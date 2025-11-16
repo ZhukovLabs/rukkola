@@ -2,67 +2,83 @@
 
 import {useEffect, useRef, useState} from "react";
 import {HStack, Box} from "@chakra-ui/react";
-import {motion, AnimatePresence} from "framer-motion";
+import {motion} from "framer-motion";
 import {useSearchParams} from "next/navigation";
-import {NavbarItem, NavItem} from "./nav-item";
+
+import {NavItem} from "./nav-item";
+import {NavbarItem} from "./types";
 import {CART_QUERY_KEY} from "@/app-pages/menu/config";
 
-const MotionBox = motion(Box);
+const MotionNav = motion(Box);
 
 type NavbarProps = {
     items: NavbarItem[];
 };
 
 export const Navbar = ({items}: NavbarProps) => {
+    const searchParams = useSearchParams();
     const navRef = useRef<HTMLDivElement>(null);
     const [isFixed, setIsFixed] = useState(false);
-    const [active, setActive] = useState<string | null>(null);
+    const [activeId, setActiveId] = useState<string | null>(null);
     const [navHeight, setNavHeight] = useState(0);
-    const [threshold, setThreshold] = useState(0);
-    const searchParams = useSearchParams();
 
     useEffect(() => {
-        const updateNavHeightAndThreshold = () => {
-            if (!navRef.current) return;
-            const height = navRef.current.offsetHeight;
-            setNavHeight(height);
-
-            const firstSection = document.getElementById(items[0].id);
-            if (!firstSection) return;
-
-            setThreshold(firstSection.offsetTop - height - 10);
+        const updateHeight = () => {
+            if (navRef.current) {
+                setNavHeight(navRef.current.offsetHeight);
+            }
         };
 
-        updateNavHeightAndThreshold();
-        window.addEventListener("resize", updateNavHeightAndThreshold);
-        return () => window.removeEventListener("resize", updateNavHeightAndThreshold);
-    }, [items]);
+        updateHeight();
+        window.addEventListener("resize", updateHeight);
+        return () => window.removeEventListener("resize", updateHeight);
+    }, []);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        setActiveId(entry.target.id);
+                    }
+                });
+            },
+            {
+                rootMargin: `-${navHeight + 20}px 0px -60% 0px`,
+                threshold: [0, 0.1],
+            }
+        );
+
+        items.forEach(({id}) => {
+            const el = document.getElementById(id);
+            if (el) observer.observe(el);
+        });
+
+        return () => {
+            items.forEach(({id}) => {
+                const el = document.getElementById(id);
+                if (el) observer.unobserve(el);
+            });
+        };
+    }, [items, navHeight]);
 
     useEffect(() => {
         const handleScroll = () => {
-            const y = window.scrollY;
-            setIsFixed(y > threshold);
-
-            const scrollPos = y + window.innerHeight / 3;
-            const current = items.find(({id}) => {
-                const section = document.getElementById(id);
-                if (!section) return false;
-                return scrollPos >= section.offsetTop && scrollPos < section.offsetTop + section.offsetHeight;
-            });
-            setActive(current?.id || null);
+            const threshold = items[0]?.id ? document.getElementById(items[0].id)?.offsetTop || 0 : 0;
+            setIsFixed(window.scrollY > threshold - navHeight - 10);
         };
 
-        window.addEventListener("scroll", handleScroll, {passive: true});
         handleScroll();
+        window.addEventListener("scroll", handleScroll, {passive: true});
         return () => window.removeEventListener("scroll", handleScroll);
-    }, [items, threshold]);
+    }, [items, navHeight]);
 
     const handleClick = (id: string) => {
         const section = document.getElementById(id);
-        if (!section || !navRef.current) return;
+        if (!section) return;
 
         window.scrollTo({
-            top: section.offsetTop - navHeight,
+            top: section.offsetTop - navHeight * 2,
             behavior: "smooth",
         });
     };
@@ -71,41 +87,38 @@ export const Navbar = ({items}: NavbarProps) => {
 
     return (
         <Box position="relative" zIndex="10">
-            {/* Пустой блок для предотвращения прыжка контента */}
             {isFixed && <Box height={navHeight}/>}
-            <AnimatePresence>
-                <MotionBox
-                    ref={navRef}
-                    as="nav"
-                    position={isFixed ? "fixed" : "relative"}
-                    top={0}
-                    left={0}
-                    right={0}
-                    zIndex={100}
-                    mx="auto"
-                    bgGradient="linear(to-r, rgba(26, 32, 44, 0.85), rgba(26, 32, 44, 0.75))"
-                    backdropFilter="blur(14px)"
-                    boxShadow="0 8px 30px rgba(0,0,0,0.35)"
-                    py={4}
-                    borderBottom={isFixed ? "1px solid rgba(255,255,255,0.08)" : "none"}
-                    initial={{opacity: 0, y: -20}}
-                    animate={{opacity: 1, y: 0}}
-                    transition={{duration: 0.4, ease: "easeOut"}}
-                >
-                    <HStack wrap="wrap" justify="center">
-                        {items.map((item) => (
-                            <NavItem
-                                key={item.id}
-                                id={item.id}
-                                title={item.name}
-                                isActive={active === item.id}
-                                onClick={handleClick}
-                                childrenItems={item.children}
-                            />
-                        ))}
-                    </HStack>
-                </MotionBox>
-            </AnimatePresence>
+
+            <MotionNav
+                ref={navRef}
+                position={isFixed ? "fixed" : "relative"}
+                top={0}
+                insetX={0}
+                zIndex={100}
+                mx="auto"
+                bgGradient="linear(to-r, rgba(26, 32, 44, 0.85), rgba(26, 32, 44, 0.75))"
+                backdropFilter="blur(14px)"
+                boxShadow="0 8px 30px rgba(0,0,0,0.35)"
+                py={4}
+                borderBottom={isFixed ? "1px solid rgba(255,255,255,0.08)" : "none"}
+                initial={{opacity: 0, y: -20}}
+                animate={{opacity: 1, y: 0}}
+                exit={{opacity: 0, y: -20}}
+                transition={{duration: 0.4, ease: "easeOut"}}
+            >
+                <HStack wrap="wrap" justify="center" gap={6}>
+                    {items.map((item) => (
+                        <NavItem
+                            key={item.id}
+                            id={item.id}
+                            title={item.name}
+                            isActive={activeId === item.id}
+                            onClick={handleClick}
+                            childrenItems={item.children}
+                        />
+                    ))}
+                </HStack>
+            </MotionNav>
         </Box>
     );
 };

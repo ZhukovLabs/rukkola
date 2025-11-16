@@ -1,7 +1,9 @@
+import {ProductType} from "@/models/product";
+
 export const CART_KEY = "localCart";
 export const CART_TTL = 12 * 60 * 60 * 1000; // 12 hours
 
-export type CartItem = {
+export type CartItemType = {
     id: string;
     name: string;
     price: number;
@@ -10,7 +12,7 @@ export type CartItem = {
     timestamp: number;
 }
 
-export const getCart = () => {
+export const getCart = (): CartItemType[] => {
     try {
         const raw = localStorage.getItem(CART_KEY);
         if (!raw) return [];
@@ -18,7 +20,7 @@ export const getCart = () => {
         const data = JSON.parse(raw);
         const now = Date.now();
 
-        const filtered = data.filter((item: CartItem) => now - item.timestamp < CART_TTL);
+        const filtered = data.filter((item: CartItemType) => now - item.timestamp < CART_TTL);
         localStorage.setItem(CART_KEY, JSON.stringify(filtered));
 
         return filtered;
@@ -27,7 +29,13 @@ export const getCart = () => {
     }
 };
 
-export const setCart = (items: CartItem[]) => {
+export const setCart = (items: CartItemType[]) => {
     localStorage.setItem(CART_KEY, JSON.stringify(items));
     window.dispatchEvent(new Event("storage"));
+};
+
+export const addToCart = (item: Omit<CartItemType, 'timestamp'>) => {
+    const cart = getCart();
+    cart.push({...item, timestamp: Date.now()});
+    setCart(cart);
 };
