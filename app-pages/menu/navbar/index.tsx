@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect, useRef, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import {HStack, Box} from "@chakra-ui/react";
 import {motion} from "framer-motion";
 import {useSearchParams} from "next/navigation";
@@ -21,6 +21,20 @@ export const Navbar = ({items}: NavbarProps) => {
     const [isFixed, setIsFixed] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [navHeight, setNavHeight] = useState(0);
+
+    const allSectionIds = useMemo(() => {
+        const ids = new Set<string>();
+
+        const collect = (items: NavbarItem[]) => {
+            items.forEach((item) => {
+                ids.add(item.id);
+                if (item.children) collect(item.children);
+            });
+        };
+
+        collect(items);
+        return Array.from(ids);
+    }, [items]);
 
     useEffect(() => {
         const updateHeight = () => {
@@ -49,18 +63,18 @@ export const Navbar = ({items}: NavbarProps) => {
             }
         );
 
-        items.forEach(({id}) => {
+        allSectionIds.forEach((id) => {
             const el = document.getElementById(id);
             if (el) observer.observe(el);
         });
 
         return () => {
-            items.forEach(({id}) => {
+            allSectionIds.forEach((id) => {
                 const el = document.getElementById(id);
                 if (el) observer.unobserve(el);
             });
         };
-    }, [items, navHeight]);
+    }, [allSectionIds, navHeight]);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -112,9 +126,10 @@ export const Navbar = ({items}: NavbarProps) => {
                             key={item.id}
                             id={item.id}
                             title={item.name}
-                            isActive={activeId === item.id}
+                            isActive={activeId === item.id || item.children?.some(child => child.id === activeId) || false}
                             onClick={handleClick}
                             childrenItems={item.children}
+                            activeId={activeId}
                         />
                     ))}
                 </HStack>

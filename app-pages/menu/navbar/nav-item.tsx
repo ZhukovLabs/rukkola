@@ -17,6 +17,7 @@ type NavItemProps = {
     isActive: boolean;
     onClick: (id: string) => void;
     childrenItems?: NavbarItem[];
+    activeId: string | null;
 };
 
 export const NavItem = ({
@@ -25,12 +26,14 @@ export const NavItem = ({
                             isActive,
                             onClick,
                             childrenItems,
+                            activeId
                         }: NavItemProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const triggerRef = useRef<HTMLButtonElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
     const isMobile = useBreakpointValue({base: true, md: false});
     const hasChildren = !!childrenItems?.length;
+    const isGroupActive = isActive || childrenItems?.some(child => child.id === activeId);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -109,7 +112,7 @@ export const NavItem = ({
                 variant="ghost"
                 borderRadius="full"
                 fontWeight="medium"
-                color={isActive ? "teal.300" : "gray.200"}
+                color={isGroupActive ? "teal.300" : "gray.200"}
                 bg="transparent"
                 _hover={{color: "teal.200", transform: "translateY(-2px)"}}
                 _active={{color: "teal.100"}}
