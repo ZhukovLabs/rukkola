@@ -4,13 +4,19 @@ import {Navbar} from "./navbar";
 import {Products} from "./products";
 import {Footer} from "./footer";
 import {CartButton} from "./cart-button";
-import {CartModal} from "./cart-modal";
 import {ScrollToFooterButton} from "@/components/scroll-footer-button";
 import {ProductModal} from "@/components/product-modal";
 import {connectToDatabase} from "@/lib/mongoose";
 import {Category} from "@/models/category";
 import {Lunch} from "@/models/lunch";
 import {ActiveLunch} from "@/app-pages/menu/active-lunch";
+
+import dynamic from "next/dynamic";
+
+const CartModal = dynamic(() => import("./cart-modal").then(m => m.CartModal), {
+    loading: () => null,
+});
+
 
 export const MenuPage = async () => {
     await connectToDatabase();
