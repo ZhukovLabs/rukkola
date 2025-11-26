@@ -22,7 +22,6 @@ export const ActiveLunch = ({image}: ActiveLunchProps) => {
                         borderColor="teal.700"
                         maxW="600px"
                         w="100%"
-                        h={{base: "150px", sm: "180px", md: "220px"}}
                         transition={!disableMotion ? "all 0.3s ease" : undefined}
                         _hover={!disableMotion ? {
                             transform: "scale(1.015)",
