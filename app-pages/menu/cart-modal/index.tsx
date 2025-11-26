@@ -1,6 +1,6 @@
 "use client";
 
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useEffect, useState, useMemo} from "react";
 import {
     Box,
     Button,
@@ -8,7 +8,7 @@ import {
     Text,
     Icon,
     Dialog,
-    Portal, useMediaQuery,
+    Portal,
 } from "@chakra-ui/react";
 import {motion} from "framer-motion";
 import {useSearchParams, usePathname, useRouter} from "next/navigation";
@@ -28,11 +28,15 @@ export const CartModal = () => {
     const searchParams = useSearchParams();
     const pathname = usePathname();
     const router = useRouter();
-    const [items, setItems] = useState<CartItemType[]>([]);
+
+    const [items, setItems] = useState<CartItemType[]>(() => getCart());
 
     const isOpen = searchParams.has(CART_QUERY_KEY);
+
     useEffect(() => {
-        setItems(getCart());
+        const onUpdate = () => setItems(getCart());
+        window.addEventListener("cart-updated", onUpdate);
+        return () => window.removeEventListener("cart-updated", onUpdate);
     }, []);
 
     const closeCart = useCallback(() => {
@@ -41,23 +45,23 @@ export const CartModal = () => {
         router.replace(`${pathname}?${params.toString()}`, {scroll: false});
     }, [pathname, router, searchParams]);
 
-    const handleRemove =
+    const handleRemove = useCallback(
         (clickId: string) => () => {
             const updated = items.filter(({id}) => clickId !== id);
             setCart(updated);
-
-            router.refresh();
-        };
+            setItems(updated);
+        },
+        [items]
+    );
 
     const handleClear = useCallback(() => {
         setCart([]);
-        router.refresh();
-    }, [router]);
-
+        setItems([]);
+    }, []);
 
     const total = items.reduce((sum, {price}) => sum + (price || 0), 0);
 
-    const itemList = (
+    const itemList = useMemo(() => (
         <Flex direction="column" gap={3}>
             {items.map(({id, name, image, size, price}, i) => (
                 <CartItem
@@ -71,9 +75,7 @@ export const CartModal = () => {
                 />
             ))}
         </Flex>
-    );
-
-    const [isMobile] = useMediaQuery(["(max-width: 768px)"]);
+    ), [items, handleRemove]);
 
     return (
         <Dialog.Root open={isOpen} onOpenChange={closeCart} size="cover">
@@ -81,7 +83,7 @@ export const CartModal = () => {
                 <Dialog.Backdrop
                     as={motion.div}
                     style={{
-                        backdropFilter: isMobile ? "none" : "blur(8px)",
+                        backdropFilter: "blur(8px)",
                         background: "rgba(0,0,0,0.75)",
                     }}
                 />
@@ -120,7 +122,7 @@ export const CartModal = () => {
                                 py={4}
                                 borderTop="1px solid rgba(56,178,172,0.2)"
                                 bg="rgba(0,0,0,0.5)"
-                                backdropFilter={isMobile ? undefined : "blur(4px)"}
+                                backdropFilter="blur(4px)"
                             >
                                 <Flex justify="space-between" align="center">
                                     <Text color="gray.400" fontSize="sm">Итого:</Text>

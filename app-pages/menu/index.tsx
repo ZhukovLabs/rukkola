@@ -5,7 +5,7 @@ import {Products} from "./products";
 import {Footer} from "./footer";
 import {CartButton} from "./cart-button";
 import {ScrollToFooterButton} from "@/components/scroll-footer-button";
-import {ProductModal} from "@/components/product-modal";
+import {ProductModal} from "./product-modal";
 import {connectToDatabase} from "@/lib/mongoose";
 import {Category} from "@/models/category";
 import {Lunch} from "@/models/lunch";

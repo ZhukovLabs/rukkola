@@ -31,7 +31,7 @@ export const getCart = (): CartItemType[] => {
 
 export const setCart = (items: CartItemType[]) => {
     localStorage.setItem(CART_KEY, JSON.stringify(items));
-    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new CustomEvent("cart-updated"));
 };
 
 export const addToCart = (item: Omit<CartItemType, 'timestamp'>) => {
