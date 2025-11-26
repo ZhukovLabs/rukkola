@@ -1,24 +1,47 @@
-import { NextRequest, NextResponse } from "next/server"
-import fs from "fs"
-import path from "path"
+import { NextRequest, NextResponse } from "next/server";
+import fs from "fs/promises";
+import path from "path";
+import { LRUCache } from "lru-cache";
+import mime from "mime";
 
-export async function GET(req: NextRequest, { params }: { params: Promise< { filename: string }> }) {
-    const { filename } = await params;
-    if (!filename) return NextResponse.json({ error: 'Filename is required' }, { status: 400 })
+const cache = new LRUCache<string, { buffer: Buffer; contentType: string }>({ max: 200 });
+const uploadDir = path.join(process.cwd(), "uploads", "products");
 
-    const filePath = path.join(process.cwd(), 'uploads', 'products', filename)
-    if (!fs.existsSync(filePath)) {
-        return NextResponse.json({ error: 'File not found' }, { status: 404 })
-    }
-
-    const fileBuffer = fs.readFileSync(filePath)
-    const ext = path.extname(filename).substring(1)
-    const contentType = `image/${ext === 'jpg' ? 'jpeg' : ext}`
-
-    return new NextResponse(fileBuffer, {
+function sendFile(buffer: Buffer, contentType: string) {
+    return new NextResponse(new Uint8Array(buffer), {
         status: 200,
         headers: {
-            'Content-Type': contentType
-        }
-    })
+            "Content-Type": contentType,
+            "Cache-Control": "public, max-age=86400, immutable",
+        },
+    });
+}
+
+export async function GET(
+    req: NextRequest,
+    { params }: { params: Promise<{ filename: string }> }
+) {
+    const { filename } = await params;
+    if (!filename) return NextResponse.json({ error: "Filename is required" }, { status: 400 });
+
+    const cached = cache.get(filename);
+    if (cached) return sendFile(cached.buffer, cached.contentType);
+
+    const filePath = path.join(uploadDir, filename);
+    if (!filePath.startsWith(uploadDir)) {
+        return NextResponse.json({ error: "Invalid path" }, { status: 400 });
+    }
+
+    try {
+        const fileBuffer = await fs.readFile(filePath);
+        const contentType =
+            mime.getType(filename) || (path.extname(filename).toLowerCase() === ".jpg" ? "image/jpeg" : "application/octet-stream");
+
+        cache.set(filename, { buffer: fileBuffer, contentType });
+
+        return sendFile(fileBuffer, contentType);
+    } catch (err: any) {
+        if (err.code === "ENOENT") return NextResponse.json({ error: "File not found" }, { status: 404 });
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    }
 }

@@ -27,7 +27,9 @@
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.2.3",
     "framer-motion": "^12.23.24",
+    "lru-cache": "^11.2.2",
     "lucide-react": "^0.548.0",
+    "mime": "^4.1.0",
     "mongodb": "^6.20.0",
     "mongoose": "^8.19.2",
     "next": "16.0.0",
@@ -39,6 +41,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@types/lru-cache": "^7.10.9",
     "@types/node": "^20.19.24",
     "@types/react": "^19",
     "@types/react-dom": "^19",

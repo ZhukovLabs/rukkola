@@ -1,6 +1,6 @@
 import { Box, Heading, SimpleGrid } from "@chakra-ui/react";
 import type { ProductType } from "@/models/product";
-import { ProductWithSuspense } from "./product";
+import { Product } from "./product";
 
 type ProductGroupProps = {
     id?: string;
@@ -28,12 +28,12 @@ export const ProductGroup = ({ id, title, products }: ProductGroupProps) => {
             )}
 
             <SimpleGrid
-                columns={{ base: 1, sm: 2, xl: 3, "2xl": 4 }}
+                columns={{ base: 1, sm: 2, xl: 3 }}
                 gap={6}
                 alignItems="stretch"
             >
                 {products.map((product) => (
-                    <ProductWithSuspense
+                    <Product
                         key={product._id.toString()}
                         id={product._id.toString()}
                         img={product.image}
