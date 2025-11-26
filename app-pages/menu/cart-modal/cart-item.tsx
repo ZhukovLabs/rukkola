@@ -1,6 +1,7 @@
-import {Box, Button, Flex, Image, Text} from "@chakra-ui/react";
-import {motion} from "framer-motion";
-import {ImCross} from 'react-icons/im';
+import { Box, Flex, Image, Text, IconButton } from "@chakra-ui/react";
+import { motion } from "framer-motion";
+import { ImCross } from "react-icons/im";
+import { AiOutlineMinus, AiOutlinePlus } from "react-icons/ai";
 
 const MotionBox = motion(Box);
 
@@ -9,12 +10,25 @@ type CartItemProps = {
     image?: string;
     size: string;
     price: number;
+    quantity?: number;
     handleRemove: () => void;
+    onIncrease?: () => void;
+    onDecrease?: () => void;
     indexDelay?: number;
-}
+};
 
-export const CartItem = ({name, image, size, price, handleRemove, indexDelay = 0}: CartItemProps) => {
-    const formattedPrice = price ? `${price.toFixed(2).replace(".", ",")} руб.` : "—"
+export const CartItem = ({
+                             name,
+                             image,
+                             size,
+                             price,
+                             quantity = 1,
+                             handleRemove,
+                             onIncrease,
+                             onDecrease,
+                             indexDelay = 0
+                         }: CartItemProps) => {
+    const formattedPrice = price ? `${(price * quantity).toFixed(2).replace(".", ",")} ₽` : "—";
 
     return (
         <MotionBox
@@ -22,52 +36,84 @@ export const CartItem = ({name, image, size, price, handleRemove, indexDelay = 0
             display="flex"
             alignItems="center"
             justifyContent="space-between"
-            bg="rgba(255,255,255,0.03)"
-            borderRadius="lg"
-            border="1px solid transparent"
-            initial={{opacity: 0, y: 10}}
-            animate={{opacity: 1, y: 0}}
-            transition={{duration: 0.25, delay: indexDelay * 0.04}}
-            whileHover={{
-                borderColor: "rgba(56,178,172,0.3)",
-                boxShadow: "0 0 8px rgba(56,178,172,0.2)",
-                backgroundColor: "rgba(255,255,255,0.05)",
-            }}
+            bg="gray.800"
+            borderRadius="md"
+            border="1px solid rgba(255,255,255,0.08)"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: indexDelay * 0.04 }}
+            whileHover={{ backgroundColor: "gray.700" }}
         >
             <Flex align="center" gap={3}>
                 {image && (
                     <Image
                         src={image}
                         alt={name}
-                        width={50}
-                        height={50}
+                        boxSize="50px"
                         borderRadius="md"
                         objectFit="cover"
-                        border="1px solid rgba(56,178,172,0.25)"
+                        border="1px solid rgba(255,255,255,0.1)"
                     />
                 )}
-                <Box>
+
+                <Box flex="1">
                     <Text color="whiteAlpha.900" fontWeight="medium" fontSize="sm">
                         {name}
                     </Text>
-                    <Text color="gray.500" fontSize="xs">Размер: {size}</Text>
+                    <Text color="gray.400" fontSize="xs">
+                        Размер: {size}
+                    </Text>
+
+                    <Flex mt={1} align="center" gap={2}>
+                        <IconButton
+                            size="sm"
+                            aria-label="Уменьшить количество"
+                            onClick={onDecrease}
+                            disabled={quantity <= 1}
+                            variant="outline"
+                            borderColor="teal.400"
+                            color="teal.400"
+                            _hover={{ bg: "teal.50" }}>
+                            <AiOutlineMinus />
+                        </IconButton>
+                        <Text
+                            px={2}
+                            fontSize="sm"
+                            fontWeight="bold"
+                            color="whiteAlpha.900"
+                            textAlign="center"
+                            minW="24px"
+                        >
+                            {quantity} шт.
+                        </Text>
+                        <IconButton
+                            size="sm"
+                            aria-label="Увеличить количество"
+                            onClick={onIncrease}
+                            variant="outline"
+                            borderColor="teal.400"
+                            color="teal.400"
+                            _hover={{ bg: "teal.50" }}>
+                            <AiOutlinePlus />
+                        </IconButton>
+                    </Flex>
                 </Box>
             </Flex>
 
-            <Flex align="center" gap={3}>
+            <Flex align="center" gap={2}>
                 <Text color="teal.300" fontWeight="semibold" fontSize="sm">
                     {formattedPrice}
                 </Text>
-                <Button
-                    size="xs"
+                <IconButton
+                    size="sm"
                     variant="ghost"
-                    color="gray.500"
-                    _hover={{color: "red.400", bg: "rgba(255,0,0,0.06)"}}
+                    aria-label="Удалить товар"
                     onClick={handleRemove}
+                    color="red.500"
                 >
                     <ImCross/>
-                </Button>
+                </IconButton>
             </Flex>
         </MotionBox>
     );
-}
+};

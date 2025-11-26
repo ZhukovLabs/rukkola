@@ -61,7 +61,6 @@ export const ProductModal = () => {
         });
     };
 
-    // Закрытие по Esc
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
             if (e.key === "Escape") closeModal();

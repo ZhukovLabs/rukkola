@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {useCallback, useEffect, useState, useMemo} from "react";
 import {
@@ -13,7 +13,7 @@ import {
 import {motion} from "framer-motion";
 import {useSearchParams, usePathname, useRouter} from "next/navigation";
 import {FiShoppingCart} from "react-icons/fi";
-import {CartItemType, getCart, setCart} from "@/lib/local-storage";
+import {CartItemType, getCart, setCart, addToCart, removeFromCart, clearCart} from "@/lib/local-storage";
 import {CART_QUERY_KEY} from "../config";
 import {CartItem} from "@/app-pages/menu/cart-modal/cart-item";
 
@@ -30,7 +30,6 @@ export const CartModal = () => {
     const router = useRouter();
 
     const [items, setItems] = useState<CartItemType[]>(() => getCart());
-
     const isOpen = searchParams.has(CART_QUERY_KEY);
 
     useEffect(() => {
@@ -46,36 +45,58 @@ export const CartModal = () => {
     }, [pathname, router, searchParams]);
 
     const handleRemove = useCallback(
-        (clickId: string) => () => {
-            const updated = items.filter(({id}) => clickId !== id);
-            setCart(updated);
-            setItems(updated);
+        (id: string, size: string) => () => {
+            removeFromCart(id, size);
+            setItems(getCart());
+        },
+        []
+    );
+
+    const handleClear = useCallback(() => {
+        clearCart();
+        setItems([]);
+    }, []);
+
+    const increaseQuantity = useCallback(
+        (id: string, size: string) => () => {
+            const item = items.find(i => i.id === id && i.size === size);
+            if (item) {
+                addToCart({id: item.id, name: item.name, price: item.price, size: item.size, image: item.image});
+                setItems(getCart());
+            }
         },
         [items]
     );
 
-    const handleClear = useCallback(() => {
-        setCart([]);
-        setItems([]);
-    }, []);
+    const decreaseQuantity = useCallback(
+        (id: string, size: string) => () => {
+            const item = items.find(i => i.id === id && i.size === size);
+            if (item) {
+                removeFromCart(id, size, 1);
+                setItems(getCart());
+            }
+        },
+        [items]
+    );
 
-    const total = items.reduce((sum, {price}) => sum + (price || 0), 0);
+    const total = items.reduce((sum, {price, quantity}) => sum + (price || 0) * (quantity || 1), 0);
 
-    const itemList = useMemo(() => (
-        <Flex direction="column" gap={3}>
-            {items.map(({id, name, image, size, price}, i) => (
-                <CartItem
-                    key={`${id}-${i}`}
-                    name={name}
-                    image={image}
-                    size={size}
-                    price={price}
-                    handleRemove={handleRemove(id)}
-                    indexDelay={i}
-                />
-            ))}
-        </Flex>
-    ), [items, handleRemove]);
+    const itemList =  <Flex direction="column" gap={3}>
+        {items.map(({id, name, image, size, price, quantity}, i) => (
+            <CartItem
+                key={`${id}-${size}`}
+                name={name}
+                image={image}
+                size={size}
+                price={price}
+                quantity={quantity}
+                handleRemove={handleRemove(id, size)}
+                onIncrease={increaseQuantity(id, size)}
+                onDecrease={decreaseQuantity(id, size)}
+                indexDelay={i}
+            />
+        ))}
+    </Flex>;
 
     return (
         <Dialog.Root open={isOpen} onOpenChange={closeCart} size="cover">
@@ -84,7 +105,7 @@ export const CartModal = () => {
                     as={motion.div}
                     style={{
                         backdropFilter: "blur(8px)",
-                        background: "rgba(0,0,0,0.75)",
+                        background: "rgba(0,0,0,0.75)"
                     }}
                 />
 
@@ -95,7 +116,7 @@ export const CartModal = () => {
                         border="1px solid rgba(56,178,172,0.25)"
                         borderRadius="2xl"
                         boxShadow="0 0 25px rgba(56,178,172,0.15)"
-                        maxH="85vh"
+                        maxH="80vh"
                         display="flex"
                         flexDirection="column"
                         overflow="hidden"
