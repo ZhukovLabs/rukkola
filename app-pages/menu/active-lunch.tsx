@@ -20,8 +20,9 @@ export const ActiveLunch = ({image}: ActiveLunchProps) => {
                         boxShadow="0 0 15px rgba(56,178,172,0.4)"
                         border="1px solid"
                         borderColor="teal.700"
-                        maxW="600px"
+                        maxW="640px"
                         w="100%"
+                        h={{base: 200, sm: 300, md: 442}}
                         transition={!disableMotion ? "all 0.3s ease" : undefined}
                         _hover={!disableMotion ? {
                             transform: "scale(1.015)",

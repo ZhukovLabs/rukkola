@@ -7,7 +7,8 @@ import {MenuPageClient} from "./menu-page-client";
 import {Product as ProductDb, type ProductType} from "@/models/product";
 import type {GroupWithProducts} from "@/app-pages/menu/products/types";
 import {Products} from './products';
-import {ComponentProps} from "react";
+import {ComponentProps, Suspense} from "react";
+import {MenuLoader} from "@/app-pages/menu/menu-loader";
 
 export const MenuPage = async () => {
     await connectToDatabase();
@@ -124,14 +125,16 @@ export const MenuPage = async () => {
                 />
             </Box>
 
-            <MenuPageClient
-                activeLunch={{image: activeLunch?.image}}
-                navbar={{items: navItems}}
-                products={{
-                    grouped,
-                    uncategorized,
-                }}
-            />
+            <Suspense fallback={<MenuLoader />}>
+                <MenuPageClient
+                    activeLunch={{ image: activeLunch?.image }}
+                    navbar={{ items: navItems }}
+                    products={{
+                        grouped,
+                        uncategorized,
+                    }}
+                />
+            </Suspense>
         </Box>
     );
 };
