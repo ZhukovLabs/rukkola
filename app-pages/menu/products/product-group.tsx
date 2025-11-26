@@ -34,8 +34,8 @@ export const ProductGroup = ({ id, title, products }: ProductGroupProps) => {
             >
                 {products.map((product) => (
                     <Product
-                        key={product._id.toString()}
-                        id={product._id.toString()}
+                        key={product.id.toString()}
+                        id={product.id.toString()}
                         img={product.image}
                         alt={product.name}
                         title={product.name}

@@ -11,7 +11,7 @@ import {
     Icon
 } from "@chakra-ui/react";
 import Image from "next/image";
-import {memo, useState, useCallback, useMemo} from "react";
+import {memo, useState, useCallback} from "react";
 import {motion, AnimatePresence} from "framer-motion";
 import {FiCheck, FiImage} from "react-icons/fi";
 import {useRouter} from "next/navigation";
@@ -144,34 +144,25 @@ export const Product = memo(function Product({
         [router, id, img]
     );
 
-    /* —————— PRICE LISTS —————— */
-    const priceButtons = useMemo(
-        () =>
-            prices?.map(p => (
-                <PriceButton
-                    key={p.size}
-                    price={p}
-                    selected={selectedPrice?.size === p.size}
-                    onClick={() => setSelectedPrice(p)}
-                />
-            )),
-        [prices, selectedPrice]
-    );
+    const priceButtons = prices?.map(p => (
+        <PriceButton
+            key={p.size}
+            price={p}
+            selected={selectedPrice?.size === p.size}
+            onClick={() => setSelectedPrice(p)}
+        />
+    ));
 
-    const staticPriceList = useMemo(
-        () =>
-            prices?.map(p => (
-                <Flex key={p.size} justify="space-between" align="center">
-                    <Text fontSize="sm" color="gray.400">
-                        {p.size}
-                    </Text>
-                    <Text fontSize="md" fontWeight="semibold" color="teal.300">
-                        {p.price.toFixed(2).replace(".", ",")} руб.
-                    </Text>
-                </Flex>
-            )),
-        [prices]
-    );
+    const staticPriceList = prices?.map(p => (
+        <Flex key={p.size} justify="space-between" align="center">
+            <Text fontSize="sm" color="gray.400">
+                {p.size}
+            </Text>
+            <Text fontSize="md" color="teal.300">
+                {p.price.toFixed(2).replace(".", ",")} руб.
+            </Text>
+        </Flex>
+    ));
 
     const containerMotion = !disableMotion
         ? {
@@ -231,7 +222,6 @@ export const Product = memo(function Product({
                         <Heading
                             fontSize="xl"
                             color="whiteAlpha.900"
-                            fontWeight="semibold"
                         >
                             {title}
                         </Heading>
@@ -289,7 +279,6 @@ export const Product = memo(function Product({
                                 )}
                             </AnimatePresence>
                         ) : (
-                            // no-motion fallback
                             <>
                                 {selecting ? (
                                     <Flex direction="column" gap={2}>

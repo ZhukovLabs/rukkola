@@ -1,10 +1,19 @@
-"use client";
-import { Box, Flex, Text, Heading, IconButton, Spinner, Center } from "@chakra-ui/react";
+'use client';
+
+import {
+    Box,
+    Flex,
+    Text,
+    Heading,
+    IconButton,
+    Spinner,
+    Center,
+} from "@chakra-ui/react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FiX } from "react-icons/fi";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getProductById } from "./actions";
 
 type Product = {
@@ -23,43 +32,35 @@ export const ProductModal = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
 
-    useEffect(() => {
+    const fetchProduct = useCallback(async () => {
         if (!productId) {
             setProduct(null);
             return;
         }
 
-        let isMounted = true;
         setLoading(true);
         setError(false);
 
-        getProductById(productId)
-            .then((data) => {
-                if (isMounted) {
-                    setProduct(data);
-                    setLoading(false);
-                }
-            })
-            .catch(() => {
-                if (isMounted) {
-                    setError(true);
-                    setLoading(false);
-                }
-            });
-
-        return () => {
-            isMounted = false;
-        };
+        try {
+            const data = await getProductById(productId);
+            setProduct(data);
+        } catch {
+            setError(true);
+        } finally {
+            setLoading(false);
+        }
     }, [productId]);
 
-    const closeModal = () => {
+    useEffect(() => {
+        fetchProduct();
+    }, [fetchProduct]);
+
+    const closeModal = useCallback(() => {
         const current = new URLSearchParams(searchParams.toString());
         current.delete("product");
 
-        router.replace(`${window.location.pathname}?${current.toString()}`, {
-            scroll: false,
-        });
-    };
+        router.replace(`${window.location.pathname}?${current.toString()}`, { scroll: false });
+    }, [router, searchParams]);
 
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
@@ -67,17 +68,14 @@ export const ProductModal = () => {
         };
         window.addEventListener("keydown", handleEsc);
         return () => window.removeEventListener("keydown", handleEsc);
-    }, []);
+    }, [closeModal]);
 
     if (!productId) return null;
 
     return (
         <Box
             position="fixed"
-            top={0}
-            left={0}
-            right={0}
-            bottom={0}
+            inset={0}
             bg="black"
             zIndex={9999}
             overflow="hidden"
@@ -101,10 +99,7 @@ export const ProductModal = () => {
                         bg="blackAlpha.800"
                         color="white"
                         _hover={{ bg: "blackAlpha.900" }}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            closeModal();
-                        }}
+                        onClick={(e) => { e.stopPropagation(); closeModal(); }}
                     >
                         <FiX size={28} />
                     </IconButton>
@@ -135,10 +130,7 @@ export const ProductModal = () => {
                                         alt={product.name}
                                         fill
                                         priority
-                                        style={{
-                                            objectFit: "contain",
-                                            objectPosition: "center",
-                                        }}
+                                        style={{ objectFit: "contain", objectPosition: "center" }}
                                         sizes="100vw"
                                     />
                                 ) : (
@@ -150,7 +142,6 @@ export const ProductModal = () => {
                                 )}
                             </Box>
 
-                            {/* ОПИСАНИЕ — ОТДЕЛЬНАЯ ПАНЕЛЬ */}
                             {product.description && (
                                 <Box
                                     bg="blackAlpha.900"
@@ -162,13 +153,8 @@ export const ProductModal = () => {
                                     css={{
                                         "&::-webkit-scrollbar": { width: "6px" },
                                         "&::-webkit-scrollbar-track": { bg: "transparent" },
-                                        "&::-webkit-scrollbar-thumb": {
-                                            bg: "rgba(255,255,255,0.2)",
-                                            borderRadius: "3px",
-                                        },
-                                        "&::-webkit-scrollbar-thumb:hover": {
-                                            bg: "rgba(255,255,255,0.3)",
-                                        },
+                                        "&::-webkit-scrollbar-thumb": { bg: "rgba(255,255,255,0.2)", borderRadius: "3px" },
+                                        "&::-webkit-scrollbar-thumb:hover": { bg: "rgba(255,255,255,0.3)" },
                                     }}
                                 >
                                     <Box maxW="900px" mx="auto">

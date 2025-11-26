@@ -1,13 +1,14 @@
 'use client';
 
-import {useEffect, useMemo, useRef, useState} from "react";
-import {HStack, Box} from "@chakra-ui/react";
-import {motion} from "framer-motion";
-import {useSearchParams} from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { HStack, Box } from "@chakra-ui/react";
+import { motion } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 
-import {NavItem} from "./nav-item";
-import {NavbarItem} from "./types";
-import {CART_QUERY_KEY} from "@/app-pages/menu/config";
+import { NavItem } from "./nav-item";
+import { NavbarItem } from "./types";
+import { CART_QUERY_KEY } from "@/app-pages/menu/config";
+import { useIsLowPerformanceDevice } from "@/hooks/use-is-low-performance-device";
 
 const MotionNav = motion(Box);
 
@@ -15,52 +16,46 @@ type NavbarProps = {
     items: NavbarItem[];
 };
 
-export const Navbar = ({items}: NavbarProps) => {
+export const Navbar = ({ items }: NavbarProps) => {
     const searchParams = useSearchParams();
     const navRef = useRef<HTMLDivElement>(null);
+    const disableMotion = useIsLowPerformanceDevice();
+
     const [isFixed, setIsFixed] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [navHeight, setNavHeight] = useState(0);
 
     const allSectionIds = useMemo(() => {
         const ids = new Set<string>();
-
         const collect = (items: NavbarItem[]) => {
             items.forEach((item) => {
                 ids.add(item.id);
                 if (item.children) collect(item.children);
             });
         };
-
         collect(items);
         return Array.from(ids);
     }, [items]);
 
     useEffect(() => {
         const updateHeight = () => {
-            if (navRef.current) {
-                setNavHeight(navRef.current.offsetHeight);
-            }
+            if (navRef.current) setNavHeight(navRef.current.offsetHeight);
         };
-
         updateHeight();
         window.addEventListener("resize", updateHeight);
         return () => window.removeEventListener("resize", updateHeight);
     }, []);
 
     useEffect(() => {
+        if (!allSectionIds.length) return;
+
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        setActiveId(entry.target.id);
-                    }
+                    if (entry.isIntersecting) setActiveId(entry.target.id);
                 });
             },
-            {
-                rootMargin: `-${navHeight + 20}px 0px -60% 0px`,
-                threshold: [0, 0.1],
-            }
+            { rootMargin: `-${navHeight + 20}px 0px -60% 0px`, threshold: [0, 0.1] }
         );
 
         allSectionIds.forEach((id) => {
@@ -78,12 +73,12 @@ export const Navbar = ({items}: NavbarProps) => {
 
     useEffect(() => {
         const handleScroll = () => {
-            const threshold = items[0]?.id ? document.getElementById(items[0].id)?.offsetTop || 0 : 0;
+            const firstSection = items[0]?.id ? document.getElementById(items[0].id) : null;
+            const threshold = firstSection?.offsetTop ?? 0;
             setIsFixed(window.scrollY > threshold - navHeight - 10);
         };
-
         handleScroll();
-        window.addEventListener("scroll", handleScroll, {passive: true});
+        window.addEventListener("scroll", handleScroll, { passive: true });
         return () => window.removeEventListener("scroll", handleScroll);
     }, [items, navHeight]);
 
@@ -101,7 +96,7 @@ export const Navbar = ({items}: NavbarProps) => {
 
     return (
         <Box position="relative" zIndex="10">
-            {isFixed && <Box height={navHeight}/>}
+            {isFixed && <Box height={navHeight} />}
 
             <MotionNav
                 ref={navRef}
@@ -115,10 +110,10 @@ export const Navbar = ({items}: NavbarProps) => {
                 boxShadow="0 8px 30px rgba(0,0,0,0.35)"
                 py={4}
                 borderBottom={isFixed ? "1px solid rgba(255,255,255,0.08)" : "none"}
-                initial={{opacity: 0, y: -20}}
-                animate={{opacity: 1, y: 0}}
-                exit={{opacity: 0, y: -20}}
-                transition={{duration: 0.4, ease: "easeOut"}}
+                initial={!disableMotion ? { opacity: 0, y: -20 } : undefined}
+                animate={!disableMotion ? { opacity: 1, y: 0 } : undefined}
+                exit={!disableMotion ? { opacity: 0, y: -20 } : undefined}
+                transition={!disableMotion ? { duration: 0.4, ease: "easeOut" } : undefined}
             >
                 <HStack wrap="wrap" justify="center" gap={6}>
                     {items.map((item) => (
@@ -126,7 +121,9 @@ export const Navbar = ({items}: NavbarProps) => {
                             key={item.id}
                             id={item.id}
                             title={item.name}
-                            isActive={activeId === item.id || item.children?.some(child => child.id === activeId) || false}
+                            isActive={
+                                activeId === item.id || item.children?.some((c) => c.id === activeId) || false
+                            }
                             onClick={handleClick}
                             childrenItems={item.children}
                             activeId={activeId}

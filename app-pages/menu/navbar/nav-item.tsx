@@ -1,15 +1,12 @@
-"use client";
+'use client';
 
-import {
-    Button,
-    Portal,
-    useBreakpointValue
-} from "@chakra-ui/react";
-import {ChevronDownIcon} from "@chakra-ui/icons";
-import {useRef, useState, useEffect, useCallback} from "react";
-import {AnimatePresence} from "framer-motion";
-import {NavbarItem} from "./types";
-import {Menu} from "./menu";
+import { Button, Portal, useBreakpointValue } from "@chakra-ui/react";
+import { ChevronDownIcon } from "@chakra-ui/icons";
+import { useRef, useState, useEffect, useCallback } from "react";
+import { AnimatePresence } from "framer-motion";
+import { NavbarItem } from "./types";
+import { Menu } from "./menu";
+import { useIsLowPerformanceDevice } from "@/hooks/use-is-low-performance-device";
 
 type NavItemProps = {
     id: string;
@@ -26,12 +23,13 @@ export const NavItem = ({
                             isActive,
                             onClick,
                             childrenItems,
-                            activeId
+                            activeId,
                         }: NavItemProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const triggerRef = useRef<HTMLButtonElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
-    const isMobile = useBreakpointValue({base: true, md: false});
+    const isMobile = useBreakpointValue({ base: true, md: false });
+    const disableMotion = useIsLowPerformanceDevice();
     const hasChildren = !!childrenItems?.length;
     const isGroupActive = isActive || childrenItems?.some(child => child.id === activeId);
 
@@ -40,38 +38,30 @@ export const NavItem = ({
 
         const handleOutside = (e: Event) => {
             const target = e.target as Node;
-
-            if (
-                triggerRef.current?.contains(target) ||
-                menuRef.current?.contains(target)
-            ) {
-                return;
-            }
-
+            if (triggerRef.current?.contains(target) || menuRef.current?.contains(target)) return;
             setIsOpen(false);
         };
 
-        const events: (keyof DocumentEventMap)[] = ["mousedown", "touchstart"];
-        events.forEach((ev) => document.addEventListener(ev, handleOutside));
+        document.addEventListener("mousedown", handleOutside);
+        document.addEventListener("touchstart", handleOutside, { passive: true });
 
-        return () => events.forEach((ev) => document.removeEventListener(ev, handleOutside));
+        return () => {
+            document.removeEventListener("mousedown", handleOutside);
+            document.removeEventListener("touchstart", handleOutside);
+        };
     }, [isOpen]);
 
     useEffect(() => {
         if (!isOpen || !isMobile) return;
         const handleScroll = () => setIsOpen(false);
-        window.addEventListener("touchmove", handleScroll, {passive: true});
+        window.addEventListener("touchmove", handleScroll, { passive: true });
         return () => window.removeEventListener("touchmove", handleScroll);
     }, [isOpen, isMobile]);
 
     const handleTriggerClick = useCallback(
         (e: React.MouseEvent) => {
             e.stopPropagation();
-            if (hasChildren) {
-                setIsOpen((v) => !v);
-            } else {
-                onClick(id);
-            }
+            hasChildren ? setIsOpen(v => !v) : onClick(id);
         },
         [hasChildren, id, onClick]
     );
@@ -92,10 +82,10 @@ export const NavItem = ({
                 fontWeight="medium"
                 color={isActive ? "teal.300" : "gray.200"}
                 bg="transparent"
-                _hover={{color: "teal.200", transform: "translateY(-2px)"}}
-                _active={{color: "teal.100"}}
+                _hover={{ color: "teal.200", transform: disableMotion ? undefined : "translateY(-2px)" }}
+                _active={{ color: "teal.100" }}
                 onClick={() => onClick(id)}
-                style={{WebkitTapHighlightColor: "transparent"}}
+                style={{ WebkitTapHighlightColor: "transparent", transition: "transform 0.15s ease" }}
             >
                 {title}
             </Button>
@@ -114,15 +104,15 @@ export const NavItem = ({
                 fontWeight="medium"
                 color={isGroupActive ? "teal.300" : "gray.200"}
                 bg="transparent"
-                _hover={{color: "teal.200", transform: "translateY(-2px)"}}
-                _active={{color: "teal.100"}}
+                _hover={{ color: "teal.200", transform: disableMotion ? undefined : "translateY(-2px)" }}
+                _active={{ color: "teal.100" }}
                 onClick={handleTriggerClick}
-                style={{WebkitTapHighlightColor: "transparent"}}
+                style={{ WebkitTapHighlightColor: "transparent", transition: "transform 0.15s ease" }}
             >
                 {title}
                 <ChevronDownIcon
                     ml={1}
-                    transition="transform 0.2s"
+                    transition="transform 0.2s ease"
                     transform={isOpen ? "rotate(180deg)" : "rotate(0deg)"}
                 />
             </Button>

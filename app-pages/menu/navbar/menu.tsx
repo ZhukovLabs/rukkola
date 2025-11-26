@@ -1,9 +1,23 @@
+'use client';
+
 import {NavbarItem} from "./types";
 import {Box} from "@chakra-ui/react";
-import {useEffect, useRef, useState} from "react";
+import {useEffect, useState, useMemo} from "react";
 import {MenuItem} from "./menu-item";
 import {Arrow} from "./arrow";
-import {motion} from "framer-motion";
+import {motion, MotionProps} from "framer-motion";
+import {useIsLowPerformanceDevice} from "@/hooks/use-is-low-performance-device";
+
+function throttle(fn: (...args: unknown[]) => void, wait: number) {
+    let lastTime = 0;
+    return (...args: unknown[]) => {
+        const now = Date.now();
+        if (now - lastTime >= wait) {
+            lastTime = now;
+            fn(...args);
+        }
+    };
+}
 
 type MenuProps = {
     triggerRef: React.RefObject<HTMLButtonElement | null>;
@@ -13,6 +27,8 @@ type MenuProps = {
     onItemClick: (id: string) => void;
 };
 
+const MotionBox = motion(Box);
+
 export const Menu = ({
                          triggerRef,
                          menuRef,
@@ -21,21 +37,22 @@ export const Menu = ({
                          onItemClick,
                      }: MenuProps) => {
     const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
+    const disableMotion = useIsLowPerformanceDevice();
 
     useEffect(() => {
         if (!triggerRef.current) return;
 
-        const updatePosition = () => {
+        const updatePosition = throttle(() => {
             const rect = triggerRef.current!.getBoundingClientRect();
             setPosition({
                 top: rect.bottom + 8,
                 left: isMobile ? window.innerWidth / 2 : rect.left,
             });
-        };
+        }, 50);
 
         updatePosition();
         window.addEventListener("resize", updatePosition);
-        window.addEventListener("scroll", updatePosition);
+        window.addEventListener("scroll", updatePosition, {passive: true});
 
         return () => {
             window.removeEventListener("resize", updatePosition);
@@ -46,14 +63,13 @@ export const Menu = ({
     if (!position) return null;
 
     return (
-        <Box
+        <MotionBox
             ref={menuRef}
-            as={motion.div}
             position="fixed"
             top={`${position.top}px`}
             left={isMobile ? "50%" : `${position.left}px`}
-            transform={isMobile ? "translateX(-50%)" : "none"}
-            width={isMobile ? "90vw" : "auto"}
+            transform={isMobile ? "translateX(-50%)" : undefined}
+            width={isMobile ? "90vw" : undefined}
             maxW={isMobile ? "90vw" : "240px"}
             minW={isMobile ? "90vw" : "180px"}
             zIndex={99999}
@@ -81,6 +97,6 @@ export const Menu = ({
 
                 {!isMobile && <Arrow/>}
             </Box>
-        </Box>
+        </MotionBox>
     );
 };

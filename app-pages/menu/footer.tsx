@@ -3,13 +3,34 @@
 import { Box, Flex, Text, Icon, Stack, Link, Button } from "@chakra-ui/react";
 import { Phone, Clock, MapPin, ArrowUpRight, ArrowUp } from "lucide-react";
 import { motion } from "framer-motion";
+import {ElementType, useCallback, useMemo} from "react";
 
 const MotionLink = motion(Link);
 
+type FooterItemProps = {
+    icon: ElementType;
+    title: string;
+    children: React.ReactNode;
+};
+
+const FooterItem = ({ icon, title, children }: FooterItemProps) => (
+    <Stack direction="row" align="flex-start">
+        <Icon as={icon} color="teal.300" mt={1} boxSize={5} />
+        <Box>
+            <Text color="teal.200">{title}</Text>
+            {children}
+        </Box>
+    </Stack>
+);
+
 export const Footer = () => {
-    const scrollToTop = () => {
+    const scrollToTop = useCallback(() => {
         window.scrollTo({ top: 0, behavior: "smooth" });
-    };
+    }, []);
+
+    const year = useMemo(() => new Date().getFullYear(), []);
+
+    const motionProps = { whileHover: { x: 2 }, transition: { duration: 0.2 } };
 
     return (
         <Box
@@ -24,11 +45,7 @@ export const Footer = () => {
             color="gray.200"
             position="relative"
         >
-            <Box
-                position="absolute"
-                top={-6}
-                right={6}
-            >
+            <Box position="absolute" top={-6} right={6}>
                 <Button
                     colorScheme="teal"
                     borderRadius="full"
@@ -50,76 +67,47 @@ export const Footer = () => {
                 maxW="6xl"
                 mx="auto"
             >
-                <Stack direction="row" align="flex-start">
-                    <Icon as={MapPin} color="teal.300" mt={1} boxSize={5} />
-                    <Box>
-                        <Text fontWeight="semibold" color="teal.200">
-                            Адрес:
-                        </Text>
-                        <MotionLink
-                            href="https://www.google.com/maps/search/?api=1&query=ул.+Советская,+60,+новый+универмаг,+Руккола"
-                            fontWeight="medium"
-                            color="gray.100"
-                            cursor="pointer"
-                            display="inline-flex"
-                            alignItems="center"
-                            gap={1}
-                            _hover={{ color: "teal.300" }}
-                            whileHover={{ x: 2 }}
-                            transition={{ duration: 0.2 }}
-                        >
-                            ул. Советская, 60
-                            <Icon as={ArrowUpRight} boxSize={3} opacity={0.7} />
-                        </MotionLink>
-                        <Text color="gray.400" fontSize="sm">(новый универмаг)</Text>
-                    </Box>
-                </Stack>
+                <FooterItem icon={MapPin} title="Адрес:">
+                    <MotionLink
+                        href="https://www.google.com/maps/search/?api=1&query=ул.+Советская,+60,+новый+универмаг,+Руккола"
+                        fontWeight="medium"
+                        color="gray.100"
+                        cursor="pointer"
+                        display="inline-flex"
+                        alignItems="center"
+                        gap={1}
+                        _hover={{ color: "teal.300" }}
+                        {...motionProps}
+                    >
+                        ул. Советская, 60 <Icon as={ArrowUpRight} boxSize={3} opacity={0.7} />
+                    </MotionLink>
+                    <Text color="gray.400" fontSize="sm">(новый универмаг)</Text>
+                </FooterItem>
 
-                <Stack direction="row" align="flex-start">
-                    <Icon as={Phone} color="teal.300" mt={1} boxSize={5} />
-                    <Box>
-                        <Text fontWeight="semibold" color="teal.200">
-                            Телефон:
-                        </Text>
-                        <MotionLink
-                            href="tel:+375447703003"
-                            fontWeight="medium"
-                            color="gray.100"
-                            cursor="pointer"
-                            display="inline-flex"
-                            alignItems="center"
-                            gap={1}
-                            _hover={{ color: "teal.300" }}
-                            whileHover={{ x: 2 }}
-                            transition={{ duration: 0.2 }}
-                        >
-                            +375 (44) 770-30-03
-                            <Icon as={ArrowUpRight} boxSize={3} opacity={0.7} />
-                        </MotionLink>
-                    </Box>
-                </Stack>
+                <FooterItem icon={Phone} title="Телефон:">
+                    <MotionLink
+                        href="tel:+375447703003"
+                        fontWeight="medium"
+                        color="gray.100"
+                        cursor="pointer"
+                        display="inline-flex"
+                        alignItems="center"
+                        gap={1}
+                        _hover={{ color: "teal.300" }}
+                        {...motionProps}
+                    >
+                        +375 (44) 770-30-03 <Icon as={ArrowUpRight} boxSize={3} opacity={0.7} />
+                    </MotionLink>
+                </FooterItem>
 
-                <Stack direction="row" align="flex-start">
-                    <Icon as={Clock} color="teal.300" mt={1} boxSize={5} />
-                    <Box>
-                        <Text fontWeight="semibold" color="teal.200">
-                            Время работы:
-                        </Text>
-                        <Text color="gray.200">12:00 — 23:00</Text>
-                        <Text color="gray.400" fontSize="sm">без выходных</Text>
-                    </Box>
-                </Stack>
+                <FooterItem icon={Clock} title="Время работы:">
+                    <Text color="gray.200">12:00 — 23:00</Text>
+                    <Text color="gray.400" fontSize="sm">без выходных</Text>
+                </FooterItem>
             </Flex>
 
-            <Box
-                textAlign="center"
-                mt={10}
-                fontSize="sm"
-                color="gray.500"
-                borderTop="1px solid rgba(255,255,255,0.08)"
-                pt={6}
-            >
-                © {new Date().getFullYear()} Все права защищены
+            <Box textAlign="center" mt={10} fontSize="sm" color="gray.500" borderTop="1px solid rgba(255,255,255,0.08)" pt={6}>
+                © {year} Все права защищены
             </Box>
         </Box>
     );
