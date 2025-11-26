@@ -1,7 +1,7 @@
 import {auth} from "@/lib/auth"
 import {NextResponse} from "next/server"
 
-export default auth((req) => {
+export default auth(async (req) => {
     const user = req.auth?.user
 
     if (!user) {
