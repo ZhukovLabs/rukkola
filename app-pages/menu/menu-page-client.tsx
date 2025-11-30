@@ -1,5 +1,3 @@
-'use client';
-
 import dynamic from "next/dynamic";
 import {CartButton} from "./cart-button";
 import {Box} from "@chakra-ui/react";
