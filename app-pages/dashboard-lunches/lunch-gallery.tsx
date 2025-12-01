@@ -1,6 +1,6 @@
-'use client'
+'use client';
 
-import React, {useState, useTransition} from 'react'
+import React, {useState, useTransition} from 'react';
 import {
     Box,
     Button,
@@ -12,115 +12,135 @@ import {
     Spinner,
     Dialog,
     Portal,
-} from '@chakra-ui/react'
-import {FiUpload, FiStar, FiTrash2} from 'react-icons/fi'
-import {toggleActiveLunch, deleteLunch} from './actions'
+    Center,
+} from '@chakra-ui/react';
+import {FiUpload, FiStar, FiTrash2, FiPower} from 'react-icons/fi';
+import {activeLunch, deleteLunch, deactivateLunch} from './actions';
 
 type Lunch = {
-    _id: string
-    image: string
-    active: boolean
-}
+    _id: string;
+    image: string;
+    active: boolean;
+};
 
 export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
-    const [lunches, setLunches] = useState(initialLunches)
-    const [file, setFile] = useState<File | null>(null)
-    const [loading, setLoading] = useState(false)
-    const [isDragOver, setIsDragOver] = useState(false)
-    const [isPending, startTransition] = useTransition()
-    const [deleting, setDeleting] = useState<string | null>(null)
-    const [confirmingId, setConfirmingId] = useState<string | null>(null)
+    const [lunches, setLunches] = useState<Lunch[]>(initialLunches);
+    const [file, setFile] = useState<File | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [isDragOver, setIsDragOver] = useState(false);
+    const [isPending, startTransition] = useTransition();
+    const [deleting, setDeleting] = useState<string | null>(null);
+    const [confirmingId, setConfirmingId] = useState<string | null>(null);
+    const [deactivating, setDeactivating] = useState(false);
 
-    // --- Upload new image ---
     const handleUpload = async () => {
-        if (!file) return
-        setLoading(true)
+        if (!file) return;
+        setLoading(true);
 
-        const formData = new FormData()
-        formData.append('file', file)
+        const formData = new FormData();
+        formData.append('file', file);
 
         try {
-            const res = await fetch('/api/lunches/upload', {method: 'POST', body: formData})
+            const res = await fetch('/api/lunches/upload', {method: 'POST', body: formData});
             if (res.ok) {
-                const data = await res.json()
-                setLunches((prev) => [{_id: data.id, image: data.image, active: false}, ...prev])
+                const data = await res.json();
+                setLunches(prev => [{_id: data.id, image: data.image, active: false}, ...prev]);
             }
         } finally {
-            setLoading(false)
-            setFile(null)
+            setLoading(false);
+            setFile(null);
         }
-    }
+    };
 
-    // --- Toggle active image ---
-    const handleToggle = (id: string) => {
+    const handleActivate = (id: string) => {
         startTransition(async () => {
-            await toggleActiveLunch(id)
-            setLunches((prev) =>
-                prev.map((l) =>
-                    l._id === id ? {...l, active: !l.active} : {...l, active: false}
-                )
-            )
-        })
-    }
+            await activeLunch(id);
+            setLunches(prev =>
+                prev.map(l => l._id === id ? {...l, active: true} : {...l, active: false})
+            );
+        });
+    };
 
-    // --- Delete image ---
-    const handleDelete = async (id: string) => {
-        setDeleting(id)
+    const handleDeactivateAll = async () => {
+        setDeactivating(true);
         try {
-            await deleteLunch(id)
-            setLunches((prev) => prev.filter((l) => l._id !== id))
+            await deactivateLunch();
+            setLunches(prev => prev.map(l => ({...l, active: false})));
         } finally {
-            setDeleting(null)
-            setConfirmingId(null)
+            setDeactivating(false);
         }
-    }
+    };
 
-    const hoverShadow = '0 0 12px rgba(56,178,172,0.3)'
-    const activeShadow = '0 0 18px rgba(56,178,172,0.5)'
+    const handleDelete = async (id: string) => {
+        setDeleting(id);
+        try {
+            await deleteLunch(id);
+            setLunches(prev => prev.filter(l => l._id !== id));
+        } finally {
+            setDeleting(null);
+            setConfirmingId(null);
+        }
+    };
+
+    const hoverShadow = '0 6px 18px rgba(2,6,23,0.35)';
+    const activeBorder = '2px solid #2dd4bf';
 
     return (
-        <Box
-            maxW="750px"
-            mx="auto"
-            mt={16}
-            bgGradient="linear(to-br, blackAlpha.900, gray.900)"
-            border="1px solid"
-            borderColor="teal.800"
-            rounded="2xl"
-            p={8}
-            boxShadow="0 0 25px rgba(56,178,172,0.15)"
-        >
-            <Text fontSize={['xl', '2xl']} fontWeight="bold" color="teal.300" mb={6}>
-                Управление изображениями ланча
+        <Box mx="auto" bg="gray.900" borderRadius="2xl" position="relative">
+            <Text fontSize="1.5rem" fontWeight="bold" mb={4}>
+                Галерея обедов
             </Text>
 
+            <Flex justify="flex-end" mb={4}>
+                <Button
+                    size="md"
+                    onClick={handleDeactivateAll}
+                    loading={deactivating}
+                    bg="linear-gradient(90deg, rgba(45,212,191,0.12), rgba(45,212,191,0.06))"
+                    color="teal.100"
+                    border="1px solid"
+                    borderColor="rgba(45,212,191,0.12)"
+                    _hover={{transform: 'translateY(-2px)', boxShadow: '0 8px 20px rgba(2,6,23,0.18)'}}
+                    _active={{transform: 'scale(0.98)'}}
+                    borderRadius="lg"
+                    fontWeight="600"
+                    px={4}
+                    py={2}
+                    aria-label="Выключить отображение обеда"
+                    title="Выключить отображение обеда"
+                >
+                    <Box as="span" display="inline-flex" alignItems="center" gap={2}>
+                        <FiPower/>
+                        Выключить отображение обеда
+                    </Box>
+                </Button>
+            </Flex>
+
             <VStack gap={5} align="stretch">
-                {/* --- Drag & Drop Upload --- */}
                 <Box
                     border="2px dashed"
                     borderColor={file ? 'teal.400' : 'gray.600'}
-                    borderRadius="md"
-                    p={4}
+                    borderRadius="xl"
+                    p={6}
                     textAlign="center"
-                    bg={isDragOver ? 'rgba(45,212,191,0.1)' : 'rgba(40,40,45,0.6)'}
+                    bg={isDragOver ? 'rgba(45,212,191,0.03)' : 'rgba(40,40,45,0.45)'}
                     cursor="pointer"
-                    transition="all 0.2s ease"
+                    transition="all 0.18s ease"
+                    _hover={{bg: 'rgba(45,212,191,0.05)'}}
                     onClick={() => document.getElementById('lunch-image-input')?.click()}
-                    onDragOver={(e) => {
-                        e.preventDefault()
-                        setIsDragOver(true)
+                    onDragOver={e => {
+                        e.preventDefault();
+                        setIsDragOver(true);
                     }}
-                    onDragLeave={(e) => {
-                        e.preventDefault()
-                        setIsDragOver(false)
+                    onDragLeave={e => {
+                        e.preventDefault();
+                        setIsDragOver(false);
                     }}
-                    onDrop={(e) => {
-                        e.preventDefault()
-                        setIsDragOver(false)
-                        const droppedFile = e.dataTransfer.files[0]
-                        if (droppedFile && droppedFile.type.startsWith('image/')) {
-                            setFile(droppedFile)
-                        }
+                    onDrop={e => {
+                        e.preventDefault();
+                        setIsDragOver(false);
+                        const droppedFile = e.dataTransfer.files[0];
+                        if (droppedFile && droppedFile.type.startsWith('image/')) setFile(droppedFile);
                     }}
                 >
                     <input
@@ -128,7 +148,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                         type="file"
                         accept="image/*"
                         style={{display: 'none'}}
-                        onChange={(e) => setFile(e.target.files?.[0] || null)}
+                        onChange={e => setFile(e.target.files?.[0] || null)}
                     />
 
                     {file ? (
@@ -136,151 +156,173 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                             <Image
                                 src={URL.createObjectURL(file)}
                                 alt="preview"
-                                borderRadius="md"
+                                borderRadius="lg"
                                 maxH="160px"
                                 objectFit="cover"
+                                w="auto"
                             />
-                            {loading ? (
-                                <Flex align="center" gap={2} color="teal.300">
-                                    <Spinner size="xs"/>
-                                    <Text fontSize="xs">Загрузка...</Text>
-                                </Flex>
-                            ) : (
-                                <Text fontSize="xs" color="gray.300">
-                                    {file.name}
-                                </Text>
-                            )}
+                            <Flex align="center" gap={2}>
+                                {loading ? (
+                                    <Spinner color="teal.400" size="sm"/>
+                                ) : null}
+                                <Text fontSize="xs" color="gray.300">{file.name}</Text>
+                            </Flex>
                         </Flex>
                     ) : (
-                        <Text color="gray.400" fontSize="sm">
-                            Перетащите файл сюда или нажмите для выбора
-                        </Text>
+                        <Text color="gray.400" fontSize="sm">Перетащите файл сюда или нажмите для выбора</Text>
                     )}
                 </Box>
-
-                <Button
-                    colorScheme="teal"
+                {file && <Button
                     onClick={handleUpload}
                     loading={loading}
                     loadingText="Загрузка..."
-                    rounded="md"
+                    rounded="xl"
                     px={6}
+                    py={3}
                     fontWeight="bold"
-                    bgGradient="linear(to-r, teal.500, teal.300)"
-                    _hover={{
-                        bgGradient: 'linear(to-r, teal.400, teal.200)',
-                        transform: 'translateY(-1px)',
-                        boxShadow: hoverShadow,
-                    }}
-                    _active={{transform: 'scale(0.97)'}}
+                    bg="rgba(255,255,255,0.06)"
+                    border="1px solid"
+                    borderColor="rgba(255,255,255,0.08)"
+                    backdropFilter="blur(6px)"
+                    boxShadow="0 6px 24px rgba(10, 10, 10, 0.12)"
+                    _hover={{transform: "translateY(-4px)", boxShadow: "lg"}}
+                    _active={{transform: "scale(0.99)"}}
+                    aria-label="Загрузить новый обед"
                 >
-                    <FiUpload style={{marginRight: 6}}/> Загрузить
-                </Button>
+                    <Box as="span" mr={3} style={{display: "inline-flex", alignItems: "center"}}>
+                        <FiUpload/>
+                    </Box>
+                    Загрузить новый обед
+                </Button>}
 
-                {isPending && (
-                    <Flex justify="center" align="center" py={4}>
-                        <Spinner color="teal.400"/>
-                    </Flex>
-                )}
-
-                {/* --- Gallery Grid --- */}
-                <SimpleGrid columns={[2, 3, 4]} gap={4} mt={4}>
-                    {lunches.map((lunch) => (
-                        <Box
-                            key={lunch._id}
-                            position="relative"
-                            rounded="lg"
-                            overflow="hidden"
-                            border={lunch.active ? '2px solid teal' : '1px solid gray'}
-                            boxShadow={lunch.active ? activeShadow : hoverShadow}
-                            transition="all 0.25s ease"
-                            cursor="pointer"
-                            _hover={{transform: 'scale(1.05)', boxShadow: activeShadow}}
-                            onClick={() => handleToggle(lunch._id)}
+                <Box position="relative">
+                    {isPending && (
+                        <Center
+                            position="absolute"
+                            inset={0}
+                            zIndex={40}
+                            bg="rgba(0,0,0,0.4)"
+                            borderRadius="lg"
                         >
-                            <Image
-                                src={lunch.image}
-                                alt="lunch image"
-                                objectFit="cover"
-                                w="100%"
-                                h="160px"
-                                borderRadius="md"
-                            />
-
-                            {lunch.active && (
-                                <Flex
-                                    position="absolute"
-                                    top={2}
-                                    right={2}
-                                    bg="teal.500"
-                                    p={1}
-                                    rounded="full"
-                                    align="center"
-                                    justify="center"
-                                    boxShadow="0 0 10px rgba(56,178,172,0.7)"
-                                >
-                                    <FiStar color="black" size={18}/>
-                                </Flex>
-                            )}
-
-                            <Button
-                                p={2}
-                                size="xs"
-                                position="absolute"
-                                bottom={2}
-                                right={2}
-                                colorScheme="red"
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    setConfirmingId(lunch._id)
-                                }}
-                                loading={deleting === lunch._id}
+                            <Flex
+                                align="center"
+                                gap={3}
+                                bg="rgba(255,255,255,0.04)"
+                                p={3}
+                                px={5}
+                                borderRadius="lg"
+                                boxShadow="0 8px 24px rgba(2,6,23,0.32)"
                             >
-                                <FiTrash2/> Удалить
-                            </Button>
-                        </Box>
-                    ))}
-                </SimpleGrid>
+                                <Spinner color="teal.300" size="lg"/>
+                                <Text color="teal.100" fontWeight="600">Сохранение...</Text>
+                            </Flex>
+                        </Center>
+                    )}
+
+                    <SimpleGrid columns={[2, 3, 4]} gap={4}>
+                        {lunches.map(lunch => (
+                            <Box
+                                key={lunch._id}
+                                position="relative"
+                                borderRadius="lg"
+                                overflow="hidden"
+                                border={lunch.active ? activeBorder : '1px solid rgba(255,255,255,0.04)'}
+                                boxShadow={hoverShadow}
+                                transition="transform 0.18s ease, box-shadow 0.18s ease"
+                                _hover={{transform: 'translateY(-4px)'}}
+                            >
+                                <Image
+                                    src={lunch.image}
+                                    alt="lunch"
+                                    objectFit="cover"
+                                    w="100%"
+                                    h="160px"
+                                    borderRadius="lg"
+                                    cursor="pointer"
+                                    onClick={() => handleActivate(lunch._id)}
+                                />
+
+                                {lunch.active && (
+                                    <Flex
+                                        position="absolute"
+                                        top={2}
+                                        right={2}
+                                        bg="teal.400"
+                                        p={1}
+                                        borderRadius="full"
+                                        align="center"
+                                        justify="center"
+                                    >
+                                        <FiStar color="white" size={14}/>
+                                    </Flex>
+                                )}
+
+                                <Button
+                                    size="xs"
+                                    position="absolute"
+                                    bottom={2}
+                                    right={2}
+                                    colorScheme="red"
+                                    rounded="md"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setConfirmingId(lunch._id);
+                                    }}
+                                    loading={deleting === lunch._id}
+                                >
+                                    <FiTrash2/>
+                                </Button>
+                            </Box>
+                        ))}
+                    </SimpleGrid>
+                </Box>
             </VStack>
 
-            {/* --- Confirm Delete Dialog --- */}
             <Dialog.Root open={!!confirmingId} onOpenChange={() => setConfirmingId(null)}>
                 <Portal>
-                    <Dialog.Backdrop bg="blackAlpha.700"/>
+                    <Dialog.Backdrop bg="blackAlpha.400" backdropFilter="blur(3px)"/>
                     <Dialog.Positioner>
-                        <Dialog.Content
-                            bg="gray.900"
-                            border="1px solid"
-                            borderColor="teal.700"
-                            rounded="xl"
-                            p={6}
-                            color="white"
-                            shadow="xl"
-                        >
-                            <Dialog.Header>
-                                <Dialog.Title color="teal.300">Удалить изображение?</Dialog.Title>
+                        <Dialog.Content bg="gray.800" borderRadius="xl" p={5} color="white" maxW="sm" w="full">
+                            <Dialog.Header mb={3}>
+                                <Dialog.Title fontSize="lg" fontWeight="bold" color="teal.300">
+                                    Удалить изображение?
+                                </Dialog.Title>
                             </Dialog.Header>
-                            <Dialog.Body>
-                                <Text color="gray.300" mb={4}>
-                                    Это действие нельзя будет отменить. Вы уверены, что хотите удалить ланч?
+                            <Dialog.Body mb={4}>
+                                <Text color="gray.300" fontSize="sm">
+                                    Это действие нельзя будет отменить.
+                                    <br/>
+                                    Вы уверены, что хотите удалить обед?
                                 </Text>
-                                <Flex justify="flex-end" gap={3}>
-                                    <Button variant="outline" onClick={() => setConfirmingId(null)}>
-                                        Отмена
-                                    </Button>
-                                    <Button
-                                        colorScheme="red"
-                                        onClick={() => confirmingId && handleDelete(confirmingId)}
-                                        loading={deleting === confirmingId}
-                                    >
-                                        Удалить
-                                    </Button>
-                                </Flex>
                             </Dialog.Body>
+                            <Dialog.Footer display="flex" justifyContent="flex-end" gap={2}>
+                                <Button
+                                    p={2}
+                                    colorPalette="gray"
+                                    color="gray.200"
+                                    _hover={{
+                                        bg: 'gray.500',
+                                    }}
+                                    variant="outline"
+                                    onClick={() => setConfirmingId(null)}
+                                    rounded="md"
+                                >
+                                    Отмена
+                                </Button>
+                                <Button
+                                    p={2}
+                                    colorPalette="red"
+                                    onClick={() => confirmingId && handleDelete(confirmingId)}
+                                    rounded="md"
+                                    loading={!!deleting}
+                                >
+                                    Удалить
+                                </Button>
+                            </Dialog.Footer>
                         </Dialog.Content>
                     </Dialog.Positioner>
                 </Portal>
             </Dialog.Root>
         </Box>
-    )
-}
+    );
+};

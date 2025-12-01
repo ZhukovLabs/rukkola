@@ -23,9 +23,9 @@ import {ProductRow} from './product-row'
 import {Pagination} from './pagination'
 import {EditProductModal} from "./edit-product-modal"
 import {ProductType} from "@/models/product"
-import {SkeletonRows} from "@/app-pages/dashboard-products/skeleton-rows"
-import {CreateProductModal} from "@/app-pages/dashboard-products/create-modal-product"
-import {CreateProductButton} from "@/app-pages/dashboard-products/create-product-button"
+import {SkeletonRows} from "./skeleton-rows"
+import {CreateProductModal} from "./create-modal-product"
+import {CreateProductButton} from "./create-product-button"
 import {FiSearch, FiX, FiFilter, FiChevronDown, FiRefreshCw} from 'react-icons/fi'
 import {CategoryType} from '@/models/category'
 

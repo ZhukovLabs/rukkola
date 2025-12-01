@@ -13,20 +13,23 @@ export const getAllLunches = async () => {
     return JSON.parse(JSON.stringify(lunches))
 }
 
-export async function toggleActiveLunch(id: string) {
+export async function activeLunch(id: string) {
     await connectToDatabase()
 
     const lunch = await Lunch.findById(id)
-    if (!lunch) return
+    if (!lunch) return;
 
-    if (lunch.active) {
-        lunch.active = false
-        await lunch.save()
-    } else {
-        await Lunch.updateMany({}, {$set: {active: false}})
-        lunch.active = true
-        await lunch.save()
-    }
+    await Lunch.updateMany({}, {$set: {active: false}})
+    lunch.active = true
+    await lunch.save()
+
+    revalidatePath('/')
+    revalidatePath('/dashboard/lunches')
+}
+
+export async function deactivateLunch() {
+    await connectToDatabase()
+    await Lunch.updateMany({}, {$set: {active: false}})
 
     revalidatePath('/')
     revalidatePath('/dashboard/lunches')
