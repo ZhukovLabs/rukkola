@@ -13,7 +13,6 @@ import {
     Heading,
     IconButton,
     Image,
-    Checkbox,
     Spinner,
     Alert,
     Separator,
@@ -21,11 +20,10 @@ import {
 import {useSearchParams, useRouter} from 'next/navigation'
 import {useEffect, useState} from 'react'
 import {useQuery} from '@tanstack/react-query'
-import {useForm, useFieldArray, Controller} from 'react-hook-form'
+import {useForm, useFieldArray, Controller, SubmitHandler} from 'react-hook-form'
 import {zodResolver} from '@hookform/resolvers/zod'
 import {createProduct, getCategories} from './actions'
 import {productSchema, ProductFormValues} from '@/app-pages/dashboard-products/validation'
-import {PortionPrice} from '@/models/product'
 import {CategoryType} from '@/models/category'
 import {FiAlertCircle} from 'react-icons/fi'
 import {FaTrash} from 'react-icons/fa'
@@ -34,7 +32,7 @@ type Props = {
     refetch?: VoidFunction
 }
 
-async function uploadImageToApi(productId: string, file: File) {
+const uploadImageToApi = async (productId: string, file: File) => {
     const formData = new FormData()
     formData.append('id', productId)
     formData.append('file', file)
@@ -43,10 +41,9 @@ async function uploadImageToApi(productId: string, file: File) {
         body: formData,
     })
     if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
+        const err: { error?: string } = await res.json().catch(() => ({}))
         throw new Error(err?.error || 'Failed to upload image')
     }
-    return res.json()
 }
 
 export const CreateProductModal = ({refetch}: Props) => {
@@ -61,7 +58,7 @@ export const CreateProductModal = ({refetch}: Props) => {
     const [dataError, setDataError] = useState<string | null>(null)
     const [isDragOver, setIsDragOver] = useState(false)
 
-    const {data: allCategories = []} = useQuery({
+    const {data: allCategories = []} = useQuery<CategoryType[]>({
         queryKey: ['categories'],
         queryFn: getCategories,
     })
@@ -71,8 +68,7 @@ export const CreateProductModal = ({refetch}: Props) => {
         register,
         handleSubmit,
         reset,
-        formState: {errors},
-        getValues,
+        formState: {errors}
     } = useForm<ProductFormValues>({
         resolver: zodResolver(productSchema),
         defaultValues: {
@@ -98,9 +94,12 @@ export const CreateProductModal = ({refetch}: Props) => {
                 categories: [],
                 hidden: false,
             })
-            setImageFile(null)
-            setImageError(null)
-            setDataError(null)
+
+            queueMicrotask(() => {
+                setImageFile(null)
+                setImageError(null)
+                setDataError(null)
+            })
         }
     }, [isOpen, reset])
 
@@ -110,17 +109,16 @@ export const CreateProductModal = ({refetch}: Props) => {
         router.push(`?${params.toString()}`, {scroll: false})
     }
 
-    const onSubmit = async () => {
+    const onSubmit: SubmitHandler<ProductFormValues> = async (values) => {
         setDataError(null)
         setImageError(null)
 
-        const values = getValues()
-        const formatted = {
+        const formatted: ProductFormValues = {
             ...values,
             prices: values.prices.map((p) => ({
                 ...p,
                 price: parseFloat(String(p.price).replace(',', '.')) || 0,
-            })) as PortionPrice[],
+            })),
         }
 
         try {
@@ -129,67 +127,57 @@ export const CreateProductModal = ({refetch}: Props) => {
                 name: formatted.name,
                 description: formatted.description,
                 prices: formatted.prices,
-                categories: formatted.categories,
+                categories: formatted.categories ?? [],
                 hidden: formatted.hidden,
             })
 
-            if (imageFile && created && (created as any)._id) {
+            if (imageFile) {
                 setIsUploadingImage(true)
                 try {
-                    await uploadImageToApi((created as any)._id.toString(), imageFile)
+                    await uploadImageToApi(created._id.toString(), imageFile)
                     setIsUploadingImage(false)
                     setImageError(null)
-                } catch (err: any) {
+                } catch (err: unknown) {
                     setIsUploadingImage(false)
-                    setImageError(err?.message || 'Не удалось загрузить изображение')
+                    setImageError(err instanceof Error ? err.message : 'Не удалось загрузить изображение')
                     setIsSubmitting(false)
                     return
                 }
             }
 
-            if (typeof refetch === 'function') refetch()
+            refetch?.()
             setIsSubmitting(false)
             close()
-        } catch (err: any) {
-            setDataError(err?.message || 'Не удалось создать продукт')
+        } catch (err: unknown) {
+            setDataError(err instanceof Error ? err.message : 'Не удалось создать продукт')
             setIsSubmitting(false)
         }
     }
 
-    // === Общие стили (как в EditProductModal) ===
-    const cardBg = 'rgba(20, 20, 25, 0.9)'
-    const inputBg = 'rgba(30, 30, 35, 0.9)'
-
     return (
-        <Dialog.Root open={isOpen} onOpenChange={(open) => !open && close()}>
-            <Dialog.Backdrop bg="blackAlpha.800" backdropFilter="blur(6px)"/>
+        <Dialog.Root open={isOpen}>
+            <Dialog.Backdrop bg="blackAlpha.800" backdropFilter="blur(8px)"/>
             <Dialog.Positioner>
                 <Dialog.Content
-                    bg={cardBg}
-                    borderRadius="xl"
-                    shadow="xl"
+                    bg="rgba(24,26,28,0.95)"
+                    borderRadius="2xl"
+                    shadow="2xl"
                     border="1px solid"
-                    borderColor="teal.600"
+                    borderColor="gray.700"
                     color="white"
                     maxW="3xl"
                     w="full"
-                    backdropFilter="blur(14px)"
+                    backdropFilter="blur(18px)"
                     transition="all 0.25s ease"
                 >
                     <Dialog.Header borderBottom="1px solid" borderColor="gray.700">
                         <Flex justify="space-between" align="center" p={4}>
-                            <Heading
-                                size="md"
-                                bgGradient="linear(to-r, teal.200, cyan.400)"
-                                bgClip="text"
-                                color="teal.200"
-                                textShadow="0 0 8px rgba(56,178,172,0.4)"
-                                fontWeight="normal"
-                            >
+                            <Heading size="md" color="teal.200" fontWeight="semibold" letterSpacing="0.3px">
                                 Создать товар
                             </Heading>
                             <Dialog.CloseTrigger asChild>
                                 <Button
+                                    onClick={close}
                                     variant="ghost"
                                     colorScheme="gray"
                                     size="xs"
@@ -205,17 +193,13 @@ export const CreateProductModal = ({refetch}: Props) => {
                     <Dialog.Body p={6}>
                         <form onSubmit={handleSubmit(onSubmit)}>
                             <Stack gap={5}>
-
-                                {/* Ошибка данных */}
                                 {dataError && (
                                     <Alert.Root status="error" variant="subtle">
                                         <Alert.Indicator asChild>
                                             <FiAlertCircle color="red.400"/>
                                         </Alert.Indicator>
                                         <Alert.Content>
-                                            <Alert.Description fontSize="sm">
-                                                {dataError}
-                                            </Alert.Description>
+                                            <Alert.Description fontSize="sm">{dataError}</Alert.Description>
                                         </Alert.Content>
                                     </Alert.Root>
                                 )}
@@ -229,12 +213,15 @@ export const CreateProductModal = ({refetch}: Props) => {
                                         {...register('name')}
                                         p={2}
                                         placeholder="Введите название"
-                                        bg={inputBg}
+                                        bg="gray.800"
                                         border="1px solid"
-                                        borderColor="gray.600"
-                                        _focus={{borderColor: 'teal.400', boxShadow: '0 0 6px teal'}}
+                                        borderColor="gray.700"
+                                        borderRadius="md"
+                                        _focus={{borderColor: 'teal.500', boxShadow: '0 0 6px teal'}}
                                         h="36px"
                                         fontSize="sm"
+                                        _hover={{borderColor: 'teal.500'}}
+                                        transition="border-color 0.15s ease"
                                     />
                                     {errors.name && (
                                         <Text color="red.400" mt={1} fontSize="xs">
@@ -251,13 +238,16 @@ export const CreateProductModal = ({refetch}: Props) => {
                                     <Textarea
                                         {...register('description')}
                                         placeholder="Краткое описание товара"
-                                        bg={inputBg}
+                                        bg="gray.800"
                                         border="1px solid"
-                                        borderColor="gray.600"
+                                        borderColor="gray.700"
+                                        borderRadius="md"
                                         minH="80px"
-                                        _focus={{borderColor: 'teal.400', boxShadow: '0 0 6px teal'}}
+                                        _focus={{borderColor: 'teal.500', boxShadow: '0 0 6px teal'}}
                                         fontSize="sm"
                                         p={2}
+                                        _hover={{borderColor: 'teal.500'}}
+                                        transition="border-color 0.15s ease"
                                     />
                                     {errors.description && (
                                         <Text color="red.400" mt={1} fontSize="xs">
@@ -273,16 +263,15 @@ export const CreateProductModal = ({refetch}: Props) => {
                                     <Heading size="sm" mb={2} color="teal.200">
                                         Изображение
                                     </Heading>
-
                                     <Box
                                         border="2px dashed"
-                                        borderColor={imageFile ? 'teal.400' : 'gray.600'}
-                                        borderRadius="md"
+                                        borderColor={imageFile ? 'teal.400' : 'gray.700'}
+                                        borderRadius="lg"
                                         p={4}
                                         textAlign="center"
-                                        bg={isDragOver ? 'rgba(45,212,191,0.1)' : 'rgba(40,40,45,0.6)'}
+                                        bg={isDragOver ? 'rgba(56,178,172,0.12)' : 'rgba(35,37,40,0.6)'}
                                         cursor="pointer"
-                                        transition="all 0.2s ease"
+                                        transition="all 0.25s ease"
                                         onClick={() => document.getElementById('create-product-image')?.click()}
                                         onDragOver={(e) => {
                                             e.preventDefault()
@@ -349,80 +338,113 @@ export const CreateProductModal = ({refetch}: Props) => {
                                                 <FiAlertCircle color="red.400"/>
                                             </Alert.Indicator>
                                             <Alert.Content>
-                                                <Alert.Description fontSize="xs">
-                                                    {imageError}
-                                                </Alert.Description>
+                                                <Alert.Description fontSize="xs">{imageError}</Alert.Description>
                                             </Alert.Content>
                                         </Alert.Root>
                                     )}
                                 </Box>
 
-                                {/* Цены */}
                                 <Box>
                                     <Heading size="sm" mb={2} color="teal.200">
                                         Цены
                                     </Heading>
                                     <Stack gap={3}>
                                         {fields.map((field, idx) => (
-                                            <HStack
-                                                key={field.id}
-                                                bg={inputBg}
-                                                p={3}
-                                                borderRadius="md"
-                                                border="1px solid"
-                                                borderColor="gray.600"
-                                                _hover={{borderColor: 'teal.400'}}
-                                            >
-                                                <Input
-                                                    {...register(`prices.${idx}.size`)}
-                                                    p={2}
-                                                    placeholder="Размер"
-                                                    bg="gray.800"
-                                                    fontSize="sm"
-                                                    h="32px"
-                                                />
-                                                <Input
-                                                    {...register(`prices.${idx}.price`, {
-                                                        setValueAs: (v) => {
-                                                            if (typeof v === 'string') {
-                                                                return parseFloat(v.replace(',', '.')) || 0
-                                                            }
-                                                            return v
-                                                        },
-                                                    })}
-                                                    p={2}
-                                                    placeholder="Цена"
-                                                    type="text"
-                                                    bg="gray.800"
-                                                    fontSize="sm"
-                                                    h="32px"
-                                                    onInput={(e: React.FormEvent<HTMLInputElement>) => {
-                                                        const input = e.currentTarget
-                                                        input.value = input.value.replace(/[^0-9.,]/g, '')
-                                                    }}
-                                                />
-                                                <IconButton
-                                                    aria-label="Удалить"
-                                                    color="red.400"
-                                                    size="xs"
-                                                    colorScheme="red"
-                                                    variant="ghost"
-                                                    onClick={() => remove(idx)}
+                                            <Box key={field.id} w="full">
+                                                <HStack
+                                                    bg="gray.850"
+                                                    p={3}
+                                                    borderRadius="lg"
+                                                    border="1px solid"
+                                                    borderColor="gray.700"
+                                                    align="flex-start"
                                                 >
-                                                    <FaTrash/>
-                                                </IconButton>
-                                            </HStack>
+                                                    <Box flex={1}>
+                                                        <Input
+                                                            {...register(`prices.${idx}.size`)}
+                                                            px={2}
+                                                            placeholder="Размер"
+                                                            bg="gray.800"
+                                                            fontSize="sm"
+                                                            h="32px"
+                                                        />
+                                                        {errors.prices?.[idx]?.size && (
+                                                            <Text color="red.400" fontSize="xs" mt={1}>
+                                                                {errors.prices[idx].size?.message}
+                                                            </Text>
+                                                        )}
+                                                    </Box>
+
+                                                    <Box flex={1}>
+                                                        <Input
+                                                            {...register(`prices.${idx}.price`, {
+                                                                setValueAs: (v) =>
+                                                                    typeof v === 'string' ? parseFloat(v.replace(',', '.')) || 0 : v,
+                                                            })}
+                                                            px={2}
+                                                            placeholder="Цена"
+                                                            type="text"
+                                                            bg="gray.800"
+                                                            fontSize="sm"
+                                                            h="32px"
+                                                            onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                                                                const input = e.currentTarget;
+                                                                let v = input.value.replace(/[^0-9.,]/g, '');
+
+                                                                const dotIndex = v.indexOf('.');
+                                                                const commaIndex = v.indexOf(',');
+                                                                const firstSepIndex = Math.min(
+                                                                    dotIndex === -1 ? Infinity : dotIndex,
+                                                                    commaIndex === -1 ? Infinity : commaIndex
+                                                                );
+
+                                                                if (firstSepIndex !== Infinity) {
+                                                                    const sep = v[firstSepIndex];
+                                                                    const before = v.slice(0, firstSepIndex).replace(/[.,]/g, '');
+                                                                    const after = v.slice(firstSepIndex + 1).replace(/[.,]/g, '');
+                                                                    v = before + sep + after;
+                                                                } else {
+                                                                    v = v.replace(/[.,]/g, '');
+                                                                }
+
+                                                                input.value = v;
+                                                            }}
+                                                            onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                e.currentTarget.value = e.currentTarget.value.replace(',', '.');
+                                                            }}
+                                                        />
+                                                        {errors.prices?.[idx]?.price && (
+                                                            <Text color="red.400" fontSize="xs" mt={1}>
+                                                                {errors.prices[idx].price?.message}
+                                                            </Text>
+                                                        )}
+                                                    </Box>
+
+                                                    <IconButton
+                                                        aria-label="Удалить"
+                                                        color="red.400"
+                                                        size="xs"
+                                                        colorScheme="red"
+                                                        variant="ghost"
+                                                        mt={1}
+                                                        onClick={() => remove(idx)}
+                                                    >
+                                                        <FaTrash/>
+                                                    </IconButton>
+                                                </HStack>
+                                            </Box>
                                         ))}
+
                                         <Button
                                             size="xs"
                                             variant="solid"
-                                            bg="teal.700"
+                                            bg="teal.600"
                                             color="white"
                                             _hover={{
-                                                bg: 'teal.600',
+                                                bg: 'teal.500',
                                                 boxShadow: '0 0 6px rgba(56,178,172,0.6)',
                                             }}
-                                            _active={{bg: 'teal.800'}}
+                                            _active={{bg: 'teal.700'}}
                                             onClick={() => append({size: '', price: 0})}
                                         >
                                             Добавить цену
@@ -430,13 +452,12 @@ export const CreateProductModal = ({refetch}: Props) => {
                                     </Stack>
                                 </Box>
 
-                                {/* Категории */}
                                 <Box>
                                     <Heading size="sm" mb={2} color="teal.200">
                                         Категории
                                     </Heading>
                                     <Flex wrap="wrap" gap={2}>
-                                        {allCategories.map(({_id, name}: CategoryType) => {
+                                        {allCategories.map(({_id, name}) => {
                                             const id = _id.toString()
                                             return (
                                                 <Controller
@@ -444,45 +465,34 @@ export const CreateProductModal = ({refetch}: Props) => {
                                                     name="categories"
                                                     control={control}
                                                     render={({field}) => {
-                                                        const isChecked = field.value.includes(id)
+                                                        const isChecked = field.value?.includes(id)
                                                         return (
-                                                            <Checkbox.Root
-                                                                id={`cat-${id}`}
-                                                                checked={isChecked}
-                                                                onCheckedChange={() => {
+                                                            <Box
+                                                                px={3}
+                                                                py={1.5}
+                                                                borderRadius="md"
+                                                                border="1px solid"
+                                                                borderColor={isChecked ? 'teal.400' : 'gray.700'}
+                                                                bg={isChecked ? 'teal.700' : 'gray.800'}
+                                                                color={isChecked ? 'teal.100' : 'gray.300'}
+                                                                fontWeight="medium"
+                                                                fontSize="xs"
+                                                                cursor="pointer"
+                                                                transition="all 0.2s ease"
+                                                                _hover={{
+                                                                    borderColor: 'teal.300',
+                                                                    bg: isChecked ? 'teal.600' : 'gray.750',
+                                                                }}
+                                                                onClick={() => {
                                                                     if (isChecked) {
-                                                                        field.onChange(field.value.filter((v: string) => v !== id))
+                                                                        field.onChange(field.value?.filter((v: string) => v !== id))
                                                                     } else {
-                                                                        field.onChange([...field.value, id])
+                                                                        field.onChange([...(field.value || []), id])
                                                                     }
                                                                 }}
                                                             >
-                                                                <Checkbox.HiddenInput/>
-                                                                <Flex
-                                                                    align="center"
-                                                                    px={3}
-                                                                    py={1}
-                                                                    borderRadius="full"
-                                                                    border="1px solid"
-                                                                    borderColor={isChecked ? 'teal.400' : 'gray.600'}
-                                                                    bg={isChecked ? 'teal.700' : 'transparent'}
-                                                                    color={isChecked ? 'teal.100' : 'gray.300'}
-                                                                    fontWeight="medium"
-                                                                    fontSize="xs"
-                                                                    cursor="pointer"
-                                                                    transition="all 0.2s ease"
-                                                                    _hover={{
-                                                                        borderColor: 'teal.300',
-                                                                        bg: isChecked ? 'teal.600' : 'gray.800',
-                                                                    }}
-                                                                    _active={{transform: 'scale(0.97)'}}
-                                                                >
-                                                                    <Checkbox.Control display="none"/>
-                                                                    <Checkbox.Label cursor="pointer">
-                                                                        {name}
-                                                                    </Checkbox.Label>
-                                                                </Flex>
-                                                            </Checkbox.Root>
+                                                                {name}
+                                                            </Box>
                                                         )
                                                     }}
                                                 />
@@ -498,69 +508,51 @@ export const CreateProductModal = ({refetch}: Props) => {
                                     render={({field}) => {
                                         const isChecked = !!field.value
                                         return (
-                                            <Checkbox.Root
-                                                id="hidden"
-                                                checked={isChecked}
-                                                onCheckedChange={(value) => {
-                                                    const checked = typeof value === 'boolean' ? value : value?.checked
-                                                    field.onChange(checked)
-                                                }}
-                                            >
-                                                <Checkbox.HiddenInput/>
-                                                <Flex align="center" gap={2} cursor="pointer" userSelect="none">
-                                                    <Text
-                                                        color={isChecked ? 'teal.100' : 'gray.300'}
-                                                        fontWeight="500"
-                                                        fontSize="sm"
-                                                    >
-                                                        Скрыт
-                                                    </Text>
+                                            <Flex align="center" gap={2} cursor="pointer" userSelect="none">
+                                                <Text color={isChecked ? 'teal.100' : 'gray.300'} fontWeight="500"
+                                                      fontSize="sm">
+                                                    Скрыт
+                                                </Text>
+                                                <Box
+                                                    role="switch"
+                                                    aria-checked={isChecked}
+                                                    tabIndex={0}
+                                                    w="38px"
+                                                    h="20px"
+                                                    borderRadius="full"
+                                                    px="2px"
+                                                    display="flex"
+                                                    alignItems="center"
+                                                    bg={isChecked ? 'rgba(45,212,191,0.08)' : 'transparent'}
+                                                    border="1px solid"
+                                                    borderColor={isChecked ? 'teal.300' : 'gray.600'}
+                                                    transition="all 180ms ease"
+                                                    _hover={{borderColor: 'teal.300'}}
+                                                    onClick={() => field.onChange(!isChecked)}
+                                                >
                                                     <Box
-                                                        role="switch"
-                                                        aria-checked={isChecked}
-                                                        tabIndex={0}
-                                                        w="38px"
-                                                        h="20px"
+                                                        w="14px"
+                                                        h="14px"
                                                         borderRadius="full"
-                                                        px="2px"
-                                                        display="flex"
-                                                        alignItems="center"
-                                                        bg={isChecked ? 'rgba(45,212,191,0.08)' : 'transparent'}
-                                                        border="1px solid"
-                                                        borderColor={isChecked ? 'teal.300' : 'gray.600'}
+                                                        bg={isChecked ? 'teal.300' : 'gray.400'}
+                                                        transform={isChecked ? 'translateX(16px)' : 'translateX(0px)'}
                                                         transition="all 180ms ease"
-                                                        _hover={{borderColor: 'teal.300'}}
-                                                    >
-                                                        <Box
-                                                            w="14px"
-                                                            h="14px"
-                                                            borderRadius="full"
-                                                            bg={isChecked ? 'teal.300' : 'gray.400'}
-                                                            transform={isChecked ? 'translateX(16px)' : 'translateX(0px)'}
-                                                            transition="all 180ms ease"
-                                                            boxShadow={isChecked ? '0 3px 8px rgba(56,178,172,0.18)' : 'none'}
-                                                        />
-                                                    </Box>
-                                                </Flex>
-                                            </Checkbox.Root>
+                                                        boxShadow={isChecked ? '0 3px 8px rgba(56,178,172,0.18)' : 'none'}
+                                                    />
+                                                </Box>
+                                            </Flex>
                                         )
                                     }}
                                 />
                             </Stack>
 
-                            <Dialog.Footer
-                                borderTop="1px solid"
-                                borderColor="gray.700"
-                                mt={6}
-                                pt={3}
-                                gap={3}
-                            >
+                            <Dialog.Footer borderTop="1px solid" borderColor="gray.700" mt={6} pt={3} gap={3}>
                                 <Button
                                     p={2}
                                     variant="outline"
                                     size="sm"
                                     color="gray.300"
-                                    borderColor="gray.600"
+                                    borderColor="gray.700"
                                     _hover={{
                                         bg: 'gray.800',
                                         borderColor: 'teal.400',
@@ -577,9 +569,10 @@ export const CreateProductModal = ({refetch}: Props) => {
                                     size="sm"
                                     bg="teal.500"
                                     color="white"
+                                    borderRadius="md"
                                     _hover={{
                                         bg: 'teal.400',
-                                        boxShadow: '0 0 10px rgba(56,178,172,0.5)',
+                                        boxShadow: '0 0 12px rgba(56,178,172,0.45)',
                                     }}
                                     _active={{bg: 'teal.600'}}
                                     type="submit"

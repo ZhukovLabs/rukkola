@@ -28,7 +28,7 @@ export const CartItem = ({
                              onDecrease,
                              indexDelay = 0
                          }: CartItemProps) => {
-    const formattedPrice = price ? `${(price * quantity).toFixed(2).replace(".", ",")} ₽` : "—";
+    const formattedPrice = price ? `${(price * quantity).toFixed(2).replace(".", ",")} руб` : "—";
 
     return (
         <MotionBox

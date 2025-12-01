@@ -1,31 +1,37 @@
-'use client'
-
-import {Button} from '@chakra-ui/react'
-import {useRouter, useSearchParams} from 'next/navigation'
+import Link from 'next/link'
 import {PlusIcon} from 'lucide-react'
+import {Button, Box} from '@chakra-ui/react'
 
-export const CreateProductButton = () => {
-    const router = useRouter()
-    const searchParams = useSearchParams()
-
-    const handleOpen = () => {
-        const params = new URLSearchParams(searchParams)
-        params.set('create', 'true')
-        router.push(`?${params.toString()}`, {scroll: false})
-    }
+export const CreateProductButton = ({searchParams}: { searchParams?: Record<string, string> }) => {
+    const params = new URLSearchParams(searchParams)
+    params.set('create', 'true')
 
     return (
-        <Button
-            p={2}
-            mb={4}
-            onClick={handleOpen}
-            colorScheme="teal"
-            size="sm"
-            bg="teal.500"
-            _hover={{bg: 'teal.400', boxShadow: '0 0 10px rgba(56,178,172,0.5)'}}
-            _active={{bg: 'teal.600'}}
-        >
-            <PlusIcon size={16}/> Добавить продукт
-        </Button>
+        <Box display="flex" justifyContent="flex-end" mb={4}>
+            <Button
+                as={Link}
+                // @ts-expect-error — href от Link
+                href={`?${params.toString()}`}
+                px={3}
+                py={2}
+                size="sm"
+                colorScheme="teal"
+                bg="teal.500"
+                borderRadius="md"
+                fontWeight="500"
+                transition="all 0.15s ease-out"
+                _hover={{
+                    bg: 'teal.400',
+                    boxShadow: '0 2px 8px rgba(56,178,172,0.25)',
+                }}
+                _active={{
+                    bg: 'teal.600',
+                }}
+                scroll={false}
+            >
+                <PlusIcon size={16}/>
+                Добавить продукт
+            </Button>
+        </Box>
     )
 }

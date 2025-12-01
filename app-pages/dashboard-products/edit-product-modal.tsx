@@ -1,74 +1,89 @@
 'use client'
+
 import {
     Dialog,
-    Checkbox,
     Button,
-    Flex,
-    Stack,
+    Box,
     Input,
     Textarea,
-    Spinner,
+    Text,
+    HStack,
+    Flex,
+    Stack,
     Heading,
     IconButton,
-    HStack,
-    Box,
-    Text,
-    Separator,
     Image,
+    Spinner,
     Alert,
+    Separator,
 } from '@chakra-ui/react'
 import {useSearchParams, useRouter} from 'next/navigation'
 import {useEffect, useState} from 'react'
-import {useQuery, useMutation} from '@tanstack/react-query'
-import {getProductById, updateProductData, getCategories} from './actions'
-import {FaTrash} from 'react-icons/fa'
-import {FiAlertCircle} from 'react-icons/fi'
-import {useForm, useFieldArray, Controller} from 'react-hook-form'
+import {useQuery} from '@tanstack/react-query'
+import {useForm, useFieldArray, Controller, SubmitHandler} from 'react-hook-form'
 import {zodResolver} from '@hookform/resolvers/zod'
-import {productSchema, ProductFormValues} from "@/app-pages/dashboard-products/validation";
-import {PortionPrice} from "@/models/product";
-import {CategoryType} from "@/models/category";
+import {getCategories, getProductById, updateProductData} from './actions'
+import {productSchema, ProductFormValues} from './validation'
+import {PortionPrice} from '@/models/product'
+import {CategoryType} from '@/models/category'
+import {FiAlertCircle} from 'react-icons/fi'
+import {FaTrash} from 'react-icons/fa'
 
-type EditProductModalProps = {
-    refetch: VoidFunction
+type Props = {
+    refetch?: VoidFunction
 }
 
-export async function uploadProductImage(productId: string, file: File) {
-    const formData = new FormData();
-    formData.append('id', productId);
-    formData.append('file', file);
+type ProductFromServer = {
+    _id: string
+    name: string
+    description?: string
+    prices: PortionPrice[]
+    categories: CategoryType[]
+    hidden: boolean
+    imageUrl?: string
+}
+
+async function uploadImageToApi(productId: string, file: File): Promise<void> {
+    const formData = new FormData()
+    formData.append('id', productId)
+    formData.append('file', file)
     const res = await fetch('/api/products/upload', {
         method: 'POST',
         body: formData,
-    });
+    })
     if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error?.error || 'Failed to upload image');
+        const err: { error?: string } = await res.json().catch(() => ({}))
+        throw new Error(err?.error || 'Failed to upload image')
     }
-    return res.json();
 }
 
-export const EditProductModal = ({refetch}: EditProductModalProps) => {
-    const searchParams = useSearchParams();
-    const router = useRouter();
-    const [isDragOver, setIsDragOver] = useState(false)
-    const productId = searchParams.get('edit')
-    const isOpen = !!productId
+export const EditProductModal = ({refetch}: Props) => {
+    const searchParams = useSearchParams()
+    const router = useRouter()
+    const isOpen = searchParams.has('edit');
+    const productId = searchParams.get('edit') ?? '';
 
-    // Состояния загрузки и ошибок
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const [isUploadingImage, setIsUploadingImage] = useState(false)
+    const [imageFile, setImageFile] = useState<File | null>(null)
     const [imageError, setImageError] = useState<string | null>(null)
     const [dataError, setDataError] = useState<string | null>(null)
+    const [isDragOver, setIsDragOver] = useState(false)
 
-    const {data: product, isLoading} = useQuery({
-        queryKey: ['product', productId],
-        queryFn: () => productId ? getProductById(productId) : null,
-        enabled: isOpen,
-    })
-
-    const {data: allCategories = []} = useQuery({
+    const {data: allCategories = []} = useQuery<CategoryType[]>({
         queryKey: ['categories'],
         queryFn: getCategories,
+    })
+
+    const {
+        data: product,
+        isLoading: isProductLoading,
+        isError: isProductError,
+        error: productFetchError,
+    } = useQuery<ProductFromServer>({
+        queryKey: ['product', productId],
+        queryFn: () => getProductById(productId),
+        enabled: Boolean(productId),
     })
 
     const {
@@ -76,7 +91,7 @@ export const EditProductModal = ({refetch}: EditProductModalProps) => {
         register,
         handleSubmit,
         reset,
-        formState: {errors, isSubmitting},
+        formState: {errors},
         getValues
     } = useForm<ProductFormValues>({
         resolver: zodResolver(productSchema),
@@ -94,125 +109,99 @@ export const EditProductModal = ({refetch}: EditProductModalProps) => {
         name: 'prices',
     })
 
-    const [imageFile, setImageFile] = useState<File | null>(null)
-
     useEffect(() => {
-        if (product) {
+        if (isOpen && product) {
             reset({
                 name: product.name ?? '',
                 description: product.description ?? '',
-                prices: product.prices?.length
-                    ? product.prices.map((price: PortionPrice) => ({...price}))
-                    : [{size: '', price: 0}],
-                categories: product.categories?.map(({_id}: CategoryType) => _id) || [],
-                hidden: product.hidden || false,
+                prices: product.prices.length ? product.prices : [{size: '', price: 0}],
+                categories: product.categories.map(({_id}) => String(_id)) ?? [],
+                hidden: Boolean(product.hidden),
             })
-            setImageError(null)
-            setDataError(null)
+
+            queueMicrotask(() => {
+                setImageFile(null)
+                setImageError(null)
+                setDataError(null)
+            })
         }
-        return () => setImageFile(null);
-    }, [product, reset])
+    }, [isOpen, product, reset])
 
-    const {mutateAsync: updateData} = useMutation({
-        mutationFn: (data: ProductFormValues) => updateProductData(productId!, {
-            name: data.name,
-            description: data.description,
-            prices: data.prices,
-            categories: data.categories,
-            hidden: data.hidden
-        }),
-        onSuccess: () => {
-            refetch();
-            setDataError(null)
-        },
-        onError: (error: any) => {
-            setDataError(error?.message || 'Не удалось сохранить данные')
-        }
-    });
-
-    const {mutateAsync: uploadImage} = useMutation({
-        mutationFn: (file: File) => uploadProductImage(productId!, file),
-        onSuccess: () => {
-            refetch();
-            setIsUploadingImage(false)
-            setImageError(null)
-        },
-        onError: (error: any) => {
-            setIsUploadingImage(false)
-            setImageError(error?.message || 'Не удалось загрузить изображение')
-        },
-    });
-
-    const handleClose = () => {
+    const close = () => {
         const params = new URLSearchParams(window.location.search)
         params.delete('edit')
         router.push(`?${params.toString()}`, {scroll: false})
     }
 
-    const onSubmit = async () => {
+    const onSubmit: SubmitHandler<ProductFormValues> = async (values) => {
         setDataError(null)
         setImageError(null)
 
-        const values = getValues();
-        const formattedData = {
+        const formatted: ProductFormValues = {
             ...values,
-            prices: values.prices.map(p => ({
+            prices: values.prices.map((p) => ({
                 ...p,
-                price: parseFloat(String(p.price).replace(',', '.')) || 0
-            }))
-        };
+                price: parseFloat(String(p.price).replace(',', '.')) || 0,
+            })),
+        }
 
         try {
-            await updateData(formattedData);
-        } catch (err) {
-            return
-        }
+            setIsSubmitting(true)
+            await updateProductData(productId, {
+                name: formatted.name,
+                description: formatted.description ?? '',
+                prices: formatted.prices,
+                categories: formatted.categories ?? [],
+                hidden: formatted.hidden,
+            })
 
-        if (imageFile && productId) {
-            setIsUploadingImage(true)
-            try {
-                await uploadImage(imageFile);
-            } catch (err) {
-                // Ошибка уже в onError
+            if (imageFile) {
+                setIsUploadingImage(true)
+                try {
+                    await uploadImageToApi(productId, imageFile)
+                    setIsUploadingImage(false)
+                    setImageError(null)
+                } catch (err: unknown) {
+                    setIsUploadingImage(false)
+                    setImageError(err instanceof Error ? err.message : 'Не удалось загрузить изображение')
+                    setIsSubmitting(false)
+                    return
+                }
             }
-        } else {
-            handleClose();
-        }
-    };
 
-    const cardBg = 'rgba(20, 20, 25, 0.9)'
-    const inputBg = 'rgba(30, 30, 35, 0.9)'
+            refetch?.()
+            setIsSubmitting(false)
+            close()
+        } catch (err: unknown) {
+            setDataError(err instanceof Error ? err.message : 'Не удалось обновить продукт')
+            setIsSubmitting(false)
+        }
+    }
 
     return (
-        <Dialog.Root open={isOpen} onOpenChange={handleClose}>
-            <Dialog.Backdrop bg="blackAlpha.800" backdropFilter="blur(6px)"/>
+        <Dialog.Root open={isOpen} onOpenChange={(open) => !open && close()}>
+            <Dialog.Backdrop bg="blackAlpha.800" backdropFilter="blur(8px)"/>
             <Dialog.Positioner>
                 <Dialog.Content
-                    bg={cardBg}
-                    borderRadius="xl"
-                    shadow="xl"
+                    bg="rgba(24,26,28,0.95)"
+                    borderRadius="2xl"
+                    shadow="2xl"
                     border="1px solid"
-                    borderColor="teal.600"
+                    borderColor="gray.700"
                     color="white"
                     maxW="3xl"
                     w="full"
-                    backdropFilter="blur(14px)"
+                    backdropFilter="blur(18px)"
                     transition="all 0.25s ease"
                 >
                     <Dialog.Header borderBottom="1px solid" borderColor="gray.700">
                         <Flex justify="space-between" align="center" p={4}>
-                            <Heading
-                                size="md"
-                                bgGradient="linear(to-r, teal.200, cyan.400)"
-                                bgClip="text"
-                                color="teal.200"
-                                textShadow="0 0 8px rgba(56,178,172,0.4)"
-                                fontWeight="normal"
-                            >
-                                Редактирование товара
+                            <Heading size="md" color="teal.200" fontWeight="semibold" letterSpacing="0.3px">
+                                Редактировать товар
                             </Heading>
                             <Dialog.CloseTrigger asChild>
                                 <Button
+                                    onClick={close}
                                     variant="ghost"
                                     colorScheme="gray"
                                     size="xs"
@@ -226,28 +215,40 @@ export const EditProductModal = ({refetch}: EditProductModalProps) => {
                     </Dialog.Header>
 
                     <Dialog.Body p={6}>
-                        {isLoading ? (
-                            <Flex direction="column" align="center" py={10} gap={3}>
-                                <Spinner size="lg" color="teal.300"/>
-                                <Text color="gray.400" fontSize="sm">Загрузка данных товара...</Text>
+                        {isProductLoading ? (
+                            <Flex align="center" justify="center" p={8}>
+                                <Spinner size="lg"/>
                             </Flex>
+                        ) : isProductError ? (
+                            <Alert.Root status="error" variant="subtle">
+                                <Alert.Indicator asChild>
+                                    <FiAlertCircle color="red.400"/>
+                                </Alert.Indicator>
+                                <Alert.Content>
+                                    <Alert.Description fontSize="sm">
+                                        {(productFetchError instanceof Error && productFetchError.message) || 'Не удалось загрузить продукт'}
+                                    </Alert.Description>
+                                </Alert.Content>
+                            </Alert.Root>
                         ) : (
-                            <form onSubmit={handleSubmit(onSubmit)}>
-                                <Stack gap={5}>
+                            <form onSubmit={handleSubmit(onSubmit, (errors, event) => {
+                                console.log(errors);
+                                console.log(getValues());
+                            })}>
 
+                                <Stack gap={5}>
                                     {dataError && (
                                         <Alert.Root status="error" variant="subtle">
                                             <Alert.Indicator asChild>
                                                 <FiAlertCircle color="red.400"/>
                                             </Alert.Indicator>
                                             <Alert.Content>
-                                                <Alert.Description fontSize="sm">
-                                                    {dataError}
-                                                </Alert.Description>
+                                                <Alert.Description fontSize="sm">{dataError}</Alert.Description>
                                             </Alert.Content>
                                         </Alert.Root>
                                     )}
 
+                                    {/* Название */}
                                     <Box>
                                         <Heading mb={1} size="sm" color="teal.200">
                                             Название
@@ -256,12 +257,15 @@ export const EditProductModal = ({refetch}: EditProductModalProps) => {
                                             {...register('name')}
                                             p={2}
                                             placeholder="Введите название"
-                                            bg={inputBg}
+                                            bg="gray.800"
                                             border="1px solid"
-                                            borderColor="gray.600"
-                                            _focus={{borderColor: 'teal.400', boxShadow: '0 0 6px teal'}}
+                                            borderColor={errors.name ? 'red.400' : 'gray.700'}
+                                            borderRadius="md"
+                                            _focus={{borderColor: 'teal.500', boxShadow: '0 0 6px teal'}}
                                             h="36px"
                                             fontSize="sm"
+                                            _hover={{borderColor: 'teal.500'}}
+                                            transition="border-color 0.15s ease"
                                         />
                                         {errors.name && (
                                             <Text color="red.400" mt={1} fontSize="xs">
@@ -270,6 +274,7 @@ export const EditProductModal = ({refetch}: EditProductModalProps) => {
                                         )}
                                     </Box>
 
+                                    {/* Описание */}
                                     <Box>
                                         <Heading mb={1} size="sm" color="teal.200">
                                             Описание
@@ -277,13 +282,16 @@ export const EditProductModal = ({refetch}: EditProductModalProps) => {
                                         <Textarea
                                             {...register('description')}
                                             placeholder="Краткое описание товара"
-                                            bg={inputBg}
+                                            bg="gray.800"
                                             border="1px solid"
-                                            borderColor="gray.600"
+                                            borderColor={errors.description ? 'red.400' : 'gray.700'}
+                                            borderRadius="md"
                                             minH="80px"
-                                            _focus={{borderColor: 'teal.400', boxShadow: '0 0 6px teal'}}
+                                            _focus={{borderColor: 'teal.500', boxShadow: '0 0 6px teal'}}
                                             fontSize="sm"
                                             p={2}
+                                            _hover={{borderColor: 'teal.500'}}
+                                            transition="border-color 0.15s ease"
                                         />
                                         {errors.description && (
                                             <Text color="red.400" mt={1} fontSize="xs">
@@ -294,21 +302,21 @@ export const EditProductModal = ({refetch}: EditProductModalProps) => {
 
                                     <Separator borderColor="gray.700"/>
 
+                                    {/* Изображение */}
                                     <Box>
                                         <Heading size="sm" mb={2} color="teal.200">
                                             Изображение
                                         </Heading>
-
                                         <Box
                                             border="2px dashed"
-                                            borderColor={imageFile ? 'teal.400' : 'gray.600'}
-                                            borderRadius="md"
+                                            borderColor={imageFile ? 'teal.400' : 'gray.700'}
+                                            borderRadius="lg"
                                             p={4}
                                             textAlign="center"
-                                            bg={isDragOver ? 'rgba(45,212,191,0.1)' : 'rgba(40,40,45,0.6)'}
+                                            bg={isDragOver ? 'rgba(56,178,172,0.12)' : 'rgba(35,37,40,0.6)'}
                                             cursor="pointer"
-                                            transition="all 0.2s ease"
-                                            onClick={() => document.getElementById('product-image-input')?.click()}
+                                            transition="all 0.25s ease"
+                                            onClick={() => document.getElementById('update-product-image')?.click()}
                                             onDragOver={(e) => {
                                                 e.preventDefault()
                                                 setIsDragOver(true)
@@ -347,6 +355,14 @@ export const EditProductModal = ({refetch}: EditProductModalProps) => {
                                                         </Text>
                                                     )}
                                                 </Flex>
+                                            ) : product?.imageUrl ? (
+                                                <Flex direction="column" align="center" gap={2}>
+                                                    <Image src={product.imageUrl} alt="product" borderRadius="md"
+                                                           maxH="160px" objectFit="cover"/>
+                                                    <Text fontSize="xs" color="gray.400">
+                                                        Текущее изображение
+                                                    </Text>
+                                                </Flex>
                                             ) : (
                                                 <Text color="gray.400" fontSize="sm">
                                                     Перетащите файл сюда или нажмите для выбора
@@ -355,7 +371,7 @@ export const EditProductModal = ({refetch}: EditProductModalProps) => {
                                         </Box>
 
                                         <Input
-                                            id="product-image-input"
+                                            id="update-product-image"
                                             type="file"
                                             accept="image/*"
                                             onChange={(e) => {
@@ -368,16 +384,13 @@ export const EditProductModal = ({refetch}: EditProductModalProps) => {
                                             display="none"
                                         />
 
-                                        {/* Ошибка загрузки изображения */}
                                         {imageError && (
                                             <Alert.Root status="error" variant="subtle" mt={2}>
                                                 <Alert.Indicator asChild>
                                                     <FiAlertCircle color="red.400"/>
                                                 </Alert.Indicator>
                                                 <Alert.Content>
-                                                    <Alert.Description fontSize="xs">
-                                                        {imageError}
-                                                    </Alert.Description>
+                                                    <Alert.Description fontSize="xs">{imageError}</Alert.Description>
                                                 </Alert.Content>
                                             </Alert.Root>
                                         )}
@@ -390,65 +403,106 @@ export const EditProductModal = ({refetch}: EditProductModalProps) => {
                                         </Heading>
                                         <Stack gap={3}>
                                             {fields.map((field, idx) => (
-                                                <HStack
-                                                    key={field.id}
-                                                    bg={inputBg}
-                                                    p={3}
-                                                    borderRadius="md"
-                                                    border="1px solid"
-                                                    borderColor="gray.600"
-                                                    _hover={{borderColor: 'teal.400'}}
-                                                >
-                                                    <Input
-                                                        {...register(`prices.${idx}.size`)}
-                                                        p={2}
-                                                        placeholder="Размер"
-                                                        bg="gray.800"
-                                                        fontSize="sm"
-                                                        h="32px"
-                                                    />
-                                                    <Input
-                                                        {...register(`prices.${idx}.price`, {
-                                                            setValueAs: (v) => {
-                                                                if (typeof v === 'string') {
-                                                                    return parseFloat(v.replace(',', '.')) || 0
-                                                                }
-                                                                return v
-                                                            },
-                                                        })}
-                                                        p={2}
-                                                        placeholder="Цена"
-                                                        type="text"
-                                                        bg="gray.800"
-                                                        fontSize="sm"
-                                                        h="32px"
-                                                        onInput={(e: React.FormEvent<HTMLInputElement>) => {
-                                                            const input = e.currentTarget
-                                                            input.value = input.value.replace(/[^0-9.,]/g, '')
-                                                        }}
-                                                    />
-                                                    <IconButton
-                                                        aria-label="Удалить"
-                                                        color="red.400"
-                                                        size="xs"
-                                                        colorScheme="red"
-                                                        variant="ghost"
-                                                        onClick={() => remove(idx)}
+                                                <Box key={field.id} w="full">
+                                                    <HStack
+                                                        bg="gray.850"
+                                                        p={3}
+                                                        borderRadius="lg"
+                                                        border="1px solid"
+                                                        borderColor={errors.prices?.[idx] ? 'red.400' : 'gray.700'}
+                                                        _hover={{borderColor: 'teal.500'}}
+                                                        align="flex-start"
                                                     >
-                                                        <FaTrash/>
-                                                    </IconButton>
-                                                </HStack>
+                                                        <Box flex={1}>
+                                                            <Input
+                                                                {...register(`prices.${idx}.size` as const)}
+                                                                p={2}
+                                                                placeholder="Размер"
+                                                                bg="gray.800"
+                                                                fontSize="sm"
+                                                                h="32px"
+                                                            />
+                                                            {errors.prices?.[idx]?.size && (
+                                                                <Text color="red.400" fontSize="xs" mt={1}>
+                                                                    {errors.prices[idx]?.size?.message}
+                                                                </Text>
+                                                            )}
+                                                        </Box>
+
+                                                        <Box flex={1}>
+                                                            <Input
+                                                                {...register(`prices.${idx}.price` as const, {
+                                                                    setValueAs: (v) =>
+                                                                        typeof v === 'string' ? parseFloat(v.replace(',', '.')) || 0 : v,
+                                                                })}
+                                                                p={2}
+                                                                placeholder="Цена"
+                                                                type="text"
+                                                                bg="gray.800"
+                                                                fontSize="sm"
+                                                                h="32px"
+                                                                inputMode="decimal"
+                                                                pattern="[0-9]*[.,]?[0-9]*"
+                                                                onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                                                                    const input = e.currentTarget
+                                                                    // Удаляем всё, кроме цифр и разделителей
+                                                                    let v = input.value.replace(/[^0-9.,]/g, '')
+
+                                                                    // Находим первый разделитель точка или запятая
+                                                                    const dotIdx = v.indexOf('.')
+                                                                    const commaIdx = v.indexOf(',')
+                                                                    const firstSepIdx = Math.min(
+                                                                        dotIdx === -1 ? Infinity : dotIdx,
+                                                                        commaIdx === -1 ? Infinity : commaIdx
+                                                                    )
+
+                                                                    if (firstSepIdx !== Infinity) {
+                                                                        const sep = v[firstSepIdx] // '.' или ','
+                                                                        const before = v.slice(0, firstSepIdx).replace(/[.,]/g, '')
+                                                                        const after = v.slice(firstSepIdx + 1).replace(/[.,]/g, '')
+                                                                        v = before + sep + after
+                                                                    } else {
+                                                                        v = v.replace(/[.,]/g, '')
+                                                                    }
+
+                                                                    input.value = v
+                                                                }}
+                                                                onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                    e.currentTarget.value = e.currentTarget.value.replace(',', '.')
+                                                                }}
+                                                            />
+                                                            {errors.prices?.[idx]?.price && (
+                                                                <Text color="red.400" fontSize="xs" mt={1}>
+                                                                    {errors.prices[idx]?.price?.message}
+                                                                </Text>
+                                                            )}
+                                                        </Box>
+
+                                                        <IconButton
+                                                            aria-label="Удалить"
+                                                            color="red.400"
+                                                            size="xs"
+                                                            colorScheme="red"
+                                                            variant="ghost"
+                                                            mt={1}
+                                                            onClick={() => remove(idx)}
+                                                        >
+                                                            <FaTrash/>
+                                                        </IconButton>
+                                                    </HStack>
+                                                </Box>
                                             ))}
+
                                             <Button
                                                 size="xs"
                                                 variant="solid"
-                                                bg="teal.700"
+                                                bg="teal.600"
                                                 color="white"
                                                 _hover={{
-                                                    bg: 'teal.600',
+                                                    bg: 'teal.500',
                                                     boxShadow: '0 0 6px rgba(56,178,172,0.6)',
                                                 }}
-                                                _active={{bg: 'teal.800'}}
+                                                _active={{bg: 'teal.700'}}
                                                 onClick={() => append({size: '', price: 0})}
                                             >
                                                 Добавить цену
@@ -456,59 +510,49 @@ export const EditProductModal = ({refetch}: EditProductModalProps) => {
                                         </Stack>
                                     </Box>
 
-                                    {/* Категории */}
                                     <Box>
                                         <Heading size="sm" mb={2} color="teal.200">
                                             Категории
                                         </Heading>
                                         <Flex wrap="wrap" gap={2}>
-                                            {allCategories.map(({_id, name}: CategoryType) => {
-                                                const id = _id.toString()
+                                            {allCategories.map(({_id, name}) => {
+                                                const id = _id.toString();
+
                                                 return (
                                                     <Controller
                                                         key={id}
                                                         name="categories"
                                                         control={control}
                                                         render={({field}) => {
-                                                            const isChecked = field.value.includes(id)
+                                                            const isChecked = field.value?.includes(id);
+
                                                             return (
-                                                                <Checkbox.Root
-                                                                    id={`cat-${id}`}
-                                                                    checked={isChecked}
-                                                                    onCheckedChange={() => {
+                                                                <Box
+                                                                    px={3}
+                                                                    py={1.5}
+                                                                    borderRadius="md"
+                                                                    border="1px solid"
+                                                                    borderColor={isChecked ? 'teal.400' : 'gray.700'}
+                                                                    bg={isChecked ? 'teal.700' : 'gray.800'}
+                                                                    color={isChecked ? 'teal.100' : 'gray.300'}
+                                                                    fontWeight="medium"
+                                                                    fontSize="xs"
+                                                                    cursor="pointer"
+                                                                    transition="all 0.2s ease"
+                                                                    _hover={{
+                                                                        borderColor: 'teal.300',
+                                                                        bg: isChecked ? 'teal.600' : 'gray.750',
+                                                                    }}
+                                                                    onClick={() => {
                                                                         if (isChecked) {
-                                                                            field.onChange(field.value.filter((v: string) => v !== id))
+                                                                            field.onChange(field.value?.filter((v: string) => v !== id))
                                                                         } else {
-                                                                            field.onChange([...field.value, id])
+                                                                            field.onChange([...(field.value ?? []), id])
                                                                         }
                                                                     }}
                                                                 >
-                                                                    <Checkbox.HiddenInput/>
-                                                                    <Flex
-                                                                        align="center"
-                                                                        px={3}
-                                                                        py={1}
-                                                                        borderRadius="full"
-                                                                        border="1px solid"
-                                                                        borderColor={isChecked ? 'teal.400' : 'gray.600'}
-                                                                        bg={isChecked ? 'teal.700' : 'transparent'}
-                                                                        color={isChecked ? 'teal.100' : 'gray.300'}
-                                                                        fontWeight="medium"
-                                                                        fontSize="xs"
-                                                                        cursor="pointer"
-                                                                        transition="all 0.2s ease"
-                                                                        _hover={{
-                                                                            borderColor: 'teal.300',
-                                                                            bg: isChecked ? 'teal.600' : 'gray.800',
-                                                                        }}
-                                                                        _active={{transform: 'scale(0.97)'}}
-                                                                    >
-                                                                        <Checkbox.Control display="none"/>
-                                                                        <Checkbox.Label cursor="pointer">
-                                                                            {name}
-                                                                        </Checkbox.Label>
-                                                                    </Flex>
-                                                                </Checkbox.Root>
+                                                                    {name}
+                                                                </Box>
                                                             )
                                                         }}
                                                     />
@@ -517,92 +561,64 @@ export const EditProductModal = ({refetch}: EditProductModalProps) => {
                                         </Flex>
                                     </Box>
 
-                                    {/* Скрыт */}
                                     <Controller
                                         name="hidden"
                                         control={control}
                                         render={({field}) => {
                                             const isChecked = !!field.value
                                             return (
-                                                <Checkbox.Root
-                                                    id="hidden"
-                                                    checked={isChecked}
-                                                    onCheckedChange={(value) => {
-                                                        const checked =
-                                                            typeof value === 'boolean' ? value : value?.checked
-                                                        field.onChange(checked)
-                                                    }}
-                                                >
-                                                    <Checkbox.HiddenInput/>
-                                                    <Flex align="center" gap={2} cursor="pointer" userSelect="none">
-                                                        <Text
-                                                            color={isChecked ? 'teal.100' : 'gray.300'}
-                                                            fontWeight="500"
-                                                            fontSize="sm"
-                                                        >
-                                                            Скрыт
-                                                        </Text>
+                                                <Flex align="center" gap={2} cursor="pointer" userSelect="none">
+                                                    <Text color={isChecked ? 'teal.100' : 'gray.300'} fontWeight="500"
+                                                          fontSize="sm">
+                                                        Скрыт
+                                                    </Text>
+                                                    <Box
+                                                        role="switch"
+                                                        aria-checked={isChecked}
+                                                        tabIndex={0}
+                                                        w="38px"
+                                                        h="20px"
+                                                        borderRadius="full"
+                                                        px="2px"
+                                                        display="flex"
+                                                        alignItems="center"
+                                                        bg={isChecked ? 'rgba(45,212,191,0.08)' : 'transparent'}
+                                                        border="1px solid"
+                                                        borderColor={isChecked ? 'teal.300' : 'gray.600'}
+                                                        transition="all 180ms ease"
+                                                        _hover={{borderColor: 'teal.300'}}
+                                                        onClick={() => field.onChange(!isChecked)}
+                                                    >
                                                         <Box
-                                                            role="switch"
-                                                            aria-checked={isChecked}
-                                                            tabIndex={0}
-                                                            w="38px"
-                                                            h="20px"
+                                                            w="14px"
+                                                            h="14px"
                                                             borderRadius="full"
-                                                            px="2px"
-                                                            display="flex"
-                                                            alignItems="center"
-                                                            bg={isChecked ? 'rgba(45,212,191,0.08)' : 'transparent'}
-                                                            border="1px solid"
-                                                            borderColor={isChecked ? 'teal.300' : 'gray.600'}
+                                                            bg={isChecked ? 'teal.300' : 'gray.400'}
+                                                            transform={isChecked ? 'translateX(16px)' : 'translateX(0px)'}
                                                             transition="all 180ms ease"
-                                                            _hover={{borderColor: 'teal.300'}}
-                                                        >
-                                                            <Box
-                                                                w="14px"
-                                                                h="14px"
-                                                                borderRadius="full"
-                                                                bg={isChecked ? 'teal.300' : 'gray.400'}
-                                                                transform={
-                                                                    isChecked
-                                                                        ? 'translateX(16px)'
-                                                                        : 'translateX(0px)'
-                                                                }
-                                                                transition="all 180ms ease"
-                                                                boxShadow={
-                                                                    isChecked
-                                                                        ? '0 3px 8px rgba(56,178,172,0.18)'
-                                                                        : 'none'
-                                                                }
-                                                            />
-                                                        </Box>
-                                                    </Flex>
-                                                </Checkbox.Root>
+                                                            boxShadow={isChecked ? '0 3px 8px rgba(56,178,172,0.18)' : 'none'}
+                                                        />
+                                                    </Box>
+                                                </Flex>
                                             )
                                         }}
                                     />
                                 </Stack>
 
-                                <Dialog.Footer
-                                    borderTop="1px solid"
-                                    borderColor="gray.700"
-                                    mt={6}
-                                    pt={3}
-                                    gap={3}
-                                >
+                                <Dialog.Footer borderTop="1px solid" borderColor="gray.700" mt={6} pt={3} gap={3}>
                                     <Button
                                         p={2}
                                         variant="outline"
                                         size="sm"
                                         color="gray.300"
-                                        borderColor="gray.600"
+                                        borderColor="gray.700"
                                         _hover={{
                                             bg: 'gray.800',
                                             borderColor: 'teal.400',
                                             color: 'teal.200',
                                         }}
                                         _active={{bg: 'gray.700'}}
-                                        onClick={handleClose}
+                                        onClick={close}
                                     >
                                         Отмена
                                     </Button>
@@ -612,9 +628,10 @@ export const EditProductModal = ({refetch}: EditProductModalProps) => {
                                         size="sm"
                                         bg="teal.500"
                                         color="white"
+                                        borderRadius="md"
                                         _hover={{
                                             bg: 'teal.400',
-                                            boxShadow: '0 0 10px rgba(56,178,172,0.5)',
+                                            boxShadow: '0 0 12px rgba(56,178,172,0.45)',
                                         }}
                                         _active={{bg: 'teal.600'}}
                                         type="submit"

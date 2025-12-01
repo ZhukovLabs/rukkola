@@ -9,7 +9,7 @@ import {auth} from "@/lib/auth";
 export const Dashboard = async () => {
     await connectToDatabase();
 
-    const [productsCount, hiddenProductsCount,categoriesCount, usersCount] = await Promise.all([
+    const [productsCount, hiddenProductsCount, categoriesCount, usersCount] = await Promise.all([
         Product.countDocuments(),
         Product.countDocuments({hidden: true}),
         Category.countDocuments(),
@@ -81,7 +81,6 @@ export const Dashboard = async () => {
                     </Text>
                 </Box>
             </SimpleGrid>
-
         </Box>
     );
 };

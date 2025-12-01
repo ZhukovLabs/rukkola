@@ -21,7 +21,7 @@ import {useState, useEffect, useMemo} from 'react'
 import {deleteProduct, getProducts, toggleProductVisibility, getCategories} from './actions'
 import {ProductRow} from './product-row'
 import {Pagination} from './pagination'
-import {EditProductModal} from "@/app-pages/dashboard-products/edit-product-modal"
+import {EditProductModal} from "./edit-product-modal"
 import {ProductType} from "@/models/product"
 import {SkeletonRows} from "@/app-pages/dashboard-products/skeleton-rows"
 import {CreateProductModal} from "@/app-pages/dashboard-products/create-modal-product"

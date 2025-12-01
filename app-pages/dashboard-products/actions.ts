@@ -5,20 +5,21 @@ import {PortionPrice, Product} from '@/models/product'
 import {Types} from "mongoose";
 import {revalidatePath} from "next/cache";
 import {Category} from "@/models/category";
-import { ObjectId } from 'mongodb'
+import {ObjectId} from 'mongodb'
+import {productSchema} from "./validation";
 
 export async function getProducts(page = 1, limit = 10, search?: string, category?: string) {
     await connectToDatabase()
 
     const skip = (page - 1) * limit
     const filter: any = {}
-    if (search) filter.name = { $regex: search, $options: 'i' }
+    if (search) filter.name = {$regex: search, $options: 'i'}
     if (category) filter.categories = new ObjectId(category)
 
     const total = await Product.countDocuments(filter)
 
     const products = await Product.aggregate([
-        { $match: filter },
+        {$match: filter},
         {
             $lookup: {
                 from: 'categories',
@@ -29,13 +30,13 @@ export async function getProducts(page = 1, limit = 10, search?: string, categor
         },
         {
             $addFields: {
-                minCategoryOrder: { $min: '$categories.order' }
+                minCategoryOrder: {$min: '$categories.order'}
             }
         },
-        { $sort: { minCategoryOrder: 1 } },
-        { $skip: skip },
-        { $limit: limit },
-        { $project: { minCategoryOrder: 0 } }
+        {$sort: {minCategoryOrder: 1}},
+        {$skip: skip},
+        {$limit: limit},
+        {$project: {minCategoryOrder: 0}}
     ])
 
     return {
@@ -67,7 +68,10 @@ export async function toggleProductVisibility(productId: string) {
 
 export async function getProductById(id: string) {
     await connectToDatabase()
-    const product = await Product.findById(id).populate('categories').lean()
+    const product = await Product
+        .findById(id)
+        .populate('categories')
+        .lean();
     return JSON.parse(JSON.stringify(product))
 }
 
@@ -136,12 +140,22 @@ export type CreateProductInput = {
 export async function createProduct(data: CreateProductInput) {
     await connectToDatabase()
 
+    const parsed = productSchema.safeParse(data)
+    if (!parsed.success) {
+        const {fieldErrors} = parsed.error.flatten()
+        const messages = Object.entries(fieldErrors)
+            .flatMap(([field, errs]) => (errs ?? []).map((m) => `${field}: ${m}`))
+        throw new Error(`Validation failed: ${messages.join('; ')}`)
+    }
+
+    const valid = parsed.data;
+
     const product = new Product({
-        name: data.name,
-        description: data.description ?? '',
-        prices: data.prices ?? [],
-        categories: data.categories ?? [],
-        hidden: !!data.hidden,
+        name: valid.name,
+        description: valid.description ?? '',
+        prices: valid.prices,
+        categories: valid.categories ?? [],
+        hidden: Boolean(valid.hidden),
     })
 
     await product.save()
