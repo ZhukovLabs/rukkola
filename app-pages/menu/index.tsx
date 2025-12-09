@@ -1,37 +1,33 @@
 import {Box} from "@chakra-ui/react";
 import Image from "next/image";
-import {connectToDatabase} from "@/lib/mongoose";
-import {Category} from "@/models/category";
-import {Lunch} from "@/models/lunch";
 import {MenuPageClient} from "./menu-page-client";
-import {Product as ProductDb, type ProductType} from "@/models/product";
-import type {GroupWithProducts} from "@/app-pages/menu/products/types";
 import {Products} from './products';
 import {ComponentProps, Suspense} from "react";
 import {MenuLoader} from "@/app-pages/menu/menu-loader";
+import {getMenuData} from "./config";
 
 export const MenuPage = async () => {
-    await connectToDatabase();
+    const {
+        activeLunch: activeLunchRaw,
+        categories: categoriesRaw,
+        groupedProducts: groupedProductsRaw,
+        uncategorizedProduct: uncategorizedProductRaw
+    } = await getMenuData();
 
-    const [activeLunchDoc, categoriesDoc] = await Promise.all([
-        Lunch.findOne({active: true}).lean(),
-        Category.find({isMenuItem: true}).sort({order: 1}).lean()
-    ]);
-
-    const activeLunch = activeLunchDoc
+    const activeLunch = activeLunchRaw
         ? {
-            id: activeLunchDoc._id.toString(),
-            image: activeLunchDoc.image ?? null,
-            active: activeLunchDoc.active ?? false,
+            id: activeLunchRaw._id.toString(),
+            image: activeLunchRaw.image ?? null,
+            active: activeLunchRaw.active ?? false,
         }
         : null;
 
-    const categories = categoriesDoc.map(cat => ({
-        id: cat._id.toString(),
-        name: cat.name,
-        parent: cat.parent?.toString() ?? null,
-        order: cat.order ?? 0,
-        showGroupTitle: cat.showGroupTitle ?? true,
+    const categories = categoriesRaw.map(c => ({
+        id: c._id.toString(),
+        name: c.name,
+        parent: c.parent?.toString() ?? null,
+        order: c.order ?? 0,
+        showGroupTitle: c.showGroupTitle ?? true,
     }));
 
     const navItems = categories
@@ -44,49 +40,7 @@ export const MenuPage = async () => {
                 .map(sub => ({id: sub.id, name: sub.name}))
         }));
 
-    const [groupedDocs, uncategorizedDocs] = await Promise.all([
-        ProductDb.aggregate<GroupWithProducts>([
-            {
-                $match: {
-                    $and: [
-                        {$or: [{hidden: {$exists: false}}, {hidden: false}]},
-                        {categories: {$exists: true, $ne: []}},
-                    ],
-                },
-            },
-            {$unwind: "$categories"},
-            {
-                $lookup: {
-                    from: "categories",
-                    localField: "categories",
-                    foreignField: "_id",
-                    as: "categoryInfo",
-                },
-            },
-            {$unwind: "$categoryInfo"},
-            {$match: {"categoryInfo.hidden": {$ne: true}}},
-            {
-                $group: {
-                    _id: "$categoryInfo._id",
-                    categoryName: {$first: "$categoryInfo.name"},
-                    categoryOrder: {$first: "$categoryInfo.order"},
-                    showGroupTitle: {$first: "$categoryInfo.showGroupTitle"},
-                    products: {$push: "$$ROOT"},
-                },
-            },
-            {$sort: {categoryOrder: 1}},
-        ]),
-        ProductDb.find({
-            $and: [
-                {$or: [{hidden: {$exists: false}}, {hidden: false}]},
-                {$or: [{categories: {$exists: false}}, {categories: {$size: 0}}]},
-            ],
-        })
-            .lean<ProductType[]>()
-            .exec(),
-    ]);
-
-    const grouped = groupedDocs.map(group => ({
+    const grouped = groupedProductsRaw.map(group => ({
         id: group._id.toString(),
         categoryName: group.categoryName,
         categoryOrder: group.categoryOrder ?? 0,
@@ -102,7 +56,7 @@ export const MenuPage = async () => {
         })),
     })) as unknown as ComponentProps<typeof Products>['grouped'];
 
-    const uncategorized = uncategorizedDocs.map(p => ({
+    const uncategorized = uncategorizedProductRaw.map(p => ({
         id: p._id.toString(),
         name: p.name,
         description: p.description ?? null,
@@ -125,10 +79,10 @@ export const MenuPage = async () => {
                 />
             </Box>
 
-            <Suspense fallback={<MenuLoader />}>
+            <Suspense fallback={<MenuLoader/>}>
                 <MenuPageClient
-                    activeLunch={{ image: activeLunch?.image }}
-                    navbar={{ items: navItems }}
+                    activeLunch={{image: activeLunch?.image}}
+                    navbar={{items: navItems}}
                     products={{
                         grouped,
                         uncategorized,

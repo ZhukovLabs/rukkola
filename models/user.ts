@@ -19,4 +19,4 @@ const UserSchema = new Schema<UserType>({
     role: { type: String, enum: ['admin', 'moderator'], default: 'moderator' }
 });
 
-export const User = (mongoose.models.User as mongoose.Model<UserType>) || mongoose.model<UserType>('User', UserSchema);
+export const User = (mongoose.models?.User as mongoose.Model<UserType>) || mongoose.model<UserType>('User', UserSchema);

@@ -39,4 +39,4 @@ const ProductSchema = new Schema<ProductType>(
 )
 
 export const Product: Model<ProductType> =
-    mongoose.models.Product || mongoose.model<ProductType>('Product', ProductSchema)
+    mongoose.models?.Product || mongoose.model<ProductType>('Product', ProductSchema)

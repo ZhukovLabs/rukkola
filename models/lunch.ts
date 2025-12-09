@@ -16,4 +16,4 @@ const LunchSchema = new Schema<LunchType>(
 )
 
 export const Lunch: Model<LunchType> =
-    mongoose.models.Lunch || mongoose.model<LunchType>('Lunch', LunchSchema)
+    mongoose.models?.Lunch || mongoose.model<LunchType>('Lunch', LunchSchema)

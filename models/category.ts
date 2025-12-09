@@ -18,4 +18,4 @@ const CategorySchema = new Schema<CategoryType>({
 })
 
 export const Category: Model<CategoryType> =
-    mongoose.models.Category || mongoose.model<CategoryType>('Category', CategorySchema)
+    mongoose.models?.Category || mongoose.model<CategoryType>('Category', CategorySchema)
