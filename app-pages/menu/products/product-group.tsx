@@ -1,6 +1,9 @@
-import { Box, Heading, SimpleGrid } from "@chakra-ui/react";
+'use client';
+
+import { Box, Heading, SimpleGrid, useBreakpointValue } from "@chakra-ui/react";
 import type { ProductType } from "@/models/product";
 import { Product } from "./product";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 type ProductGroupProps = {
     id?: string;
@@ -9,6 +12,16 @@ type ProductGroupProps = {
 };
 
 export const ProductGroup = ({ id, title, products }: ProductGroupProps) => {
+    const columnCount = useBreakpointValue({ base: 1, sm: 2, xl: 3 }) ?? 1;
+    const rowCount = Math.ceil(products.length / columnCount);
+
+    const virtualizer = useVirtualizer({
+        count: rowCount,
+        estimateSize: () => 400,
+        getScrollElement: () => document.documentElement,
+        overscan: 5,
+    });
+
     if (!products.length) return null;
 
     return (
@@ -27,23 +40,49 @@ export const ProductGroup = ({ id, title, products }: ProductGroupProps) => {
                 </Heading>
             )}
 
-            <SimpleGrid
-                columns={{ base: 1, sm: 2, xl: 3 }}
-                gap={6}
-                alignItems="stretch"
+            <Box
+                position="relative"
+                w="100%"
+                h={`${virtualizer.getTotalSize()}px`}
             >
-                {products.map((product) => (
-                    <Product
-                        key={product.id.toString()}
-                        id={product.id.toString()}
-                        img={product.image}
-                        alt={product.name}
-                        title={product.name}
-                        description={product.description}
-                        prices={product.prices}
-                    />
-                ))}
-            </SimpleGrid>
+                {virtualizer.getVirtualItems().map((virtualRow) => {
+                    const rowStart = virtualRow.index * columnCount;
+                    const rowEnd = Math.min(rowStart + columnCount, products.length);
+                    const rowProducts = products.slice(rowStart, rowEnd);
+
+                    return (
+                        <Box
+                            key={virtualRow.key}
+                            ref={virtualizer.measureElement}
+                            data-index={virtualRow.index}
+                            position="absolute"
+                            top={0}
+                            left={0}
+                            w="100%"
+                            transform={`translateY(${virtualRow.start}px)`}
+                            pb={6}  // Здесь добавлен вертикальный отступ (padding-bottom) между рядами продуктов
+                        >
+                            <SimpleGrid
+                                columns={columnCount}
+                                gap={6}
+                                alignItems="stretch"
+                            >
+                                {rowProducts.map((product) => (
+                                    <Product
+                                        key={product.id.toString()}
+                                        id={product.id.toString()}
+                                        img={product.image}
+                                        alt={product.name}
+                                        title={product.name}
+                                        description={product.description}
+                                        prices={product.prices}
+                                    />
+                                ))}
+                            </SimpleGrid>
+                        </Box>
+                    );
+                })}
+            </Box>
         </Box>
     );
 };
