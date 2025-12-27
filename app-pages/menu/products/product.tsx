@@ -46,6 +46,8 @@ const ProductImage = memo(function ProductImage({
             fill
             loading="lazy"
             sizes="(max-width: 768px) 100vw, 45vw"
+            placeholder="blur"
+            blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/OhSPQAIZwPB9++2WgAAAABJRU5ErkJggg=="
             style={{objectFit: "cover", objectPosition: "center"}}
             onError={onError}
         />

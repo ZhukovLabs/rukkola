@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "analyze": "npx next experimental-analyze",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -47,6 +48,7 @@
     "@types/node": "^20.19.24",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
+    "baseline-browser-mapping": "^2.9.11",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "ts-node": "^10.9.2",
