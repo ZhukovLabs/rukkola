@@ -19,13 +19,16 @@ export const UsersTable = () => {
     useEffect(() => {
         (async () => {
             try {
-                const data = await getUsers();
-                setUsers(data);
+                const res = await getUsers();
+                if (res.success && res.data) {
+                    setUsers(res.data);
+                }
             } finally {
                 setLoading(false);
             }
         })()
     }, [])
+
 
     const handleUserCreated = (newUser: UserType) => {
         setUsers((prev) => [newUser, ...prev])
