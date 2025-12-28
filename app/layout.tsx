@@ -14,25 +14,50 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-    metadataBase: new URL('https://rukkola-production.up.railway.app'),
+    metadataBase: new URL("https://rukkola-production.up.railway.app"),
+
     title: {
-        default: "Руккола — пицца, суши, роллы в Гомеле",
-        template: "%s | Руккола — пицца и суши в [город]",
+        default: "Руккола — кафе с авторской пиццей и суши в Гомеле",
+        template: "%s | Руккола — кафе в Гомеле",
     },
+
     description:
-        "Руккола — уютное кафе с авторской пиццей, свежими суши и роллами, пад тай и другими блюдами азиатской кухни. Работает с 12:00 до 23:00.",
+        "Руккола — уютное кафе в центре Гомеля. Авторская пинца, свежие суши, роллы и блюда паназиатской кухни. Работаем ежедневно с 12:00 до 23:00.",
+
     keywords: [
+        // Бренд
         "руккола",
-        "пицца",
-        "суши",
-        "роллы",
-        "пад тай",
-        "азиатская кухня",
-        "паназиатская кухня",
+        "руккола гомель",
         "кафе руккола",
-        "пицца",
-        "суши",
-        "Гомель",
+        "кафе руккола гомель",
+
+        // Основные блюда + гео
+        "пицца гомель",
+        "пинца гомель",
+        "суши гомель",
+        "роллы гомель",
+        "японская кухня гомель",
+        "паназиатская кухня гомель",
+        "азиатская кухня гомель",
+
+        // Коммерческие запросы без доставки
+        "где поесть пиццу гомель",
+        "где поесть пинцу гомель",
+        "где поесть суши гомель",
+        "где поесть роллы гомель",
+        "лучшая пицца гомель",
+        "лучшая пинца гомель",
+        "лучшие суши гомель",
+        "кафе с суши гомель",
+        "кафе с пиццей гомель",
+        "кафе с пинцей гомель",
+
+        // Тип заведения + локация
+        "кафе гомель",
+        "кафе центр гомель",
+        "ресторан гомель",
+        "кафе на советской гомель",
+        "заведения гомеля",
     ],
 
     alternates: {
@@ -40,9 +65,9 @@ export const metadata: Metadata = {
     },
 
     openGraph: {
-        title: "Руккола — пицца и суши в Гомеле",
+        title: "Руккола — кафе с пиццей и суши в Гомеле",
         description:
-            "Свежая пицца, вкусные суши и роллы. Приходи и насладись едой!",
+            "Уютное кафе Руккола в центре Гомеля: авторская пинца, свежие суши и роллы, паназиатская кухня. Ждём вас ежедневно с 12:00 до 23:00.",
         url: "https://rukkola-production.up.railway.app",
         siteName: "Руккола",
         images: [
@@ -50,17 +75,17 @@ export const metadata: Metadata = {
                 url: "/og-image.webp",
                 width: 1200,
                 height: 630,
-                alt: "Руккола — пицца и суши",
+                alt: "Руккола — кафе с пиццей и суши в Гомеле",
             },
         ],
-        locale: "ru_RU",
+        locale: "ru_BY",
         type: "website",
     },
 
     twitter: {
         card: "summary_large_image",
-        title: "Руккола — пицца и суши",
-        description: "Закажи пиццу, суши и роллы с доставкой",
+        title: "Руккола — кафе с пиццей и суши в Гомеле",
+        description: "Авторская пинца, свежие суши и роллы в уютном кафе в центре Гомеля. Приходите в Рукколу!",
         images: ["/og-image.webp"],
     },
 
@@ -74,6 +99,12 @@ export const metadata: Metadata = {
             "max-image-preview": "large",
             "max-snippet": -1,
         },
+        // @ts-expect-error - ok
+        yandexBot: {
+            index: true,
+            follow: true,
+            "max-image-preview": "large",
+        }
     },
 };
 
@@ -92,8 +123,8 @@ export default function RootLayout({
     return (
         <html lang="ru" suppressHydrationWarning>
         <head>
-            <meta name="google-site-verification" content="XHWnek4KF6QdZm1UFnJeFW8xUtW1ZXbZkIHO84ZD5xs" />
-            <meta name="yandex-verification" content="91fc20500288b2fe" />
+            <meta name="google-site-verification" content="XHWnek4KF6QdZm1UFnJeFW8xUtW1ZXbZkIHO84ZD5xs"/>
+            <meta name="yandex-verification" content="91fc20500288b2fe"/>
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{
@@ -101,37 +132,43 @@ export default function RootLayout({
                         "@context": "https://schema.org",
                         "@type": "Restaurant",
                         name: "Руккола",
-                        description:
-                            "Кафе Руккола — авторская пицца, суши, роллы и блюда азиатской кухни с доставкой.",
-                        url: "https://rukkola.rest",
-                        logo: "https://rukkola.rest/logo.svg",
-                        image: "https://rukkola.rest/og-image.jpg",
-                        telephone: "+375 (44) 770-30-03",
+                        url: "https://rukkola-production.up.railway.app",
+                        logo: "https://rukkola-production.up.railway.app/logo.svg",
+                        image: "https://rukkola-production.up.railway.app/og-image.webp",
+                        description: "Кафе Руккола в центре Гомеля — авторская пинца, свежие суши, роллы и блюда паназиатской кухни.",
+                        telephone: "+375447703003",
+                        priceRange: "$$",
                         address: {
                             "@type": "PostalAddress",
                             streetAddress: "ул. Советская, 60",
                             addressLocality: "Гомель",
-                            addressCountry: "RU",
+                            addressRegion: "Гомельская область",
+                            addressCountry: "BY",
                         },
-                        openingHoursSpecification: [
-                            {
-                                "@type": "OpeningHoursSpecification",
-                                dayOfWeek: [
-                                    "Monday",
-                                    "Tuesday",
-                                    "Wednesday",
-                                    "Thursday",
-                                    "Friday",
-                                    "Saturday",
-                                    "Sunday",
-                                ],
-                                opens: "12:00",
-                                closes: "23:00",
-                            },
+                        geo: {
+                            "@type": "GeoCoordinates",
+                            latitude: 52.441176,
+                            longitude: 30.987846,
+                        },
+                        openingHoursSpecification: {
+                            "@type": "OpeningHoursSpecification",
+                            dayOfWeek: [
+                                "Monday",
+                                "Tuesday",
+                                "Wednesday",
+                                "Thursday",
+                                "Friday",
+                                "Saturday",
+                                "Sunday",
+                            ],
+                            opens: "12:00",
+                            closes: "23:00",
+                        },
+                        servesCuisine: ["Пинца", "Пицца", "Суши", "Роллы", "Японская кухня", "Паназиатская кухня"],
+                        acceptsReservations: true,
+                        sameAs: [
+                            "https://www.instagram.com/rukkola.gomel"
                         ],
-                        servesCuisine: ["Японская", "Азиатская"],
-                        priceRange: "$$",
-                        hasMenu: "https://rukkola-production.up.railway.app",
                     }),
                 }}
             />
