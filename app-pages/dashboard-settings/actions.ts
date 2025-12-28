@@ -71,9 +71,6 @@ export async function updateUser(id: string, data: Partial<UserType>) {
     if (currentUser.role !== 'admin') {
         throw new Error('Недостаточно прав');
     }
-    if (id === currentUser.id) {
-        throw new Error('Нельзя редактировать самого себя');
-    }
 
     await connectToDatabase();
 

@@ -28,9 +28,9 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
 
     const handleSave = async () => {
         try {
-            await updateUser(user._id.toString(), tempUser)
-            onUserUpdate({...user, ...tempUser} as UserType)
-            setEditing(false)
+            await updateUser(user._id.toString(), tempUser);
+            onUserUpdate({...user, ...tempUser} as UserType);
+            setEditing(false);
         } catch (err) {
             console.error(err)
         }
@@ -156,7 +156,6 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                 )}
             </Table.Cell>
 
-            {/* Действия */}
             <Table.Cell p={3} verticalAlign="middle">
                 <Flex justify="center" gap={2}>
                     {editing ? (
