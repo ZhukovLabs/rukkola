@@ -9,7 +9,6 @@ import {checkAuth} from "@/lib/auth/actions";
 
 export const Dashboard = async () => {
     await connectToDatabase();
-    await checkAuth();
 
     const [productsCount, hiddenProductsCount, categoriesCount, usersCount] = await Promise.all([
         Product.countDocuments(),
