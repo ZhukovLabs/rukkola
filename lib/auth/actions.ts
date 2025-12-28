@@ -17,8 +17,6 @@ export async function checkAuth() {
         return await signOut();
     }
 
-    await connectToDatabase();
-
     const user = await User.findById(sessionUser.id).select('role').lean();
 
     if (!user) {

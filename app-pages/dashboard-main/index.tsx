@@ -8,8 +8,8 @@ import {auth} from "@/lib/auth";
 import {checkAuth} from "@/lib/auth/actions";
 
 export const Dashboard = async () => {
-    await checkAuth();
     await connectToDatabase();
+    await checkAuth();
 
     const [productsCount, hiddenProductsCount, categoriesCount, usersCount] = await Promise.all([
         Product.countDocuments(),
