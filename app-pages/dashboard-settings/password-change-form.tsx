@@ -35,15 +35,30 @@ export const PasswordChangeForm = () => {
         setServerError('')
         setServerSuccess('')
 
-        startTransition(async () => {
-            if (!data) return
-            try {
-                await updatePassword(data.user.id, values.oldPassword, values.newPassword)
-                setServerSuccess('Пароль успешно изменён')
-                reset()
-            } catch (e: unknown) {
-                setServerError((e as { message: string })?.message || 'Ошибка при изменении пароля')
-            }
+        startTransition(() => {
+            // startTransition callback should not rely on returned promise for UI sync,
+            // but we still use async work inside.
+            (async () => {
+                if (!data) {
+                    setServerError('Пользователь не авторизован')
+                    return
+                }
+
+                try {
+                    const res = await updatePassword(data.user.id, values.oldPassword, values.newPassword)
+
+                    if (res?.success) {
+                        setServerSuccess(res.message ?? 'Пароль успешно изменён')
+                        reset()
+                    } else {
+                        // возвращаемое сообщение от сервера
+                        setServerError(res?.message ?? 'Ошибка при изменении пароля')
+                    }
+                } catch (e) {
+                    // на случай неожиданных ошибок (network, runtime и т.д.)
+                    setServerError((e as { message?: string })?.message ?? 'Ошибка при изменении пароля')
+                }
+            })()
         })
     }
 
@@ -79,8 +94,7 @@ export const PasswordChangeForm = () => {
                     transform="translateY(-50%)"
                     onClick={() => setShow(!show)}
                     color="teal.200"
-                    _hover={{ bg: 'blackAlpha.400' }}
-                >
+                    _hover={{ bg: 'blackAlpha.400' }}>
                     {show ? <FiEyeOff /> : <FiEye />}
                 </IconButton>
             </Box>

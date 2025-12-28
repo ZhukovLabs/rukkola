@@ -66,10 +66,15 @@ export const AddUserModal = ({ isOpen, onClose, onUserAdded }: AddUserModalProps
         setError(null)
 
         try {
-            const newUser = await createUser(data)
-            onUserAdded(newUser)
-            onClose()
-            reset()
+            const res = await createUser(data)
+
+            if (res.success) {
+                onUserAdded(res.data!)
+                reset()
+                onClose()
+            } else {
+                setError(res.message || 'Ошибка при создании пользователя')
+            }
         } catch (e: any) {
             setError(e?.message || 'Ошибка при создании пользователя')
         } finally {
@@ -94,7 +99,6 @@ export const AddUserModal = ({ isOpen, onClose, onUserAdded }: AddUserModalProps
                     p={0}
                     overflow="hidden"
                 >
-                    {/* Заголовок с хорошим внутренним отступом */}
                     <Dialog.Header py={5} px={7} bg="gray.800">
                         <Flex justify="space-between" align="center">
                             <Heading size="md" fontWeight="semibold">
@@ -115,11 +119,9 @@ export const AddUserModal = ({ isOpen, onClose, onUserAdded }: AddUserModalProps
                         </Flex>
                     </Dialog.Header>
 
-                    {/* Основное тело с комфортными отступами */}
                     <Dialog.Body px={7} pt={6} pb={8}>
                         <form onSubmit={handleSubmit(onSubmit)}>
-                            <Stack gap={5}>   {/* Увеличил gap для "воздуха" между полями */}
-                                {/* Глобальная ошибка */}
+                            <Stack gap={5}>
                                 {error && (
                                     <Text color="red.400" fontSize="sm" textAlign="center">
                                         {error}
@@ -130,7 +132,7 @@ export const AddUserModal = ({ isOpen, onClose, onUserAdded }: AddUserModalProps
                                 <Field.Root invalid={!!errors.username}>
                                     <Field.Label fontSize="sm">Логин</Field.Label>
                                     <Input
-                                        px={4}   /* Внутренний padding инпута — текст не прижат к краю */
+                                        px={4}
                                         py={3}
                                         bg="gray.800"
                                         border="none"

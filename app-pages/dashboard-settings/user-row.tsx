@@ -1,12 +1,12 @@
 'use client'
 
-import React, {useState} from 'react'
-import {Flex, Table, Text, Input, IconButton, Portal} from '@chakra-ui/react'
-import {FiEdit, FiTrash2, FiCheck, FiX} from 'react-icons/fi'
-import {UserType} from '@/models/user'
-import {updateUser, deleteUser} from './actions'
-import {Tooltip} from '@/components/tooltip'
-import {Select, createListCollection} from '@chakra-ui/react'
+import React, { useState } from 'react'
+import { Flex, Table, Text, Input, IconButton, Portal } from '@chakra-ui/react'
+import { FiEdit, FiTrash2, FiCheck, FiX } from 'react-icons/fi'
+import { UserType } from '@/models/user'
+import { updateUser, deleteUser } from './actions'
+import { Tooltip } from '@/components/tooltip'
+import { Select, createListCollection } from '@chakra-ui/react'
 
 type UserRowProps = {
     onUserDelete: (id: string) => void
@@ -17,37 +17,52 @@ type UserRowProps = {
 
 const roles = createListCollection({
     items: [
-        {label: 'admin', value: 'admin'},
-        {label: 'moderator', value: 'moderator'},
+        { label: 'admin', value: 'admin' },
+        { label: 'moderator', value: 'moderator' },
     ],
 })
 
-export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRowProps) => {
+export const UserRow = ({ user, onUserUpdate, onUserDelete, isOwnAccount }: UserRowProps) => {
     const [editing, setEditing] = useState(false)
     const [tempUser, setTempUser] = useState<UserType>(user)
+    const [error, setError] = useState<string | null>(null)
 
     const handleSave = async () => {
+        setError(null)
         try {
-            await updateUser(user._id.toString(), tempUser);
-            onUserUpdate({...user, ...tempUser} as UserType);
-            setEditing(false);
+            const res = await updateUser(user._id.toString(), tempUser)
+            if (res.success) {
+                onUserUpdate(res.data!)
+                setEditing(false)
+            } else {
+                setError(res.message || 'Не удалось обновить пользователя')
+            }
         } catch (err) {
             console.error(err)
+            setError('Не удалось обновить пользователя')
         }
     }
 
     const handleCancel = () => {
         setEditing(false)
         setTempUser(user)
+        setError(null)
     }
 
     const handleDelete = async () => {
         if (!window.confirm('Удалить пользователя?')) return
+
+        setError(null)
         try {
-            await deleteUser(user._id.toString())
-            onUserDelete(user._id.toString())
+            const res = await deleteUser(user._id.toString())
+            if (res.success) {
+                onUserDelete(user._id.toString())
+            } else {
+                setError(res.message || 'Не удалось удалить пользователя')
+            }
         } catch (err) {
             console.error(err)
+            setError('Не удалось удалить пользователя')
         }
     }
 
@@ -56,7 +71,7 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
             bg="gray.900"
             borderBottom="1px solid"
             borderColor="gray.700"
-            _hover={{bg: 'gray.850', transition: '0.2s ease'}}
+            _hover={{ bg: 'gray.850', transition: '0.2s ease' }}
         >
             {/* Username */}
             <Table.Cell p={3} verticalAlign="middle">
@@ -65,7 +80,7 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                         size="sm"
                         value={tempUser.username ?? ''}
                         onChange={(e) =>
-                            setTempUser({...tempUser, username: e.target.value} as UserType)
+                            setTempUser({ ...tempUser, username: e.target.value } as UserType)
                         }
                         bg="gray.800"
                         color="teal.300"
@@ -90,10 +105,7 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                             size="sm"
                             value={(tempUser as any)[field] ?? ''}
                             onChange={(e) =>
-                                setTempUser({
-                                    ...tempUser,
-                                    [field]: e.target.value,
-                                } as UserType)
+                                setTempUser({ ...tempUser, [field]: e.target.value } as UserType)
                             }
                             bg="gray.800"
                             color="teal.300"
@@ -124,7 +136,7 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                             } as UserType)
                         }
                     >
-                        <Select.HiddenSelect/>
+                        <Select.HiddenSelect />
                         <Select.Control>
                             <Select.Trigger
                                 px={2}
@@ -133,7 +145,7 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                                 borderColor="teal.500"
                                 height="36px"
                             >
-                                <Select.ValueText placeholder="Роль"/>
+                                <Select.ValueText placeholder="Роль" />
                             </Select.Trigger>
                         </Select.Control>
                         <Portal>
@@ -142,7 +154,7 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                                     {roles.items.map((item) => (
                                         <Select.Item key={item.value} item={item}>
                                             {item.label}
-                                            <Select.ItemIndicator/>
+                                            <Select.ItemIndicator />
                                         </Select.Item>
                                     ))}
                                 </Select.Content>
@@ -157,80 +169,90 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
             </Table.Cell>
 
             <Table.Cell p={3} verticalAlign="middle">
-                <Flex justify="center" gap={2}>
-                    {editing ? (
-                        <>
-                            <Tooltip content="Сохранить">
-                                <IconButton
-                                    aria-label="Сохранить"
-                                    size="sm"
-                                    borderRadius="xl"
-                                    bgGradient="linear(to-r, green.400, green.500)"
-                                    color="white"
-                                    _hover={{
-                                        transform: 'scale(1.1)',
-                                        bgGradient: 'linear(to-r, green.500, green.600)',
-                                    }}
-                                    onClick={handleSave}
-                                >
-                                    <FiCheck/>
-                                </IconButton>
-                            </Tooltip>
-
-                            <Tooltip content="Отмена">
-                                <IconButton
-                                    aria-label="Отмена"
-                                    size="sm"
-                                    borderRadius="xl"
-                                    bgGradient="linear(to-r, gray.500, gray.600)"
-                                    color="white"
-                                    _hover={{
-                                        transform: 'scale(1.1)',
-                                        bgGradient: 'linear(to-r, gray.600, gray.700)',
-                                    }}
-                                    onClick={handleCancel}
-                                >
-                                    <FiX/>
-                                </IconButton>
-                            </Tooltip>
-                        </>
-                    ) : (
-                        <>
-                            <Tooltip content="Редактировать">
-                                <IconButton
-                                    aria-label="Редактировать"
-                                    size="sm"
-                                    borderRadius="xl"
-                                    bgGradient="linear(to-r, blue.400, blue.500)"
-                                    color="white"
-                                    _hover={{
-                                        transform: 'scale(1.1)',
-                                        bgGradient: 'linear(to-r, blue.500, blue.600)',
-                                    }}
-                                    onClick={() => setEditing(true)}
-                                >
-                                    <FiEdit/>
-                                </IconButton>
-                            </Tooltip>
-
-                            {!isOwnAccount && (<Tooltip content="Удалить">
-                                <IconButton
-                                    aria-label="Удалить"
-                                    size="sm"
-                                    borderRadius="xl"
-                                    bgGradient="linear(to-r, red.500, red.600)"
-                                    color="white"
-                                    _hover={{
-                                        transform: 'scale(1.1)',
-                                        bgGradient: 'linear(to-r, red.600, red.700)',
-                                    }}
-                                    onClick={handleDelete}
-                                >
-                                    <FiTrash2/>
-                                </IconButton>
-                            </Tooltip>)}
-                        </>
+                <Flex direction="column" gap={1} align="center">
+                    {error && (
+                        <Text color="red.400" fontSize="xs">
+                            {error}
+                        </Text>
                     )}
+
+                    <Flex justify="center" gap={2}>
+                        {editing ? (
+                            <>
+                                <Tooltip content="Сохранить">
+                                    <IconButton
+                                        aria-label="Сохранить"
+                                        size="sm"
+                                        borderRadius="xl"
+                                        bgGradient="linear(to-r, green.400, green.500)"
+                                        color="white"
+                                        _hover={{
+                                            transform: 'scale(1.1)',
+                                            bgGradient: 'linear(to-r, green.500, green.600)',
+                                        }}
+                                        onClick={handleSave}
+                                    >
+                                        <FiCheck />
+                                    </IconButton>
+                                </Tooltip>
+
+                                <Tooltip content="Отмена">
+                                    <IconButton
+                                        aria-label="Отмена"
+                                        size="sm"
+                                        borderRadius="xl"
+                                        bgGradient="linear(to-r, gray.500, gray.600)"
+                                        color="white"
+                                        _hover={{
+                                            transform: 'scale(1.1)',
+                                            bgGradient: 'linear(to-r, gray.600, gray.700)',
+                                        }}
+                                        onClick={handleCancel}
+                                    >
+                                        <FiX />
+                                    </IconButton>
+                                </Tooltip>
+                            </>
+                        ) : (
+                            <>
+                                <Tooltip content="Редактировать">
+                                    <IconButton
+                                        aria-label="Редактировать"
+                                        size="sm"
+                                        borderRadius="xl"
+                                        bgGradient="linear(to-r, blue.400, blue.500)"
+                                        color="white"
+                                        _hover={{
+                                            transform: 'scale(1.1)',
+                                            bgGradient: 'linear(to-r, blue.500, blue.600)',
+                                        }}
+                                        onClick={() => setEditing(true)}
+                                    >
+                                        <FiEdit />
+                                    </IconButton>
+                                </Tooltip>
+
+                                {!isOwnAccount && (
+                                    <Tooltip content="Удалить">
+                                        <IconButton
+                                            aria-label="Удалить"
+                                            size="sm"
+                                            borderRadius="xl"
+                                            bgGradient="linear(to-r, red.500, red.600)"
+                                            color="white"
+                                            _hover={{
+                                                transform: 'scale(1.1)',
+                                                bgGradient: 'linear(to-r, red.600, red.700)',
+                                            }}
+                                            onClick={handleDelete}
+                                        >
+                                            <FiTrash2 />
+                                        </IconButton>
+                                    </Tooltip>
+                                )}
+                            </>
+                        )}
+                    </Flex>
                 </Flex>
             </Table.Cell>
         </Table.Row>
