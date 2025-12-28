@@ -14,6 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+    metadataBase: new URL('https://rukkola-production.up.railway.app'),
     title: {
         default: "Руккола — пицца, суши, роллы в Гомеле",
         template: "%s | Руккола — пицца и суши в [город]",
