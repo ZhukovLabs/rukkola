@@ -1,34 +1,35 @@
 'use client'
 
-import React, { useState } from 'react'
-import { Flex, Table, Text, Input, IconButton, Portal } from '@chakra-ui/react'
-import { FiEdit, FiTrash2, FiCheck, FiX } from 'react-icons/fi'
-import { UserType } from '@/models/user'
-import { updateUser, deleteUser } from './actions'
-import { Tooltip } from '@/components/tooltip'
-import { Select, createListCollection } from '@chakra-ui/react'
+import React, {useState} from 'react'
+import {Flex, Table, Text, Input, IconButton, Portal} from '@chakra-ui/react'
+import {FiEdit, FiTrash2, FiCheck, FiX} from 'react-icons/fi'
+import {UserType} from '@/models/user'
+import {updateUser, deleteUser} from './actions'
+import {Tooltip} from '@/components/tooltip'
+import {Select, createListCollection} from '@chakra-ui/react'
 
 type UserRowProps = {
     onUserDelete: (id: string) => void
     onUserUpdate: (user: UserType) => void
     user: UserType
+    isOwnAccount: boolean
 }
 
 const roles = createListCollection({
     items: [
-        { label: 'admin', value: 'admin' },
-        { label: 'moderator', value: 'moderator' },
+        {label: 'admin', value: 'admin'},
+        {label: 'moderator', value: 'moderator'},
     ],
 })
 
-export const UserRow = ({ user, onUserUpdate, onUserDelete }: UserRowProps) => {
+export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRowProps) => {
     const [editing, setEditing] = useState(false)
     const [tempUser, setTempUser] = useState<UserType>(user)
 
     const handleSave = async () => {
         try {
             await updateUser(user._id.toString(), tempUser)
-            onUserUpdate({ ...user, ...tempUser } as UserType)
+            onUserUpdate({...user, ...tempUser} as UserType)
             setEditing(false)
         } catch (err) {
             console.error(err)
@@ -55,7 +56,7 @@ export const UserRow = ({ user, onUserUpdate, onUserDelete }: UserRowProps) => {
             bg="gray.900"
             borderBottom="1px solid"
             borderColor="gray.700"
-            _hover={{ bg: 'gray.850', transition: '0.2s ease' }}
+            _hover={{bg: 'gray.850', transition: '0.2s ease'}}
         >
             {/* Username */}
             <Table.Cell p={3} verticalAlign="middle">
@@ -64,7 +65,7 @@ export const UserRow = ({ user, onUserUpdate, onUserDelete }: UserRowProps) => {
                         size="sm"
                         value={tempUser.username ?? ''}
                         onChange={(e) =>
-                            setTempUser({ ...tempUser, username: e.target.value } as UserType)
+                            setTempUser({...tempUser, username: e.target.value} as UserType)
                         }
                         bg="gray.800"
                         color="teal.300"
@@ -123,7 +124,7 @@ export const UserRow = ({ user, onUserUpdate, onUserDelete }: UserRowProps) => {
                             } as UserType)
                         }
                     >
-                        <Select.HiddenSelect />
+                        <Select.HiddenSelect/>
                         <Select.Control>
                             <Select.Trigger
                                 px={2}
@@ -132,7 +133,7 @@ export const UserRow = ({ user, onUserUpdate, onUserDelete }: UserRowProps) => {
                                 borderColor="teal.500"
                                 height="36px"
                             >
-                                <Select.ValueText placeholder="Роль" />
+                                <Select.ValueText placeholder="Роль"/>
                             </Select.Trigger>
                         </Select.Control>
                         <Portal>
@@ -141,7 +142,7 @@ export const UserRow = ({ user, onUserUpdate, onUserDelete }: UserRowProps) => {
                                     {roles.items.map((item) => (
                                         <Select.Item key={item.value} item={item}>
                                             {item.label}
-                                            <Select.ItemIndicator />
+                                            <Select.ItemIndicator/>
                                         </Select.Item>
                                     ))}
                                 </Select.Content>
@@ -173,7 +174,7 @@ export const UserRow = ({ user, onUserUpdate, onUserDelete }: UserRowProps) => {
                                     }}
                                     onClick={handleSave}
                                 >
-                                    <FiCheck />
+                                    <FiCheck/>
                                 </IconButton>
                             </Tooltip>
 
@@ -190,7 +191,7 @@ export const UserRow = ({ user, onUserUpdate, onUserDelete }: UserRowProps) => {
                                     }}
                                     onClick={handleCancel}
                                 >
-                                    <FiX />
+                                    <FiX/>
                                 </IconButton>
                             </Tooltip>
                         </>
@@ -209,11 +210,11 @@ export const UserRow = ({ user, onUserUpdate, onUserDelete }: UserRowProps) => {
                                     }}
                                     onClick={() => setEditing(true)}
                                 >
-                                    <FiEdit />
+                                    <FiEdit/>
                                 </IconButton>
                             </Tooltip>
 
-                            <Tooltip content="Удалить">
+                            {!isOwnAccount && (<Tooltip content="Удалить">
                                 <IconButton
                                     aria-label="Удалить"
                                     size="sm"
@@ -226,9 +227,9 @@ export const UserRow = ({ user, onUserUpdate, onUserDelete }: UserRowProps) => {
                                     }}
                                     onClick={handleDelete}
                                 >
-                                    <FiTrash2 />
+                                    <FiTrash2/>
                                 </IconButton>
-                            </Tooltip>
+                            </Tooltip>)}
                         </>
                     )}
                 </Flex>

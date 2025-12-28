@@ -1,4 +1,4 @@
-import { Products } from './products'; // Ваш клиентский Products с virtualizer
+import { Products } from './products';
 import { getMenuData } from "./config";
 import { ComponentProps } from "react";
 

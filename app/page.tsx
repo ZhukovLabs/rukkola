@@ -1,4 +1,4 @@
-export const revalidate = 3600;
+export const revalidate = 0;
 
 import {MenuPage} from "@/app-pages/menu";
 

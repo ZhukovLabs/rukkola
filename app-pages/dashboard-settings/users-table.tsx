@@ -6,11 +6,16 @@ import { getUsers } from './actions'
 import { UserType } from '@/models/user'
 import { AddUserModal } from './add-user-modal'
 import { UserRow } from './user-row'
+import { useSession } from 'next-auth/react'
 
 export const UsersTable = () => {
-    const [users, setUsers] = useState<UserType[]>([])
-    const [loading, setLoading] = useState(true)
-    const [isAddOpen, setIsAddOpen] = useState(false)
+    const { data: session } = useSession();
+    const authenticatedUserId = session?.user?.id as string | undefined;
+
+
+    const [users, setUsers] = useState<UserType[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isAddOpen, setIsAddOpen] = useState(false);
 
     useEffect(() => {
         (async () => {
@@ -114,6 +119,7 @@ export const UsersTable = () => {
                                     <UserRow
                                         key={user._id.toString()}
                                         user={user}
+                                        isOwnAccount={user._id.toString() === authenticatedUserId}
                                         onUserUpdate={(updated) =>
                                             setUsers((prev) =>
                                                 prev.map((u) => (u._id === updated._id ? updated : u))

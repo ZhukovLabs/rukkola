@@ -8,17 +8,20 @@ import {
     Stack,
     Input,
     Text,
-    Heading
+    Heading,
+    IconButton,
+    Field,
 } from '@chakra-ui/react'
 import { Select, createListCollection } from '@chakra-ui/react'
 import { useForm, Controller } from 'react-hook-form'
 import { UserType } from '@/models/user'
 import { createUser } from './actions'
+import { FiX } from 'react-icons/fi'
 
 const roles = createListCollection({
     items: [
-        { label: 'admin', value: 'admin' },
-        { label: 'moderator', value: 'moderator' },
+        { label: 'Администратор', value: 'admin' },
+        { label: 'Модератор', value: 'moderator' },
     ],
 })
 
@@ -76,174 +79,213 @@ export const AddUserModal = ({ isOpen, onClose, onUserAdded }: AddUserModalProps
 
     return (
         <Dialog.Root open={isOpen} onOpenChange={onClose}>
-            <Dialog.Backdrop bg="blackAlpha.800" backdropFilter="blur(6px)" />
+            <Dialog.Backdrop bg="blackAlpha.800" backdropFilter="blur(8px)" />
+
             <Dialog.Positioner>
                 <Dialog.Content
+                    maxW="420px"
+                    w="full"
                     bg="gray.900"
                     borderRadius="xl"
-                    shadow="xl"
+                    shadow="lg"
                     border="1px solid"
-                    borderColor="teal.600"
+                    borderColor="gray.700"
                     color="white"
-                    maxW="md"
-                    w="full"
-                    p={6}
+                    p={0}
+                    overflow="hidden"
                 >
-                    <Dialog.Header borderBottom="1px solid" borderColor="gray.700" mb={4}>
+                    {/* Заголовок с хорошим внутренним отступом */}
+                    <Dialog.Header py={5} px={7} bg="gray.800">
                         <Flex justify="space-between" align="center">
-                            <Heading size="md" color="teal.200">
+                            <Heading size="md" fontWeight="semibold">
                                 Добавить пользователя
                             </Heading>
+
                             <Dialog.CloseTrigger asChild>
-                                <Button size="sm" variant="ghost" color="gray.400">
-                                    X
-                                </Button>
+                                <IconButton
+                                    aria-label="Закрыть"
+                                    size="sm"
+                                    variant="ghost"
+                                    color="gray.400"
+                                    _hover={{ color: 'white', bg: 'gray.700' }}
+                                >
+                                    <FiX size={18} />
+                                </IconButton>
                             </Dialog.CloseTrigger>
                         </Flex>
                     </Dialog.Header>
 
-                    <Dialog.Body>
+                    {/* Основное тело с комфортными отступами */}
+                    <Dialog.Body px={7} pt={6} pb={8}>
                         <form onSubmit={handleSubmit(onSubmit)}>
-                            <Stack gap={4}>
+                            <Stack gap={5}>   {/* Увеличил gap для "воздуха" между полями */}
+                                {/* Глобальная ошибка */}
                                 {error && (
-                                    <Text color="red.400" fontSize="sm">
+                                    <Text color="red.400" fontSize="sm" textAlign="center">
                                         {error}
                                     </Text>
                                 )}
 
-                                <Input
-                                    p={2}
-                                    placeholder="Логин"
-                                    bg="gray.700"
-                                    color="white"
-                                    autoFocus
-                                    {...register('username', { required: 'Логин обязателен' })}
-                                />
-                                {errors.username && (
-                                    <Text color="red.400" fontSize="sm">
-                                        {errors.username.message}
-                                    </Text>
-                                )}
+                                {/* Логин */}
+                                <Field.Root invalid={!!errors.username}>
+                                    <Field.Label fontSize="sm">Логин</Field.Label>
+                                    <Input
+                                        px={4}   /* Внутренний padding инпута — текст не прижат к краю */
+                                        py={3}
+                                        bg="gray.800"
+                                        border="none"
+                                        _placeholder={{ color: 'gray.500' }}
+                                        _focus={{
+                                            bg: 'gray.700',
+                                            boxShadow: '0 0 0 2px rgba(56, 178, 172, 0.4)',
+                                        }}
+                                        {...register('username', { required: 'Логин обязателен' })}
+                                    />
+                                    <Field.ErrorText fontSize="xs">{errors.username?.message}</Field.ErrorText>
+                                </Field.Root>
 
-                                <Input
-                                    p={2}
-                                    placeholder="Пароль"
-                                    type="password"
-                                    bg="gray.700"
-                                    color="white"
-                                    {...register('password', { required: 'Пароль обязателен', minLength: { value: 6, message: 'Минимум 6 символов' } })}
-                                />
-                                {errors.password && (
-                                    <Text color="red.400" fontSize="sm">
-                                        {errors.password.message}
-                                    </Text>
-                                )}
+                                {/* Пароль */}
+                                <Field.Root invalid={!!errors.password}>
+                                    <Field.Label fontSize="sm">Пароль</Field.Label>
+                                    <Input
+                                        px={4}
+                                        py={3}
+                                        type="password"
+                                        bg="gray.800"
+                                        border="none"
+                                        _placeholder={{ color: 'gray.500' }}
+                                        _focus={{
+                                            bg: 'gray.700',
+                                            boxShadow: '0 0 0 2px rgba(56, 178, 172, 0.4)',
+                                        }}
+                                        {...register('password', {
+                                            required: 'Пароль обязателен',
+                                            minLength: { value: 6, message: 'Минимум 6 символов' },
+                                        })}
+                                    />
+                                    <Field.ErrorText fontSize="xs">{errors.password?.message}</Field.ErrorText>
+                                </Field.Root>
 
-                                <Input
-                                    p={2}
-                                    placeholder="Имя"
-                                    bg="gray.700"
-                                    color="white"
-                                    {...register('name', { required: 'Имя обязательно' })}
-                                />
-                                {errors.name && (
-                                    <Text color="red.400" fontSize="sm">
-                                        {errors.name.message}
-                                    </Text>
-                                )}
+                                {/* Имя */}
+                                <Field.Root invalid={!!errors.name}>
+                                    <Field.Label fontSize="sm">Имя</Field.Label>
+                                    <Input
+                                        px={4}
+                                        py={3}
+                                        bg="gray.800"
+                                        border="none"
+                                        _placeholder={{ color: 'gray.500' }}
+                                        _focus={{
+                                            bg: 'gray.700',
+                                            boxShadow: '0 0 0 2px rgba(56, 178, 172, 0.4)',
+                                        }}
+                                        {...register('name', { required: 'Имя обязательно' })}
+                                    />
+                                    <Field.ErrorText fontSize="xs">{errors.name?.message}</Field.ErrorText>
+                                </Field.Root>
 
-                                <Input
-                                    p={2}
-                                    placeholder="Фамилия"
-                                    bg="gray.700"
-                                    color="white"
-                                    {...register('surname')}
-                                />
+                                {/* Фамилия и Отчество */}
+                                <Flex gap={4}>
+                                    <Field.Root flex={1}>
+                                        <Field.Label fontSize="sm">Фамилия</Field.Label>
+                                        <Input
+                                            px={4}
+                                            py={3}
+                                            bg="gray.800"
+                                            border="none"
+                                            _placeholder={{ color: 'gray.500' }}
+                                            _focus={{
+                                                bg: 'gray.700',
+                                                boxShadow: '0 0 0 2px rgba(56, 178, 172, 0.4)',
+                                            }}
+                                            {...register('surname')}
+                                        />
+                                    </Field.Root>
 
-                                <Input
-                                    p={2}
-                                    placeholder="Отчество"
-                                    bg="gray.700"
-                                    color="white"
-                                    {...register('patronymic')}
-                                />
+                                    <Field.Root flex={1}>
+                                        <Field.Label fontSize="sm">Отчество</Field.Label>
+                                        <Input
+                                            px={4}
+                                            py={3}
+                                            bg="gray.800"
+                                            border="none"
+                                            _placeholder={{ color: 'gray.500' }}
+                                            _focus={{
+                                                bg: 'gray.700',
+                                                boxShadow: '0 0 0 2px rgba(56, 178, 172, 0.4)',
+                                            }}
+                                            {...register('patronymic')}
+                                        />
+                                    </Field.Root>
+                                </Flex>
 
-                                <Controller
-                                    name="role"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <>
+                                {/* Роль */}
+                                <Field.Root>
+                                    <Field.Label fontSize="sm">Роль</Field.Label>
+                                    <Controller
+                                        name="role"
+                                        control={control}
+                                        render={({ field }) => (
                                             <Select.Root
                                                 collection={roles}
                                                 value={[field.value]}
-                                                positioning={{ strategy: 'fixed', hideWhenDetached: true }}
-                                                onValueChange={(item) => {
-                                                    field.onChange(item.value[0])
-                                                }}
+                                                onValueChange={(details) => field.onChange(details.value[0])}
                                             >
-                                                <Select.HiddenSelect />
                                                 <Select.Control>
                                                     <Select.Trigger
-                                                        p={2}
+                                                        px={4}
+                                                        py={3}
                                                         bg="gray.800"
-                                                        color="teal.200"
-                                                        borderColor="teal.600"
-                                                        height="40px"
-                                                        _hover={{ borderColor: 'teal.500' }}
+                                                        border="none"
+                                                        _hover={{ bg: 'gray.700' }}
+                                                        _focus={{
+                                                            boxShadow: '0 0 0 2px rgba(56, 178, 172, 0.4)',
+                                                        }}
                                                     >
                                                         <Select.ValueText placeholder="Выберите роль" />
+                                                        <Select.IndicatorGroup>
+                                                            <Select.Indicator />
+                                                        </Select.IndicatorGroup>
                                                     </Select.Trigger>
-                                                    <Select.IndicatorGroup>
-                                                        <Select.Indicator />
-                                                    </Select.IndicatorGroup>
                                                 </Select.Control>
 
-                                                    <Select.Positioner>
-                                                        <Select.Content bg="gray.800" borderColor="teal.600" border="1px solid">
-                                                            {roles.items.map((item) => (
-                                                                <Select.Item key={item.value} item={item}>
-                                                                    {item.label}
-                                                                    <Select.ItemIndicator />
-                                                                </Select.Item>
-                                                            ))}
-                                                        </Select.Content>
-                                                    </Select.Positioner>
+                                                <Select.Positioner>
+                                                    <Select.Content bg="gray.800" borderColor="gray.700">
+                                                        {roles.items.map((item) => (
+                                                            <Select.Item key={item.value} item={item}>
+                                                                <Select.ItemText>{item.label}</Select.ItemText>
+                                                                <Select.ItemIndicator />
+                                                            </Select.Item>
+                                                        ))}
+                                                    </Select.Content>
+                                                </Select.Positioner>
                                             </Select.Root>
-
-                                            {errors.role && (
-                                                <Text color="red.400" fontSize="sm">
-                                                    {errors.role.message}
-                                                </Text>
-                                            )}
-                                        </>
-                                    )}
-                                />
+                                        )}
+                                    />
+                                </Field.Root>
                             </Stack>
 
-                            <Dialog.Footer mt={6} borderColor="gray.700">
+                            <Flex gap={4} mt={8} justify="flex-end">
                                 <Button
-                                    p={2}
-                                    variant="outline"
+                                    variant="ghost"
                                     color="gray.400"
-                                    size="sm"
-                                    mr={2}
+                                    _hover={{ bg: 'gray.700', color: 'white' }}
                                     onClick={onClose}
                                     disabled={loading}
+                                    p={2}
                                 >
                                     Отмена
                                 </Button>
+
                                 <Button
                                     p={2}
-                                    variant="outline"
                                     type="submit"
-                                    color="teal.300"
-                                    borderColor="teal.300"
-                                    size="sm"
+                                    colorScheme="teal"
                                     loading={loading}
                                 >
                                     Добавить
                                 </Button>
-                            </Dialog.Footer>
+                            </Flex>
                         </form>
                     </Dialog.Body>
                 </Dialog.Content>

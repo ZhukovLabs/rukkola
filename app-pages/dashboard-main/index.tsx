@@ -5,8 +5,10 @@ import {Category} from "@/models/category";
 import {User} from "@/models/user";
 import {StatsGrid} from "./sats-grid";
 import {auth} from "@/lib/auth";
+import {checkAuth} from "@/lib/auth/actions";
 
 export const Dashboard = async () => {
+    await checkAuth();
     await connectToDatabase();
 
     const [productsCount, hiddenProductsCount, categoriesCount, usersCount] = await Promise.all([

@@ -1,8 +1,9 @@
 'use server';
 
-import { connectToDatabase } from "@/lib/mongoose";
-import { User, UserType } from '@/models/user'
+import {connectToDatabase} from "@/lib/mongoose";
+import {User, UserType} from '@/models/user'
 import bcrypt from "bcryptjs";
+import {checkAuth} from "@/lib/auth/actions";
 
 type CreateUserData = {
     username: string
@@ -25,9 +26,14 @@ function serializeUser(user: any): UserType {
 }
 
 export async function createUser(data: CreateUserData): Promise<UserType> {
+    const user = await checkAuth();
+    if (user.role !== 'admin') {
+        throw new Error('Недостаточно прав');
+    }
+
     await connectToDatabase();
 
-    const existing = await User.findOne({ username: data.username })
+    const existing = await User.findOne({username: data.username})
     if (existing) {
         throw new Error('Пользователь с таким логином уже существует')
     }
@@ -49,6 +55,11 @@ export async function createUser(data: CreateUserData): Promise<UserType> {
 }
 
 export async function getUsers() {
+    const user = await checkAuth();
+    if (user.role !== 'admin') {
+        throw new Error('Недостаточно прав');
+    }
+
     await connectToDatabase();
 
     const users = await User.find().lean().exec()
@@ -56,14 +67,30 @@ export async function getUsers() {
 }
 
 export async function updateUser(id: string, data: Partial<UserType>) {
+    const currentUser = await checkAuth();
+    if (currentUser.role !== 'admin') {
+        throw new Error('Недостаточно прав');
+    }
+    if (id === currentUser.id) {
+        throw new Error('Нельзя редактировать самого себя');
+    }
+
     await connectToDatabase();
 
-    const updated = await User.findByIdAndUpdate(id, data, { new: true }).lean().exec()
+    const updated = await User.findByIdAndUpdate(id, data, {new: true}).lean().exec()
     if (!updated) throw new Error('Пользователь не найден')
     return serializeUser(updated)
 }
 
 export async function deleteUser(id: string) {
+    const currentUser = await checkAuth();
+    if (currentUser.role !== 'admin') {
+        throw new Error('Недостаточно прав');
+    }
+    if (id === currentUser.id) {
+        throw new Error('Нельзя удалить самого себя');
+    }
+
     await connectToDatabase();
 
     const deleted = await User.findByIdAndDelete(id).lean().exec()
@@ -72,6 +99,11 @@ export async function deleteUser(id: string) {
 }
 
 export async function updatePassword(userId: string, oldPassword: string, newPassword: string) {
+    const currentUser = await checkAuth();
+    if (userId !== currentUser.id) {
+        throw new Error('Можно изменить пароль только для себя');
+    }
+
     await connectToDatabase()
 
     const user = await User.findById(userId);
@@ -83,5 +115,5 @@ export async function updatePassword(userId: string, oldPassword: string, newPas
     user.password = await bcrypt.hash(newPassword, 10)
     await user.save()
 
-    return { success: true }
+    return {success: true}
 }

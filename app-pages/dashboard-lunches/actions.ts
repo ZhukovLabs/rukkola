@@ -1,23 +1,28 @@
 'use server'
 
 import {Lunch} from '@/models/lunch'
-import {revalidatePath} from "next/cache";
-import {connectToDatabase} from "@/lib/mongoose";
-import fs from "fs";
-import path from "path";
+import {revalidatePath} from "next/cache"
+import {connectToDatabase} from "@/lib/mongoose"
+import fs from "fs"
+import path from "path"
+import {checkAuth} from '@/lib/auth/actions'
 
 export const getAllLunches = async () => {
-    await connectToDatabase();
+    await checkAuth();
+
+    await connectToDatabase()
 
     const lunches = await Lunch.find().sort({createdAt: -1}).lean()
     return JSON.parse(JSON.stringify(lunches))
 }
 
 export async function activeLunch(id: string) {
+    await checkAuth();
+
     await connectToDatabase()
 
     const lunch = await Lunch.findById(id)
-    if (!lunch) return;
+    if (!lunch) return
 
     await Lunch.updateMany({}, {$set: {active: false}})
     lunch.active = true
@@ -28,6 +33,8 @@ export async function activeLunch(id: string) {
 }
 
 export async function deactivateLunch() {
+    await checkAuth();
+
     await connectToDatabase()
     await Lunch.updateMany({}, {$set: {active: false}})
 
@@ -36,6 +43,8 @@ export async function deactivateLunch() {
 }
 
 export async function deleteLunch(id: string) {
+    await checkAuth();
+
     await connectToDatabase()
 
     const lunch = await Lunch.findById(id)
@@ -63,7 +72,8 @@ export async function deleteLunch(id: string) {
 
     await Lunch.deleteOne({_id: id})
 
-    revalidatePath('/');
+    revalidatePath('/')
+    revalidatePath('/dashboard/lunches')
 
     return {success: true}
 }

@@ -35,7 +35,9 @@ export const authConfig = {
     )
     ],
     session: {strategy: "jwt"},
-    pages: {signIn: "/login"},
+    pages: {
+        signIn: "/login"
+    },
     callbacks: {
         async jwt({token, user}) {
             if (user) {

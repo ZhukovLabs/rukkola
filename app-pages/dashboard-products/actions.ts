@@ -1,25 +1,28 @@
 'use server'
 
-import {connectToDatabase} from '@/lib/mongoose'
-import {PortionPrice, Product} from '@/models/product'
-import {Types} from "mongoose";
-import {revalidatePath} from "next/cache";
-import {Category} from "@/models/category";
-import {ObjectId} from 'mongodb'
-import {productSchema} from "./validation";
+import { connectToDatabase } from '@/lib/mongoose'
+import { PortionPrice, Product } from '@/models/product'
+import { Types } from "mongoose"
+import { revalidatePath } from "next/cache"
+import { Category } from "@/models/category"
+import { ObjectId } from 'mongodb'
+import { productSchema } from "./validation"
+import {checkAuth} from "@/lib/auth/actions";
 
 export async function getProducts(page = 1, limit = 10, search?: string, category?: string) {
+    await checkAuth();
+
     await connectToDatabase()
 
     const skip = (page - 1) * limit
     const filter: any = {}
-    if (search) filter.name = {$regex: search, $options: 'i'}
+    if (search) filter.name = { $regex: search, $options: 'i' }
     if (category) filter.categories = new ObjectId(category)
 
     const total = await Product.countDocuments(filter)
 
     const products = await Product.aggregate([
-        {$match: filter},
+        { $match: filter },
         {
             $lookup: {
                 from: 'categories',
@@ -30,13 +33,13 @@ export async function getProducts(page = 1, limit = 10, search?: string, categor
         },
         {
             $addFields: {
-                minCategoryOrder: {$min: '$categories.order'}
+                minCategoryOrder: { $min: '$categories.order' }
             }
         },
-        {$sort: {minCategoryOrder: 1}},
-        {$skip: skip},
-        {$limit: limit},
-        {$project: {minCategoryOrder: 0}}
+        { $sort: { minCategoryOrder: 1 } },
+        { $skip: skip },
+        { $limit: limit },
+        { $project: { minCategoryOrder: 0 } }
     ])
 
     return {
@@ -47,81 +50,92 @@ export async function getProducts(page = 1, limit = 10, search?: string, categor
 }
 
 export async function toggleProductVisibility(productId: string) {
+    await checkAuth();
+
     if (!Types.ObjectId.isValid(productId)) {
-        throw new Error('Invalid product ID');
+        throw new Error('Invalid product ID')
     }
 
-    await connectToDatabase();
+    await connectToDatabase()
 
-    const product = await Product.findById(productId);
+    const product = await Product.findById(productId)
     if (!product) {
-        throw new Error('Product not found');
+        throw new Error('Product not found')
     }
 
-    product.hidden = !product.hidden;
-    await product.save();
+    product.hidden = !product.hidden
+    await product.save()
 
-    revalidatePath('/');
+    revalidatePath('/')
 
-    return null;
+    return null
 }
 
 export async function getProductById(id: string) {
+    await checkAuth();
+
     await connectToDatabase()
     const product = await Product
         .findById(id)
         .populate('categories')
-        .lean();
+        .lean()
+
     return JSON.parse(JSON.stringify(product))
 }
 
 type UpdateProductDataPayload = {
-    name: string;
-    description: string;
-    prices: { size: string; price: number }[];
-    categories: string[];
-    hidden: boolean;
-};
+    name: string
+    description: string
+    prices: { size: string; price: number }[]
+    categories: string[]
+    hidden: boolean
+}
 
 export async function updateProductData(id: string, data: UpdateProductDataPayload) {
-    const product = await Product.findById(id);
-    if (!product) throw new Error('Product not found');
+    await checkAuth();
+
+    const product = await Product.findById(id)
+    if (!product) throw new Error('Product not found')
 
     const newObj = {
         ...data,
         image: product.image,
-    };
+    }
 
-    await Product.findByIdAndUpdate(id, newObj);
-    revalidatePath('/');
+    await Product.findByIdAndUpdate(id, newObj)
+    revalidatePath('/')
 
-    return newObj;
+    return newObj
 }
 
 export async function deleteProduct(productId: string) {
+    await checkAuth();
+
     if (!Types.ObjectId.isValid(productId)) {
-        throw new Error("Invalid product ID");
+        throw new Error("Invalid product ID")
     }
 
-    await connectToDatabase();
+    await connectToDatabase()
 
-    const product = await Product.findById(productId).lean();
+    const product = await Product.findById(productId).lean()
     if (!product) {
-        throw new Error("Product not found");
+        throw new Error("Product not found")
     }
 
-    await Product.deleteOne({_id: product._id});
+    await Product.deleteOne({ _id: product._id })
 
     return {
         ...product,
         _id: product._id.toString(),
-        categories: product.categories.map(c => ({_id: c._id.toString()})),
+        categories: product.categories.map((c: any) => ({ _id: c._id.toString() })),
         createdAt: product.createdAt?.toISOString(),
         updatedAt: product.updatedAt?.toISOString(),
-    };
+    }
 }
 
 export async function getCategories() {
+    await checkAuth();
+
     await connectToDatabase()
 
     const categories = await Category.find().lean()
@@ -138,17 +152,19 @@ export type CreateProductInput = {
 }
 
 export async function createProduct(data: CreateProductInput) {
+    await checkAuth();
+
     await connectToDatabase()
 
     const parsed = productSchema.safeParse(data)
     if (!parsed.success) {
-        const {fieldErrors} = parsed.error.flatten()
+        const { fieldErrors } = parsed.error.flatten()
         const messages = Object.entries(fieldErrors)
             .flatMap(([field, errs]) => (errs ?? []).map((m) => `${field}: ${m}`))
         throw new Error(`Validation failed: ${messages.join('; ')}`)
     }
 
-    const valid = parsed.data;
+    const valid = parsed.data
 
     const product = new Product({
         name: valid.name,
