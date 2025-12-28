@@ -1,15 +1,14 @@
 'use server'
 
-import {Lunch} from '@/models/lunch'
-import {revalidatePath} from "next/cache"
-import {connectToDatabase} from "@/lib/mongoose"
-import fs from "fs"
-import path from "path"
+import {Lunch, LunchType} from '@/models/lunch'
+import {revalidatePath} from 'next/cache'
+import {connectToDatabase} from '@/lib/mongoose'
+import fs from 'fs'
+import path from 'path'
 import {checkAuth} from '@/lib/auth/actions'
 
 export const getAllLunches = async () => {
-    await checkAuth();
-
+    await checkAuth()
     await connectToDatabase()
 
     const lunches = await Lunch.find().sort({createdAt: -1}).lean()
@@ -17,12 +16,13 @@ export const getAllLunches = async () => {
 }
 
 export async function activeLunch(id: string) {
-    await checkAuth();
-
+    await checkAuth()
     await connectToDatabase()
 
-    const lunch = await Lunch.findById(id)
-    if (!lunch) return
+    const lunch: LunchType | null = await Lunch.findById(id)
+    if (!lunch) {
+        return {success: false, message: 'Обед не найден'}
+    }
 
     await Lunch.updateMany({}, {$set: {active: false}})
     lunch.active = true
@@ -30,26 +30,37 @@ export async function activeLunch(id: string) {
 
     revalidatePath('/')
     revalidatePath('/dashboard/lunches')
+
+    return {
+        success: true,
+        message: 'Обед активирован',
+        data: {
+            _id: lunch._id.toString(),
+            image: lunch.image,
+            active: lunch.active
+        },
+    }
 }
 
 export async function deactivateLunch() {
-    await checkAuth();
-
+    await checkAuth()
     await connectToDatabase()
+
     await Lunch.updateMany({}, {$set: {active: false}})
 
     revalidatePath('/')
     revalidatePath('/dashboard/lunches')
+
+    return {success: true, message: 'Все обеды деактивированы'}
 }
 
 export async function deleteLunch(id: string) {
-    await checkAuth();
-
+    await checkAuth()
     await connectToDatabase()
 
     const lunch = await Lunch.findById(id)
     if (!lunch) {
-        throw new Error('Lunch not found')
+        return {success: false, message: 'Обед не найден'}
     }
 
     const uploadsDir = path.resolve('uploads')
@@ -75,5 +86,5 @@ export async function deleteLunch(id: string) {
     revalidatePath('/')
     revalidatePath('/dashboard/lunches')
 
-    return {success: true}
+    return {success: true, message: 'Обед удалён', data: lunch}
 }

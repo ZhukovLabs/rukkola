@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useState, useTransition} from 'react';
+import React, { useState, useTransition } from 'react';
 import {
     Box,
     Button,
@@ -14,8 +14,8 @@ import {
     Portal,
     Center,
 } from '@chakra-ui/react';
-import {FiUpload, FiStar, FiTrash2, FiPower} from 'react-icons/fi';
-import {activeLunch, deleteLunch, deactivateLunch} from './actions';
+import { FiUpload, FiStar, FiTrash2, FiPower } from 'react-icons/fi';
+import { activeLunch, deleteLunch, deactivateLunch } from './actions';
 
 type Lunch = {
     _id: string;
@@ -23,7 +23,7 @@ type Lunch = {
     active: boolean;
 };
 
-export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
+export const LunchGallery = ({ initialLunches }: { initialLunches: Lunch[] }) => {
     const [lunches, setLunches] = useState<Lunch[]>(initialLunches);
     const [file, setFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
@@ -41,11 +41,15 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
         formData.append('file', file);
 
         try {
-            const res = await fetch('/api/lunches/upload', {method: 'POST', body: formData});
+            const res = await fetch('/api/lunches/upload', { method: 'POST', body: formData });
             if (res.ok) {
                 const data = await res.json();
-                setLunches(prev => [{_id: data.id, image: data.image, active: false}, ...prev]);
+                setLunches(prev => [{ _id: data.id, image: data.image, active: false }, ...prev]);
+            } else {
+                console.error('Upload failed', await res.text());
             }
+        } catch (err) {
+            console.error('Upload error', err);
         } finally {
             setLoading(false);
             setFile(null);
@@ -53,19 +57,45 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
     };
 
     const handleActivate = (id: string) => {
-        startTransition(async () => {
-            await activeLunch(id);
-            setLunches(prev =>
-                prev.map(l => l._id === id ? {...l, active: true} : {...l, active: false})
-            );
-        });
-    };
+        startTransition(() => {
+            void (async () => {
+                const lunch = lunches.find(l => l._id === id)
+                if (!lunch) return
+
+                try {
+                    if (lunch.active) {
+                        const res = await deactivateLunch()
+                        if (res?.success) {
+                            setLunches(prev => prev.map(l => ({ ...l, active: false })))
+                        }
+                    } else {
+                        const res = await activeLunch(id)
+                        if (res?.success) {
+                            setLunches(prev =>
+                                prev.map(l => l._id === id ? { ...l, active: true } : { ...l, active: false })
+                            )
+                        } else {
+                            console.error('Activate lunch failed:', res?.message)
+                        }
+                    }
+                } catch (err) {
+                    console.error('Activate lunch error', err)
+                }
+            })()
+        })
+    }
 
     const handleDeactivateAll = async () => {
         setDeactivating(true);
         try {
-            await deactivateLunch();
-            setLunches(prev => prev.map(l => ({...l, active: false})));
+            const res = await deactivateLunch();
+            if (res?.success) {
+                setLunches(prev => prev.map(l => ({ ...l, active: false })));
+            } else {
+                console.error('Deactivate all failed:', res?.message);
+            }
+        } catch (err) {
+            console.error('Deactivate all error', err);
         } finally {
             setDeactivating(false);
         }
@@ -74,8 +104,14 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
     const handleDelete = async (id: string) => {
         setDeleting(id);
         try {
-            await deleteLunch(id);
-            setLunches(prev => prev.filter(l => l._id !== id));
+            const res = await deleteLunch(id);
+            if (res?.success) {
+                setLunches(prev => prev.filter(l => l._id !== id));
+            } else {
+                console.error('Delete lunch failed:', res?.message);
+            }
+        } catch (err) {
+            console.error('Delete lunch error', err);
         } finally {
             setDeleting(null);
             setConfirmingId(null);
@@ -86,7 +122,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
     const activeBorder = '2px solid #2dd4bf';
 
     return (
-        <Box mx="auto" bg="gray.900" borderRadius="2xl" position="relative">
+        <Box mx="auto" bg="gray.900" borderRadius="2xl" position="relative" p={6}>
             <Text fontSize="1.5rem" fontWeight="bold" mb={4}>
                 Галерея обедов
             </Text>
@@ -100,8 +136,8 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                     color="teal.100"
                     border="1px solid"
                     borderColor="rgba(45,212,191,0.12)"
-                    _hover={{transform: 'translateY(-2px)', boxShadow: '0 8px 20px rgba(2,6,23,0.18)'}}
-                    _active={{transform: 'scale(0.98)'}}
+                    _hover={{ transform: 'translateY(-2px)', boxShadow: '0 8px 20px rgba(2,6,23,0.18)' }}
+                    _active={{ transform: 'scale(0.98)' }}
                     borderRadius="lg"
                     fontWeight="600"
                     px={4}
@@ -110,7 +146,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                     title="Выключить отображение обеда"
                 >
                     <Box as="span" display="inline-flex" alignItems="center" gap={2}>
-                        <FiPower/>
+                        <FiPower />
                         Выключить отображение обеда
                     </Box>
                 </Button>
@@ -126,7 +162,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                     bg={isDragOver ? 'rgba(45,212,191,0.03)' : 'rgba(40,40,45,0.45)'}
                     cursor="pointer"
                     transition="all 0.18s ease"
-                    _hover={{bg: 'rgba(45,212,191,0.05)'}}
+                    _hover={{ bg: 'rgba(45,212,191,0.05)' }}
                     onClick={() => document.getElementById('lunch-image-input')?.click()}
                     onDragOver={e => {
                         e.preventDefault();
@@ -147,7 +183,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                         id="lunch-image-input"
                         type="file"
                         accept="image/*"
-                        style={{display: 'none'}}
+                        style={{ display: 'none' }}
                         onChange={e => setFile(e.target.files?.[0] || null)}
                     />
 
@@ -163,7 +199,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                             />
                             <Flex align="center" gap={2}>
                                 {loading ? (
-                                    <Spinner color="teal.400" size="sm"/>
+                                    <Spinner color="teal.400" size="sm" />
                                 ) : null}
                                 <Text fontSize="xs" color="gray.300">{file.name}</Text>
                             </Flex>
@@ -172,28 +208,31 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                         <Text color="gray.400" fontSize="sm">Перетащите файл сюда или нажмите для выбора</Text>
                     )}
                 </Box>
-                {file && <Button
-                    onClick={handleUpload}
-                    loading={loading}
-                    loadingText="Загрузка..."
-                    rounded="xl"
-                    px={6}
-                    py={3}
-                    fontWeight="bold"
-                    bg="rgba(255,255,255,0.06)"
-                    border="1px solid"
-                    borderColor="rgba(255,255,255,0.08)"
-                    backdropFilter="blur(6px)"
-                    boxShadow="0 6px 24px rgba(10, 10, 10, 0.12)"
-                    _hover={{transform: "translateY(-4px)", boxShadow: "lg"}}
-                    _active={{transform: "scale(0.99)"}}
-                    aria-label="Загрузить новый обед"
-                >
-                    <Box as="span" mr={3} style={{display: "inline-flex", alignItems: "center"}}>
-                        <FiUpload/>
-                    </Box>
-                    Загрузить новый обед
-                </Button>}
+
+                {file && (
+                    <Button
+                        onClick={handleUpload}
+                        loading={loading}
+                        loadingText="Загрузка..."
+                        rounded="xl"
+                        px={6}
+                        py={3}
+                        fontWeight="bold"
+                        bg="rgba(255,255,255,0.06)"
+                        border="1px solid"
+                        borderColor="rgba(255,255,255,0.08)"
+                        backdropFilter="blur(6px)"
+                        boxShadow="0 6px 24px rgba(10, 10, 10, 0.12)"
+                        _hover={{ transform: "translateY(-4px)", boxShadow: "lg" }}
+                        _active={{ transform: "scale(0.99)" }}
+                        aria-label="Загрузить новый обед"
+                    >
+                        <Box as="span" mr={3} style={{ display: "inline-flex", alignItems: "center" }}>
+                            <FiUpload />
+                        </Box>
+                        Загрузить новый обед
+                    </Button>
+                )}
 
                 <Box position="relative">
                     {isPending && (
@@ -213,7 +252,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                 borderRadius="lg"
                                 boxShadow="0 8px 24px rgba(2,6,23,0.32)"
                             >
-                                <Spinner color="teal.300" size="lg"/>
+                                <Spinner color="teal.300" size="lg" />
                                 <Text color="teal.100" fontWeight="600">Сохранение...</Text>
                             </Flex>
                         </Center>
@@ -229,7 +268,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                 border={lunch.active ? activeBorder : '1px solid rgba(255,255,255,0.04)'}
                                 boxShadow={hoverShadow}
                                 transition="transform 0.18s ease, box-shadow 0.18s ease"
-                                _hover={{transform: 'translateY(-4px)'}}
+                                _hover={{ transform: 'translateY(-4px)' }}
                             >
                                 <Image
                                     src={lunch.image}
@@ -253,7 +292,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                         align="center"
                                         justify="center"
                                     >
-                                        <FiStar color="white" size={14}/>
+                                        <FiStar color="white" size={14} />
                                     </Flex>
                                 )}
 
@@ -270,7 +309,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                     }}
                                     loading={deleting === lunch._id}
                                 >
-                                    <FiTrash2/>
+                                    <FiTrash2 />
                                 </Button>
                             </Box>
                         ))}
@@ -280,7 +319,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
 
             <Dialog.Root open={!!confirmingId} onOpenChange={() => setConfirmingId(null)}>
                 <Portal>
-                    <Dialog.Backdrop bg="blackAlpha.400" backdropFilter="blur(3px)"/>
+                    <Dialog.Backdrop bg="blackAlpha.400" backdropFilter="blur(3px)" />
                     <Dialog.Positioner>
                         <Dialog.Content bg="gray.800" borderRadius="xl" p={5} color="white" maxW="sm" w="full">
                             <Dialog.Header mb={3}>
@@ -291,14 +330,13 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                             <Dialog.Body mb={4}>
                                 <Text color="gray.300" fontSize="sm">
                                     Это действие нельзя будет отменить.
-                                    <br/>
+                                    <br />
                                     Вы уверены, что хотите удалить обед?
                                 </Text>
                             </Dialog.Body>
                             <Dialog.Footer display="flex" justifyContent="flex-end" gap={2}>
                                 <Button
                                     p={2}
-                                    colorPalette="gray"
                                     color="gray.200"
                                     _hover={{
                                         bg: 'gray.500',
@@ -311,7 +349,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                 </Button>
                                 <Button
                                     p={2}
-                                    colorPalette="red"
+                                    colorScheme="red"
                                     onClick={() => confirmingId && handleDelete(confirmingId)}
                                     rounded="md"
                                     loading={!!deleting}

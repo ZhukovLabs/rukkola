@@ -1,6 +1,7 @@
-import mongoose, { Schema, Document, Model } from 'mongoose'
+import mongoose, {Schema, Document, Model, Types} from 'mongoose'
 
 export type LunchType = {
+    _id: Types.ObjectId
     image: string
     active: boolean
     createdAt?: Date
