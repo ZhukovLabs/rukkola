@@ -12,7 +12,6 @@ export const UsersTable = () => {
     const { data: session } = useSession();
     const authenticatedUserId = session?.user?.id as string | undefined;
 
-
     const [users, setUsers] = useState<UserType[]>([]);
     const [loading, setLoading] = useState(true);
     const [isAddOpen, setIsAddOpen] = useState(false);
@@ -20,10 +19,10 @@ export const UsersTable = () => {
     useEffect(() => {
         (async () => {
             try {
-                const data = await getUsers()
-                setUsers(data)
+                const data = await getUsers();
+                setUsers(data);
             } finally {
-                setLoading(false)
+                setLoading(false);
             }
         })()
     }, [])

@@ -4,6 +4,7 @@ import {connectToDatabase} from "@/lib/mongoose";
 import {User, UserType} from '@/models/user'
 import bcrypt from "bcryptjs";
 import {checkAuth} from "@/lib/auth/actions";
+import {revalidatePath} from "next/cache";
 
 type CreateUserData = {
     username: string
@@ -49,9 +50,11 @@ export async function createUser(data: CreateUserData): Promise<UserType> {
         role: data.role || 'moderator',
     })
 
-    await newUser.save()
+    await newUser.save();
 
-    return serializeUser(newUser)
+    revalidatePath('/dashboard/settings');
+
+    return serializeUser(newUser);
 }
 
 export async function getUsers() {
@@ -62,7 +65,8 @@ export async function getUsers() {
 
     await connectToDatabase();
 
-    const users = await User.find().lean().exec()
+    const users = await User.find().lean().exec();
+
     return users.map(serializeUser)
 }
 
@@ -75,7 +79,11 @@ export async function updateUser(id: string, data: Partial<UserType>) {
     await connectToDatabase();
 
     const updated = await User.findByIdAndUpdate(id, data, {new: true}).lean().exec()
+
     if (!updated) throw new Error('Пользователь не найден')
+
+    revalidatePath('/dashboard/settings');
+
     return serializeUser(updated)
 }
 
@@ -88,10 +96,15 @@ export async function deleteUser(id: string) {
         throw new Error('Нельзя удалить самого себя');
     }
 
+    revalidatePath('/dashboard/settings');
+
     await connectToDatabase();
 
-    const deleted = await User.findByIdAndDelete(id).lean().exec()
-    if (!deleted) throw new Error('Пользователь не найден')
+    const deleted = await User.findByIdAndDelete(id).lean().exec();
+    if (!deleted) throw new Error('Пользователь не найден');
+
+    revalidatePath('/dashboard/settings');
+
     return serializeUser(deleted)
 }
 
