@@ -1,6 +1,6 @@
 'use server';
 
-import {auth} from "@/lib/auth/index";
+import {auth, signOut} from "@/lib/auth/index";
 import {connectToDatabase} from "@/lib/mongoose";
 import {User} from "@/models/user";
 
@@ -8,13 +8,13 @@ export async function checkAuth() {
     const session = await auth();
 
     if (!session || !session.user) {
-        throw new Error('Не авторизовано');
+        return await signOut();
     }
 
     const sessionUser = session.user as { id: string; role: string };
 
     if (!sessionUser.id) {
-        throw new Error('Не авторизовано');
+        return await signOut();
     }
 
     await connectToDatabase();
@@ -22,11 +22,11 @@ export async function checkAuth() {
     const user = await User.findById(sessionUser.id).select('role').lean();
 
     if (!user) {
-        throw new Error('Пользователь не найден или был удалён');
+        return await signOut();
     }
 
     if (user.role !== sessionUser.role) {
-        throw new Error('Роль пользователя изменилась. Требуется повторный вход');
+        return await signOut();
     }
 
     return {
