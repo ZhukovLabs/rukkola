@@ -94,6 +94,8 @@ export async function updateUser(id: string, data: Partial<UserType>) {
         }
 
         revalidatePath('/dashboard/settings');
+        revalidatePath('/dashboard');
+
         return { success: true, data: serializeUser(updated) };
     } catch (err: any) {
         console.error(err);
