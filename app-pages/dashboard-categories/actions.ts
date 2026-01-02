@@ -3,7 +3,7 @@
 import { connectToDatabase } from '@/lib/mongoose'
 import { Category } from '@/models/category'
 import { revalidatePath } from "next/cache"
-import { checkAuth } from '@/lib/auth/actions'
+import { checkAuth } from '@/lib/auth/check-auth'
 
 export async function toggleCategoryField(id: string, field: 'isMenuItem' | 'showGroupTitle') {
     await checkAuth();

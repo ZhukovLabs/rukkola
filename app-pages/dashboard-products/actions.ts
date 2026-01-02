@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache"
 import { Category } from "@/models/category"
 import { ObjectId } from 'mongodb'
 import { productSchema } from "./validation"
-import {checkAuth} from "@/lib/auth/actions";
+import {checkAuth} from "@/lib/auth/check-auth";
 
 export async function getProducts(page = 1, limit = 10, search?: string, category?: string) {
     await checkAuth();

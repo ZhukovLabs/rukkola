@@ -2,10 +2,12 @@ import NextAuth, {type NextAuthConfig, type User as NextAuthUser} from "next-aut
 import Credentials from "next-auth/providers/credentials";
 import {Session as NextAuthSession} from "next-auth";
 import {JWT as NextAuthJWT} from "next-auth/jwt";
+import {v4 as uuidv4} from "uuid";
 
 import {connectToDatabase} from "@/lib/mongoose";
 import {User} from "@/models/user";
 import {isValidCredentials} from "@/lib/auth/utils";
+import {Session} from "@/models/session";
 
 export const authConfig: NextAuthConfig = {
     providers: [
@@ -63,8 +65,8 @@ export const authConfig: NextAuthConfig = {
 
     pages: {
         signIn: "/login",
-        signOut: "/login", // Перенаправление после выхода
-        error: "/login", // Обработка ошибок
+        signOut: "/",
+        error: "/login",
     },
 
     callbacks: {
@@ -79,7 +81,21 @@ export const authConfig: NextAuthConfig = {
             if (user && !user.error) {
                 token.uid = user.id;
                 token.role = user.role;
+
+                const sessionToken = uuidv4();
+
+                await connectToDatabase();
+
+                await Session.create({
+                    userId: user.id,
+                    token: sessionToken,
+                    createdAt: new Date(),
+                    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                });
+
+                token.sessionToken = sessionToken;
             }
+
             return token;
         },
 
@@ -87,18 +103,24 @@ export const authConfig: NextAuthConfig = {
             if (session.user) {
                 session.user.id = token.uid;
                 session.user.role = token.role;
+                session.user.sessionToken = token.sessionToken;
             }
             return session;
         },
+    },
+    events: {
+        async signOut(message) {
+            //@ts-expect-error - ok
+            const sessionToken = message?.token?.sessionToken;
+            if (!sessionToken) return;
 
-        async redirect({url, baseUrl}) {
-            if (url === "/logout" || url === "/api/auth/signout") {
-                return `${baseUrl}/login`;
+            try {
+                await Session.deleteOne({token: sessionToken});
+            } catch (err) {
+                console.error("Ошибка при удалении сессии:", err);
             }
-            return url.startsWith(baseUrl) ? url : baseUrl;
         },
     },
-
     secret: process.env.NEXTAUTH_SECRET,
 };
 

@@ -5,7 +5,7 @@ import {revalidatePath} from 'next/cache'
 import {connectToDatabase} from '@/lib/mongoose'
 import fs from 'fs'
 import path from 'path'
-import {checkAuth} from '@/lib/auth/actions'
+import {checkAuth} from '@/lib/auth/check-auth'
 
 export const getAllLunches = async () => {
     await checkAuth()
