@@ -1,165 +1,186 @@
 "use client";
 
-import { Flex, Box, Heading, Input, Button, Text } from "@chakra-ui/react";
-import { FiUser, FiLock, FiEye, FiEyeOff, FiAlertCircle } from "react-icons/fi";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { signIn, useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import {useColorModeValue} from "@chakra-ui/color-mode";
-
-const loginSchema = z.object({
-    username: z.string().min(3, "Логин: минимум 3 символа"),
-    password: z.string().min(5, "Пароль: минимум 5 символов"),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
+import React, {useEffect, useState} from "react";
+import {
+    Alert,
+    Box,
+    Button,
+    Flex,
+    Heading,
+    VStack,
+} from "@chakra-ui/react";
+import {FiUser, FiLock, FiEye, FiEyeOff, FiAlertCircle} from "react-icons/fi";
+import {useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {signIn, useSession} from "next-auth/react";
+import {useRouter} from "next/navigation";
+import {loginSchema, type LoginFormData} from "./validation";
+import {InputField} from "@/components/input-field";
 
 export const LoginPage = () => {
-    const { status } = useSession();
+    const {status} = useSession();
     const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
-
-    const bg = useColorModeValue("gray.900", "gray.900");
-    const cardBg = "rgba(20,20,30,0.85)";
-    const inputBg = "rgba(30,30,40,0.7)";
+    const [alert, setAlert] = useState<{
+        message: string;
+        status: "success" | "error";
+    } | null>(null);
 
     useEffect(() => {
-        if (status === "authenticated") router.push("/dashboard");
+        if (status === "authenticated") {
+            router.replace("/dashboard");
+        }
     }, [status, router]);
 
-    const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+    const showAlert = (message: string, status: "success" | "error" = "error") => {
+        setAlert({message, status});
+    };
+
+    const {
+        register,
+        handleSubmit,
+        formState: {errors, isSubmitting, isValid},
+    } = useForm<LoginFormData>({
         resolver: zodResolver(loginSchema),
+        mode: "onTouched",
+        defaultValues: {
+            username: "",
+            password: "",
+        },
     });
 
-    const notify = (message: string, type: "success" | "error") => {
-        setNotification({ message, type });
-        setTimeout(() => setNotification(null), 3000);
-    };
-
     const onSubmit = async (data: LoginFormData) => {
-        setIsLoading(true);
-        const result = await signIn("credentials", { username: data.username, password: data.password, redirect: false });
-        if (result?.error) notify("Неверный логин или пароль", "error");
-        else {
-            notify("Успешный вход!", "success");
-            setTimeout(() => router.push("/dashboard"), 1200);
+        try {
+            const result = await signIn("credentials", {
+                username: data.username,
+                password: data.password,
+                redirect: false,
+            });
+
+            if (result?.error) {
+                return showAlert(result.error, "error");
+            }
+
+            if (result?.ok) {
+                showAlert("Успешный вход", "success");
+                router.replace("/dashboard");
+            }
+        } catch (error) {
+            const message =
+                error instanceof Error ? error.message : "Ошибка при входе";
+            showAlert(message, "error");
         }
-        setIsLoading(false);
-    };
+    }
+
+    if (status === "loading") {
+        return (
+            <Flex minH="100vh" align="center" justify="center" bg="gray.950">
+                <Box color="teal.400">Загрузка...</Box>
+            </Flex>
+        );
+    }
 
     return (
-        <Flex minH="100vh" align="center" justify="center" bg={bg}>
+        <Flex
+            minH="100vh"
+            align="center"
+            justify="center"
+            bg="gray.950"
+            p={4}
+            data-testid="login-page"
+        >
             <Box
                 w="full"
                 maxW="md"
-                bg={cardBg}
-                p={8}
+                bg="gray.900"
+                p={{base: 6, md: 8}}
                 borderRadius="2xl"
-                boxShadow="0 0 40px rgba(0,0,0,0.7)"
-                border="1px solid rgba(255,255,255,0.05)"
+                border="1px solid"
+                borderColor="gray.800"
+                boxShadow="0 0 40px rgba(0,0,0,0.8)"
             >
-                <Heading mb={6} textAlign="center" fontSize="2xl" color="teal.400">
+                <Heading
+                    mb={6}
+                    textAlign="center"
+                    fontSize={{base: "xl", md: "2xl"}}
+                    color="teal.400"
+                >
                     Вход
                 </Heading>
 
-                {notification && (
-                    <Box mb={4} p={3} borderRadius="md" textAlign="center" bg={notification.type === "success" ? "green.500" : "red.500"} color="white">
-                        {notification.message}
-                    </Box>
+                {alert && (
+                    <Alert.Root
+                        mb={4}
+                        borderRadius="md"
+                        p={3}
+                        bg={alert.status === "success" ? "green.500" : "red.500"}
+                        color="white"
+                        role="alert"
+                        aria-live="polite"
+                    >
+                        <Alert.Indicator>
+                            <FiAlertCircle/>
+                        </Alert.Indicator>
+                        <Alert.Content>
+                            <Alert.Title>
+                                {alert.status === "success" ? "Успех" : "Ошибка"}
+                            </Alert.Title>
+                            <Alert.Description>{alert.message}</Alert.Description>
+                        </Alert.Content>
+                    </Alert.Root>
                 )}
 
-                <form onSubmit={handleSubmit(onSubmit)}>
-                    <InputField
-                        icon={<FiUser />}
-                        placeholder="Логин"
-                        register={register("username")}
-                        error={errors.username}
-                        bg={inputBg}
-                    />
+                <form onSubmit={handleSubmit(onSubmit)} noValidate>
+                    <VStack gap={4}>
+                        <InputField
+                            icon={<FiUser/>}
+                            placeholder="Логин"
+                            register={register("username")}
+                            error={errors.username}
+                        />
+                        <InputField
+                            icon={<FiLock/>}
+                            placeholder="Пароль"
+                            type={showPassword ? "text" : "password"}
+                            register={register("password")}
+                            error={errors.password}
+                            rightElement={
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    color="gray.300"
+                                    _hover={{bg: "transparent", color: "teal.300"}}
+                                    onClick={() => setShowPassword((v) => !v)}
+                                    aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}
+                                    type="button"
+                                >
+                                    {showPassword ? <FiEyeOff/> : <FiEye/>}
+                                </Button>
+                            }
+                        />
 
-                    <InputField
-                        icon={<FiLock />}
-                        placeholder="Пароль"
-                        type={showPassword ? "text" : "password"}
-                        register={register("password")}
-                        error={errors.password}
-                        rightElement={
-                            <Button size="sm"  onClick={() => setShowPassword(!showPassword)} color="gray.300">
-                                {showPassword ? <FiEyeOff /> : <FiEye />}
-                            </Button>
-                        }
-                        bg={inputBg}
-                    />
-
-                    <Button
-                        type="submit"
-                        w="full"
-                        mt={4}
-                        bgColor="teal.600"
-                        color="white"
-                        _hover={{ bgGradient: "linear(to-r, teal.300, cyan.300)" }}
-                        loading={isLoading}
-                        borderRadius="lg"
-                        py={3}
-                    >
-                        Войти
-                    </Button>
+                        <Button
+                            type="submit"
+                            w="full"
+                            mt={2}
+                            bg="teal.600"
+                            color="white"
+                            _hover={{bg: "teal.500"}}
+                            _active={{bg: "teal.700"}}
+                            _disabled={{
+                                bg: "gray.600",
+                                cursor: "not-allowed",
+                            }}
+                            loading={isSubmitting}
+                            disabled={!isValid && isSubmitting}
+                            loadingText="Вход..."
+                            aria-label="Войти в систему"
+                        >
+                            Войти
+                        </Button>
+                    </VStack>
                 </form>
             </Box>
         </Flex>
     );
-};
-
-type InputFieldProps = {
-    icon: React.ReactNode;
-    placeholder: string;
-    type?: string;
-    register: any;
-    error?: any;
-    rightElement?: React.ReactNode;
-    bg?: string;
-};
-
-const InputField = ({ icon, placeholder, type = "text", register, error, rightElement, bg }: InputFieldProps) => (
-    <Box mb={4}>
-        <Box position="relative">
-            <Box position="absolute" left={3} top="50%" transform="translateY(-50%)" color="gray.400" zIndex={1}>
-                {icon}
-            </Box>
-
-            <Input
-                {...register}
-                type={type}
-                placeholder={placeholder}
-                pl={10}
-                pr={rightElement ? 12 : 4}
-                py={3}
-                borderRadius="lg"
-                bg={bg}
-                borderColor={error ? "red.400" : "gray.600"}
-                color="white"
-                _placeholder={{ color: "gray.400" }}
-                _focus={{ borderColor: "teal.400", boxShadow: "0 0 0 1px teal.400" }}
-            />
-
-            {rightElement && (
-                <Box position="absolute" right={3} top="50%" transform="translateY(-50%)" zIndex={1}>
-                    {rightElement}
-                </Box>
-            )}
-        </Box>
-
-        {error && (
-            <Flex align="center" gap={1} mt={1}>
-                <FiAlertCircle color="red.400" size={14} />
-                <Text fontSize="xs" color="red.400">{error.message}</Text>
-            </Flex>
-        )}
-    </Box>
-);
-
+}

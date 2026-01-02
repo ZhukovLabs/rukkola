@@ -1,34 +1,32 @@
 'use server';
 
-import {auth, signOut} from "@/lib/auth/index";
-import {connectToDatabase} from "@/lib/mongoose";
+import {auth, signOut} from "@/lib/auth";
 import {User} from "@/models/user";
+import type {UserRole} from "@/models/user";
 
-export async function checkAuth() {
+type CheckAuthUser = { id: string; role: UserRole }
+
+export async function checkAuth(): Promise<CheckAuthUser | null> {
     const session = await auth();
 
-    if (!session || !session.user) {
-        return await signOut();
+    if (!session?.user?.id || !session.user.role) {
+        await signOut();
+        return null;
     }
 
-    const sessionUser = session.user as { id: string; role: string };
+    const {id, role: sessionRole} = session.user;
 
-    if (!sessionUser.id) {
-        return await signOut();
-    }
+    const user = await User.findById(id)
+        .select("role isActive")
+        .lean<CheckAuthUser & { isActive: boolean }>();
 
-    const user = await User.findById(sessionUser.id).select('role').lean();
-
-    if (!user) {
-        return await signOut();
-    }
-
-    if (user.role !== sessionUser.role) {
-        return await signOut();
+    if (!user || !user.isActive || user.role !== sessionRole) {
+        await signOut();
+        return null;
     }
 
     return {
-        id: sessionUser.id,
-        role: user.role as string,
+        id,
+        role: user.role,
     };
 }
