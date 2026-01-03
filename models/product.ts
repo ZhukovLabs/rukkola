@@ -38,5 +38,20 @@ const ProductSchema = new Schema<ProductType>(
     {timestamps: true}
 )
 
+ProductSchema.virtual('id').get(function (this: ProductType) {
+    return this._id.toString();
+});
+
+ProductSchema.set('toJSON', {
+    virtuals: true,
+    versionKey: false,
+    transform: (_, ret) => {
+        const { _id, ...rest } = ret;
+        return rest;
+    },
+});
+
+ProductSchema.set('toObject', { virtuals: true });
+
 export const Product: Model<ProductType> =
     mongoose.models?.Product || mongoose.model<ProductType>('Product', ProductSchema)

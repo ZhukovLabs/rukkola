@@ -2,13 +2,13 @@ import {Box, Button, Flex, IconButton, Image, Stack, Table, Text} from "@chakra-
 import {Tooltip} from "@/components/tooltip";
 import {FaEdit, FaEye, FaEyeSlash, FaTrash} from "react-icons/fa";
 
-export const ProductRow = ({ p, onToggle, onDelete, loadingId, deletePending, router }: any) => (
+export const ProductRow = ({product: p, onToggle, onDelete, loadingId, deletePending, router}: any) => (
     <Table.Row
-        key={p._id}
+        key={p.id}
         bg="gray.900"
         borderBottom="1px solid"
         borderColor="gray.800"
-        _hover={{ bg: 'gray.800', transition: '0.2s ease' }}
+        _hover={{bg: 'gray.800', transition: '0.2s ease'}}
     >
         <Table.Cell p={4}>
             <Image
@@ -34,7 +34,8 @@ export const ProductRow = ({ p, onToggle, onDelete, loadingId, deletePending, ro
             {p.prices?.length ? (
                 <Stack gap={1} fontSize="sm">
                     {p.prices.map((price: any) => (
-                        <Flex key={price.size} justify="space-between" borderBottom="1px dashed" borderColor="gray.700" pb="1">
+                        <Flex key={price.size} justify="space-between" borderBottom="1px dashed" borderColor="gray.700"
+                              pb="1">
                             <Text color="gray.400">{price.size}</Text>
                             <Text color="teal.400" fontWeight="semibold">
                                 {price.price} руб.
@@ -52,7 +53,7 @@ export const ProductRow = ({ p, onToggle, onDelete, loadingId, deletePending, ro
                 <Flex wrap="wrap" gap={1}>
                     {p.categories.map((c: any) => (
                         <Box
-                            key={c._id}
+                            key={c.id}
                             bg="gray.700"
                             color="gray.200"
                             px={2}
@@ -92,12 +93,12 @@ export const ProductRow = ({ p, onToggle, onDelete, loadingId, deletePending, ro
                                 ? 'linear(to-r, orange.500, orange.600)'
                                 : 'linear(to-r, teal.500, teal.600)',
                         }}
-                        _active={{ transform: 'scale(0.97)' }}
-                        loading={loadingId === p._id}
-                        onClick={() => onToggle(p._id)}
+                        _active={{transform: 'scale(0.97)'}}
+                        loading={loadingId === p.id}
+                        onClick={() => onToggle(p.id)}
                         flexShrink={0}
                     >
-                        {p.hidden ? <FaEye /> : <FaEyeSlash />}
+                        {p.hidden ? <FaEye/> : <FaEyeSlash/>}
                         {p.hidden ? 'Показать' : 'Скрыть'}
                     </Button>
                 </Tooltip>
@@ -109,16 +110,16 @@ export const ProductRow = ({ p, onToggle, onDelete, loadingId, deletePending, ro
                         borderRadius="xl"
                         bgGradient="linear(to-r, blue.400, blue.500)"
                         color="white"
-                        _hover={{ transform: 'scale(1.1)', bgGradient: 'linear(to-r, blue.500, blue.600)' }}
+                        _hover={{transform: 'scale(1.1)', bgGradient: 'linear(to-r, blue.500, blue.600)'}}
                         onClick={() => {
                             const params = new URLSearchParams(window.location.search)
-                            params.set('edit', p._id)
-                            router.push(`?${params.toString()}`, { scroll: false })
+                            params.set('edit', p.id)
+                            router.push(`?${params.toString()}`, {scroll: false})
                         }}
 
                         flexShrink={0}
                     >
-                        <FaEdit />
+                        <FaEdit/>
                     </IconButton>
                 </Tooltip>
 
@@ -129,12 +130,12 @@ export const ProductRow = ({ p, onToggle, onDelete, loadingId, deletePending, ro
                         borderRadius="xl"
                         bgGradient="linear(to-r, red.500, red.600)"
                         color="white"
-                        _hover={{ transform: 'scale(1.1)', bgGradient: 'linear(to-r, red.600, red.700)' }}
-                        onClick={() => onDelete(p._id)}
-                        loading={deletePending && deletePending === p._id}
+                        _hover={{transform: 'scale(1.1)', bgGradient: 'linear(to-r, red.600, red.700)'}}
+                        onClick={() => onDelete(p.id)}
+                        loading={deletePending && deletePending === p.id}
                         flexShrink={0}
                     >
-                        <FaTrash />
+                        <FaTrash/>
                     </IconButton>
                 </Tooltip>
             </Flex>

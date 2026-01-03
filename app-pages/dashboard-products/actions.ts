@@ -1,86 +1,184 @@
 'use server'
 
-import { connectToDatabase } from '@/lib/mongoose'
-import { PortionPrice, Product } from '@/models/product'
-import { Types } from "mongoose"
-import { revalidatePath } from "next/cache"
-import { Category } from "@/models/category"
-import { ObjectId } from 'mongodb'
-import { productSchema } from "./validation"
-import {checkAuth} from "@/lib/auth/check-auth";
+import {ObjectId} from 'mongodb'
+import {revalidatePath} from 'next/cache'
 
-export async function getProducts(page = 1, limit = 10, search?: string, category?: string) {
-    await checkAuth();
+import {connectToDatabase} from '@/lib/mongoose'
+import {checkAuth} from '@/lib/auth/check-auth'
 
+import {Product, PortionPrice, ProductType} from '@/models/product'
+import {Category, CategoryType} from '@/models/category'
+
+import {productSchema} from './validation'
+import {ActionResponse} from "@/types";
+import {Types} from "mongoose";
+
+export async function getProducts(
+    page = 1,
+    limit = 10,
+    search?: string,
+    category?: string,
+): Promise<ActionResponse<{
+    products: ProductType[]
+    total: number
+    totalPages: number
+}>> {
+    await checkAuth()
     await connectToDatabase()
 
     const skip = (page - 1) * limit
-    const filter: any = {}
-    if (search) filter.name = { $regex: search, $options: 'i' }
-    if (category) filter.categories = new ObjectId(category)
+    const filter: Record<string, unknown> = {}
 
-    const total = await Product.countDocuments(filter)
+    if (search) filter.name = {$regex: search, $options: 'i'};
+    if (category) filter.categories = new ObjectId(category);
+
+    const total = await Product.countDocuments(filter);
 
     const products = await Product.aggregate([
-        { $match: filter },
+        {$match: filter},
         {
             $lookup: {
                 from: 'categories',
                 localField: 'categories',
                 foreignField: '_id',
-                as: 'categories'
-            }
+                as: 'categories',
+            },
         },
         {
             $addFields: {
-                minCategoryOrder: { $min: '$categories.order' }
-            }
+                minCategoryOrder: {$min: '$categories.order'},
+            },
         },
-        { $sort: { minCategoryOrder: 1 } },
-        { $skip: skip },
-        { $limit: limit },
-        { $project: { minCategoryOrder: 0 } }
-    ])
+        {$sort: {minCategoryOrder: 1}},
+        {$skip: skip},
+        {$limit: limit},
+        {
+            $project: {
+                _id: 0,
+                id: {$toString: '$_id'},
+                name: 1,
+                description: 1,
+                prices: 1,
+                image: 1,
+                hidden: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                categories: {
+                    $map: {
+                        input: '$categories',
+                        as: 'cat',
+                        in: {
+                            _id: 0,
+                            id: {$toString: '$$cat._id'},
+                            name: '$$cat.name',
+                            order: '$$cat.order',
+                        },
+                    },
+                },
+            },
+        },
+    ]);
 
     return {
-        products: JSON.parse(JSON.stringify(products)),
-        total,
-        totalPages: Math.ceil(total / limit),
+        success: true,
+        message: 'Список товаров получен',
+        data: {
+            products: products,
+            total,
+            totalPages: Math.ceil(total / limit),
+        },
     }
 }
 
-export async function toggleProductVisibility(productId: string) {
+export async function getProductById(id: string): Promise<ActionResponse<ProductType>> {
     await checkAuth();
+    await connectToDatabase();
 
-    if (!Types.ObjectId.isValid(productId)) {
-        throw new Error('Invalid product ID')
+    const result = await Product.aggregate([
+        {
+            $match: {_id: new Types.ObjectId(id)},
+        },
+        {
+            $lookup: {
+                from: 'categories',
+                localField: 'categories',
+                foreignField: '_id',
+                as: 'categories',
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 0,
+                            id: {$toString: '$_id'},
+                            name: 1,
+                        },
+                    },
+                ],
+            },
+        }, {
+            $project: {
+                _id: 0,
+                id: {$toString: '$_id'},
+                name: 1,
+                description: 1,
+                prices: 1,
+                image: 1,
+                categories: 1,
+                hidden: 1,
+            }
+        }
+    ]);
+
+    const product = result[0] || null;
+
+    if (!product) return {success: false, message: 'Товар не найден'};
+
+    return {
+        success: true,
+        message: 'Товар найден',
+        data: JSON.parse(JSON.stringify(product)),
     }
+}
 
-    await connectToDatabase()
+export async function toggleProductVisibility(
+    productId: string,
+): Promise<ActionResponse<{ id: string; hidden: boolean }>> {
+    await checkAuth();
+    await connectToDatabase();
 
     const product = await Product.findById(productId)
-    if (!product) {
-        throw new Error('Product not found')
-    }
+    if (!product) return {success: false, message: 'Товар не найден'};
 
     product.hidden = !product.hidden
     await product.save()
 
-    revalidatePath('/')
+    revalidatePath('/');
 
-    return null
+    return {
+        success: true,
+        message: product.hidden ? 'Товар скрыт' : 'Товар отображается',
+        data: {
+            id: productId,
+            hidden: product.hidden,
+        },
+    }
 }
 
-export async function getProductById(id: string) {
+export async function deleteProduct(productId: string): Promise<ActionResponse<{ id: string }>> {
     await checkAuth();
+    await connectToDatabase();
 
-    await connectToDatabase()
-    const product = await Product
-        .findById(id)
-        .populate('categories')
-        .lean()
+    const product = await Product.findById(productId);
+    if (!product) return {success: false, message: 'Товар не найден'};
 
-    return JSON.parse(JSON.stringify(product))
+    await product.deleteOne();
+
+    revalidatePath('/');
+
+    return {
+        success: true,
+        message: 'Товар удалён',
+        data: {id: productId},
+    };
 }
 
 type UpdateProductDataPayload = {
@@ -91,56 +189,51 @@ type UpdateProductDataPayload = {
     hidden: boolean
 }
 
-export async function updateProductData(id: string, data: UpdateProductDataPayload) {
-    await checkAuth();
+export async function updateProductData(
+    id: string,
+    data: UpdateProductDataPayload,
+): Promise<ActionResponse<{ id: string }>> {
+    await checkAuth()
+    await connectToDatabase()
 
-    const product = await Product.findById(id)
-    if (!product) throw new Error('Product not found')
+    const product = await Product.findById(id);
+    if (!product) return {success: false, message: 'Товар не найден'};
 
-    const newObj = {
+    const updatedData = {
         ...data,
         image: product.image,
     }
 
-    await Product.findByIdAndUpdate(id, newObj)
+    await Product.findByIdAndUpdate(id, updatedData)
     revalidatePath('/')
 
-    return newObj
+    return {
+        success: true,
+        message: 'Товар обновлён',
+        data: {id},
+    }
 }
 
-export async function deleteProduct(productId: string) {
+export async function getCategories(): Promise<ActionResponse<CategoryType[]>> {
     await checkAuth();
+    await connectToDatabase();
 
-    if (!Types.ObjectId.isValid(productId)) {
-        throw new Error("Invalid product ID")
-    }
-
-    await connectToDatabase()
-
-    const product = await Product.findById(productId).lean()
-    if (!product) {
-        throw new Error("Product not found")
-    }
-
-    await Product.deleteOne({ _id: product._id })
+    const categories = await Category.aggregate([
+        {
+            $project: {
+                _id: 0,
+                id: {$toString: '$_id'},
+                name: 1,
+                order: 1
+            },
+        },
+    ])
 
     return {
-        ...product,
-        _id: product._id.toString(),
-        categories: product.categories.map((c: any) => ({ _id: c._id.toString() })),
-        createdAt: product.createdAt?.toISOString(),
-        updatedAt: product.updatedAt?.toISOString(),
-    }
-}
-
-export async function getCategories() {
-    await checkAuth();
-
-    await connectToDatabase()
-
-    const categories = await Category.find().lean()
-
-    return JSON.parse(JSON.stringify(categories))
+        success: true,
+        message: 'Категории получены',
+        data: JSON.parse(JSON.stringify(categories)),
+    };
 }
 
 export type CreateProductInput = {
@@ -151,32 +244,40 @@ export type CreateProductInput = {
     hidden?: boolean
 }
 
-export async function createProduct(data: CreateProductInput) {
-    await checkAuth();
-
+export async function createProduct(
+    data: CreateProductInput,
+): Promise<ActionResponse<{ id: string }>> {
+    await checkAuth()
     await connectToDatabase()
 
     const parsed = productSchema.safeParse(data)
     if (!parsed.success) {
-        const { fieldErrors } = parsed.error.flatten()
-        const messages = Object.entries(fieldErrors)
-            .flatMap(([field, errs]) => (errs ?? []).map((m) => `${field}: ${m}`))
-        throw new Error(`Validation failed: ${messages.join('; ')}`)
+        const messages = parsed.error.issues.map(
+            (issue) => `${issue.path.join('.')}: ${issue.message}`,
+        )
+
+        return {
+            success: false,
+            message: `Ошибка валидации: ${messages.join('; ')}`,
+        }
     }
 
-    const valid = parsed.data
-
     const product = new Product({
-        name: valid.name,
-        description: valid.description ?? '',
-        prices: valid.prices,
-        categories: valid.categories ?? [],
-        hidden: Boolean(valid.hidden),
+        name: parsed.data.name,
+        description: parsed.data.description ?? '',
+        prices: parsed.data.prices,
+        categories: parsed.data.categories ?? [],
+        hidden: Boolean(parsed.data.hidden),
     })
 
     await product.save()
 
     revalidatePath('/dashboard/products')
+    revalidatePath('/')
 
-    return product.toObject()
+    return {
+        success: true,
+        message: 'Товар создан',
+        data: {id: product.id},
+    }
 }

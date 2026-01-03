@@ -14,7 +14,7 @@ export const MenuPage = async () => {
     const {
         activeLunch: activeLunchRaw,
         categories: categoriesRaw,
-    } = await getMenuData(); // Фетчим только лёгкие данные здесь
+    } = await getMenuData();
 
     const activeLunch = activeLunchRaw
         ? {
