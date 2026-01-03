@@ -18,7 +18,7 @@ export const authConfig: NextAuthConfig = {
                 password: {label: "Пароль", type: "password"},
             },
 
-            async authorize(credentials): Promise<NextAuthUser | { error: string }> {
+            async authorize(credentials, req): Promise<NextAuthUser | { error: string }> {
                 if (!isValidCredentials(credentials)) return {error: "Некорректные учетные данные"};
 
                 await connectToDatabase();
@@ -49,11 +49,21 @@ export const authConfig: NextAuthConfig = {
 
                 await user.save();
 
+                const ip =
+                    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+                    req.headers.get("x-real-ip") ??
+                    "unknown";
+
+                const userAgent = req.headers.get("user-agent") ?? "unknown";
+
                 return {
                     id: user._id.toString(),
                     username: user.username,
                     name: user.name,
                     role: user.role ?? "moderator",
+
+                    ip,
+                    userAgent
                 };
             },
         }),
@@ -89,7 +99,8 @@ export const authConfig: NextAuthConfig = {
                 await Session.create({
                     userId: user.id,
                     token: sessionToken,
-                    createdAt: new Date(),
+                    ip: user.ip,
+                    userAgent: user.userAgent,
                     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
                 });
 
