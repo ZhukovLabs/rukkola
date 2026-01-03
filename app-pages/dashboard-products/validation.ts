@@ -40,7 +40,7 @@ export const productSchema = z.object({
             'Файл должен быть изображением (jpeg, png, gif, webp и т.д.)'
         )
         .refine(
-            (file) => !file || file.size <= 10 * 1024 * 1024, // 10 МБ
+            (file) => !file || file.size <= 10 * 1024 * 1024,
             'Размер изображения не должен превышать 10 МБ'
         ),
 });

@@ -1,7 +1,6 @@
 'use client';
 
 import {memo} from 'react';
-import {useRouter} from 'next/navigation';
 import {
     Box,
     Flex,
@@ -34,8 +33,6 @@ const COLUMNS: Column[] = [
 ];
 
 export const ProductsTable = memo(() => {
-    const router = useRouter();
-
     const {
         data: {products},
         isFetching,
@@ -74,7 +71,6 @@ export const ProductsTable = memo(() => {
                 <ProductRow
                     key={product.id}
                     product={product}
-                    router={router}
                     onToggle={toggleVisibility.mutate}
                     onDelete={openDialog}
                     loadingId={loadingId}

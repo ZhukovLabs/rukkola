@@ -46,12 +46,12 @@ ProductSchema.set('toJSON', {
     virtuals: true,
     versionKey: false,
     transform: (_, ret) => {
-        const { _id, ...rest } = ret;
+        const {_id, ...rest} = ret;
         return rest;
     },
 });
 
-ProductSchema.set('toObject', { virtuals: true });
+ProductSchema.set('toObject', {virtuals: true});
 
 export const Product: Model<ProductType> =
     mongoose.models?.Product || mongoose.model<ProductType>('Product', ProductSchema)

@@ -3,12 +3,21 @@
 import {Box, Heading, Card} from '@chakra-ui/react'
 import {useSearchParams, useRouter} from 'next/navigation'
 import {Pagination} from '@/components/pagination'
-import {EditProductModal} from './modals/edit-product-modal'
-import {CreateProductModal} from './modals/create-modal-product'
 import {CreateProductButton} from './create-product-button'
 import {FilterSection} from "./filter-section";
 import {ProductsTable} from "./products-table";
 import {useProductsTable} from "./hooks/use-products-table";
+import dynamic from 'next/dynamic'
+
+const CreateProductModal = dynamic(
+    () => import('./modals/create-modal-product').then(mod => ({default: mod.CreateProductModal})),
+    {ssr: false}
+)
+
+const EditProductModal = dynamic(
+    () => import('./modals/edit-product-modal').then(mod => ({default: mod.EditProductModal})),
+    {ssr: false}
+)
 
 export const ProductsPage = () => {
     const searchParams = useSearchParams();
