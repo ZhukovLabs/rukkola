@@ -35,6 +35,8 @@ declare module "next-auth/adapters" {
         username?: string;
         name?: string;
         role?: "admin" | "moderator";
+        ip?: string;
+        userAgent?: string;
         error?: string;
     }
 }
