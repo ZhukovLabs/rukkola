@@ -16,6 +16,8 @@ declare module "next-auth" {
         username?: string;
         name?: string;
         role?: "admin" | "moderator";
+        ip?: string;
+        userAgent?: string;
         error?: string;
     }
 }
