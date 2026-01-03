@@ -40,11 +40,9 @@ export async function createUser(data: CreateUserData) {
             return {success: false, message: 'Пользователь с таким логином уже существует'}
         }
 
-        const hashedPassword = await bcrypt.hash(data.password, 10);
-
         const newUser = new User({
             username: data.username,
-            password: hashedPassword,
+            password: data.password,
             name: data.name,
             surname: data.surname || '',
             patronymic: data.patronymic || '',
