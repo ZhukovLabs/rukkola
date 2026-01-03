@@ -3,7 +3,7 @@ User-agent: *
 Allow: /
 
 # Host
-Host: rukkola-production.up.railway.app
+Host: https://rukkola-production.up.railway.app
 
 # Sitemaps
 Sitemap: https://rukkola-production.up.railway.app/sitemap.xml

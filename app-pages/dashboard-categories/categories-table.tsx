@@ -29,6 +29,7 @@ import {
     deleteCategory,
 } from './actions'
 import {Tooltip} from '@/components/tooltip'
+import {useConfirmationDialog} from "@/hooks/use-delete-product-confirmation";
 
 type Props = { categories: CategoryType[] }
 
@@ -37,7 +38,21 @@ export default function CategoriesTable({categories: initialCategories}: Props) 
     const [editingId, setEditingId] = useState<string | null>(null)
     const [tempName, setTempName] = useState('')
 
-    // Mutations
+    const {
+        openDialog: openDeleteDialog,
+        ConfirmationDialog: DeleteConfirmationDialog,
+    } = useConfirmationDialog<string>({
+        title: 'Удаление категории',
+        description: 'Категория будет удалена без возможности восстановления.',
+        confirmText: 'Удалить',
+        cancelText: 'Отмена',
+        colorScheme: 'red',
+        onConfirm: (categoryId) => {
+            deleteMutation.mutate(categoryId)
+        },
+    })
+
+
     const toggleMutation = useMutation({
         mutationFn: ({id, field}: { id: string; field: 'isMenuItem' | 'showGroupTitle' }) =>
             toggleCategoryField(id, field),
@@ -172,7 +187,6 @@ export default function CategoriesTable({categories: initialCategories}: Props) 
                         </Tooltip>
                     </Table.Cell>
 
-                    {/* Показывать заголовок — Checkbox */}
                     <Table.Cell p={4} textAlign="center">
                         <Tooltip content={category.showGroupTitle ? 'Заголовок виден' : 'Заголовок скрыт'}
                                  openDelay={400}>
@@ -203,7 +217,6 @@ export default function CategoriesTable({categories: initialCategories}: Props) 
                         </Tooltip>
                     </Table.Cell>
 
-                    {/* Действия */}
                     <Table.Cell p={4}>
                         <Flex gap={2} align="center" justify="center" alignSelf="center">
                             {isEditing ? (
@@ -311,11 +324,7 @@ export default function CategoriesTable({categories: initialCategories}: Props) 
                                         transform: 'scale(1.1)',
                                         bgGradient: 'linear(to-r, red.600, red.700)',
                                     }}
-                                    onClick={() => {
-                                        if (window.confirm('Вы точно хотите удалить категорию?')) {
-                                            deleteMutation.mutate(category._id.toString())
-                                        }
-                                    }}
+                                    onClick={() => openDeleteDialog(category._id.toString())}
                                     loading={isDeleting}
                                 >
                                     <FiTrash2/>
@@ -409,6 +418,8 @@ export default function CategoriesTable({categories: initialCategories}: Props) 
                     </Box>
                 </Card.Body>
             </Card.Root>
+
+            <DeleteConfirmationDialog />
         </Box>
     )
 }
