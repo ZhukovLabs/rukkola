@@ -52,16 +52,35 @@ const getCategories = async (withAlcohol: boolean = false) => {
     }
 };
 
-const getGroupedProducts = () => (
-    Product.aggregate<GroupWithProducts>([
+const getGroupedProducts = (withAlcohol: boolean = false) => {
+    return Product.aggregate<GroupWithProducts>([
         {
             $match: {
-                $and: [
-                    {$or:[{isAlcohol: false}, {isAlcohol: {$exists: false}}]},
-                    {$or: [{hidden: {$exists: false}}, {hidden: false}]},
-                    {categories: {$exists: true, $ne: []}},
-                ],
-            },
+                $expr: {
+                    $and: [
+                        {
+                            $or: [
+                                {$eq: [{$ifNull: ["$hidden", false]}, false]},
+                                {$eq: [{$type: "$hidden"}, "missing"]}
+                            ]
+                        },
+                        {
+                            $and: [
+                                {$ne: [{$type: "$categories"}, "missing"]},
+                                {$gt: [{$size: {$ifNull: ["$categories", []]}}, 0]}
+                            ]
+                        },
+                        ...(withAlcohol ? [] : [
+                            {
+                                $or: [
+                                    {$eq: ["$isAlcohol", false]},
+                                    {$eq: [{$type: "$isAlcohol"}, "missing"]}
+                                ]
+                            }
+                        ])
+                    ]
+                }
+            }
         },
         {$unwind: "$categories"},
         {
@@ -84,8 +103,8 @@ const getGroupedProducts = () => (
             },
         },
         {$sort: {categoryOrder: 1}},
-    ])
-);
+    ]);
+};
 
 const getUncategorizedProducts = () => (
     Product.find({
@@ -98,13 +117,13 @@ const getUncategorizedProducts = () => (
         .exec()
 );
 
-export const getMenuData = async () => {
+export const getMenuData = async ({getAlcohol}: { getAlcohol: boolean }) => {
     await connectToDatabase();
 
     const [activeLunch, categories, groupedProducts, uncategorizedProduct] = await Promise.all([
         getLunch(),
-        getCategories(),
-        getGroupedProducts(),
+        getCategories(getAlcohol),
+        getGroupedProducts(getAlcohol),
         getUncategorizedProducts()
     ]);
 

@@ -1,10 +1,14 @@
-import { Products } from './products';
-import { getMenuData } from "./config";
-import { ComponentProps } from "react";
+import {Products} from './products';
+import type {ComponentProps} from "react";
+import type {ProductType} from "@/models/product";
+import type {GroupWithProducts} from "@/app-pages/menu/products/types";
 
-export async function ProductsServer() {
-    const { groupedProducts: groupedProductsRaw, uncategorizedProduct: uncategorizedProductRaw } = await getMenuData();
+type ProductsServerProps = {
+    groupedProductsRaw: GroupWithProducts[],
+    uncategorizedProductRaw: ProductType[]
+}
 
+export async function ProductsServer({groupedProductsRaw, uncategorizedProductRaw}: ProductsServerProps) {
     const grouped = groupedProductsRaw.map(group => ({
         id: group._id.toString(),
         categoryName: group.categoryName,
@@ -31,5 +35,5 @@ export async function ProductsServer() {
         categories: p.categories?.map(c => c.toString()) ?? [],
     })) as unknown as ComponentProps<typeof Products>['uncategorized'];
 
-    return <Products grouped={grouped} uncategorized={uncategorized} />;
+    return <Products grouped={grouped} uncategorized={uncategorized}/>;
 }

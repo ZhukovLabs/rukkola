@@ -9,12 +9,19 @@ import dynamic from "next/dynamic";
 
 const Footer = dynamic(() => import("./footer").then(m => m.Footer));
 
+type MenuPageProps = {
+    searchParams: Promise<{ showAlcohol?: unknown }>
+}
 
-export const MenuPage = async () => {
+export const MenuPage = async ({searchParams}: MenuPageProps) => {
+    const {showAlcohol} = await searchParams;
+
     const {
         activeLunch: activeLunchRaw,
         categories: categoriesRaw,
-    } = await getMenuData();
+        groupedProducts,
+        uncategorizedProduct
+    } = await getMenuData({getAlcohol: showAlcohol === 'true'});
 
     const activeLunch = activeLunchRaw
         ? {
@@ -61,7 +68,7 @@ export const MenuPage = async () => {
             />
 
             <Suspense fallback={<MenuLoader/>}>
-                <ProductsServer/>
+                <ProductsServer groupedProductsRaw={groupedProducts} uncategorizedProductRaw={uncategorizedProduct}/>
             </Suspense>
 
             <Footer/>
