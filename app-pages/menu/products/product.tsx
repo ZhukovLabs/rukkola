@@ -11,13 +11,13 @@ import {
     Icon
 } from "@chakra-ui/react";
 import Image from "next/image";
-import {memo, useState, useCallback} from "react";
-import {motion, AnimatePresence} from "framer-motion";
-import {FiCheck, FiImage} from "react-icons/fi";
-import {useRouter} from "next/navigation";
-import {addToCart} from "@/lib/local-storage";
-import {useInView} from "react-intersection-observer";
-import {useIsLowPerformanceDevice} from "@/hooks/use-is-low-performance-device";
+import { memo, useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FiCheck, FiImage } from "react-icons/fi";
+import { useRouter } from "next/navigation";
+import { addToCart } from "@/lib/local-storage";
+import { useInView } from "react-intersection-observer";
+import { useIsLowPerformanceDevice } from "@/hooks/use-is-low-performance-device";
 
 type Price = { size: string; price: number };
 
@@ -45,10 +45,10 @@ const ProductImage = memo(function ProductImage({
             alt={alt}
             fill
             loading="lazy"
-            sizes="(max-width: 768px) 100vw, 45vw"
+            sizes="(max-width: 480px) 100vw, (max-width: 768px) 60vw, 45vw"
             placeholder="blur"
             blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/OhSPQAIZwPB9++2WgAAAABJRU5ErkJggg=="
-            style={{objectFit: "cover", objectPosition: "center"}}
+            style={{ objectFit: "cover", objectPosition: "center" }}
             onError={onError}
         />
     );
@@ -67,13 +67,14 @@ const PriceButton = memo(function PriceButton({
         <Button
             size="sm"
             borderRadius="full"
-            px={5}
-            py={2}
+            px={{ base: 2, md: 4 }}
+            py={{ base: 1, md: 2 }}
+            fontSize={{ base: "xs", md: "sm" }}
             bg={selected ? "teal.500" : "gray.800"}
             color={selected ? "white" : "teal.300"}
             borderWidth="1px"
             borderColor="teal.500"
-            _hover={{bg: selected ? "teal.600" : "gray.700", color: "white"}}
+            _hover={{ bg: selected ? "teal.600" : "gray.700", color: "white" }}
             onClick={onClick}
         >
             {price.size} — {price.price.toFixed(2).replace(".", ",")} руб.
@@ -97,8 +98,7 @@ export const Product = memo(function Product({
 
     const disableMotion = useIsLowPerformanceDevice();
     const firstPrice = prices?.[0] ?? null;
-
-    const {ref, inView} = useInView({triggerOnce: true});
+    const { ref, inView } = useInView({ triggerOnce: true });
 
     const handleAddClick = useCallback(() => {
         if (!prices?.length) return;
@@ -142,7 +142,7 @@ export const Product = memo(function Product({
     }, []);
 
     const openModal = useCallback(
-        () => img && router.push(`?product=${id}`, {scroll: false}),
+        () => img && router.push(`?product=${id}`, { scroll: false }),
         [router, id, img]
     );
 
@@ -157,49 +157,43 @@ export const Product = memo(function Product({
 
     const staticPriceList = prices?.map(p => (
         <Flex key={p.size} justify="space-between" align="center">
-            <Text fontSize="sm" color="gray.400">
+            <Text fontSize={{ base: "xs", md: "sm" }} color="gray.400">
                 {p.size}
             </Text>
-            <Text fontSize="md" color="teal.300">
+            <Text fontSize={{ base: "sm", md: "md" }} color="teal.300">
                 {p.price.toFixed(2).replace(".", ",")} руб.
             </Text>
         </Flex>
     ));
 
-    const containerMotion = !disableMotion
+    const motionProps = !disableMotion
         ? {
-            initial: {opacity: 0, y: 40},
-            animate: inView ? {opacity: 1, y: 0} : {},
-            transition: {duration: 0.45}
+            initial: { opacity: 0, y: 24 },
+            animate: inView ? { opacity: 1, y: 0 } : {},
+            transition: { duration: 0.4 }
         }
         : {};
 
     return (
-        <motion.div
-            ref={ref}
-            style={{display: "flex"}}
-            {...containerMotion}
-        >
+        <motion.div ref={ref} style={{ display: "flex" }} {...motionProps}>
             <Flex
-                position="relative"
-                direction={{base: "column", md: "row"}}
-                align="stretch"
-                overflow="hidden"
-                borderRadius="xl"
+                direction={{ base: "column", md: "row" }}
+                w="100%"
                 borderWidth="1px"
+                borderRadius={{ base: "md", md: "xl" }}
                 borderColor="gray.700"
                 bg="gray.800"
-                w="100%"
+                overflow="hidden"
                 _hover={{
                     borderColor: "teal.500",
-                    boxShadow: "0 8px 20px rgba(56,178,172,0.15)"
+                    boxShadow: "0 6px 18px rgba(56,178,172,0.15)"
                 }}
             >
                 {img && (
                     <Box
                         position="relative"
-                        w={{base: "100%", md: "45%"}}
-                        h={{base: "200px", md: "100%"}}
+                        w={{ base: "100%", md: "45%" }}
+                        aspectRatio={{ base: 3 / 2, md: undefined }}
                         flexShrink={0}
                         overflow="hidden"
                         cursor="zoom-in"
@@ -207,7 +201,7 @@ export const Product = memo(function Product({
                     >
                         {imgError ? (
                             <Center position="absolute" inset={0} bg="gray.700">
-                                <Icon as={FiImage} boxSize={8} color="gray.400"/>
+                                <Icon as={FiImage} boxSize={6} color="gray.400" />
                             </Center>
                         ) : (
                             <ProductImage
@@ -219,116 +213,80 @@ export const Product = memo(function Product({
                     </Box>
                 )}
 
-                <Flex direction="column" flex="1" p={{base: 5, md: 6}}>
-                    <Stack>
+                <Flex direction="column" flex="1" p={{ base: 3, md: 6 }}>
+                    <Stack gap={{ base: 1, md: 4 }}>
                         <Heading
-                            fontSize="xl"
+                            fontSize={{ base: "md", md: "xl" }}
+                            lineClamp={2}
                             color="whiteAlpha.900"
                         >
                             {title}
                         </Heading>
 
                         {description && (
-                            <Text fontSize="sm" color="gray.400" lineHeight="taller">
+                            <Text
+                                fontSize={{ base: "xs", md: "sm" }}
+                                color="gray.400"
+                                lineClamp={{base: 2, sm: 3, md: 4}}
+                                mb={{base: 2, md: 3}}
+                            >
                                 {description}
                             </Text>
                         )}
                     </Stack>
 
-                    <Flex direction="column" mt="auto" gap={3} minH="100px">
-                        {!disableMotion ? (
-                            <AnimatePresence mode="popLayout">
-                                {selecting ? (
-                                    <motion.div
-                                        key="select"
-                                        initial={{opacity: 0}}
-                                        animate={{opacity: 1}}
-                                        exit={{opacity: 0}}
-                                    >
-                                        <Flex direction="column" gap={2}>
-                                            {priceButtons}
-                                            <Flex justify="space-between" mt={2}>
-                                                <Button
-                                                    size="sm"
-                                                    borderRadius="full"
-                                                    bg="red.500"
-                                                    color="white"
-                                                    onClick={handleCancel}
-                                                >
-                                                    Отменить
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    borderRadius="full"
-                                                    bg="teal.500"
-                                                    color="white"
-                                                    onClick={handleConfirm}
-                                                >
-                                                    Подтвердить
-                                                </Button>
-                                            </Flex>
-                                        </Flex>
-                                    </motion.div>
-                                ) : (
-                                    <motion.div
-                                        key="static-prices"
-                                        initial={{opacity: 0}}
-                                        animate={{opacity: 1}}
-                                        exit={{opacity: 0}}
-                                    >
-                                        {staticPriceList}
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        ) : (
-                            <>
-                                {selecting ? (
-                                    <Flex direction="column" gap={2}>
+                    <Flex direction="column" mt="auto" gap={{ base: 2, md: 3 }}>
+                        {!selecting && staticPriceList}
+
+                        {selecting && (
+                            <AnimatePresence>
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                >
+                                    <Flex gap={1} direction="column" mb={{base: 2, md: 3}}>
                                         {priceButtons}
-                                        <Flex justify="space-between" mt={2}>
-                                            <Button
-                                                size="sm"
-                                                borderRadius="full"
-                                                bg="red.500"
-                                                color="white"
-                                                onClick={handleCancel}
-                                            >
-                                                Отменить
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                borderRadius="full"
-                                                bg="teal.500"
-                                                color="white"
-                                                onClick={handleConfirm}
-                                            >
-                                                Подтвердить
-                                            </Button>
-                                        </Flex>
                                     </Flex>
-                                ) : (
-                                    staticPriceList
-                                )}
-                            </>
+
+                                    <Flex justify="space-between" mt={2}>
+                                        <Button
+                                            size="sm"
+                                            fontSize="xs"
+                                            bg="red.500"
+                                            onClick={handleCancel}
+                                            px={2}
+                                        >
+                                            Отменить
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            fontSize="xs"
+                                            bg="teal.500"
+                                            onClick={handleConfirm}
+                                            px={2}
+                                        >
+                                            Подтвердить
+                                        </Button>
+                                    </Flex>
+                                </motion.div>
+                            </AnimatePresence>
                         )}
 
                         {!selecting && (
                             <Button
-                                mt={3}
                                 size="sm"
+                                fontSize="xs"
                                 borderRadius="full"
-                                px={5}
-                                py={2}
-                                bg={added ? "teal.500" : "gray.800"}
-                                color={added ? "white" : "teal.300"}
                                 borderWidth="1px"
                                 borderColor="teal.500"
-                                fontWeight="medium"
+                                bg={added ? "teal.500" : "gray.800"}
+                                color={added ? "white" : "teal.300"}
                                 onClick={handleAddClick}
                             >
                                 {added ? (
-                                    <Flex align="center" gap={2}>
-                                        <FiCheck size={16}/> Добавлено!
+                                    <Flex align="center" gap={1}>
+                                        <FiCheck size={14} /> Добавлено
                                     </Flex>
                                 ) : (
                                     "Добавить"
