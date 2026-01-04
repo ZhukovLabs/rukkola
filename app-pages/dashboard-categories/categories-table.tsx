@@ -21,12 +21,15 @@ import {
     FiCheck,
     FiX,
 } from 'react-icons/fi'
+import {FaWineBottle, FaWineGlassAlt} from 'react-icons/fa'
 import {CategoryType} from '@/models/category'
 import {
     toggleCategoryField,
     moveCategory,
     updateCategoryName,
     deleteCategory,
+    markCategoryProductsAlcohol,
+    markCategoryProductsNonAlcohol,
 } from './actions'
 import {Tooltip} from '@/components/tooltip'
 import {useConfirmationDialog} from "@/hooks/use-confirmation-dialog";
@@ -52,6 +55,33 @@ export default function CategoriesTable({categories: initialCategories}: Props) 
         },
     })
 
+    const {
+        openDialog: openMarkAlcoholDialog,
+        ConfirmationDialog: MarkAlcoholConfirmationDialog,
+    } = useConfirmationDialog<string>({
+        title: 'Пометка продуктов как алкогольных',
+        description: 'Все продукты в этой категории (включая подкатегории) будут помечены как алкогольные. Продолжить?',
+        confirmText: 'Да, пометить',
+        cancelText: 'Отмена',
+        colorScheme: 'purple',
+        onConfirm: (categoryId) => {
+            markAlcoholMutation.mutate(categoryId)
+        },
+    })
+
+    const {
+        openDialog: openMarkNonAlcoholDialog,
+        ConfirmationDialog: MarkNonAlcoholConfirmationDialog,
+    } = useConfirmationDialog<string>({
+        title: 'Пометка продуктов как безалкогольных',
+        description: 'Все продукты в этой категории (включая подкатегории) будут помечены как безалкогольные. Продолжить?',
+        confirmText: 'Да, пометить',
+        cancelText: 'Отмена',
+        colorScheme: 'green',
+        onConfirm: (categoryId) => {
+            markNonAlcoholMutation.mutate(categoryId)
+        },
+    })
 
     const toggleMutation = useMutation({
         mutationFn: ({id, field}: { id: string; field: 'isMenuItem' | 'showGroupTitle' }) =>
@@ -75,6 +105,20 @@ export default function CategoriesTable({categories: initialCategories}: Props) 
     const deleteMutation = useMutation({
         mutationFn: deleteCategory,
         onSuccess: () => queryClient.invalidateQueries({queryKey: ['categories']}),
+    })
+
+    const markAlcoholMutation = useMutation({
+        mutationFn: (categoryId: string) => markCategoryProductsAlcohol(categoryId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({queryKey: ['products']})
+        },
+    })
+
+    const markNonAlcoholMutation = useMutation({
+        mutationFn: (categoryId: string) => markCategoryProductsNonAlcohol(categoryId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({queryKey: ['products']})
+        },
     })
 
     const handleEditStart = (category: CategoryType) => {
@@ -113,6 +157,8 @@ export default function CategoriesTable({categories: initialCategories}: Props) 
         const isMoving = moveMutation.isPending && moveMutation.variables?.id === category._id.toString()
         const isToggling = toggleMutation.isPending && toggleMutation.variables?.id === category._id.toString()
         const isDeleting = deleteMutation.isPending && deleteMutation.variables === category._id.toString()
+        const isMarkingAlcohol = markAlcoholMutation.isPending && markAlcoholMutation.variables === category._id.toString()
+        const isMarkingNonAlcohol = markNonAlcoholMutation.isPending && markNonAlcoholMutation.variables === category._id.toString()
 
         return (
             <React.Fragment key={category._id.toString()}>
@@ -330,6 +376,42 @@ export default function CategoriesTable({categories: initialCategories}: Props) 
                                     <FiTrash2/>
                                 </IconButton>
                             </Tooltip>
+
+                            <Tooltip content="Пометить все продукты как алкогольные" openDelay={400}>
+                                <IconButton
+                                    aria-label="Пометить как алкогольные"
+                                    size="sm"
+                                    borderRadius="xl"
+                                    bgGradient="linear(to-r, purple.500, purple.600)"
+                                    color="white"
+                                    _hover={{
+                                        transform: 'scale(1.1)',
+                                        bgGradient: 'linear(to-r, purple.600, purple.700)',
+                                    }}
+                                    onClick={() => openMarkAlcoholDialog(category._id.toString())}
+                                    loading={isMarkingAlcohol}
+                                >
+                                    <FaWineBottle/>
+                                </IconButton>
+                            </Tooltip>
+
+                            <Tooltip content="Пометить все продукты как безалкогольные" openDelay={400}>
+                                <IconButton
+                                    aria-label="Пометить как безалкогольные"
+                                    size="sm"
+                                    borderRadius="xl"
+                                    bgGradient="linear(to-r, green.500, green.600)"
+                                    color="white"
+                                    _hover={{
+                                        transform: 'scale(1.1)',
+                                        bgGradient: 'linear(to-r, green.600, green.700)',
+                                    }}
+                                    onClick={() => openMarkNonAlcoholDialog(category._id.toString())}
+                                    loading={isMarkingNonAlcohol}
+                                >
+                                    <FaWineGlassAlt/>
+                                </IconButton>
+                            </Tooltip>
                         </Flex>
                     </Table.Cell>
                 </Table.Row>
@@ -370,7 +452,9 @@ export default function CategoriesTable({categories: initialCategories}: Props) 
                         {(toggleMutation.isPending ||
                             moveMutation.isPending ||
                             updateNameMutation.isPending ||
-                            deleteMutation.isPending) && (
+                            deleteMutation.isPending ||
+                            markAlcoholMutation.isPending ||
+                            markNonAlcoholMutation.isPending) && (
                             <Flex
                                 position="absolute"
                                 top={0}
@@ -419,7 +503,9 @@ export default function CategoriesTable({categories: initialCategories}: Props) 
                 </Card.Body>
             </Card.Root>
 
-            <DeleteConfirmationDialog />
+            <DeleteConfirmationDialog/>
+            <MarkAlcoholConfirmationDialog/>
+            <MarkNonAlcoholConfirmationDialog/>
         </Box>
     )
 }
