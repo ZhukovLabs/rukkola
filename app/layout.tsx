@@ -140,7 +140,7 @@ export default function RootLayout({
             <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"/>
             <link rel="manifest" href="/site.webmanifest"/>
             <meta name="google-site-verification" content="XHWnek4KF6QdZm1UFnJeFW8xUtW1ZXbZkIHO84ZD5xs"/>
-            <meta name="yandex-verification" content="9dd7f74dc4d8e7b4" />
+            <meta name="yandex-verification" content="91fc20500288b2fe"/>
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{
