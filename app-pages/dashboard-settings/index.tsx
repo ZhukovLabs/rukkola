@@ -1,18 +1,33 @@
 'use client'
 
-import React from 'react'
+import React, {useEffect} from 'react'
 import {Box, Tabs} from '@chakra-ui/react'
 import {UsersTable} from './users-table'
 import {PasswordChangeForm} from './password-change-form'
-import { useSession } from 'next-auth/react';
+import {useSession} from 'next-auth/react'
+import {useRouter, useSearchParams} from 'next/navigation'
 
 export const DashboardSettingsPage = () => {
-    const { data: session } = useSession();
-    const isAdmin = session?.user?.role === 'admin';
+    const {data: session} = useSession()
+    const isAdmin = session?.user?.role === 'admin'
+    const router = useRouter()
+    const searchParams = useSearchParams()
+
+    const currentTab = searchParams.get('tab') || 'settings'
+
+    const handleTabChange = (e: { value: string }) => {
+        const params = new URLSearchParams(searchParams.toString())
+        params.set('tab', e.value)
+        router.push(`?${params.toString()}`, {scroll: false})
+    }
 
     return (
         <Box minH="100vh" bg="gray.900" color="white">
-            <Tabs.Root defaultValue="settings">
+            <Tabs.Root
+                defaultValue="settings"
+                value={currentTab}
+                onValueChange={handleTabChange}
+            >
                 <Tabs.List
                     mb={4}
                     bg="gray.800"
