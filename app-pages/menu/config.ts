@@ -120,12 +120,21 @@ const getUncategorizedProducts = () => (
 export const getMenuData = async ({getAlcohol}: { getAlcohol: boolean }) => {
     await connectToDatabase();
 
-    const [activeLunch, categories, groupedProducts, uncategorizedProduct] = await Promise.all([
+    const [activeLunch, categories] = await Promise.all([
         getLunch(),
-        getCategories(getAlcohol),
+        getCategories(getAlcohol)
+    ]);
+
+    return {activeLunch, categories}
+}
+
+export const getProducts = async ({getAlcohol}: { getAlcohol: boolean }) => {
+    await connectToDatabase();
+
+    const [groupedProducts, uncategorizedProduct] = await Promise.all([
         getGroupedProducts(getAlcohol),
         getUncategorizedProducts()
     ]);
 
-    return {activeLunch, categories, groupedProducts, uncategorizedProduct}
+    return {groupedProducts, uncategorizedProduct}
 }

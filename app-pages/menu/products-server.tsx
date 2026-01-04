@@ -1,14 +1,17 @@
 import {Products} from './products';
 import type {ComponentProps} from "react";
-import type {ProductType} from "@/models/product";
-import type {GroupWithProducts} from "@/app-pages/menu/products/types";
+import {getProducts} from "./config";
 
 type ProductsServerProps = {
-    groupedProductsRaw: GroupWithProducts[],
-    uncategorizedProductRaw: ProductType[]
+    alcoholIsVisible: boolean;
 }
 
-export async function ProductsServer({groupedProductsRaw, uncategorizedProductRaw}: ProductsServerProps) {
+export async function ProductsServer({alcoholIsVisible}: ProductsServerProps) {
+    const {
+        groupedProducts: groupedProductsRaw,
+        uncategorizedProduct: uncategorizedProductRaw
+    } = await getProducts({getAlcohol: alcoholIsVisible});
+
     const grouped = groupedProductsRaw.map(group => ({
         id: group._id.toString(),
         categoryName: group.categoryName,

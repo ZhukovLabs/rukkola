@@ -16,12 +16,12 @@ type MenuPageProps = {
 export const MenuPage = async ({searchParams}: MenuPageProps) => {
     const {showAlcohol} = await searchParams;
 
+    const alcoholIsVisible = showAlcohol === 'true';
+
     const {
         activeLunch: activeLunchRaw,
-        categories: categoriesRaw,
-        groupedProducts,
-        uncategorizedProduct
-    } = await getMenuData({getAlcohol: showAlcohol === 'true'});
+        categories: categoriesRaw
+    } = await getMenuData({getAlcohol: alcoholIsVisible});
 
     const activeLunch = activeLunchRaw
         ? {
@@ -68,7 +68,7 @@ export const MenuPage = async ({searchParams}: MenuPageProps) => {
             />
 
             <Suspense fallback={<MenuLoader/>}>
-                <ProductsServer groupedProductsRaw={groupedProducts} uncategorizedProductRaw={uncategorizedProduct}/>
+                <ProductsServer alcoholIsVisible={alcoholIsVisible}/>
             </Suspense>
 
             <Footer/>
