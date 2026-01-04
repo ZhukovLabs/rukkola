@@ -121,7 +121,7 @@ export const Navbar = ({items}: NavbarProps) => {
                 zIndex={100}
                 bgGradient="linear(to-r, rgba(26,32,44,0.9), rgba(26,32,44,0.8))"
                 backdropFilter="blur(10px)"
-                borderBottom="1px solid rgba(255,255,255,0.06)"
+                borderBottom={isFixed ? "1px solid rgba(255,255,255,0.06)" : "none"}
                 py={{base: 2, md: 4}}
                 initial={!disableMotion ? {opacity: 0, y: -12} : undefined}
                 animate={!disableMotion ? {opacity: 1, y: 0} : undefined}
@@ -216,7 +216,7 @@ export const Navbar = ({items}: NavbarProps) => {
                                                                             store.setOpen(false);
                                                                             setTimeout(() => {
                                                                                 handleClick(item.id);
-                                                                                setOpenIds([]); // Очистка при клике на элемент без детей
+                                                                                setOpenIds([]);
                                                                             }, 50);
                                                                         } else {
                                                                             setOpenIds((prev) =>
