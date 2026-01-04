@@ -1,6 +1,6 @@
 import {Box, Button, Flex, IconButton, Image, Stack, Table, Text} from "@chakra-ui/react";
 import {Tooltip} from "@/components/tooltip";
-import {FaEdit, FaEye, FaEyeSlash, FaTrash} from "react-icons/fa";
+import {FaEdit, FaEye, FaEyeSlash, FaTrash, FaWineBottle, FaWineGlassAlt} from "react-icons/fa";
 import {useRouter} from "next/navigation";
 import type {ProductType} from "@/models/product";
 import type {ActionResponse} from "@/types";
@@ -13,12 +13,25 @@ type ProductRowProps = {
         id: string;
         hidden: boolean;
     }>, Error, string, void>;
+    onToggleAlcohol: UseMutateFunction<ActionResponse<{
+        id: string;
+        isAlcohol: boolean;
+    }>, Error, string, void>
     onDelete: (id: string) => void;
     loadingId: string | null;
     deletePending: string | null;
+    togglingAlcoholId: string | null;
 }
 
-export const ProductRow = ({product: p, onToggle, onDelete, loadingId, deletePending}: ProductRowProps) => {
+export const ProductRow = ({
+                               product: p,
+                               onToggle,
+                               onToggleAlcohol,
+                               onDelete,
+                               loadingId,
+                               deletePending,
+                               togglingAlcoholId
+                           }: ProductRowProps) => {
     const router = useRouter();
 
     return (
@@ -96,11 +109,44 @@ export const ProductRow = ({product: p, onToggle, onDelete, loadingId, deletePen
             </Table.Cell>
 
             <Table.Cell p={4}>
-                <Flex gap={2} align="center" whiteSpace="nowrap">
+                <Stack direction="row" gap={2} align="center">
+                    {/* Кнопка алкоголь/безалкогольный */}
+                    <Tooltip
+                        content={p.isAlcohol ? 'Алкогольный продукт' : 'Безалкогольный продукт'}
+                        openDelay={400}
+                    >
+                        <Button
+                            size="sm"
+                            borderRadius="xl"
+                            bgGradient={
+                                p.isAlcohol
+                                    ? 'linear(to-r, purple.500, purple.600)'
+                                    : 'linear(to-r, green.500, green.600)'
+                            }
+                            color="white"
+                            px={3}
+                            py={2}
+                            fontSize="sm"
+                            fontWeight="semibold"
+                            _hover={{
+                                transform: 'scale(1.05)',
+                                bgGradient: p.isAlcohol
+                                    ? 'linear(to-r, purple.600, purple.700)'
+                                    : 'linear(to-r, green.600, green.700)',
+                            }}
+                            _active={{transform: 'scale(0.97)'}}
+                            loading={togglingAlcoholId === p.id}
+                            onClick={() => onToggleAlcohol(p.id)}
+                            flexShrink={0}
+                        >
+                            {p.isAlcohol ? <FaWineBottle /> : <FaWineGlassAlt />}{p.isAlcohol ? 'Алк.' : 'Без алк.'}
+                        </Button>
+                    </Tooltip>
+
+                    {/* Кнопка показать/скрыть */}
                     <Tooltip content={p.hidden ? 'Сейчас товар скрыт' : 'Сейчас товар отображается'}
                              openDelay={400}>
                         <Button
-                            minW={128}
                             size="sm"
                             borderRadius="xl"
                             bgGradient={
@@ -109,7 +155,7 @@ export const ProductRow = ({product: p, onToggle, onDelete, loadingId, deletePen
                                     : 'linear(to-r, teal.400, teal.500)'
                             }
                             color="white"
-                            px={4}
+                            px={3}
                             py={2}
                             fontSize="sm"
                             fontWeight="semibold"
@@ -124,8 +170,7 @@ export const ProductRow = ({product: p, onToggle, onDelete, loadingId, deletePen
                             onClick={() => onToggle(p.id)}
                             flexShrink={0}
                         >
-                            {p.hidden ? <FaEye/> : <FaEyeSlash/>}
-                            {p.hidden ? 'Показать' : 'Скрыть'}
+                            {p.hidden ? <FaEye /> : <FaEyeSlash />}{p.hidden ? 'Показать' : 'Скрыть'}
                         </Button>
                     </Tooltip>
 
@@ -163,7 +208,7 @@ export const ProductRow = ({product: p, onToggle, onDelete, loadingId, deletePen
                             <FaTrash/>
                         </IconButton>
                     </Tooltip>
-                </Flex>
+                </Stack>
             </Table.Cell>
         </Table.Row>
     )

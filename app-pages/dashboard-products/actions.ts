@@ -58,6 +58,7 @@ export async function getProducts(
                 id: {$toString: '$_id'},
                 name: 1,
                 description: 1,
+                isAlcohol: 1,
                 prices: 1,
                 image: 1,
                 hidden: 1,
@@ -124,6 +125,7 @@ export async function getProductById(id: string): Promise<ActionResponse<Product
                 image: 1,
                 categories: 1,
                 hidden: 1,
+                isAlcohol: 1
             }
         }
     ]);
@@ -163,6 +165,30 @@ export async function toggleProductVisibility(
     }
 }
 
+export async function toggleProductAlcohol(
+    productId: string,
+): Promise<ActionResponse<{ id: string; isAlcohol: boolean }>> {
+    await checkAuth();
+    await connectToDatabase();
+
+    const product = await Product.findById(productId)
+    if (!product) return {success: false, message: 'Товар не найден'};
+
+    product.isAlcohol = !product.isAlcohol;
+    await product.save()
+
+    revalidatePath('/');
+
+    return {
+        success: true,
+        message: product.isAlcohol ? 'Товар помечен как алкогольный' : 'Товар помечен как безалкогольный',
+        data: {
+            id: productId,
+            isAlcohol: product.isAlcohol,
+        },
+    }
+}
+
 export async function deleteProduct(productId: string): Promise<ActionResponse<{ id: string }>> {
     await checkAuth();
     await connectToDatabase();
@@ -186,7 +212,8 @@ type UpdateProductDataPayload = {
     description: string
     prices: { size: string; price: number }[]
     categories: string[]
-    hidden: boolean
+    hidden: boolean,
+    isAlcohol: boolean,
 }
 
 export async function updateProductData(
@@ -242,6 +269,7 @@ export type CreateProductInput = {
     prices: PortionPrice[]
     categories: string[]
     hidden?: boolean
+    isAlcohol?: boolean
 }
 
 export async function createProduct(
@@ -268,6 +296,7 @@ export async function createProduct(
         prices: parsed.data.prices,
         categories: parsed.data.categories ?? [],
         hidden: Boolean(parsed.data.hidden),
+        isAlcohol: Boolean(parsed.data.isAlcohol),
     })
 
     await product.save()

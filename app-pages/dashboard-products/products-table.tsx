@@ -40,7 +40,9 @@ export const ProductsTable = memo(() => {
         loadingId,
         deletePending,
         toggleVisibility,
-        deleteMutation
+        deleteMutation,
+        togglingAlcoholId,
+        toggleAlcohol
     } = useProductsTable();
 
     const {openDialog, ConfirmationDialog} = useConfirmationDialog({
@@ -75,6 +77,8 @@ export const ProductsTable = memo(() => {
                     onDelete={openDialog}
                     loadingId={loadingId}
                     deletePending={deletePending}
+                    onToggleAlcohol={toggleAlcohol.mutate}
+                    togglingAlcoholId={togglingAlcoholId}
                 />
             ));
         }

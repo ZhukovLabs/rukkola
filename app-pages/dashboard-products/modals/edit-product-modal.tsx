@@ -41,6 +41,7 @@ export const EditProductModal = ({refetch}: Props) => {
             prices: values.prices,
             categories: values.categories ?? [],
             hidden: values.hidden,
+            isAlcohol: values.isAlcohol,
         })
 
         if (file) await uploadImageToApi(productId, file);
@@ -65,6 +66,7 @@ export const EditProductModal = ({refetch}: Props) => {
                         categories: product.categories?.map((c) => String(c.id)) ?? [],
                         hidden: Boolean(product.hidden),
                         image: product.image,
+                        isAlcohol: product.isAlcohol ?? false,
                     }
                     : undefined
             }

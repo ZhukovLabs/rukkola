@@ -34,6 +34,7 @@ export const CreateProductModal = ({refetch}: Props) => {
             prices: values.prices,
             categories: values.categories ?? [],
             hidden: values.hidden,
+            isAlcohol: values.isAlcohol
         })
 
         if (id && file) await uploadImageToApi(id, file);

@@ -30,6 +30,7 @@ export const productSchema = z.object({
     categories: z.array(z.string()).optional(),
 
     hidden: z.boolean(),
+    isAlcohol: z.boolean(),
 
     imageFile: z
         .instanceof(File, {message: 'Выбранный файл должен быть изображением'})

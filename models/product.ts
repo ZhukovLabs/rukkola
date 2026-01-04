@@ -14,6 +14,7 @@ export type ProductType = {
     image: string
     categories: mongoose.Types.ObjectId[]
     hidden?: boolean
+    isAlcohol?: boolean
     createdAt?: Date
     updatedAt?: Date
 } & Document;
@@ -34,6 +35,7 @@ const ProductSchema = new Schema<ProductType>(
         image: {type: String, required: false},
         categories: [{type: Schema.Types.ObjectId, ref: 'Category', required: false}],
         hidden: {type: Boolean, required: false, default: false},
+        isAlcohol: {type: Boolean, required: false, default: false},
     },
     {timestamps: true}
 )

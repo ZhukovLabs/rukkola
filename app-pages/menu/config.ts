@@ -10,15 +10,54 @@ const getLunch = () => (
     Lunch.findOne({active: true}).lean()
 );
 
-const getCategories = () => (
-    Category.find({isMenuItem: true}).sort({order: 1}).lean()
-);
+const getCategories = async (withAlcohol: boolean = false) => {
+    try {
+        const productQuery: any = {
+            hidden: false,
+            categories: {$exists: true, $ne: []}
+        };
+
+        if (!withAlcohol) {
+            productQuery.$or = [
+                {isAlcohol: false},
+                {isAlcohol: {$exists: false}}
+            ];
+        }
+
+        const categoryIdsWithProducts = await Product.distinct('categories', productQuery);
+
+        return Category.aggregate([
+            {
+                $match: {
+                    isMenuItem: true,
+                    $or: [
+                        {_id: {$in: categoryIdsWithProducts}},
+                        {
+                            _id: {
+                                $in: await Category.distinct('parent', {
+                                    _id: {$in: categoryIdsWithProducts},
+                                    parent: {$ne: null}
+                                })
+                            }
+                        }
+                    ]
+                }
+            },
+            {$sort: {order: 1}}
+        ]);
+
+    } catch (error) {
+        console.error('Error in getCategories:', error);
+        return [];
+    }
+};
 
 const getGroupedProducts = () => (
     Product.aggregate<GroupWithProducts>([
         {
             $match: {
                 $and: [
+                    {$or:[{isAlcohol: false}, {isAlcohol: {$exists: false}}]},
                     {$or: [{hidden: {$exists: false}}, {hidden: false}]},
                     {categories: {$exists: true, $ne: []}},
                 ],

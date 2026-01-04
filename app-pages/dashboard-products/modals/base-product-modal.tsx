@@ -79,6 +79,7 @@ export const BaseProductModal = ({
             prices: [{size: '', price: 0}],
             categories: [],
             hidden: false,
+            isAlcohol: false, // Добавлено
             imageFile: null
         },
     })
@@ -103,6 +104,7 @@ export const BaseProductModal = ({
                 prices: initialValues?.prices?.length ? initialValues.prices : [{size: '', price: 0}],
                 categories: initialValues?.categories ?? [],
                 hidden: initialValues?.hidden ?? false,
+                isAlcohol: initialValues?.isAlcohol ?? false, // Добавлено
                 imageFile: null,
             })
             clearErrors()
@@ -121,16 +123,11 @@ export const BaseProductModal = ({
             })),
             categories: data.categories,
             hidden: data.hidden,
+            isAlcohol: data.isAlcohol,
         }
 
         try {
             await onSubmit(formatted, data.imageFile!);
-
-            //setError('imageFile', {
-            //                         type: 'manual',
-            //                         message: err instanceof Error ? err.message : 'Не удалось загрузить изображение',
-            //                     })
-
             onClose()
         } catch (err) {
             setError('root', {
@@ -464,49 +461,102 @@ export const BaseProductModal = ({
                                         </Flex>
                                     </Box>
 
-                                    {/* Скрыт */}
-                                    <Controller
-                                        name="hidden"
-                                        control={control}
-                                        render={({field}) => {
-                                            const isChecked = !!field.value
-                                            return (
-                                                <Flex align="center" gap={2} cursor="pointer" userSelect="none">
-                                                    <Text color={isChecked ? 'teal.100' : 'gray.300'} fontWeight="500"
-                                                          fontSize="sm">
-                                                        Скрыт
-                                                    </Text>
-                                                    <Box
-                                                        role="switch"
-                                                        aria-checked={isChecked}
-                                                        tabIndex={0}
-                                                        w="38px"
-                                                        h="20px"
-                                                        borderRadius="full"
-                                                        px="2px"
-                                                        display="flex"
-                                                        alignItems="center"
-                                                        bg={isChecked ? 'rgba(45,212,191,0.08)' : 'transparent'}
-                                                        border="1px solid"
-                                                        borderColor={isChecked ? 'teal.300' : 'gray.600'}
-                                                        transition="all 180ms ease"
-                                                        _hover={{borderColor: 'teal.300'}}
-                                                        onClick={() => field.onChange(!isChecked)}
-                                                    >
-                                                        <Box
-                                                            w="14px"
-                                                            h="14px"
-                                                            borderRadius="full"
-                                                            bg={isChecked ? 'teal.300' : 'gray.400'}
-                                                            transform={isChecked ? 'translateX(16px)' : 'translateX(0px)'}
-                                                            transition="all 180ms ease"
-                                                            boxShadow={isChecked ? '0 3px 8px rgba(56,178,172,0.18)' : 'none'}
-                                                        />
-                                                    </Box>
-                                                </Flex>
-                                            )
-                                        }}
-                                    />
+                                    {/* Настройки продукта */}
+                                    <Flex gap={4}>
+                                        {/* Скрыт */}
+                                        <Box>
+                                            <Controller
+                                                name="hidden"
+                                                control={control}
+                                                render={({field}) => {
+                                                    const isChecked = !!field.value
+                                                    return (
+                                                        <Flex align="center" gap={2} cursor="pointer" userSelect="none">
+                                                            <Text color={isChecked ? 'teal.100' : 'gray.300'}
+                                                                  fontWeight="500"
+                                                                  fontSize="sm">
+                                                                Скрыт
+                                                            </Text>
+                                                            <Box
+                                                                role="switch"
+                                                                aria-checked={isChecked}
+                                                                tabIndex={0}
+                                                                w="38px"
+                                                                h="20px"
+                                                                borderRadius="full"
+                                                                px="2px"
+                                                                display="flex"
+                                                                alignItems="center"
+                                                                bg={isChecked ? 'rgba(45,212,191,0.08)' : 'transparent'}
+                                                                border="1px solid"
+                                                                borderColor={isChecked ? 'teal.300' : 'gray.600'}
+                                                                transition="all 180ms ease"
+                                                                _hover={{borderColor: 'teal.300'}}
+                                                                onClick={() => field.onChange(!isChecked)}
+                                                            >
+                                                                <Box
+                                                                    w="14px"
+                                                                    h="14px"
+                                                                    borderRadius="full"
+                                                                    bg={isChecked ? 'teal.300' : 'gray.400'}
+                                                                    transform={isChecked ? 'translateX(16px)' : 'translateX(0px)'}
+                                                                    transition="all 180ms ease"
+                                                                    boxShadow={isChecked ? '0 3px 8px rgba(56,178,172,0.18)' : 'none'}
+                                                                />
+                                                            </Box>
+                                                        </Flex>
+                                                    )
+                                                }}
+                                            />
+                                        </Box>
+
+                                        {/* Алкогольный */}
+                                        <Box>
+                                            <Controller
+                                                name="isAlcohol"
+                                                control={control}
+                                                render={({field}) => {
+                                                    const isChecked = !!field.value
+                                                    return (
+                                                        <Flex align="center" gap={2} cursor="pointer" userSelect="none">
+                                                            <Text color={isChecked ? 'purple.100' : 'gray.300'}
+                                                                  fontWeight="500"
+                                                                  fontSize="sm">
+                                                                Алкогольный
+                                                            </Text>
+                                                            <Box
+                                                                role="switch"
+                                                                aria-checked={isChecked}
+                                                                tabIndex={0}
+                                                                w="38px"
+                                                                h="20px"
+                                                                borderRadius="full"
+                                                                px="2px"
+                                                                display="flex"
+                                                                alignItems="center"
+                                                                bg={isChecked ? 'rgba(142, 45, 226, 0.08)' : 'transparent'}
+                                                                border="1px solid"
+                                                                borderColor={isChecked ? 'purple.300' : 'gray.600'}
+                                                                transition="all 180ms ease"
+                                                                _hover={{borderColor: 'purple.300'}}
+                                                                onClick={() => field.onChange(!isChecked)}
+                                                            >
+                                                                <Box
+                                                                    w="14px"
+                                                                    h="14px"
+                                                                    borderRadius="full"
+                                                                    bg={isChecked ? 'purple.300' : 'gray.400'}
+                                                                    transform={isChecked ? 'translateX(16px)' : 'translateX(0px)'}
+                                                                    transition="all 180ms ease"
+                                                                    boxShadow={isChecked ? '0 3px 8px rgba(142, 45, 226, 0.18)' : 'none'}
+                                                                />
+                                                            </Box>
+                                                        </Flex>
+                                                    )
+                                                }}
+                                            />
+                                        </Box>
+                                    </Flex>
                                 </Stack>
 
                                 <Dialog.Footer borderTop="1px solid" borderColor="gray.700" mt={6} pt={3} gap={3}>
