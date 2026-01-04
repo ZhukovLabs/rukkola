@@ -9,7 +9,7 @@ import {
     IconButton,
     Drawer,
     Portal,
-    CloseButton,
+    CloseButton, useBreakpointValue,
 } from "@chakra-ui/react";
 import {motion, AnimatePresence} from "framer-motion";
 import {FiMenu} from "react-icons/fi";
@@ -31,6 +31,7 @@ export const Navbar = ({items}: NavbarProps) => {
     const searchParams = useSearchParams();
     const navRef = useRef<HTMLDivElement>(null);
     const disableMotion = useIsLowPerformanceDevice();
+    const isMobile = useBreakpointValue({ base: true, md: false });
 
     const [isFixed, setIsFixed] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -111,7 +112,7 @@ export const Navbar = ({items}: NavbarProps) => {
 
     return (
         <Box position="relative" zIndex="10">
-            {isFixed && <Box height={navHeight}/>}
+            {isFixed && <Box height={isMobile ? '53px' : navHeight}/>}
 
             <MotionNav
                 ref={navRef}

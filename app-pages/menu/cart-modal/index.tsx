@@ -1,6 +1,6 @@
 'use client';
 
-import {useCallback, useEffect, useState, useMemo} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {
     Box,
     Button,
@@ -14,7 +14,7 @@ import {
 import {motion} from "framer-motion";
 import {useSearchParams, usePathname, useRouter} from "next/navigation";
 import {FiShoppingCart, FiX} from "react-icons/fi";
-import {CartItemType, getCart, setCart, addToCart, removeFromCart, clearCart} from "@/lib/local-storage";
+import {CartItemType, getCart, addToCart, removeFromCart, clearCart} from "@/lib/local-storage";
 import {CART_QUERY_KEY} from "../config";
 import {CartItem} from "@/app-pages/menu/cart-modal/cart-item";
 
