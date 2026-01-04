@@ -28,5 +28,5 @@ const SessionSchema = new Schema<SessionType>(
 SessionSchema.index({expiresAt: 1}, {expireAfterSeconds: 0});
 
 export const Session =
-    mongoose.models.Session ||
+    mongoose.models?.Session ||
     mongoose.model<SessionType>("Session", SessionSchema);
