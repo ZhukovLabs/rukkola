@@ -30,7 +30,47 @@ export async function getProducts(
     const filter: Record<string, unknown> = {}
 
     if (search) filter.name = {$regex: search, $options: 'i'};
-    if (category) filter.categories = new ObjectId(category);
+
+    if (category) {
+        try {
+            const categoryId = new ObjectId(category);
+
+            // Рекурсивная функция для поиска всех потомков
+            const getAllDescendantIds = async (parentId: ObjectId): Promise<ObjectId[]> => {
+                const children = await Category.find({ parent: parentId }).lean();
+                let allIds: ObjectId[] = [parentId];
+
+                for (const child of children) {
+                    const childIds = await getAllDescendantIds(child._id);
+                    allIds = [...allIds, ...childIds];
+                }
+
+                return [...new Set(allIds)]; // Убираем дубликаты
+            };
+
+            const allCategoryIds = await getAllDescendantIds(categoryId);
+
+            if (allCategoryIds.length > 0) {
+                filter.categories = { $in: allCategoryIds };
+            } else {
+                return {
+                    success: true,
+                    message: 'Список товаров получен',
+                    data: {
+                        products: [],
+                        total: 0,
+                        totalPages: 0,
+                    },
+                };
+            }
+        } catch (error) {
+            console.error('Error processing category filter:', error);
+            return {
+                success: false,
+                message: 'Ошибка при обработке фильтра категории',
+            };
+        }
+    }
 
     const total = await Product.countDocuments(filter);
 
