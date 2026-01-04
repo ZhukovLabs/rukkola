@@ -36,8 +36,6 @@ export const PasswordChangeForm = () => {
         setServerSuccess('')
 
         startTransition(() => {
-            // startTransition callback should not rely on returned promise for UI sync,
-            // but we still use async work inside.
             (async () => {
                 if (!data) {
                     setServerError('Пользователь не авторизован')

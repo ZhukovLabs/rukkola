@@ -29,7 +29,7 @@ import {
     deleteCategory,
 } from './actions'
 import {Tooltip} from '@/components/tooltip'
-import {useConfirmationDialog} from "@/hooks/use-delete-product-confirmation";
+import {useConfirmationDialog} from "@/hooks/use-confirmation-dialog";
 
 type Props = { categories: CategoryType[] }
 

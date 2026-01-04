@@ -15,7 +15,7 @@ import {ProductType} from '@/models/product';
 import {ProductRow} from './product-row';
 import {SkeletonRows} from './skeleton-rows';
 import {useProductsTable} from './hooks/use-products-table';
-import {useConfirmationDialog} from '@/hooks/use-delete-product-confirmation';
+import {useConfirmationDialog} from '@/hooks/use-confirmation-dialog';
 
 type Column = {
     key: string;
