@@ -135,12 +135,27 @@ export default function RootLayout({
     return (
         <html lang="ru" suppressHydrationWarning>
         <head>
+            <meta name="geo.region" content="BY-GO"/>
+            <meta name="geo.placename" content="Гомель"/>
+            <meta name="geo.position" content="52.4393223;31.0029487"/>
+            <meta name="ICBM" content="52.4393223, 31.0029487"/>
+
+            <meta name="yandex-verification" content="91fc20500288b2fe"/>
+
+            <meta property="business:contact_data:locality" content="Гомель"/>
+            <meta property="business:contact_data:region" content="Гомельская область"/>
+            <meta property="business:contact_data:country_name" content="Беларусь"/>
+            <meta property="business:contact_data:postal_code" content="246000"/>
+
+            <meta name="format-detection" content="telephone=no"/>
+            <meta name="contact" content="telephone:+375447703003"/>
+
             <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"/>
             <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"/>
             <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"/>
             <link rel="manifest" href="/site.webmanifest"/>
             <meta name="google-site-verification" content="XHWnek4KF6QdZm1UFnJeFW8xUtW1ZXbZkIHO84ZD5xs"/>
-            <meta name="yandex-verification" content="91fc20500288b2fe"/>
+
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{
@@ -163,8 +178,8 @@ export default function RootLayout({
                         },
                         geo: {
                             "@type": "GeoCoordinates",
-                            latitude: 52.441176,
-                            longitude: 30.987846,
+                            latitude: 52.4393223,
+                            longitude: 31.0029487,
                         },
                         openingHoursSpecification: {
                             "@type": "OpeningHoursSpecification",
