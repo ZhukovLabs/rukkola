@@ -44,7 +44,6 @@ export function UnofficialNotice() {
     return (
         <Alert.Root
             status="info"
-            variant="left-accent"
             colorPalette="teal"
             size="md"
             position="fixed"
