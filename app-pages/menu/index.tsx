@@ -6,6 +6,7 @@ import {MenuLoader} from "@/app-pages/menu/menu-loader";
 import {getMenuData} from "./config";
 import {ProductsServer} from "./products-server";
 import dynamic from "next/dynamic";
+import {UnofficialNotice} from "@/components/unofficial-notice";
 
 const Footer = dynamic(() => import("./footer").then(m => m.Footer));
 
@@ -51,6 +52,8 @@ export const MenuPage = async ({searchParams}: MenuPageProps) => {
 
     return (
         <Box display="flex" flexDirection="column" maxW="1440px" w="100%" mx="auto" p="20px">
+            <UnofficialNotice/>
+
             <Box mx="auto" w={{base: "80%", sm: "60%", md: "400px"}} maxW="90vw" mb={{base: 4, md: 6}}>
                 <Image
                     src="/logo.svg"
