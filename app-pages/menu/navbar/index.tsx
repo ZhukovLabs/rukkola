@@ -190,7 +190,11 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                         <Portal>
                             <Drawer.Backdrop/>
                             <Drawer.Positioner>
-                                <Drawer.Content bg="gray.800" borderTopRadius="lg">
+                                <Drawer.Content 
+                                    bg="gray.800" 
+                                    borderTopRadius="lg"
+                                    maxH="85vh"
+                                >
                                     <Drawer.Header px={4} pt={4} pb={2}>
                                         <HStack justify="space-between">
                                             <Drawer.Title fontSize="sm" color="whitesmoke">Разделы</Drawer.Title>
@@ -209,7 +213,17 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                                             <Drawer.Body
                                                 px={4}
                                                 pb={4}
-                                                style={{WebkitOverflowScrolling: 'touch'}}
+                                                overflowY="auto"
+                                                css={{
+                                                    WebkitOverflowScrolling: "touch",
+                                                    "&::-webkit-scrollbar": {
+                                                        width: "4px",
+                                                    },
+                                                    "&::-webkit-scrollbar-thumb": {
+                                                        background: "rgba(255,255,255,0.2)",
+                                                        borderRadius: "2px",
+                                                    },
+                                                }}
                                             >
                                                 <VStack align="stretch" gap={1}>
                                                     {items.map((item) => {
@@ -255,11 +269,19 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
 
                                                                 <AnimatePresence>
                                                                     {hasChildren && openIds.includes(item.id) && (
-                                                                        <MotionBox
-                                                                            initial={{opacity: 0, height: 0}}
-                                                                            animate={{opacity: 1, height: "auto"}}
-                                                                            exit={{opacity: 0, height: 0}}
-                                                                            overflow="hidden"
+                                                                        <Box
+                                                                            overflowY="auto"
+                                                                            maxH="200px"
+                                                                            css={{
+                                                                                WebkitOverflowScrolling: "touch",
+                                                                                "&::-webkit-scrollbar": {
+                                                                                    width: "4px",
+                                                                                },
+                                                                                "&::-webkit-scrollbar-thumb": {
+                                                                                    background: "rgba(255,255,255,0.2)",
+                                                                                    borderRadius: "2px",
+                                                                                },
+                                                                            }}
                                                                         >
                                                                             <VStack pl={4} mt={1} align="stretch"
                                                                                     gap={1}>
@@ -285,8 +307,8 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                                                                                         {child.name}
                                                                                     </MotionBox>
                                                                                 ))}
-                                                                            </VStack>
-                                                                        </MotionBox>
+                                                                             </VStack>
+                                                                        </Box>
                                                                     )}
                                                                 </AnimatePresence>
                                                             </Box>

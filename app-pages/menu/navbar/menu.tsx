@@ -80,7 +80,18 @@ export const Menu = ({
                 boxShadow="0 8px 30px rgba(0,0,0,0.35)"
                 borderRadius="lg"
                 border="1px solid rgba(255,255,255,0.05)"
-                overflow="hidden"
+                maxH={isMobile ? "50vh" : undefined}
+                overflowY={isMobile ? "auto" : "hidden"}
+                css={isMobile ? {
+                    WebkitOverflowScrolling: "touch",
+                    "&::-webkit-scrollbar": {
+                        width: "4px",
+                    },
+                    "&::-webkit-scrollbar-thumb": {
+                        background: "rgba(255,255,255,0.2)",
+                        borderRadius: "2px",
+                    },
+                } : undefined}
             >
                 <Box p={isMobile ? 3 : 2} display="flex" flexDir="column" gap={isMobile ? 2 : 1}>
                     {items.map((item) => (
