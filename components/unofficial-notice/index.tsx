@@ -1,7 +1,6 @@
 'use client'
 
 import {
-    Alert,
     Box,
     Flex,
     Link,
@@ -9,14 +8,13 @@ import {
     IconButton,
     HStack,
     VStack,
-    Tag,
-    Icon,
+    Badge,
 } from '@chakra-ui/react'
-import { X, ExternalLink, Leaf } from 'lucide-react'
+import { X, ExternalLink } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 const STORAGE_KEY = 'unofficial_notice_closed'
-const EXIT_ANIM_MS = 280
+const EXIT_ANIM_MS = 300
 
 export function UnofficialNotice() {
     const [visible, setVisible] = useState(() => {
@@ -25,6 +23,7 @@ export function UnofficialNotice() {
     })
 
     const [mounted, setMounted] = useState(false)
+    const [isClosing, setIsClosing] = useState(false)
 
     useEffect(() => {
         if (!visible) return
@@ -34,6 +33,8 @@ export function UnofficialNotice() {
     }, [visible])
 
     const handleClose = () => {
+        if (isClosing) return
+        setIsClosing(true)
         localStorage.setItem(STORAGE_KEY, 'true')
         setMounted(false)
         setTimeout(() => setVisible(false), EXIT_ANIM_MS)
@@ -42,139 +43,123 @@ export function UnofficialNotice() {
     if (!visible) return null
 
     return (
-        <Alert.Root
-            status="info"
-            // @ts-expect-error - ok
-            variant="left-accent"
-            colorPalette="teal"
-            size="md"
+        <Box
             position="fixed"
             bottom={0}
             left={0}
             right={0}
-            maxWidth="100%"
             zIndex="banner"
-            borderRadius="md md 0 0"
-            boxShadow="0 -6px 20px rgba(0, 0, 0, 0.14)"
-            transform={mounted ? 'translateY(0)' : 'translateY(100%)'}
-            transition={`transform ${EXIT_ANIM_MS}ms cubic-bezier(0.22, 1, 0.36, 1), opacity ${EXIT_ANIM_MS}ms`}
-            opacity={mounted ? 1 : 0}
-            pointerEvents={mounted ? 'auto' : 'none'}
+            transform={mounted && !isClosing ? 'translateY(0)' : 'translateY(100%)'}
+            transition={`transform ${EXIT_ANIM_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`}
+            opacity={mounted && !isClosing ? 1 : 0}
+            pointerEvents={mounted && !isClosing ? 'auto' : 'none'}
         >
             <Box
-                width="100%"
-                px={{ base: 3, md: 5 }}
-                py={{ base: 2.5, md: 3 }}
-                bgGradient="linear(to-r, teal.50, teal.100/40)"
-                backdropFilter="saturate(150%) blur(10px)"
-                borderTop="1px solid"
-                borderColor="teal.200/70"
+                position="relative"
+                bgGradient="linear(135deg, #0f766e 0%, #0d9488 100%)"
+                backdropFilter="blur(20px)"
+                borderTop="3px solid"
+                borderColor="whiteAlpha.300"
+                boxShadow="0 -8px 40px rgba(13, 148, 136, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15)"
+                overflow="hidden"
             >
+                <Box
+                    position="absolute"
+                    top={0}
+                    left={0}
+                    right={0}
+                    height="1px"
+                    bgGradient="linear(to-r, transparent, whiteAlpha.400, transparent)"
+                />
+
                 <Flex
                     align="center"
-                    maxW="1200px"
+                    maxW="1000px"
                     mx="auto"
-                    gap={{ base: 3, md: 4 }}
-                    justify="space-between"
+                    px={4}
+                    py={3}
+                    gap={3}
                 >
-                    <HStack gap={3} align="center" flex="1">
-                        <Icon as={Leaf} boxSize={{ base: 5, md: 6 }} color="teal.600" />
-
-                        <VStack align="stretch" gap={0.5}>
-                            <HStack gap={2} flexWrap="wrap">
-                                <Text fontWeight={700} fontSize={{ base: 'sm', md: 'md' }}>
-                                    Важное уведомление: неофициальный сайт кафе «Руккола» (Гомель)
-                                </Text>
-                                <Tag.Root
-                                    size="sm"
-                                    variant="subtle"
-                                    colorScheme="teal"
-                                    display={{ base: 'none', sm: 'inline-flex' }}
-                                >
-                                    <Tag.Label>Независимый ресурс</Tag.Label>
-                                </Tag.Root>
-                            </HStack>
-
+                    <VStack align="stretch" gap={1.5} flex="1">
+                        <HStack gap={2} flexWrap="wrap">
                             <Text
-                                fontSize={{ base: 'xs', md: 'sm' }}
-                                opacity={0.9}
-                                lineHeight="short"
+                                fontWeight={800}
+                                fontSize="sm"
+                                color="white"
+                                letterSpacing="tight"
                             >
-                                Настоящий сайт НЕ является официальным представителем кафе «Руккола», не имеет договорных или иных отношений с администрацией, владельцами или правообладателями товарного знака «Руккола».
+                                Важное уведомление
                             </Text>
-
-                            <Text
-                                fontSize={{ base: 'xs', md: 'sm' }}
-                                opacity={0.9}
-                                lineHeight="short"
+                            <Badge
+                                px={2}
+                                py={0.5}
+                                borderRadius="full"
+                                bg="whiteAlpha.200"
+                                color="white"
+                                fontSize="xs"
+                                fontWeight={600}
+                                border="1px solid"
+                                borderColor="whiteAlpha.300"
+                                textTransform="none"
                             >
-                                Сайт создан независимым третьим лицом исключительно в личных некоммерческих целях и для обмена информацией между посетителями. Администрация сайта не несёт ответственности за актуальность, достоверность или полноту размещённой информации.
-                            </Text>
+                                Неофициальный сайт
+                            </Badge>
+                        </HStack>
 
-                            <Text
-                                fontSize={{ base: 'xs', md: 'sm' }}
-                                opacity={0.92}
-                                mt={0.5}
-                                display="flex"
-                                alignItems="center"
-                                gap={1.5}
-                            >
+                        <Text fontSize="xs" color="whiteAlpha.900" lineHeight="tall">
+                            Это неофициальный сайт кафе «Руккола» (Гомель). Не является представительством кафе и не имеет договорных отношений с владельцами бренда. Создан в личных целях для обмена информацией.
+                        </Text>
+
+                        <HStack gap={3} flexWrap="wrap">
+                            <Text fontSize="xs" color="whiteAlpha.700">
                                 Официальный сайт:
-                                <Link
-                                    href="https://rukkola-gomel.by/"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    fontWeight={600}
-                                    textDecoration="underline"
-                                    color="teal.500"
-                                    _hover={{ color: 'teal.600', textDecoration: 'none' }}
-                                    transition="all 0.2s"
-                                    display="inline-flex"
-                                    alignItems="center"
-                                    gap={1}
-                                >
-                                    rukkola-gomel.by
-                                    <ExternalLink size={14} />
-                                </Link>
                             </Text>
-
-                            <Text fontSize="xs" opacity={0.7} mt={1}>
-                                Все права на товарный знак, фирменное наименование и иные объекты интеллектуальной собственности принадлежат их законным правообладателям.
-                            </Text>
-                        </VStack>
-                    </HStack>
+                            <Link
+                                href="https://rukkola-gomel.by/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                fontWeight={700}
+                                color="white"
+                                fontSize="xs"
+                                display="inline-flex"
+                                alignItems="center"
+                                gap={1}
+                                px={2}
+                                py={0.5}
+                                borderRadius="md"
+                                bg="whiteAlpha.100"
+                                _hover={{
+                                    bg: 'whiteAlpha.200',
+                                }}
+                                transition="all 0.2s"
+                            >
+                                rukkola-gomel.by
+                                <ExternalLink size={12} />
+                            </Link>
+                        </HStack>
+                    </VStack>
 
                     <IconButton
-                        aria-label="Закрыть уведомление"
+                        aria-label="Закрыть"
                         onClick={handleClose}
                         size="sm"
                         variant="ghost"
-                        colorScheme="teal"
-                        bg="transparent"
-                        color="teal.700"
-                        _hover={{ bg: 'teal.100' }}
-                        _active={{ bg: 'teal.200' }}
-                        border="2px solid"
-                        borderColor="teal.400"
+                        bg="whiteAlpha.100"
+                        color="white"
+                        _hover={{ bg: 'whiteAlpha.200' }}
+                        _active={{ bg: 'whiteAlpha.300', transform: 'scale(0.95)' }}
+                        border="1px solid"
+                        borderColor="whiteAlpha.300"
                         borderRadius="full"
-                        minW={9}
-                        h={9}
-                        p={1}
+                        w={8}
+                        h={8}
+                        flexShrink={0}
+                        transition="all 0.2s"
                     >
-                        <X size={18} strokeWidth={2.8} color="white" />
+                        <X size={16} strokeWidth={2.5} />
                     </IconButton>
                 </Flex>
-
-                <Text
-                    textAlign="center"
-                    fontSize="xs"
-                    opacity={0.6}
-                    mt={2}
-                    display={{ base: 'block', md: 'none' }}
-                >
-                    Создан: 01.02.2025 · Последнее обновление: 18.01.2026
-                </Text>
             </Box>
-        </Alert.Root>
+        </Box>
     )
 }
