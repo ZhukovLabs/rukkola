@@ -11,10 +11,14 @@ import {
     Flex,
     Spinner,
     Center,
+    Heading,
+    Card,
+    Icon,
 } from '@chakra-ui/react';
-import {FiUpload, FiStar, FiTrash2, FiPower} from 'react-icons/fi';
+import {FiUpload, FiStar, FiTrash2, FiPower, FiImage} from 'react-icons/fi';
 import {activeLunch, deleteLunch, deactivateLunch} from './actions';
 import {useConfirmationDialog} from '@/hooks/use-confirmation-dialog';
+import {useToast} from '@/components/toast-container';
 
 type Lunch = {
     _id: string;
@@ -93,6 +97,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
     });
 
     const [isPending, startTransition] = useTransition();
+    const toast = useToast();
 
     const {lunches, file, isDragOver, deletingId} = state;
 
@@ -103,9 +108,11 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                 const res = await deleteLunch(id);
                 if (res?.success) {
                     dispatch({type: 'REMOVE_LUNCH', payload: id});
+                    toast.showSuccess('Изображение удалено');
                 }
             } catch (err) {
                 console.error('Delete error', err);
+                toast.showError('Не удалось удалить изображение');
             } finally {
                 dispatch({type: 'SET_DELETING', payload: null});
             }
@@ -128,11 +135,14 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
             if (res.ok) {
                 const data = await res.json();
                 dispatch({type: 'ADD_LUNCH', payload: {id: data.id, image: data.image}});
+                toast.showSuccess('Изображение успешно загружено');
             } else {
                 console.error('Upload failed', await res.text());
+                toast.showError('Не удалось загрузить изображение');
             }
         } catch (err) {
             console.error('Upload error', err);
+            toast.showError('Ошибка при загрузке изображения');
         }
     };
 
@@ -146,15 +156,18 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                     const res = await deactivateLunch();
                     if (res?.success) {
                         dispatch({type: 'DEACTIVATE_ALL'});
+                        toast.showInfo('Отображение обеда выключено');
                     }
                 } else {
                     const res = await activeLunch(id);
                     if (res?.success) {
                         dispatch({type: 'UPDATE_ACTIVE', payload: {id, active: true}});
+                        toast.showSuccess('Обед активирован для отображения');
                     }
                 }
             } catch (err) {
                 console.error('Activate error', err);
+                toast.showError('Не удалось изменить статус обеда');
             }
         });
     };
@@ -164,23 +177,50 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
             const res = await deactivateLunch();
             if (res?.success) {
                 dispatch({type: 'DEACTIVATE_ALL'});
+                toast.showInfo('Отображение обеда выключено');
             }
         } catch (err) {
             console.error('Deactivate all error', err);
+            toast.showError('Не удалось выключить отображение');
         }
     };
 
     return (
         <>
-            <Box maxW="6xl" mx="auto" bg="gray.900" borderRadius="2xl" color="white">
-                <Flex justify="space-between" mb={6}>
-                    <Text fontSize="2xl" fontWeight="bold" mb={6} color="white">
-                        Галерея обедов
-                    </Text>
+            <Card.Root
+                w="100%"
+                borderRadius="2xl"
+                shadow="xl"
+                border="1px solid"
+                borderColor="gray.700"
+                bg="gray.900"
+                overflow="hidden"
+            >
+                <Card.Header
+                    bgGradient="linear(to-r, teal.600, cyan.600)"
+                    borderTopRadius="2xl"
+                    py={4}
+                    textAlign="center"
+                    color="white"
+                    backdropFilter="blur(10px)"
+                >
+                    <Flex justify="center" align="center" gap={2}>
+                        <Icon as={FiImage} boxSize={5}/>
+                        <Heading size="md" fontWeight="bold" letterSpacing="tight">
+                            Галерея обедов
+                        </Heading>
+                    </Flex>
+                </Card.Header>
 
-                    <Button
-                        size="md"
-                        onClick={handleDeactivateAll}
+                <Card.Body>
+                    <Flex justify="space-between" mb={6} flexWrap="wrap" gap={4}>
+                        <Text fontSize="lg" color="gray.300">
+                            Загружайте и управляйте изображениями обедов
+                        </Text>
+
+                        <Button
+                            size="md"
+                            onClick={handleDeactivateAll}
                         variant="outline"
                         borderColor="teal.600"
                         color="teal.200"
@@ -367,7 +407,8 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                         </SimpleGrid>
                     </Box>
                 </VStack>
-            </Box>
+                </Card.Body>
+            </Card.Root>
 
             <DeleteConfirmationDialog/>
         </>

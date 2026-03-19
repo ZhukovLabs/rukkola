@@ -1,8 +1,9 @@
 "use client";
 
 import React, {useEffect, useState, useCallback} from "react";
-import {Box, Button, Flex, Heading, VStack} from "@chakra-ui/react";
-import {FiUser} from "react-icons/fi";
+import {Box, Button, Flex, Heading, VStack, Text, Icon} from "@chakra-ui/react";
+import {FiUser, FiLock} from "react-icons/fi";
+import {MdDashboard} from "react-icons/md";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {signIn, useSession} from "next-auth/react";
@@ -79,20 +80,47 @@ export const LoginPage = () => {
                 w="full"
                 maxW="md"
                 bg="gray.900"
-                p={{base: 6, md: 8}}
+                p={{base: 6, md: 10}}
                 borderRadius="2xl"
                 border="1px solid"
                 borderColor="gray.800"
-                boxShadow="0 0 40px rgba(0,0,0,0.8)"
+                boxShadow="0 25px 50px -12px rgba(0, 0, 0, 0.8)"
+                position="relative"
+                overflow="hidden"
             >
-                <Heading mb={6} textAlign="center" fontSize={{base: "xl", md: "2xl"}} color="teal.400">
-                    {pageTitle}
-                </Heading>
+                <Box
+                    position="absolute"
+                    top={0}
+                    left={0}
+                    right={0}
+                    h="4px"
+                    bgGradient="linear(to-r, teal.400, cyan.400)"
+                />
+
+                <VStack gap={6} mb={8}>
+                    <Box
+                        p={4}
+                        bg="teal.900"
+                        borderRadius="2xl"
+                        border="1px solid"
+                        borderColor="teal.700"
+                    >
+                        <Icon as={MdDashboard} color="teal.300" boxSize={10}/>
+                    </Box>
+                    <VStack gap={1}>
+                        <Heading mb={2} textAlign="center" fontSize={{base: "2xl", md: "3xl"}} color="white">
+                            {pageTitle}
+                        </Heading>
+                        <Text color="gray.500" fontSize="sm">
+                            Войдите для доступа к панели управления
+                        </Text>
+                    </VStack>
+                </VStack>
 
                 {alert && <LoginAlert {...alert} successTitle={successTitle} errorTitle={errorTitle}/>}
 
                 <form onSubmit={handleSubmit(onSubmit)} noValidate>
-                    <VStack gap={4}>
+                    <VStack gap={5}>
                         <InputField
                             icon={<FiUser/>}
                             placeholder={usernamePlaceholder}
@@ -111,18 +139,30 @@ export const LoginPage = () => {
                         <Button
                             type="submit"
                             w="full"
+                            size="lg"
                             mt={2}
-                            bg="teal.600"
+                            bgGradient="linear(to-r, teal.500, teal.600)"
                             color="white"
-                            _hover={{bg: "teal.500"}}
-                            _active={{bg: "teal.700"}}
+                            _hover={{
+                                bgGradient: "linear(to-r, teal.600, teal.700)",
+                                transform: "translateY(-2px)",
+                                boxShadow: "0 10px 25px rgba(56,178,172,0.3)",
+                            }}
+                            _active={{
+                                bgGradient: "linear(to-r, teal.700, teal.800)",
+                                transform: "translateY(0)",
+                            }}
                             _disabled={{bg: "gray.600", cursor: "not-allowed"}}
                             loading={isSubmitting}
                             disabled={!isValid && isSubmitting}
                             loadingText={loginButtonLoading}
                             aria-label={loginButton}
+                            boxShadow="0 4px 15px rgba(56,178,172,0.2)"
                         >
-                            {loginButton}
+                            <Flex align="center" gap={2}>
+                                <Icon as={FiLock} boxSize={4}/>
+                                <Text>{loginButton}</Text>
+                            </Flex>
                         </Button>
                     </VStack>
                 </form>

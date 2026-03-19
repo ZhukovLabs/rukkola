@@ -16,6 +16,7 @@ import {updateUser, deleteUser} from './actions'
 import {Tooltip} from '@/components/tooltip'
 import {Select, createListCollection} from '@chakra-ui/react'
 import {useConfirmationDialog} from '@/hooks/use-confirmation-dialog'
+import {useToast} from '@/components/toast-container'
 import type {SerializedUser, UserRowProps} from './types'
 
 type EditableUserFields = Pick<SerializedUser, 'username' | 'name' | 'surname' | 'patronymic' | 'role'>;
@@ -37,6 +38,7 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
         role: user.role,
     })
     const [error, setError] = useState<string | null>(null)
+    const toast = useToast()
 
     const {openDialog, ConfirmationDialog} = useConfirmationDialog<string>({
         onConfirm: async (id) => {
@@ -45,11 +47,14 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                 const res = await deleteUser(id)
                 if (res.success) {
                     onUserDelete(id)
+                    toast.showSuccess('Пользователь удалён')
                 } else {
                     setError(res.message || 'Не удалось удалить пользователя')
+                    toast.showError(res.message || 'Не удалось удалить пользователя')
                 }
             } catch {
                 setError('Не удалось удалить пользователя')
+                toast.showError('Не удалось удалить пользователя')
             }
         },
         title: 'Удалить пользователя?',
@@ -66,11 +71,14 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
             if (res.success) {
                 onUserUpdate(res.data!)
                 setEditing(false)
+                toast.showSuccess('Данные пользователя обновлены')
             } else {
                 setError(res.message || 'Не удалось обновить пользователя')
+                toast.showError(res.message || 'Не удалось обновить пользователя')
             }
         } catch {
             setError('Не удалось обновить пользователя')
+            toast.showError('Не удалось обновить пользователя')
         }
     }
 

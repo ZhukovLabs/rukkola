@@ -16,6 +16,7 @@ import {Select, createListCollection} from '@chakra-ui/react'
 import {useForm, Controller} from 'react-hook-form'
 import {createUser} from './actions'
 import {FiX, FiEye, FiEyeOff} from 'react-icons/fi'
+import {useToast} from '@/components/toast-container'
 import type {SerializedUser} from './types'
 
 const roles = createListCollection({
@@ -44,6 +45,7 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [showPassword, setShowPassword] = useState(false)
+    const toast = useToast()
 
     const {
         register,
@@ -73,12 +75,15 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                 onUserAdded(res.data!)
                 reset()
                 onClose()
+                toast.showSuccess('Пользователь успешно создан')
             } else {
                 setError(res.message || 'Ошибка при создании пользователя')
+                toast.showError(res.message || 'Ошибка при создании пользователя')
             }
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Ошибка при создании пользователя'
             setError(message)
+            toast.showError(message)
         } finally {
             setLoading(false)
         }

@@ -5,23 +5,24 @@ import {motion} from "framer-motion";
 import {
     FiHome,
     FiBox,
-    FiUsers,
     FiSettings,
     FiLogOut,
     FiMenu,
+    FiGrid,
+    FiCoffee,
 } from "react-icons/fi";
 import { MdDashboard } from "react-icons/md";
 import {useRouter, usePathname} from "next/navigation";
 import {signOut} from "next-auth/react";
 import {useState} from "react";
 
-const MotionBox = motion(Box);
+const MotionBox = motion.create(Box);
 
 const menuItems = [
     {label: "Главная", icon: FiHome, path: "/dashboard"},
     {label: "Товары", icon: FiBox, path: "/dashboard/products"},
-    {label: "Категории", icon: FiUsers, path: "/dashboard/categories"},
-    {label: "Обеды", icon: FiUsers, path: "/dashboard/lunches"},
+    {label: "Категории", icon: FiGrid, path: "/dashboard/categories"},
+    {label: "Обеды", icon: FiCoffee, path: "/dashboard/lunches"},
     {label: "Настройки", icon: FiSettings, path: "/dashboard/settings"},
 ];
 
@@ -30,10 +31,10 @@ export const DashboardLayout = ({children}: { children: React.ReactNode }) => {
     const pathname = usePathname();
     const [mobileOpen, setMobileOpen] = useState(false);
 
-    const sidebarBg = "gray.800";
+    const sidebarBg = "linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%)";
     const activeColor = "teal.400";
-    const textColor = "gray.300";
-    const dividerColor = "rgba(255,255,255,0.08)";
+    const textColor = "gray.400";
+    const hoverBg = "rgba(56,178,172,0.1)";
 
     return (
         <Flex minH="100vh" bg="gray.900" color="white" flexDir={{base: "column", md: "row"}}>
@@ -41,10 +42,11 @@ export const DashboardLayout = ({children}: { children: React.ReactNode }) => {
                 display={{base: "flex", md: "none"}}
                 justify="space-between"
                 align="center"
-                bg={sidebarBg}
+                bg="gray.800"
                 px={4}
                 py={3}
-                borderBottom={`1px solid ${dividerColor}`}
+                borderBottom="1px solid"
+                borderColor="gray.700"
             >
                 <Flex align="center" gap={2}>
                     <Icon as={MdDashboard} color="teal.300" boxSize={5} />
@@ -56,17 +58,18 @@ export const DashboardLayout = ({children}: { children: React.ReactNode }) => {
                     aria-label="Menu"
                     variant="ghost"
                     color="white"
-                    _hover={{bg: "rgba(56,178,172,0.1)"}}
+                    _hover={{bg: hoverBg}}
                     onClick={() => setMobileOpen(!mobileOpen)}>
                     <FiMenu/>
                 </IconButton>
             </Flex>
 
             <MotionBox
-                w={{base: mobileOpen ? "100%" : 0, md: "260px"}}
+                w={{base: mobileOpen ? "100%" : 0, md: "280px"}}
                 bg={sidebarBg}
                 p={{base: mobileOpen ? 6 : 0, md: 6}}
-                borderRight={{base: "none", md: `1px solid ${dividerColor}`}}
+                borderRight={{base: "none", md: "1px solid"}}
+                borderColor="gray.800"
                 display={{base: mobileOpen ? "block" : "none", md: "flex"}}
                 flexDir="column"
                 justifyContent="space-between"
@@ -83,21 +86,39 @@ export const DashboardLayout = ({children}: { children: React.ReactNode }) => {
                 <VStack align="stretch">
                     <Box
                         display={{base: "none", md: "block"}}
-                        textAlign="center"
-                        fontWeight="bold"
-                        fontSize="xl"
-                        color="teal.300"
-                        mb={6}
+                        mb={8}
+                        p={4}
+                        bg="teal.900"
+                        borderRadius="xl"
+                        border="1px solid"
+                        borderColor="teal.700"
                     >
-                        <Flex justify="center" align="center" gap={2}>
-                            <Icon as={MdDashboard} color="teal.300" boxSize={6} />
-                            <Text fontWeight="bold" fontSize="xl" color="teal.300">
-                                Админ панель
-                            </Text>
+                        <Flex justify="center" align="center" gap={3}>
+                            <Icon as={MdDashboard} color="teal.300" boxSize={7} />
+                            <VStack align="start" gap={0}>
+                                <Text fontWeight="bold" fontSize="lg" color="white">
+                                    Админ
+                                </Text>
+                                <Text fontSize="xs" color="teal.300">
+                                    Панель управления
+                                </Text>
+                            </VStack>
                         </Flex>
                     </Box>
 
-                    <VStack align="stretch">
+                    <Text 
+                        fontSize="xs" 
+                        fontWeight="semibold" 
+                        color="gray.500" 
+                        textTransform="uppercase" 
+                        letterSpacing="wider"
+                        mb={3}
+                        px={3}
+                    >
+                        Меню
+                    </Text>
+
+                    <VStack align="stretch" gap={1}>
                         {menuItems.map((item) => {
                             const isActive = pathname === item.path;
                             return (
@@ -105,22 +126,23 @@ export const DashboardLayout = ({children}: { children: React.ReactNode }) => {
                                     key={item.path}
                                     align="center"
                                     gap={3}
-                                    px={3}
-                                    py={2.5}
-                                    borderRadius="md"
-                                    bg={isActive ? "rgba(56,178,172,0.15)" : "transparent"}
-                                    color={isActive ? activeColor : textColor}
+                                    px={4}
+                                    py={3}
+                                    borderRadius="lg"
+                                    bg={isActive ? "teal.600" : "transparent"}
+                                    color={isActive ? "white" : textColor}
                                     cursor="pointer"
                                     _hover={{
-                                        bg: "rgba(56,178,172,0.1)",
-                                        color: activeColor,
-                                        transform: "translateX(2px)",
+                                        bg: isActive ? "teal.600" : hoverBg,
+                                        color: isActive ? "white" : activeColor,
+                                        transform: "translateX(4px)",
                                     }}
                                     transition="all 0.2s ease"
                                     onClick={() => {
                                         router.push(item.path);
                                         setMobileOpen(false);
                                     }}
+                                    boxShadow={isActive ? "0 4px 12px rgba(56,178,172,0.3)" : "none"}
                                 >
                                     <Icon as={item.icon} boxSize={5}/>
                                     <Text fontWeight="medium">{item.label}</Text>
@@ -131,16 +153,16 @@ export const DashboardLayout = ({children}: { children: React.ReactNode }) => {
                 </VStack>
 
                 <Box mt={4}>
-                    <Box my={4} h="1px" bg={dividerColor}/>
+                    <Box my={4} h="1px" bg="gray.700"/>
                     <Flex
                         align="center"
                         gap={3}
-                        px={3}
-                        py={2.5}
-                        borderRadius="md"
+                        px={4}
+                        py={3}
+                        borderRadius="lg"
                         color="gray.400"
                         cursor="pointer"
-                        _hover={{bg: "rgba(56,178,172,0.1)", color: "red.300"}}
+                        _hover={{bg: "rgba(229,62,62,0.1)", color: "red.300"}}
                         transition="all 0.2s ease"
                         onClick={() => signOut({redirectTo: "/"})}
                     >
@@ -150,7 +172,13 @@ export const DashboardLayout = ({children}: { children: React.ReactNode }) => {
                 </Box>
             </MotionBox>
 
-            <Box flex="1" p={{base: 4, md: 10}} overflowX="auto" ml={{ md: "260px" }}>
+            <Box 
+                flex="1" 
+                p={{base: 4, md: 8}} 
+                overflowX="auto" 
+                ml={{ md: "280px" }}
+                bg="gray.900"
+            >
                 {children}
             </Box>
         </Flex>

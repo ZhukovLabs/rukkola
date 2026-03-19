@@ -20,6 +20,7 @@ import {
     FiTrash2,
     FiCheck,
     FiX,
+    FiFolder,
 } from 'react-icons/fi'
 import {FaWineBottle, FaWineGlassAlt} from 'react-icons/fa'
 import {CategoryType} from '@/models/category'
@@ -32,7 +33,8 @@ import {
     markCategoryProductsNonAlcohol,
 } from './actions'
 import {Tooltip} from '@/components/tooltip'
-import {useConfirmationDialog} from "@/hooks/use-confirmation-dialog";
+import {useConfirmationDialog} from "@/hooks/use-confirmation-dialog"
+import {useToast} from "@/components/toast-container"
 
 type Props = { categories: CategoryType[] }
 
@@ -40,6 +42,7 @@ export default function CategoriesTable({categories: initialCategories}: Props) 
     const queryClient = useQueryClient()
     const [editingId, setEditingId] = useState<string | null>(null)
     const [tempName, setTempName] = useState('')
+    const toast = useToast()
 
     const {
         openDialog: openDeleteDialog,
@@ -87,11 +90,13 @@ export default function CategoriesTable({categories: initialCategories}: Props) 
         mutationFn: ({id, field}: { id: string; field: 'isMenuItem' | 'showGroupTitle' }) =>
             toggleCategoryField(id, field),
         onSuccess: () => queryClient.invalidateQueries({queryKey: ['categories']}),
+        onError: () => toast.showError('Не удалось обновить настройки категории'),
     })
 
     const moveMutation = useMutation({
         mutationFn: ({id, dir}: { id: string; dir: 'up' | 'down' }) => moveCategory(id, dir),
         onSuccess: () => queryClient.invalidateQueries({queryKey: ['categories']}),
+        onError: () => toast.showError('Не удалось изменить позицию категории'),
     })
 
     const updateNameMutation = useMutation({
@@ -99,26 +104,39 @@ export default function CategoriesTable({categories: initialCategories}: Props) 
         onSuccess: () => {
             setEditingId(null)
             queryClient.invalidateQueries({queryKey: ['categories']})
+            toast.showSuccess('Название категории обновлено')
+        },
+        onError: () => {
+            setEditingId(null)
+            toast.showError('Не удалось обновить название')
         },
     })
 
     const deleteMutation = useMutation({
         mutationFn: deleteCategory,
-        onSuccess: () => queryClient.invalidateQueries({queryKey: ['categories']}),
+        onSuccess: () => {
+            queryClient.invalidateQueries({queryKey: ['categories']})
+            toast.showSuccess('Категория удалена')
+        },
+        onError: () => toast.showError('Не удалось удалить категорию'),
     })
 
     const markAlcoholMutation = useMutation({
         mutationFn: (categoryId: string) => markCategoryProductsAlcohol(categoryId),
         onSuccess: () => {
             queryClient.invalidateQueries({queryKey: ['products']})
+            toast.showSuccess('Продукты помечены как алкогольные')
         },
+        onError: () => toast.showError('Не удалось пометить продукты'),
     })
 
     const markNonAlcoholMutation = useMutation({
         mutationFn: (categoryId: string) => markCategoryProductsNonAlcohol(categoryId),
         onSuccess: () => {
             queryClient.invalidateQueries({queryKey: ['products']})
+            toast.showSuccess('Продукты помечены как безалкогольные')
         },
+        onError: () => toast.showError('Не удалось пометить продукты'),
     })
 
     const handleEditStart = (category: CategoryType) => {
@@ -426,7 +444,7 @@ export default function CategoriesTable({categories: initialCategories}: Props) 
     const rootCategories = initialCategories.filter((c) => !c.parent)
 
     return (
-        <Box minH="100vh">
+        <Box>
             <Card.Root
                 w="100%"
                 borderRadius="2xl"
@@ -434,17 +452,22 @@ export default function CategoriesTable({categories: initialCategories}: Props) 
                 border="1px solid"
                 borderColor="gray.700"
                 bg="gray.900"
+                overflow="hidden"
             >
                 <Card.Header
-                    bg="teal.500"
+                    bgGradient="linear(to-r, teal.600, cyan.600)"
                     borderTopRadius="2xl"
-                    py={3}
+                    py={4}
                     textAlign="center"
                     color="white"
+                    backdropFilter="blur(10px)"
                 >
-                    <Text fontSize="lg" fontWeight="semibold">
-                        Изменение категорий
-                    </Text>
+                    <Flex justify="center" align="center" gap={2}>
+                        <Box as={FiFolder} boxSize={5}/>
+                        <Text fontSize="lg" fontWeight="bold" letterSpacing="tight">
+                            Управление категориями
+                        </Text>
+                    </Flex>
                 </Card.Header>
 
                 <Card.Body px={0} py={0}>

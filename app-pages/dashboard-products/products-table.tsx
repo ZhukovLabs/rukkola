@@ -1,6 +1,6 @@
 'use client';
 
-import {memo} from 'react';
+import {memo, useEffect} from 'react';
 import {
     Box,
     Flex,
@@ -16,6 +16,7 @@ import {ProductRow} from './product-row';
 import {SkeletonRows} from './skeleton-rows';
 import {useProductsTable} from './hooks/use-products-table';
 import {useConfirmationDialog} from '@/hooks/use-confirmation-dialog';
+import {useToast} from '@/components/toast-container';
 
 type Column = {
     key: string;
@@ -33,6 +34,7 @@ const COLUMNS: Column[] = [
 ];
 
 export const ProductsTable = memo(() => {
+    const toast = useToast();
     const {
         data: {products},
         isFetching,
@@ -46,8 +48,25 @@ export const ProductsTable = memo(() => {
     } = useProductsTable();
 
     const {openDialog, ConfirmationDialog} = useConfirmationDialog({
-        onConfirm: deleteMutation.mutate
+        onConfirm: (id: string) => {
+            deleteMutation.mutate(id, {
+                onSuccess: () => toast.showSuccess('Товар удалён'),
+                onError: () => toast.showError('Не удалось удалить товар'),
+            })
+        }
     });
+
+    useEffect(() => {
+        if (toggleVisibility.isError) {
+            toast.showError('Не удалось изменить видимость товара');
+        }
+    }, [toggleVisibility.isError, toast]);
+
+    useEffect(() => {
+        if (toggleAlcohol.isError) {
+            toast.showError('Не удалось изменить статус алкоголя');
+        }
+    }, [toggleAlcohol.isError, toast]);
 
     const emptySize = useBreakpointValue({base: '24px', md: '32px'});
 

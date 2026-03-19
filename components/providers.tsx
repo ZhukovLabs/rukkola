@@ -5,6 +5,8 @@ import {Suspense} from "react";
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
 import {SessionProvider} from "next-auth/react";
 import {useMemo} from "react";
+import {ToastProvider} from "@/components/toast-container";
+import {ErrorBoundary} from "@/components/error-boundary";
 
 type ProvidersProps = { children: React.ReactNode }
 
@@ -40,9 +42,13 @@ export function Providers({children}: ProvidersProps) {
         <SessionProvider>
             <QueryClientProvider client={queryClient}>
                 <ChakraProvider value={system}>
-                    <Suspense fallback="Загрузка...">
-                        {children}
-                    </Suspense>
+                    <ToastProvider>
+                        <ErrorBoundary>
+                            <Suspense fallback="Загрузка...">
+                                {children}
+                            </Suspense>
+                        </ErrorBoundary>
+                    </ToastProvider>
                 </ChakraProvider>
             </QueryClientProvider>
         </SessionProvider>

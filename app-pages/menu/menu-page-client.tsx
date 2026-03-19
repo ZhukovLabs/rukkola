@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { CartButton } from "./cart-button";
 import { Box } from "@chakra-ui/react";
 import { ComponentProps } from "react";
+import { AdminFloatButton } from "@/components/admin-float-button";
 
 const Navbar = dynamic(() => import("./navbar").then(m => m.Navbar));
 const ScrollToFooterButton = dynamic(() => import("./scroll-footer-button").then(m => m.ScrollToFooterButton));
@@ -39,6 +40,8 @@ export const MenuPageClient = ({ activeLunch, navbar }: MenuPageClientProps) => 
             <Suspense fallback={<Box h="60px" />}>
                 <NavbarWrapper items={navbar.items} />
             </Suspense>
+
+            <AdminFloatButton />
 
             <Suspense fallback={null}>
                 <CartComponents />

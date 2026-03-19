@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Box, Flex, Spinner, Text, Button, Card, Table } from '@chakra-ui/react'
+import { Flex, Spinner, Text, Button, Card, Table } from '@chakra-ui/react'
 import { getUsers } from './actions'
 import { AddUserModal } from './add-user-modal'
 import { UserRow } from './user-row'
