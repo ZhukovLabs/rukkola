@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { CartButton } from "./cart-button";
 import { Box } from "@chakra-ui/react";
@@ -16,15 +17,32 @@ type MenuPageClientProps = {
     navbar: ComponentProps<typeof Navbar>
 }
 
+function CartComponents() {
+    return (
+        <>
+            <CartButton />
+            <CartModal />
+        </>
+    );
+}
+
+function NavbarWrapper({ items }: { items: ComponentProps<typeof Navbar>["items"] }) {
+    return <Navbar items={items} />;
+}
+
 export const MenuPageClient = ({ activeLunch, navbar }: MenuPageClientProps) => {
     return (
         <Box display="flex" flexDirection="column">
             {activeLunch?.image && <ActiveLunch image={activeLunch.image} />}
             <ScrollToFooterButton />
-            <Navbar items={navbar.items} />
+            
+            <Suspense fallback={<Box h="60px" />}>
+                <NavbarWrapper items={navbar.items} />
+            </Suspense>
 
-            <CartButton />
-            <CartModal />
+            <Suspense fallback={null}>
+                <CartComponents />
+            </Suspense>
 
             <ProductModal />
         </Box>

@@ -1,9 +1,72 @@
-# *
+# https://www.robotstxt.org/robotstxt.html
+
 User-agent: *
 Allow: /
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /login
+Disallow: /*.json$
+Disallow: /_next/
+Allow: /_next/static/
+Allow: /uploads/
+Allow: /favicon.svg
+Allow: /og-image.webp
 
-# Host
+Crawl-delay: 1
+
 Host: https://rukkola-production.up.railway.app
 
-# Sitemaps
 Sitemap: https://rukkola-production.up.railway.app/sitemap.xml
+
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+Image-Alt: Enabled
+
+User-agent: Googlebot-Image
+Allow: /uploads/
+Allow: /og-image.webp
+Allow: /logo.svg
+Crawl-delay: 5
+
+User-agent: Yandex
+Allow: /
+Crawl-delay: 1
+
+User-agent: YandexImages
+Allow: /uploads/
+Allow: /og-image.webp
+Allow: /logo.svg
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: DuckDuckBot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Applebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: AnthropicAI
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: CCIntelligence
+Disallow: /

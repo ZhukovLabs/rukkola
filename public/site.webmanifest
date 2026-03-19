@@ -1,1 +1,51 @@
-{"name":"","short_name":"","icons":[{"src":"/android-chrome-192x192.png","sizes":"192x192","type":"image/png"},{"src":"/android-chrome-512x512.png","sizes":"512x512","type":"image/png"}],"theme_color":"#ffffff","background_color":"#ffffff","display":"standalone"}
+{
+  "name": "Кафе Руккола — пицца и суши в Гомеле",
+  "short_name": "Руккола",
+  "description": "Уютное кафе в центре Гомеля с авторской пиццей, японскими суши и паназиатской кухней. Ежедневно 12:00-23:00.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "categories": ["food", "restaurant"],
+  "lang": "ru-BY",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.webp",
+      "sizes": "1200x630",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "Главная страница кафе Руккола"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Меню",
+      "short_name": "Меню",
+      "description": "Посмотреть меню кафе Руккола",
+      "url": "/",
+      "icons": [{"src": "/android-chrome-192x192.png", "sizes": "192x192"}]
+    }
+  ],
+  "related_applications": [],
+  "handle_links": "preferred",
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
+}

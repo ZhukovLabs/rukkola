@@ -8,7 +8,7 @@ function subscribe(callback: () => void) {
 }
 
 function getSnapshot(): CartItem[] {
-    return cartStore.getCart();
+    return cartStore.getSnapshot();
 }
 
 function getServerSnapshot(): CartItem[] {

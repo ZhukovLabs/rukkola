@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-<sitemap><loc>https://rukkola-production.up.railway.app/sitemap-0.xml</loc></sitemap>
+<sitemap>
+    <loc>https://rukkola-production.up.railway.app/sitemap.xml</loc>
+    <lastmod>2026-03-19T18:51:41.394Z</lastmod>
+</sitemap>
 </sitemapindex>

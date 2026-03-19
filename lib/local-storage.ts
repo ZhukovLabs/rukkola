@@ -12,13 +12,14 @@ export interface CartItem {
 }
 
 type CartEventMap = {
-    'cart-updated': CustomEvent<{ items: CartItem[]; totalCount: number }>;
+    'cart-updated': CustomEvent<void>;
 };
 
 type CartEventListener<K extends keyof CartEventMap> = (event: CartEventMap[K]) => void;
 
 class CartStore {
     private listeners = new Map<keyof CartEventMap, Set<CartEventListener<keyof CartEventMap>>>();
+    private cachedCart: CartItem[] | null = null;
 
     subscribe<K extends keyof CartEventMap>(event: K, listener: CartEventListener<K>): () => void {
         if (!this.listeners.has(event)) {
@@ -31,15 +32,13 @@ class CartStore {
         };
     }
 
-    private emit<K extends keyof CartEventMap>(event: K, detail: CartEventMap[K]['detail']): void {
+    private emit<K extends keyof CartEventMap>(event: K): void {
         this.listeners.get(event)?.forEach(listener => {
-            listener(new CustomEvent(event, { detail }) as CartEventMap[K]);
+            listener(new CustomEvent(event) as CartEventMap[K]);
         });
     }
 
-    getCart(): CartItem[] {
-        if (typeof window === 'undefined') return [];
-
+    private readFromStorage(): CartItem[] {
         try {
             const raw = localStorage.getItem(CART_KEY);
             if (!raw) return [];
@@ -50,7 +49,6 @@ class CartStore {
 
             if (filtered.length !== data.length) {
                 localStorage.setItem(CART_KEY, JSON.stringify(filtered));
-                this.emit('cart-updated', { items: filtered, totalCount: this.getTotalCount(filtered) });
             }
 
             return filtered;
@@ -59,13 +57,28 @@ class CartStore {
         }
     }
 
-    private getTotalCount(items: CartItem[]): number {
-        return items.reduce((sum, item) => sum + item.quantity, 0);
+    getCart(): CartItem[] {
+        if (typeof window === 'undefined') return [];
+
+        if (this.cachedCart === null) {
+            this.cachedCart = this.readFromStorage();
+        }
+
+        return this.cachedCart;
+    }
+
+    getSnapshot(): CartItem[] {
+        return this.getCart();
+    }
+
+    invalidateCache(): void {
+        this.cachedCart = null;
     }
 
     private persist(items: CartItem[]): void {
+        this.cachedCart = items;
         localStorage.setItem(CART_KEY, JSON.stringify(items));
-        this.emit('cart-updated', { items, totalCount: this.getTotalCount(items) });
+        this.emit('cart-updated');
     }
 
     add(item: Omit<CartItem, 'timestamp' | 'quantity'>, quantity = 1): void {
@@ -79,7 +92,7 @@ class CartStore {
             cart.push({ ...item, quantity, timestamp: Date.now() });
         }
 
-        this.persist(cart);
+        this.persist([...cart]);
     }
 
     remove(id: string, size: string, quantity?: number): void {
