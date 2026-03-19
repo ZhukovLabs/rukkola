@@ -74,8 +74,8 @@ export async function deleteLunch(id: string) {
 
         try {
             await fs.promises.unlink(fullPath)
-        } catch (err: any) {
-            if (err.code !== 'ENOENT') {
+        } catch (err) {
+            if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
                 console.error('Ошибка при удалении файла:', err)
             }
         }

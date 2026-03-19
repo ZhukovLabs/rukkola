@@ -1,6 +1,6 @@
 'use client'
 
-import React, {useEffect} from 'react'
+import React from 'react'
 import {Box, Tabs} from '@chakra-ui/react'
 import {UsersTable} from './users-table'
 import {PasswordChangeForm} from './password-change-form'

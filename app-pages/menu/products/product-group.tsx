@@ -1,19 +1,20 @@
 'use client';
 
+import { memo, useMemo } from "react";
 import { Box, Heading, SimpleGrid, useBreakpointValue } from "@chakra-ui/react";
-import type { ProductType } from "@/models/product";
 import { Product } from "./product";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import type {ProductClientType} from "./types";
 
 type ProductGroupProps = {
     id?: string;
     title?: string;
-    products: ProductType[];
+    products: ProductClientType[];
 };
 
-export const ProductGroup = ({ id, title, products }: ProductGroupProps) => {
+export const ProductGroup = memo(function ProductGroup({ id, title, products }: ProductGroupProps) {
     const columnCount = useBreakpointValue({ base: 1, sm: 2, xl: 3 }) ?? 1;
-    const rowCount = Math.ceil(products.length / columnCount);
+    const rowCount = useMemo(() => Math.ceil(products.length / columnCount), [products.length, columnCount]);
 
     const virtualizer = useVirtualizer({
         count: rowCount,
@@ -60,7 +61,7 @@ export const ProductGroup = ({ id, title, products }: ProductGroupProps) => {
                             left={0}
                             w="100%"
                             transform={`translateY(${virtualRow.start}px)`}
-                            pb={6}  // Здесь добавлен вертикальный отступ (padding-bottom) между рядами продуктов
+                            pb={6}
                         >
                             <SimpleGrid
                                 columns={columnCount}
@@ -69,8 +70,8 @@ export const ProductGroup = ({ id, title, products }: ProductGroupProps) => {
                             >
                                 {rowProducts.map((product) => (
                                     <Product
-                                        key={product.id.toString()}
-                                        id={product.id.toString()}
+                                        key={product.id}
+                                        id={product.id}
                                         img={product.image}
                                         alt={product.name}
                                         title={product.name}
@@ -85,4 +86,4 @@ export const ProductGroup = ({ id, title, products }: ProductGroupProps) => {
             </Box>
         </Box>
     );
-};
+});

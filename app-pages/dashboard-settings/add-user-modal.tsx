@@ -14,9 +14,9 @@ import {
 } from '@chakra-ui/react'
 import {Select, createListCollection} from '@chakra-ui/react'
 import {useForm, Controller} from 'react-hook-form'
-import {UserType} from '@/models/user'
 import {createUser} from './actions'
 import {FiX, FiEye, FiEyeOff} from 'react-icons/fi'
+import type {SerializedUser} from './types'
 
 const roles = createListCollection({
     items: [
@@ -37,7 +37,7 @@ type FormValues = {
 type AddUserModalProps = {
     isOpen: boolean
     onClose: () => void
-    onUserAdded: (user: UserType) => void
+    onUserAdded: (user: SerializedUser) => void
 }
 
 export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) => {
@@ -76,8 +76,9 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
             } else {
                 setError(res.message || 'Ошибка при создании пользователя')
             }
-        } catch (e: any) {
-            setError(e?.message || 'Ошибка при создании пользователя')
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : 'Ошибка при создании пользователя'
+            setError(message)
         } finally {
             setLoading(false)
         }

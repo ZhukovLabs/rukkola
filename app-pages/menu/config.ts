@@ -6,83 +6,90 @@ import type {GroupWithProducts} from "@/app-pages/menu/products/types";
 
 export const CART_QUERY_KEY = 'cart';
 
+const MENU_CACHE_TTL = 60 * 1000;
+const MAX_CACHE_SIZE = 10;
+
+interface MenuCache {
+    lunch: Awaited<ReturnType<typeof getLunch>>;
+    categories: Awaited<ReturnType<typeof getCategories>>;
+    timestamp: number;
+}
+
+interface ProductsCache {
+    groupedProducts: unknown[];
+    uncategorizedProduct: unknown[];
+    timestamp: number;
+}
+
+const menuCache = new Map<string, MenuCache | ProductsCache>();
+
+function cleanupCache() {
+    if (menuCache.size >= MAX_CACHE_SIZE) {
+        const now = Date.now();
+        let oldestKey: string | null = null;
+        let oldestTime = now;
+
+        for (const [key, value] of menuCache.entries()) {
+            if (value.timestamp < oldestTime) {
+                oldestTime = value.timestamp;
+                oldestKey = key;
+            }
+        }
+
+        if (oldestKey) {
+            menuCache.delete(oldestKey);
+        }
+    }
+}
+
 const getLunch = () => (
     Lunch.findOne({active: true}).lean()
 );
 
-const getCategories = async (withAlcohol: boolean = false) => {
-    try {
-        const productQuery: any = {
-            hidden: false,
-            categories: {$exists: true, $ne: []}
-        };
+const getCategories = async (withAlcohol: boolean) => {
+    const productMatch: Record<string, unknown> = {
+        hidden: false,
+        categories: { $exists: true, $ne: [] }
+    };
 
-        if (!withAlcohol) {
-            productQuery.$or = [
-                {isAlcohol: false},
-                {isAlcohol: {$exists: false}}
-            ];
-        }
-
-        const categoryIdsWithProducts = await Product.distinct('categories', productQuery);
-
-        return Category.aggregate([
-            {
-                $match: {
-                    isMenuItem: true,
-                    $or: [
-                        {_id: {$in: categoryIdsWithProducts}},
-                        {
-                            _id: {
-                                $in: await Category.distinct('parent', {
-                                    _id: {$in: categoryIdsWithProducts},
-                                    parent: {$ne: null}
-                                })
-                            }
-                        }
-                    ]
-                }
-            },
-            {$sort: {order: 1}}
-        ]);
-
-    } catch (error) {
-        console.error('Error in getCategories:', error);
-        return [];
+    if (!withAlcohol) {
+        productMatch.$or = [
+            {isAlcohol: false},
+            {isAlcohol: { $exists: false }}
+        ];
     }
+
+    const categoryIdsWithProducts = await Product.distinct('categories', productMatch);
+
+    const parentCategories = await Category.distinct('parent', {
+        _id: { $in: categoryIdsWithProducts },
+        parent: { $ne: null }
+    });
+
+    return Category.find({
+        isMenuItem: true,
+        _id: { $in: [...categoryIdsWithProducts, ...parentCategories] }
+    })
+        .sort({ order: 1 })
+        .lean();
 };
 
-const getGroupedProducts = (withAlcohol: boolean = false) => {
+const getGroupedProducts = (withAlcohol: boolean) => {
+    const matchStage: Record<string, unknown> = {
+        hidden: { $ne: true },
+        categories: { $exists: true, $ne: [], $type: 'array', $not: { $size: 0 } }
+    };
+
+    if (!withAlcohol) {
+        matchStage.$or = [
+            { isAlcohol: false },
+            { isAlcohol: { $exists: false } }
+        ];
+    }
+
     return Product.aggregate<GroupWithProducts>([
-        {
-            $match: {
-                $expr: {
-                    $and: [
-                        {
-                            $or: [
-                                {$eq: [{$ifNull: ["$hidden", false]}, false]},
-                                {$eq: [{$type: "$hidden"}, "missing"]}
-                            ]
-                        },
-                        {
-                            $and: [
-                                {$ne: [{$type: "$categories"}, "missing"]},
-                                {$gt: [{$size: {$ifNull: ["$categories", []]}}, 0]}
-                            ]
-                        },
-                        ...(withAlcohol ? [] : [
-                            {
-                                $or: [
-                                    {$eq: ["$isAlcohol", false]},
-                                    {$eq: [{$type: "$isAlcohol"}, "missing"]}
-                                ]
-                            }
-                        ])
-                    ]
-                }
-            }
-        },
-        {$unwind: "$categories"},
+        { $match: matchStage },
+        { $unwind: "$categories" },
         {
             $lookup: {
                 from: "categories",
@@ -91,50 +98,81 @@ const getGroupedProducts = (withAlcohol: boolean = false) => {
                 as: "categoryInfo",
             },
         },
-        {$unwind: "$categoryInfo"},
-        {$match: {"categoryInfo.hidden": {$ne: true}}},
+        { $unwind: "$categoryInfo" },
+        { $match: { "categoryInfo.hidden": { $ne: true }, "categoryInfo.isMenuItem": true } },
         {
             $group: {
                 _id: "$categoryInfo._id",
-                categoryName: {$first: "$categoryInfo.name"},
-                categoryOrder: {$first: "$categoryInfo.order"},
-                showGroupTitle: {$first: "$categoryInfo.showGroupTitle"},
-                products: {$push: "$$ROOT"},
+                categoryName: { $first: "$categoryInfo.name" },
+                categoryOrder: { $first: "$categoryInfo.order" },
+                showGroupTitle: { $first: "$categoryInfo.showGroupTitle" },
+                products: { $push: "$$ROOT" },
             },
         },
-        {$sort: {categoryOrder: 1}},
+        { $sort: { categoryOrder: 1 } },
     ]);
 };
 
 const getUncategorizedProducts = () => (
     Product.find({
         $and: [
-            {$or: [{hidden: {$exists: false}}, {hidden: false}]},
-            {$or: [{categories: {$exists: false}}, {categories: {$size: 0}}]},
+            { $or: [{ hidden: { $exists: false } }, { hidden: false }] },
+            { $or: [{ categories: { $exists: false } }, { categories: { $size: 0 } }] },
         ],
     })
         .lean<ProductType[]>()
         .exec()
 );
 
+function getCacheKey(getAlcohol: boolean): string {
+    return getAlcohol ? 'withAlcohol' : 'noAlcohol';
+}
+
 export const getMenuData = async ({getAlcohol}: { getAlcohol: boolean }) => {
     await connectToDatabase();
+
+    const cacheKey = getCacheKey(getAlcohol);
+    const cached = menuCache.get(cacheKey) as MenuCache | undefined;
+    
+    if (cached && Date.now() - cached.timestamp < MENU_CACHE_TTL) {
+        return { activeLunch: cached.lunch, categories: cached.categories };
+    }
 
     const [activeLunch, categories] = await Promise.all([
         getLunch(),
         getCategories(getAlcohol)
     ]);
 
-    return {activeLunch, categories}
-}
+    cleanupCache();
+    menuCache.set(cacheKey, { lunch: activeLunch, categories, timestamp: Date.now() });
+
+    return { activeLunch, categories };
+};
 
 export const getProducts = async ({getAlcohol}: { getAlcohol: boolean }) => {
     await connectToDatabase();
+
+    const cacheKey = `products_${getCacheKey(getAlcohol)}`;
+    const cached = menuCache.get(cacheKey) as ProductsCache | undefined;
+
+    if (cached && Date.now() - cached.timestamp < MENU_CACHE_TTL) {
+        return {
+            groupedProducts: cached.groupedProducts,
+            uncategorizedProduct: cached.uncategorizedProduct
+        };
+    }
 
     const [groupedProducts, uncategorizedProduct] = await Promise.all([
         getGroupedProducts(getAlcohol),
         getUncategorizedProducts()
     ]);
 
-    return {groupedProducts, uncategorizedProduct}
-}
+    cleanupCache();
+    menuCache.set(cacheKey, {
+        groupedProducts,
+        uncategorizedProduct,
+        timestamp: Date.now()
+    });
+
+    return { groupedProducts, uncategorizedProduct };
+};

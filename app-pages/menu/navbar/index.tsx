@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect, useMemo, useRef, useState} from "react";
+import {useEffect, useRef, useState, useCallback, memo, useMemo, useLayoutEffect} from "react";
 import {
     Box,
     HStack,
@@ -9,7 +9,7 @@ import {
     IconButton,
     Drawer,
     Portal,
-    CloseButton, useBreakpointValue,
+    CloseButton, 
 } from "@chakra-ui/react";
 import {motion, AnimatePresence} from "framer-motion";
 import {FiMenu} from "react-icons/fi";
@@ -20,78 +20,99 @@ import {NavbarItem} from "./types";
 import {CART_QUERY_KEY} from "@/app-pages/menu/config";
 import {useIsLowPerformanceDevice} from "@/hooks/use-is-low-performance-device";
 
-const MotionNav = motion(Box);
-const MotionBox = motion(Box);
+const MotionNav = motion.create(Box);
+const MotionBox = motion.create(Box);
 
 type NavbarProps = {
     items: NavbarItem[];
 };
 
-export const Navbar = ({items}: NavbarProps) => {
+export const Navbar = memo(function Navbar({items}: NavbarProps) {
     const searchParams = useSearchParams();
     const navRef = useRef<HTMLDivElement>(null);
     const disableMotion = useIsLowPerformanceDevice();
-    const isMobile = useBreakpointValue({ base: true, md: false });
-
+    
     const [isFixed, setIsFixed] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
-    const [navHeight, setNavHeight] = useState(0);
+    const [navHeight, setNavHeight] = useState(60);
     const [openIds, setOpenIds] = useState<string[]>([]);
-
-    const allSectionIds = useMemo(() => {
-        const ids = new Set<string>();
-        const collect = (items: NavbarItem[]) => {
-            items.forEach((item) => {
-                ids.add(item.id);
-                if (item.children) collect(item.children);
-            });
-        };
-        collect(items);
-        return Array.from(ids);
-    }, [items]);
-
-    const activeItem = items.find(
-        (item) =>
-            item.id === activeId ||
-            item.children?.some((c) => c.id === activeId)
-    );
+    const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
-        const updateHeight = () => {
-            if (navRef.current) setNavHeight(navRef.current.offsetHeight);
-        };
-        updateHeight();
-        window.addEventListener("resize", updateHeight);
-        return () => window.removeEventListener("resize", updateHeight);
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile, { passive: true });
+        return () => window.removeEventListener('resize', checkMobile);
     }, []);
+
+    useLayoutEffect(() => {
+        const measure = () => {
+            if (navRef.current) {
+                const height = navRef.current.offsetHeight || 60;
+                if (height !== navHeight) {
+                    setNavHeight(height);
+                }
+            }
+        };
+        measure();
+    }, [items, navHeight]);
+
+    const allSectionIds = useMemo(() => {
+        const ids: string[] = [];
+        const collect = (navItems: NavbarItem[]) => {
+            for (const item of navItems) {
+                ids.push(item.id);
+                if (item.children) collect(item.children);
+            }
+        };
+        collect(items);
+        return ids;
+    }, [items]);
+
+    const activeItem = useMemo(() => 
+        items.find(item => 
+            item.id === activeId || item.children?.some(c => c.id === activeId)
+        ),
+        [items, activeId]
+    );
+
+    const handleClick = useCallback((id: string) => {
+        const section = document.getElementById(id);
+        if (!section) return;
+        const currentHeight = navRef.current?.offsetHeight || navHeight || 60;
+        const y = section.getBoundingClientRect().top + window.scrollY - currentHeight;
+        window.scrollTo({top: y, behavior: "smooth"});
+    }, [navHeight]);
 
     useEffect(() => {
         if (!allSectionIds.length) return;
 
         const observer = new IntersectionObserver(
             (entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) setActiveId(entry.target.id);
-                });
+                for (const entry of entries) {
+                    if (entry.isIntersecting) {
+                        setActiveId(entry.target.id);
+                        break;
+                    }
+                }
             },
             {rootMargin: `-${navHeight + 16}px 0px -60% 0px`}
         );
 
-        allSectionIds.forEach((id) => {
+        for (const id of allSectionIds) {
             const el = document.getElementById(id);
             if (el) observer.observe(el);
-        });
+        }
 
         return () => observer.disconnect();
     }, [allSectionIds, navHeight]);
 
     useEffect(() => {
+        if (!items.length) return;
+        
+        const threshold = document.getElementById(items[0].id)?.offsetTop ?? 0;
+        
         const handleScroll = () => {
-            const firstSection = items[0]?.id
-                ? document.getElementById(items[0].id)
-                : null;
-
-            const threshold = firstSection?.offsetTop ?? 0;
             setIsFixed(window.scrollY > threshold - navHeight - 8);
         };
 
@@ -100,19 +121,19 @@ export const Navbar = ({items}: NavbarProps) => {
         return () => window.removeEventListener("scroll", handleScroll);
     }, [items, navHeight]);
 
-    const handleClick = (id: string) => {
-        const section = document.getElementById(id);
-        if (!section) return;
-
-        const y = section.getBoundingClientRect().top + window.scrollY - navHeight;
-        window.scrollTo({top: y, behavior: "smooth"});
-    };
+    const handleSetOpenIds = useCallback((ids: string[]) => {
+        setOpenIds(ids);
+    }, []);
 
     if (searchParams.has(CART_QUERY_KEY)) return null;
 
+    const motionTransition = disableMotion ? undefined : {duration: 0.3};
+    const motionInitial = disableMotion ? undefined : {opacity: 0, y: -12};
+    const motionAnimate = disableMotion ? undefined : {opacity: 1, y: 0};
+
     return (
         <Box position="relative" zIndex="10">
-            {isFixed && <Box height={isMobile ? '53px' : navHeight}/>}
+            {isFixed && <Box height={isMobile ? '53px' : `${navHeight}px`}/>}
 
             <MotionNav
                 ref={navRef}
@@ -124,16 +145,15 @@ export const Navbar = ({items}: NavbarProps) => {
                 backdropFilter="blur(10px)"
                 borderBottom={isFixed ? "1px solid rgba(255,255,255,0.06)" : "none"}
                 py={{base: 2, md: 4}}
-                initial={!disableMotion ? {opacity: 0, y: -12} : undefined}
-                animate={!disableMotion ? {opacity: 1, y: 0} : undefined}
-                transition={!disableMotion ? {duration: 0.3} : undefined}
+                initial={motionInitial}
+                animate={motionAnimate}
+                transition={motionTransition}
             >
-                {/* MOBILE */}
                 <Box display={{base: "flex", md: "none"}} justifyContent="space-between" px={4} alignItems="center">
                     <MotionBox
-                        initial={{opacity: 0, x: -20}}
-                        animate={{opacity: 1, x: 0}}
-                        transition={{duration: 0.4}}
+                        initial={disableMotion ? undefined : {opacity: 0, x: -20}}
+                        animate={disableMotion ? undefined : {opacity: 1, x: 0}}
+                        transition={disableMotion ? undefined : {duration: 0.4}}
                         display="flex"
                         alignItems="center"
                         gap={2}
@@ -178,7 +198,7 @@ export const Navbar = ({items}: NavbarProps) => {
                                                 <CloseButton
                                                     size="sm"
                                                     color="white"
-                                                    onClick={() => setOpenIds([])}
+                                                    onClick={() => handleSetOpenIds([])}
                                                 />
                                             </Drawer.CloseTrigger>
                                         </HStack>
@@ -198,6 +218,11 @@ export const Navbar = ({items}: NavbarProps) => {
                                                             activeId === item.id ||
                                                             item.children?.some((child) => child.id === activeId);
 
+                                                        const whileHover = !disableMotion ? {
+                                                            scale: 1.03,
+                                                            backgroundColor: "teal.600"
+                                                        } : undefined;
+
                                                         return (
                                                             <Box key={item.id}>
                                                                 <MotionBox
@@ -208,10 +233,7 @@ export const Navbar = ({items}: NavbarProps) => {
                                                                     color={isGroupActive ? "white" : "gray.200"}
                                                                     fontWeight="medium"
                                                                     cursor="pointer"
-                                                                    whileHover={{
-                                                                        scale: 1.03,
-                                                                        backgroundColor: "teal.600"
-                                                                    }}
+                                                                    whileHover={whileHover}
                                                                     onClick={() => {
                                                                         if (!hasChildren) {
                                                                             store.setOpen(false);
@@ -251,15 +273,12 @@ export const Navbar = ({items}: NavbarProps) => {
                                                                                         color={activeId === child.id ? "white" : "gray.200"}
                                                                                         fontWeight="medium"
                                                                                         cursor="pointer"
-                                                                                        whileHover={{
-                                                                                            scale: 1.03,
-                                                                                            backgroundColor: "teal.500"
-                                                                                        }}
+                                                                                        whileHover={whileHover}
                                                                                         onClick={() => {
                                                                                             store.setOpen(false);
                                                                                             setTimeout(() => {
                                                                                                 handleClick(child.id);
-                                                                                                setOpenIds([]); // Очистка при клике на дочерний элемент
+                                                                                                setOpenIds([]);
                                                                                             }, 50);
                                                                                         }}
                                                                                     >
@@ -283,7 +302,6 @@ export const Navbar = ({items}: NavbarProps) => {
                     </Drawer.Root>
                 </Box>
 
-                {/* DESKTOP */}
                 <Box
                     display={{base: "none", md: "flex"}}
                     justifyContent="center"
@@ -312,4 +330,4 @@ export const Navbar = ({items}: NavbarProps) => {
             </MotionNav>
         </Box>
     );
-};
+});

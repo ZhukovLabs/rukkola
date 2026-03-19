@@ -2,7 +2,7 @@
 
 import { Box, Text, HStack, IconButton } from '@chakra-ui/react'
 import { FiX, FiCheckCircle, FiAlertCircle } from 'react-icons/fi'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 
 interface ToastProps {
     message: string

@@ -1,10 +1,11 @@
 'use server';
 
 import {connectToDatabase} from "@/lib/mongoose";
-import {User, UserType} from '@/models/user'
+import {User} from '@/models/user'
 import bcrypt from "bcryptjs";
 import {checkAuth} from "@/lib/auth/check-auth";
 import {revalidatePath} from "next/cache";
+import type {SerializedUser} from "./types";
 
 type CreateUserData = {
     username: string
@@ -15,7 +16,7 @@ type CreateUserData = {
     role?: string
 }
 
-function serializeUser(user: any): UserType {
+function serializeUser(user: { _id: { toString: () => string }; username: string; name: string; surname?: string; patronymic?: string; role: string }): SerializedUser {
     return {
         _id: user._id.toString(),
         username: user.username,
@@ -23,10 +24,10 @@ function serializeUser(user: any): UserType {
         surname: user.surname,
         patronymic: user.patronymic,
         role: user.role,
-    } as UserType
+    }
 }
 
-export async function createUser(data: CreateUserData) {
+export async function createUser(data: CreateUserData): Promise<{success: boolean; message?: string; data?: SerializedUser}> {
     try {
         const user = await checkAuth();
         if (!user || user.role !== 'admin') {
@@ -54,13 +55,13 @@ export async function createUser(data: CreateUserData) {
         revalidatePath('/dashboard/settings');
 
         return {success: true, data: serializeUser(newUser)};
-    } catch (err: any) {
+    } catch (err) {
         console.error(err);
         return {success: false, message: 'Произошла ошибка при создании пользователя'}
     }
 }
 
-export async function getUsers() {
+export async function getUsers(): Promise<{success: boolean; message?: string; data?: SerializedUser[]}> {
     try {
         const user = await checkAuth();
         if (!user || user.role !== 'admin') {
@@ -69,15 +70,15 @@ export async function getUsers() {
 
         await connectToDatabase();
 
-        const users = await User.find().lean().exec();
-        return {success: true, data: users.map(serializeUser)};
-    } catch (err: any) {
+        const users = await User.find().lean<{_id: {toString: () => string}; username: string; name: string; surname?: string; patronymic?: string; role: string}[]>().exec();
+        return {success: true, data: users.map(u => serializeUser(u))};
+    } catch (err) {
         console.error(err);
         return {success: false, message: 'Не удалось получить пользователей'}
     }
 }
 
-export async function updateUser(id: string, data: Partial<UserType>) {
+export async function updateUser(id: string, data: Partial<{username: string; name: string; surname?: string; patronymic?: string; role: string}>): Promise<{success: boolean; message?: string; data?: SerializedUser}> {
     try {
         const currentUser = await checkAuth();
         if (!currentUser || currentUser.role !== 'admin') {
@@ -86,7 +87,7 @@ export async function updateUser(id: string, data: Partial<UserType>) {
 
         await connectToDatabase();
 
-        const updated = await User.findByIdAndUpdate(id, data, {new: true}).lean().exec()
+        const updated = await User.findByIdAndUpdate(id, data, {new: true}).lean<{_id: {toString: () => string}; username: string; name: string; surname?: string; patronymic?: string; role: string}>().exec()
         if (!updated) {
             return {success: false, message: 'Пользователь не найден'}
         }
@@ -95,13 +96,13 @@ export async function updateUser(id: string, data: Partial<UserType>) {
         revalidatePath('/dashboard');
 
         return {success: true, data: serializeUser(updated)};
-    } catch (err: any) {
+    } catch (err) {
         console.error(err);
         return {success: false, message: 'Не удалось обновить пользователя'}
     }
 }
 
-export async function deleteUser(id: string) {
+export async function deleteUser(id: string): Promise<{success: boolean; message?: string; data?: SerializedUser}> {
     try {
         const currentUser = await checkAuth();
         if (!currentUser || currentUser.role !== 'admin') {
@@ -113,20 +114,20 @@ export async function deleteUser(id: string) {
 
         await connectToDatabase();
 
-        const deleted = await User.findByIdAndDelete(id).lean().exec();
+        const deleted = await User.findByIdAndDelete(id).lean<{_id: {toString: () => string}; username: string; name: string; surname?: string; patronymic?: string; role: string}>().exec();
         if (!deleted) {
             return {success: false, message: 'Пользователь не найден'}
         }
 
         revalidatePath('/dashboard/settings');
         return {success: true, data: serializeUser(deleted)};
-    } catch (err: any) {
+    } catch (err) {
         console.error(err);
         return {success: false, message: 'Не удалось удалить пользователя'}
     }
 }
 
-export async function updatePassword(userId: string, oldPassword: string, newPassword: string) {
+export async function updatePassword(userId: string, oldPassword: string, newPassword: string): Promise<{success: boolean; message?: string}> {
     try {
         const currentUser = await checkAuth();
         if (!currentUser || userId !== currentUser.id) {
@@ -145,7 +146,7 @@ export async function updatePassword(userId: string, oldPassword: string, newPas
         await user.save()
 
         return {success: true, message: 'Пароль успешно обновлён'}
-    } catch (err: any) {
+    } catch (err) {
         console.error(err);
         return {success: false, message: 'Не удалось обновить пароль'}
     }

@@ -2,11 +2,10 @@
 
 import {NavbarItem} from "./types";
 import {Box} from "@chakra-ui/react";
-import {useEffect, useState, useMemo} from "react";
+import {useEffect, useState} from "react";
 import {MenuItem} from "./menu-item";
 import {Arrow} from "./arrow";
-import {motion, MotionProps} from "framer-motion";
-import {useIsLowPerformanceDevice} from "@/hooks/use-is-low-performance-device";
+import {motion} from "framer-motion";
 
 function throttle(fn: (...args: unknown[]) => void, wait: number) {
     let lastTime = 0;
@@ -37,7 +36,6 @@ export const Menu = ({
                          onItemClick,
                      }: MenuProps) => {
     const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
-    const disableMotion = useIsLowPerformanceDevice();
 
     useEffect(() => {
         if (!triggerRef.current) return;

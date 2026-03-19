@@ -1,6 +1,6 @@
 'use client';
 
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useMemo} from "react";
 import {
     Box,
     Button,
@@ -14,11 +14,12 @@ import {
 import {motion} from "framer-motion";
 import {useSearchParams, usePathname, useRouter} from "next/navigation";
 import {FiShoppingCart, FiX} from "react-icons/fi";
-import {CartItemType, getCart, addToCart, removeFromCart, clearCart} from "@/lib/local-storage";
-import {CART_QUERY_KEY} from "../config";
-import {CartItem} from "@/app-pages/menu/cart-modal/cart-item";
+import {addToCart, clearCart, type CartItem} from "@/lib/local-storage";
+import {useCart, useCartActions, useCartTotal} from "@/hooks/use-cart";
+import {CART_QUERY_KEY } from "../config";
+import {CartItem as CartItemComponent} from "@/app-pages/menu/cart-modal/cart-item";
 
-const emptyCart = (
+const emptyCartContent = (
     <Flex direction="column" align="center" justify="center" py={8} color="gray.400" gap={3}>
         <Icon as={FiShoppingCart} boxSize={{base: 8, md: 10}} color="teal.500"/>
         <Text fontSize={{base: "sm", md: "md"}}>Корзина пуста</Text>
@@ -34,14 +35,10 @@ export const CartModal = () => {
     const dialogMaxWidth = useBreakpointValue({base: "100%", md: "600px", lg: "700px"});
     const dialogHeight = useBreakpointValue({base: "calc(90vh - 40px)", md: "calc(100vh - 20px)"});
 
-    const [items, setItems] = useState<CartItemType[]>(() => getCart());
+    const items = useCart();
+    const total = useCartTotal();
+    const { remove } = useCartActions();
     const isOpen = searchParams.has(CART_QUERY_KEY);
-
-    useEffect(() => {
-        const onUpdate = () => setItems(getCart());
-        window.addEventListener("cart-updated", onUpdate);
-        return () => window.removeEventListener("cart-updated", onUpdate);
-    }, []);
 
     const closeCart = useCallback(() => {
         const params = new URLSearchParams(searchParams.toString());
@@ -49,61 +46,40 @@ export const CartModal = () => {
         router.replace(`${pathname}?${params.toString()}`, {scroll: false});
     }, [pathname, router, searchParams]);
 
-    const handleRemove = useCallback(
-        (id: string, size: string) => () => {
-            removeFromCart(id, size);
-            setItems(getCart());
-        },
-        []
-    );
+    const handleRemove = useCallback((id: string, size: string) => () => {
+        remove(id, size);
+    }, [remove]);
 
     const handleClear = useCallback(() => {
         clearCart();
-        setItems([]);
     }, []);
 
-    const increaseQuantity = useCallback(
-        (id: string, size: string) => () => {
-            const item = items.find(i => i.id === id && i.size === size);
-            if (item) {
-                addToCart({id: item.id, name: item.name, price: item.price, size: item.size, image: item.image});
-                setItems(getCart());
-            }
-        },
-        [items]
-    );
+    const increaseQuantity = useCallback((item: CartItem) => () => {
+        addToCart({id: item.id, name: item.name, price: item.price, size: item.size, image: item.image});
+    }, []);
 
-    const decreaseQuantity = useCallback(
-        (id: string, size: string) => () => {
-            const item = items.find(i => i.id === id && i.size === size);
-            if (item) {
-                removeFromCart(id, size, 1);
-                setItems(getCart());
-            }
-        },
-        [items]
-    );
+    const decreaseQuantity = useCallback((id: string, size: string) => () => {
+        remove(id, size, 1);
+    }, [remove]);
 
-    const total = items.reduce((sum, {price, quantity}) => sum + (price || 0) * (quantity || 1), 0);
-
-    const itemList = (
+    const itemList = useMemo(() => (
         <Flex direction="column" gap={{base: 2, md: 3}}>
-            {items.map(({id, name, image, size, price, quantity}, i) => (
-                <CartItem
-                    key={`${id}-${size}`}
-                    name={name}
-                    image={image}
-                    size={size}
-                    price={price}
-                    quantity={quantity}
-                    handleRemove={handleRemove(id, size)}
-                    onIncrease={increaseQuantity(id, size)}
-                    onDecrease={decreaseQuantity(id, size)}
+            {items.map((item, i) => (
+                <CartItemComponent
+                    key={`${item.id}-${item.size}`}
+                    name={item.name}
+                    image={item.image}
+                    size={item.size}
+                    price={item.price}
+                    quantity={item.quantity}
+                    handleRemove={handleRemove(item.id, item.size)}
+                    onIncrease={increaseQuantity(item)}
+                    onDecrease={decreaseQuantity(item.id, item.size)}
                     indexDelay={i}
                 />
             ))}
         </Flex>
-    );
+    ), [items, handleRemove, increaseQuantity, decreaseQuantity]);
 
     return (
         <Dialog.Root open={isOpen} onOpenChange={closeCart}>
@@ -184,7 +160,7 @@ export const CartModal = () => {
                             overflowY="auto"
                             flex="1"
                         >
-                            {items.length === 0 ? emptyCart : itemList}
+                            {items.length === 0 ? emptyCartContent : itemList}
                         </Dialog.Body>
 
                         {items.length > 0 && (

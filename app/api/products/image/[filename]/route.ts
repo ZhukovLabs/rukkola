@@ -40,8 +40,9 @@ export async function GET(
         cache.set(filename, { buffer: fileBuffer, contentType });
 
         return sendFile(fileBuffer, contentType);
-    } catch (err: any) {
-        if (err.code === "ENOENT") return NextResponse.json({ error: "File not found" }, { status: 404 });
+    } catch (err) {
+        const error = err as NodeJS.ErrnoException;
+        if (error.code === "ENOENT") return NextResponse.json({ error: "File not found" }, { status: 404 });
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

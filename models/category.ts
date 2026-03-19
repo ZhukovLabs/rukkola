@@ -1,5 +1,4 @@
 import mongoose, {Types, Schema, Document, Model} from 'mongoose'
-import {ProductType} from "@/models/product";
 
 export type CategoryType = {
     id: string;
@@ -9,25 +8,29 @@ export type CategoryType = {
     isMenuItem: boolean
     showGroupTitle: boolean
     parent?: Types.ObjectId | null
+    hidden?: boolean
 } & Document;
 
 const CategorySchema = new Schema<CategoryType>({
     name: {type: String, required: true, unique: true, trim: true},
-    order: {type: Number, required: true, unique: true},
-    isMenuItem: {type: Boolean, required: true, unique: false},
+    order: {type: Number, required: true, unique: true, index: true},
+    isMenuItem: {type: Boolean, required: true, unique: false, index: true},
     showGroupTitle: {type: Boolean, required: true, unique: false},
-    parent: {type: Schema.Types.ObjectId, ref: 'Category', default: null},
+    parent: {type: Schema.Types.ObjectId, ref: 'Category', default: null, index: true},
+    hidden: {type: Boolean, required: false, default: false, index: true},
 })
 
-CategorySchema.virtual('id').get(function (this: ProductType) {
+CategorySchema.index({ isMenuItem: 1, parent: 1, order: 1 });
+
+CategorySchema.virtual('id').get(function (this: CategoryType) {
     return this._id.toString();
 });
 
 CategorySchema.set('toJSON', {
     virtuals: true,
     versionKey: false,
-    transform: (_, ret) => {
-        const { _id, ...rest } = ret;
+    transform: (_doc, ret) => {
+        const { _id: _, ...rest } = ret;
         return rest;
     },
 });

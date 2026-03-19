@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Box, Badge, IconButton } from "@chakra-ui/react";
 import { FiShoppingCart, FiX } from "react-icons/fi";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { CART_QUERY_KEY } from "./config";
-import { getCart } from "@/lib/local-storage";
+import { useCartCount } from "@/hooks/use-cart";
 
-const MotionBox = motion(Box);
+const MotionBox = motion.create(Box);
 
 export const CartButton = () => {
     const router = useRouter();
@@ -16,16 +16,7 @@ export const CartButton = () => {
     const searchParams = useSearchParams();
     const isOpen = searchParams.has(CART_QUERY_KEY);
 
-    const [count, setCount] = useState(() => getCart().length);
-
-    useEffect(() => {
-        const handler = (e: Event) => {
-            const detail = (e as CustomEvent<number>).detail;
-            setCount(detail);
-        };
-        window.addEventListener("cart-updated", handler as EventListener);
-        return () => window.removeEventListener("cart-updated", handler as EventListener);
-    }, []);
+    const count = useCartCount();
 
     const toggleCart = useCallback(() => {
         const params = new URLSearchParams(searchParams.toString());
@@ -51,7 +42,6 @@ export const CartButton = () => {
                 transition={{ duration: 0.35, type: "spring", stiffness: 200, damping: 18 }}
             >
                 <Box position="relative">
-                    {/* Glow background */}
                     <MotionBox
                         position="absolute"
                         inset="-12px"

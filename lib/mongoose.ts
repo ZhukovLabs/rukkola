@@ -5,13 +5,17 @@ interface MongooseCache {
     promise: Promise<typeof mongoose> | null;
 }
 
-const cached: MongooseCache = (globalThis as any).mongooseCache ?? {
+interface GlobalWithMongooseCache {
+    mongooseCache?: MongooseCache;
+}
+
+const cached: MongooseCache = (globalThis as GlobalWithMongooseCache).mongooseCache ?? {
     conn: null,
     promise: null,
 };
 
-if (!(globalThis as any).mongooseCache) {
-    (globalThis as any).mongooseCache = cached;
+if (!(globalThis as GlobalWithMongooseCache).mongooseCache) {
+    (globalThis as GlobalWithMongooseCache).mongooseCache = cached;
 }
 
 export async function connectToDatabase() {

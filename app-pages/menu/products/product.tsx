@@ -30,6 +30,8 @@ export type ProductInnerProps = {
     prices: Price[] | null;
 };
 
+const BLUR_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/OhSPQAIZwPB9++2WgAAAABJRU5ErkJggg==";
+
 const ProductImage = memo(function ProductImage({
                                                     img,
                                                     alt,
@@ -47,7 +49,7 @@ const ProductImage = memo(function ProductImage({
             loading="lazy"
             sizes="(max-width: 480px) 100vw, (max-width: 768px) 60vw, 45vw"
             placeholder="blur"
-            blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/OhSPQAIZwPB9++2WgAAAABJRU5ErkJggg=="
+            blurDataURL={BLUR_DATA_URL}
             style={{ objectFit: "cover", objectPosition: "center" }}
             onError={onError}
         />
@@ -146,30 +148,10 @@ export const Product = memo(function Product({
         [router, id, img]
     );
 
-    const priceButtons = prices?.map(p => (
-        <PriceButton
-            key={p.size}
-            price={p}
-            selected={selectedPrice?.size === p.size}
-            onClick={() => setSelectedPrice(p)}
-        />
-    ));
-
-    const staticPriceList = prices?.map(p => (
-        <Flex key={p.size} justify="space-between" align="center">
-            <Text fontSize={{ base: "xs", md: "sm" }} color="gray.400">
-                {p.size}
-            </Text>
-            <Text fontSize={{ base: "sm", md: "md" }} color="teal.300">
-                {p.price.toFixed(2).replace(".", ",")} руб.
-            </Text>
-        </Flex>
-    ));
-
-    const motionProps = !disableMotion
+    const motionProps = !disableMotion && inView
         ? {
             initial: { opacity: 0, y: 24 },
-            animate: inView ? { opacity: 1, y: 0 } : {},
+            animate: { opacity: 1, y: 0 },
             transition: { duration: 0.4 }
         }
         : {};
@@ -236,7 +218,16 @@ export const Product = memo(function Product({
                     </Stack>
 
                     <Flex direction="column" mt="auto" gap={{ base: 2, md: 3 }}>
-                        {!selecting && staticPriceList}
+                        {!selecting && prices?.map(p => (
+                            <Flex key={p.size} justify="space-between" align="center">
+                                <Text fontSize={{ base: "xs", md: "sm" }} color="gray.400">
+                                    {p.size}
+                                </Text>
+                                <Text fontSize={{ base: "sm", md: "md" }} color="teal.300">
+                                    {p.price.toFixed(2).replace(".", ",")} руб.
+                                </Text>
+                            </Flex>
+                        ))}
 
                         {selecting && (
                             <AnimatePresence>
@@ -246,7 +237,14 @@ export const Product = memo(function Product({
                                     exit={{ opacity: 0 }}
                                 >
                                     <Flex gap={1} direction="column" mb={{base: 2, md: 3}}>
-                                        {priceButtons}
+                                        {prices?.map(p => (
+                                            <PriceButton
+                                                key={p.size}
+                                                price={p}
+                                                selected={selectedPrice?.size === p.size}
+                                                onClick={() => setSelectedPrice(p)}
+                                            />
+                                        ))}
                                     </Flex>
 
                                     <Flex justify="space-between" mt={2}>

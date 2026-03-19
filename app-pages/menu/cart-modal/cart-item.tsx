@@ -1,9 +1,12 @@
+'use client';
+
+import {memo} from "react";
 import { Box, Flex, Image, Text, IconButton } from "@chakra-ui/react";
 import { motion } from "framer-motion";
 import { ImCross } from "react-icons/im";
 import { AiOutlineMinus, AiOutlinePlus } from "react-icons/ai";
 
-const MotionBox = motion(Box);
+const MotionBox = motion.create(Box);
 
 type CartItemProps = {
     name: string;
@@ -17,17 +20,17 @@ type CartItemProps = {
     indexDelay?: number;
 };
 
-export const CartItem = ({
-                             name,
-                             image,
-                             size,
-                             price,
-                             quantity = 1,
-                             handleRemove,
-                             onIncrease,
-                             onDecrease,
-                             indexDelay = 0
-                         }: CartItemProps) => {
+export const CartItem = memo(function CartItem({
+    name,
+    image,
+    size,
+    price,
+    quantity = 1,
+    handleRemove,
+    onIncrease,
+    onDecrease,
+    indexDelay = 0
+}: CartItemProps) {
     const formattedPrice = price ? `${(price * quantity).toFixed(2).replace(".", ",")} руб` : "—";
 
     return (
@@ -116,4 +119,4 @@ export const CartItem = ({
             </Flex>
         </MotionBox>
     );
-};
+});

@@ -11,7 +11,7 @@ import {
     Checkbox,
     Select,
 } from '@chakra-ui/react'
-import {useState, useTransition, useEffect} from 'react'
+import {useState, useTransition} from 'react'
 import {useSearchParams, useRouter, usePathname} from 'next/navigation'
 import {createCategory} from './actions'
 import {CategoryType} from '@/models/category'
@@ -31,14 +31,12 @@ export const AddCategoryDialog = ({categories}: Props) => {
     const [isMenuItem, setIsMenuItem] = useState(false)
     const [showGroupTitle, setShowGroupTitle] = useState(false)
 
-    useEffect(() => {
-        if (!isOpen) {
-            setName('')
-            setParent(undefined)
-            setIsMenuItem(false)
-            setShowGroupTitle(false)
-        }
-    }, [isOpen])
+    const resetForm = () => {
+        setName('')
+        setParent(undefined)
+        setIsMenuItem(false)
+        setShowGroupTitle(false)
+    }
 
     const close = () => {
         const params = new URLSearchParams(searchParams.toString())
@@ -80,7 +78,12 @@ export const AddCategoryDialog = ({categories}: Props) => {
     })
 
     return (
-        <Dialog.Root open={isOpen} onOpenChange={(open) => !open && close()}>
+        <Dialog.Root open={isOpen} onOpenChange={(details) => {
+            if (!details.open) {
+                resetForm();
+                close();
+            }
+        }}>
             <Dialog.Backdrop bg="blackAlpha.800" backdropFilter="blur(8px)"/>
             <Dialog.Positioner>
                 <Dialog.Content

@@ -2,6 +2,7 @@
 
 import {Box, Skeleton, VStack, HStack, Spinner} from "@chakra-ui/react";
 import {motion, AnimatePresence} from "framer-motion";
+import {useState, useEffect} from "react";
 
 const MotionSkeleton = motion(Skeleton);
 const MotionBox = motion(Box);
@@ -30,13 +31,23 @@ const loaderTexts = [
 ];
 
 export const MenuLoader = () => {
-    const randomIndex = Math.floor(Math.random() * loaderTexts.length);
-    const text = loaderTexts[randomIndex];
+    const [textIndex, setTextIndex] = useState(() => Math.floor(Math.random() * loaderTexts.length));
+    const [tick, setTick] = useState(0);
+    const text = loaderTexts[textIndex];
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setTextIndex(prev => (prev + 1) % loaderTexts.length);
+            setTick(t => t + 1);
+        }, 3000);
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <Box my={6} px={4}>
-            <AnimatePresence>
+            <AnimatePresence mode="wait">
                 <MotionBox
+                    key={tick}
                     position="fixed"
                     top="50%"
                     left="50%"

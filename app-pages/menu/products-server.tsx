@@ -1,42 +1,61 @@
 import {Products} from './products';
-import type {ComponentProps} from "react";
 import {getProducts} from "./config";
+import type {ProductGroupClientType, ProductClientType} from "./products/types";
 
 type ProductsServerProps = {
     alcoholIsVisible: boolean;
 }
 
-export async function ProductsServer({alcoholIsVisible}: ProductsServerProps) {
-    const {
-        groupedProducts: groupedProductsRaw,
-        uncategorizedProduct: uncategorizedProductRaw
-    } = await getProducts({getAlcohol: alcoholIsVisible});
+type RawGroupedProduct = {
+    _id: { toString(): string };
+    categoryName: string;
+    categoryOrder?: number;
+    showGroupTitle?: boolean;
+    products: Array<{
+        _id: { toString(): string };
+        name: string;
+        description?: string | null;
+        image?: string | null;
+        prices?: Array<{ size: string; price: number }>;
+        hidden?: boolean;
+    }>;
+};
 
-    const grouped = groupedProductsRaw.map(group => ({
+type RawProduct = {
+    _id: { toString(): string };
+    name: string;
+    description?: string | null;
+    image?: string | null;
+    prices?: Array<{ size: string; price: number }>;
+    hidden?: boolean;
+};
+
+export async function ProductsServer({alcoholIsVisible}: ProductsServerProps) {
+    const result = await getProducts({getAlcohol: alcoholIsVisible});
+
+    const grouped: ProductGroupClientType[] = (result.groupedProducts as RawGroupedProduct[]).map((group) => ({
         id: group._id.toString(),
         categoryName: group.categoryName,
         categoryOrder: group.categoryOrder ?? 0,
         showGroupTitle: group.showGroupTitle ?? true,
-        products: group.products.map(p => ({
+        products: group.products.map((p): ProductClientType => ({
             id: p._id.toString(),
             name: p.name,
             description: p.description ?? null,
             image: p.image ?? null,
             prices: p.prices ?? [],
             hidden: p.hidden ?? false,
-            categories: Array.isArray(p.categories) ? p.categories.map(String) : [],
         })),
-    })) as unknown as ComponentProps<typeof Products>['grouped'];
+    }));
 
-    const uncategorized = uncategorizedProductRaw.map(p => ({
+    const uncategorized: ProductClientType[] = (result.uncategorizedProduct as RawProduct[]).map((p) => ({
         id: p._id.toString(),
         name: p.name,
         description: p.description ?? null,
         image: p.image ?? null,
         prices: p.prices ?? [],
         hidden: p.hidden ?? false,
-        categories: p.categories?.map(c => c.toString()) ?? [],
-    })) as unknown as ComponentProps<typeof Products>['uncategorized'];
+    }));
 
     return <Products grouped={grouped} uncategorized={uncategorized}/>;
 }

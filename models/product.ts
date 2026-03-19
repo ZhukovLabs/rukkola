@@ -29,16 +29,19 @@ const PortionPriceSchema = new Schema<PortionPrice>(
 
 const ProductSchema = new Schema<ProductType>(
     {
-        name: {type: String, required: true, trim: true},
+        name: {type: String, required: true, trim: true, index: 'text'},
         description: {type: String, required: false},
         prices: {type: [PortionPriceSchema], required: false},
         image: {type: String, required: false},
-        categories: [{type: Schema.Types.ObjectId, ref: 'Category', required: false}],
-        hidden: {type: Boolean, required: false, default: false},
-        isAlcohol: {type: Boolean, required: false, default: false},
+        categories: [{type: Schema.Types.ObjectId, ref: 'Category', required: false, index: true}],
+        hidden: {type: Boolean, required: false, default: false, index: true},
+        isAlcohol: {type: Boolean, required: false, default: false, index: true},
     },
     {timestamps: true}
 )
+
+ProductSchema.index({ hidden: 1, isAlcohol: 1 });
+ProductSchema.index({ categories: 1, hidden: 1 });
 
 ProductSchema.virtual('id').get(function (this: ProductType) {
     return this._id.toString();
@@ -47,8 +50,8 @@ ProductSchema.virtual('id').get(function (this: ProductType) {
 ProductSchema.set('toJSON', {
     virtuals: true,
     versionKey: false,
-    transform: (_, ret) => {
-        const {_id, ...rest} = ret;
+    transform: (_doc, ret) => {
+        const { _id: _, ...rest } = ret;
         return rest;
     },
 });

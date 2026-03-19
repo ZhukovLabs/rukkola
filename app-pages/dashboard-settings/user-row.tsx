@@ -12,18 +12,13 @@ import {
     HStack
 } from '@chakra-ui/react'
 import {FiEdit, FiTrash2, FiCheck, FiX} from 'react-icons/fi'
-import {UserType} from '@/models/user'
 import {updateUser, deleteUser} from './actions'
 import {Tooltip} from '@/components/tooltip'
 import {Select, createListCollection} from '@chakra-ui/react'
 import {useConfirmationDialog} from '@/hooks/use-confirmation-dialog'
+import type {SerializedUser, UserRowProps} from './types'
 
-type UserRowProps = {
-    onUserDelete: (id: string) => void
-    onUserUpdate: (user: UserType) => void
-    user: UserType
-    isOwnAccount: boolean
-}
+type EditableUserFields = Pick<SerializedUser, 'username' | 'name' | 'surname' | 'patronymic' | 'role'>;
 
 const roles = createListCollection({
     items: [
@@ -34,7 +29,13 @@ const roles = createListCollection({
 
 export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRowProps) => {
     const [editing, setEditing] = useState(false)
-    const [tempUser, setTempUser] = useState<UserType>(user)
+    const [tempUser, setTempUser] = useState<EditableUserFields>({
+        username: user.username,
+        name: user.name,
+        surname: user.surname,
+        patronymic: user.patronymic,
+        role: user.role,
+    })
     const [error, setError] = useState<string | null>(null)
 
     const {openDialog, ConfirmationDialog} = useConfirmationDialog<string>({
@@ -75,8 +76,22 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
 
     const handleCancel = () => {
         setEditing(false)
-        setTempUser(user)
+        setTempUser({
+            username: user.username,
+            name: user.name,
+            surname: user.surname,
+            patronymic: user.patronymic,
+            role: user.role,
+        })
         setError(null)
+    }
+
+    const handleFieldChange = (field: keyof Pick<EditableUserFields, 'name' | 'surname' | 'patronymic'>, value: string) => {
+        setTempUser(prev => ({...prev, [field]: value}));
+    }
+
+    const getFieldValue = (userData: EditableUserFields, field: keyof Pick<EditableUserFields, 'name' | 'surname' | 'patronymic'>) => {
+        return userData[field] || '';
     }
 
     return (
@@ -95,7 +110,7 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                                 p={2}
                                 size="sm"
                                 value={tempUser.username ?? ''}
-                                onChange={(e) => setTempUser({...tempUser, username: e.target.value} as UserType)}
+                                onChange={(e) => setTempUser({...tempUser, username: e.target.value})}
                                 bg="gray.800"
                                 color="teal.300"
                                 borderColor="teal.500"
@@ -111,14 +126,14 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                     </HStack>
                 </Table.Cell>
 
-                {['name', 'surname', 'patronymic'].map((field) => (
+                {(['name', 'surname', 'patronymic'] as const).map((field) => (
                     <Table.Cell key={field} p={3} verticalAlign="middle">
                         {editing ? (
                             <Input
                                 p={2}
                                 size="sm"
-                                value={(tempUser as any)[field] ?? ''}
-                                onChange={(e) => setTempUser({...tempUser, [field]: e.target.value} as UserType)}
+                                value={getFieldValue(tempUser, field)}
+                                onChange={(e) => handleFieldChange(field, e.target.value)}
                                 bg="gray.800"
                                 color="teal.300"
                                 borderColor="teal.500"
@@ -128,7 +143,7 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                             />
                         ) : (
                             <Text color="gray.200" lineHeight="36px" textAlign="center">
-                                {(user as any)[field] || '-'}
+                                {getFieldValue({username: user.username, name: user.name, surname: user.surname, patronymic: user.patronymic, role: user.role}, field) || '-'}
                             </Text>
                         )}
                     </Table.Cell>
@@ -140,7 +155,7 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                             collection={roles}
                             value={[tempUser.role ?? 'moderator']}
                             onValueChange={(val) =>
-                                setTempUser({...tempUser, role: val.value[0] as 'admin' | 'moderator'} as UserType)
+                                setTempUser({...tempUser, role: val.value[0] as 'admin' | 'moderator'})
                             }
                         >
                             <Select.HiddenSelect/>

@@ -3,16 +3,16 @@
 import React, { useState, useEffect } from 'react'
 import { Box, Flex, Spinner, Text, Button, Card, Table } from '@chakra-ui/react'
 import { getUsers } from './actions'
-import { UserType } from '@/models/user'
 import { AddUserModal } from './add-user-modal'
 import { UserRow } from './user-row'
 import { useSession } from 'next-auth/react'
+import type { SerializedUser } from './types'
 
 export const UsersTable = () => {
     const { data: session } = useSession();
     const authenticatedUserId = session?.user?.id as string | undefined;
 
-    const [users, setUsers] = useState<UserType[]>([]);
+    const [users, setUsers] = useState<SerializedUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [isAddOpen, setIsAddOpen] = useState(false);
 
@@ -30,7 +30,7 @@ export const UsersTable = () => {
     }, [])
 
 
-    const handleUserCreated = (newUser: UserType) => {
+    const handleUserCreated = (newUser: SerializedUser) => {
         setUsers((prev) => [newUser, ...prev])
     }
 
@@ -38,103 +38,97 @@ export const UsersTable = () => {
         <>
             <Card.Root
                 w="100%"
-                borderRadius="2xl"
+                borderRadius="xl"
                 shadow="xl"
                 border="1px solid"
                 borderColor="gray.700"
-                bg="gray.900"
+                bg="gray.800"
                 overflow="hidden"
             >
                 <Card.Header
-                    bgGradient="linear(to-r, teal.600, teal.500)"
-                    borderTopRadius="2xl"
+                    bgGradient="linear(to-r, teal.600, cyan.600)"
+                    borderTopRadius="xl"
                     py={4}
                     textAlign="center"
                     color="white"
+                    backdropFilter="blur(10px)"
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    flexDir="row"
                 >
-                    <Flex justify="space-between" align="center" px={6}>
-                        <Text fontSize="lg" fontWeight="semibold" letterSpacing="wide">
-                            Пользователи
-                        </Text>
-
-                        <Button
-                            p={2}
-                            size="sm"
-                            fontWeight="semibold"
-                            borderRadius="xl"
-                            bgGradient="linear(to-r, teal.400, teal.500)"
-                            color="teal.500"
-                            _hover={{
-                                transform: 'scale(1.05)',
-                                bgGradient: 'linear(to-r, teal.300, teal.400)'
-                            }}
-                            _active={{ transform: 'scale(0.97)' }}
-                            onClick={() => setIsAddOpen(true)}
-                        >
-                            + Добавить
-                        </Button>
-                    </Flex>
+                    <Text fontSize="lg" fontWeight="bold" letterSpacing="tight" w="100%">
+                        Пользователи
+                    </Text>
+                    <Button
+                        size="sm"
+                        bg="whiteAlpha.200"
+                        color="white"
+                        _hover={{bg: "whiteAlpha.300"}}
+                        onClick={() => setIsAddOpen(true)}
+                        borderRadius="lg"
+                    >
+                        + Добавить
+                    </Button>
                 </Card.Header>
 
-                <Card.Body px={0} py={0}>
-                    <Box overflowX="auto" position="relative">
-                        {loading && (
-                            <Flex
-                                position="absolute"
-                                inset={0}
-                                justify="center"
-                                align="center"
-                                bg="rgba(0,0,0,0.6)"
-                                zIndex={10}
-                            >
-                                <Spinner size="xl" color="teal.400" />
-                            </Flex>
-                        )}
-
-                        <Table.Root w="100%" size="md" variant="outline">
-                            <Table.Header bg="gray.800" borderBottom="1px solid" borderColor="gray.700">
+                <Card.Body px={0} py={0} minH="200px">
+                    {loading ? (
+                        <Flex justify="center" align="center" h="200px">
+                            <Spinner size="xl" color="teal.300"/>
+                        </Flex>
+                    ) : (
+                        <Table.Root size="md" variant="outline" w="full">
+                            <Table.Header bg="gray.900" borderBottomWidth="2px" borderColor="gray.700">
                                 <Table.Row>
-                                    {['Логин', 'Имя', 'Фамилия', 'Отчество', 'Роль', 'Действия'].map((col) => (
-                                        <Table.ColumnHeader
-                                            key={col}
-                                            textAlign={col === 'Логин' ? 'left' : 'center'}
-                                            color="white"
-                                            p={4}
-                                            letterSpacing="wider"
-                                        >
-                                            {col}
-                                        </Table.ColumnHeader>
-                                    ))}
+                                    <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider">
+                                        Логин
+                                    </Table.ColumnHeader>
+                                    <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider">
+                                        Имя
+                                    </Table.ColumnHeader>
+                                    <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider">
+                                        Фамилия
+                                    </Table.ColumnHeader>
+                                    <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider">
+                                        Отчество
+                                    </Table.ColumnHeader>
+                                    <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider">
+                                        Роль
+                                    </Table.ColumnHeader>
+                                    <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider">
+                                        Действия
+                                    </Table.ColumnHeader>
                                 </Table.Row>
                             </Table.Header>
 
                             <Table.Body>
-                                {!loading && users.length === 0 && (
+                                {users.length > 0 ? (
+                                    users.map((user) => (
+                                        <UserRow
+                                            key={user._id}
+                                            user={user}
+                                            onUserUpdate={(updated) => {
+                                                setUsers((prev) =>
+                                                    prev.map((u) => (u._id === updated._id ? updated : u))
+                                                )
+                                            }}
+                                            onUserDelete={(id) => {
+                                                setUsers((prev) => prev.filter((u) => u._id !== id))
+                                            }}
+                                            isOwnAccount={user._id === authenticatedUserId}
+                                        />
+                                    ))
+                                ) : (
                                     <Table.Row>
-                                        <Table.Cell colSpan={6} textAlign="center" color="gray.500" py={8}>
-                                            Нет пользователей
+                                        <Table.Cell colSpan={6} textAlign="center" py={8}>
+                                            <Text color="gray.500">Нет пользователей</Text>
                                         </Table.Cell>
                                     </Table.Row>
                                 )}
-
-                                {users.map((user) => (
-                                    <UserRow
-                                        key={user._id.toString()}
-                                        user={user}
-                                        isOwnAccount={user._id.toString() === authenticatedUserId}
-                                        onUserUpdate={(updated) =>
-                                            setUsers((prev) =>
-                                                prev.map((u) => (u._id === updated._id ? updated : u))
-                                            )
-                                        }
-                                        onUserDelete={(id) =>
-                                            setUsers((prev) => prev.filter((u) => u._id.toString() !== id))
-                                        }
-                                    />
-                                ))}
                             </Table.Body>
                         </Table.Root>
-                    </Box>
+                    )}
                 </Card.Body>
             </Card.Root>
 
