@@ -34,9 +34,10 @@ export const ActiveLunch = ({image}: ActiveLunchProps) => {
                             src={image}
                             alt="Обеденное меню"
                             fill
-                            sizes="(max-width: 768px) 100vw, 600px"
+                            sizes="(max-width: 640px) 100vw, 640px"
                             style={{objectFit: "contain", borderRadius: "12px"}}
-                            loading="lazy"
+                            priority
+                            fetchPriority="high"
                         />
                     </Box>
                 </Dialog.Trigger>

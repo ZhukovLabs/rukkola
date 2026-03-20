@@ -318,11 +318,6 @@ export default function RootLayout({
         <head>
             <link rel="preconnect" href="https://fonts.googleapis.com" />
             <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-            <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-            <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-            <link rel="dns-prefetch" href="https://rukkola-production.up.railway.app" />
-            <link rel="preconnect" href="https://mc.yandex.ru" />
-            <link rel="dns-prefetch" href="https://mc.yandex.ru" />
             
             <meta name="geo.region" content="BY-GO" />
             <meta name="geo.placename" content="Гомель" />
