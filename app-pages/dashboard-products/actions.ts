@@ -29,7 +29,10 @@ export async function getProducts(
     const skip = (page - 1) * limit
     const filter: Record<string, unknown> = {}
 
-    if (search) filter.name = {$regex: search, $options: 'i'};
+    if (search) {
+        const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        filter.name = {$regex: escapedSearch, $options: 'i'};
+    }
 
     if (category) {
         try {
