@@ -30,8 +30,10 @@ export async function getProducts(
     const filter: Record<string, unknown> = {}
 
     if (search) {
-        const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        filter.name = {$regex: escapedSearch, $options: 'i'};
+        filter.$or = [
+            {name: {$regex: search, $options: 'i'}},
+            {description: {$regex: search, $options: 'i'}},
+        ];
     }
 
     if (category) {
