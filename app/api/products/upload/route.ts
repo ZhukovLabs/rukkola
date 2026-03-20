@@ -32,6 +32,19 @@ export const POST = async (req: NextRequest) => {
         const product = await Product.findById(id);
         if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
 
+        // Delete old image if exists
+        if (product.image) {
+            const oldFileName = product.image.split('/').pop();
+            if (oldFileName) {
+                const oldFilePath = path.join(UPLOAD_DIR, oldFileName);
+                try {
+                    await fs.unlink(oldFilePath);
+                } catch {
+                    // Ignore if file doesn't exist
+                }
+            }
+        }
+
         await fs.mkdir(UPLOAD_DIR, { recursive: true });
 
         const fileName = sanitizeFileName(product.name, '.webp');
