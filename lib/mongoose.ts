@@ -1,7 +1,9 @@
 import mongoose from 'mongoose';
 
-mongoose.set('bufferCommands', true);
-mongoose.set('bufferTimeoutMS', 300000);
+if (typeof window === 'undefined') {
+    mongoose.set('bufferCommands', true);
+    mongoose.set('bufferTimeoutMS', 300000);
+}
 
 interface MongooseCache {
     conn: typeof mongoose | null;
@@ -21,43 +23,48 @@ if (!(globalThis as GlobalWithMongooseCache).mongooseCache) {
     (globalThis as GlobalWithMongooseCache).mongooseCache = cached;
 }
 
-if (!cached.promise) {
-    const MONGODB_URI = process.env.MONGODB_URI;
-    if (MONGODB_URI) {
-        cached.promise = mongoose.connect(MONGODB_URI, {
-            serverSelectionTimeoutMS: 30000,
-            socketTimeoutMS: 45000,
-        });
-    }
-}
+if (typeof window === 'undefined') {
+    mongoose.set('bufferCommands', true);
+    mongoose.set('bufferTimeoutMS', 300000);
 
-mongoose.connection.on('disconnected', () => {
-    console.log('MongoDB disconnected. Reconnecting...');
-    cached.conn = null;
-    cached.promise = null;
-
-    const reconnect = async () => {
-        while (true) {
-            try {
-                await mongoose.connect(process.env.MONGODB_URI!, {
-                    serverSelectionTimeoutMS: 30000,
-                    socketTimeoutMS: 45000,
-                });
-                console.log('MongoDB reconnected');
-                break;
-            } catch {
-                console.log('Reconnection failed. Retrying in 5s...');
-                await new Promise((resolve) => setTimeout(resolve, 5000));
-            }
+    if (!cached.promise) {
+        const MONGODB_URI = process.env.MONGODB_URI;
+        if (MONGODB_URI) {
+            cached.promise = mongoose.connect(MONGODB_URI, {
+                serverSelectionTimeoutMS: 30000,
+                socketTimeoutMS: 45000,
+            });
         }
-    };
+    }
 
-    reconnect();
-});
+    mongoose.connection.on('disconnected', () => {
+        console.log('MongoDB disconnected. Reconnecting...');
+        cached.conn = null;
+        cached.promise = null;
 
-mongoose.connection.on('error', (err) => {
-    console.error('MongoDB connection error:', err);
-});
+        const reconnect = async () => {
+            while (true) {
+                try {
+                    await mongoose.connect(process.env.MONGODB_URI!, {
+                        serverSelectionTimeoutMS: 30000,
+                        socketTimeoutMS: 45000,
+                    });
+                    console.log('MongoDB reconnected');
+                    break;
+                } catch {
+                    console.log('Reconnection failed. Retrying in 5s...');
+                    await new Promise((resolve) => setTimeout(resolve, 5000));
+                }
+            }
+        };
+
+        reconnect();
+    });
+
+    mongoose.connection.on('error', (err) => {
+        console.error('MongoDB connection error:', err);
+    });
+}
 
 export async function connectToDatabase() {
     if (!process.env.MONGODB_URI) {

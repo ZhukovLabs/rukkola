@@ -347,6 +347,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                                         color="white"
                                         ml="auto"
                                         mr={2}
+                                        onClick={() => setDrawerOpen(true)}
                                     >
                                         <FiMenu/>
                                     </IconButton>
