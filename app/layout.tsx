@@ -316,8 +316,6 @@ export default function RootLayout({
     return (
         <html lang="ru" suppressHydrationWarning>
         <head>
-            <link rel="preconnect" href="https://fonts.googleapis.com" />
-            <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
             
             <meta name="geo.region" content="BY-GO" />
             <meta name="geo.placename" content="Гомель" />

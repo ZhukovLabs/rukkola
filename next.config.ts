@@ -23,7 +23,6 @@ const nextConfig: NextConfig = {
     experimental: {
         optimizePackageImports: ['@chakra-ui/react', 'framer-motion', 'react-icons', 'lucide-react'],
         scrollRestoration: true,
-        optimizeCss: true,
     },
     turbopack: {},
     webpack: (config, {isServer, dev}) => {
@@ -59,6 +58,12 @@ const nextConfig: NextConfig = {
                         priority: 10,
                     },
                 },
+            };
+            config.resolve.fallback = {
+                ...config.resolve.fallback,
+                fs: false,
+                net: false,
+                tls: false,
             };
         }
         return config;

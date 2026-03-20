@@ -1,7 +1,6 @@
 'use client'
 
 import {ChakraProvider, defaultConfig, createSystem} from '@chakra-ui/react'
-import {Suspense} from "react";
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
 import {SessionProvider} from "next-auth/react";
 import {useMemo} from "react";
@@ -9,8 +8,6 @@ import {ToastProvider} from "@/components/toast-container";
 import {ErrorBoundary} from "@/components/error-boundary";
 
 type ProvidersProps = { children: React.ReactNode }
-
-const system = createSystem(defaultConfig);
 
 function makeQueryClient() {
     return new QueryClient({
@@ -37,6 +34,7 @@ function getQueryClient() {
 
 export function Providers({children}: ProvidersProps) {
     const queryClient = useMemo(() => getQueryClient(), [])
+    const system = useMemo(() => createSystem(defaultConfig), [])
     
     return (
         <SessionProvider>
@@ -44,9 +42,7 @@ export function Providers({children}: ProvidersProps) {
                 <ChakraProvider value={system}>
                     <ToastProvider>
                         <ErrorBoundary>
-                            <Suspense fallback="Загрузка...">
-                                {children}
-                            </Suspense>
+                            {children}
                         </ErrorBoundary>
                     </ToastProvider>
                 </ChakraProvider>
