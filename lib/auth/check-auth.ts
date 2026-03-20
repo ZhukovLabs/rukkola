@@ -3,11 +3,14 @@
 import {auth, signOut} from "@/lib/auth";
 import {User} from "@/models/user";
 import {Session} from "@/models/session";
+import {connectToDatabase} from "@/lib/mongoose";
 import type {UserRole} from "@/models/user";
 
 type CheckAuthUser = { id: string; role: UserRole };
 
 export const checkAuth = async (): Promise<CheckAuthUser | null> => {
+    await connectToDatabase();
+
     const session = await auth();
 
     if (!session?.user?.id || !session.user.role || !session.user.sessionToken) {
