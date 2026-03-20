@@ -3,6 +3,7 @@ import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 import { Product } from '@/models/product';
 import { sanitizeFileName } from "@/lib/sanitize";
+import { optimizeImage } from '@/lib/image-optimize';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'products');
 const ALLOWED_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp']);
@@ -24,10 +25,12 @@ export const POST = async (req: NextRequest) => {
 
         await fs.mkdir(UPLOAD_DIR, { recursive: true });
 
-        const fileName = sanitizeFileName(product.name, ext);
+        const fileName = sanitizeFileName(product.name, '.webp');
         const filePath = path.join(UPLOAD_DIR, fileName);
 
-        await fs.writeFile(filePath, Buffer.from(await file.arrayBuffer()));
+        const originalBuffer = Buffer.from(await file.arrayBuffer());
+        const optimizedBuffer = await optimizeImage(originalBuffer, { quality: 80 });
+        await fs.writeFile(filePath, optimizedBuffer);
 
         product.image = `/api/products/image/${fileName}`;
         await product.save();

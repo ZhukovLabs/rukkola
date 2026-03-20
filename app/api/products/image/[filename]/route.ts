@@ -2,13 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import { LRUCache } from "lru-cache";
-import mime from "mime";
+import sharp from "sharp";
 
-const cache = new LRUCache<string, { buffer: Buffer; contentType: string }>({ max: 200 });
+const cache = new LRUCache<string, { buffer: Buffer; contentType: string; width?: number }>({ max: 500 });
 const uploadDir = path.join(process.cwd(), "uploads", "products");
 
+interface CacheEntry {
+    buffer: Buffer;
+    contentType: string;
+    width?: number;
+}
+
 function sendFile(buffer: Buffer, contentType: string) {
-    return new NextResponse(new Uint8Array(buffer), {
+    return new NextResponse(buffer as unknown as BodyInit, {
         status: 200,
         headers: {
             "Content-Type": contentType,
@@ -24,7 +30,11 @@ export async function GET(
     const { filename } = await params;
     if (!filename) return NextResponse.json({ error: "Filename is required" }, { status: 400 });
 
-    const cached = cache.get(filename);
+    const { searchParams } = new URL(req.url);
+    const width = searchParams.get("w") ? parseInt(searchParams.get("w")!) : undefined;
+    const cacheKey = `${filename}-${width || "original"}`;
+
+    const cached = cache.get(cacheKey);
     if (cached) return sendFile(cached.buffer, cached.contentType);
 
     const filePath = path.join(uploadDir, filename);
@@ -33,13 +43,19 @@ export async function GET(
     }
 
     try {
-        const fileBuffer = await fs.readFile(filePath);
-        const contentType =
-            mime.getType(filename) || (path.extname(filename).toLowerCase() === ".jpg" ? "image/jpeg" : "application/octet-stream");
+        const originalBuffer = await fs.readFile(filePath);
+        let fileBuffer = originalBuffer;
+        
+        if (width) {
+            fileBuffer = Buffer.from(await sharp(originalBuffer)
+                .resize(width, undefined, { fit: "inside", withoutEnlargement: true })
+                .webp({ quality: 80 })
+                .toBuffer());
+        }
 
-        cache.set(filename, { buffer: fileBuffer, contentType });
+        cache.set(cacheKey, { buffer: fileBuffer, contentType: "image/webp", width });
 
-        return sendFile(fileBuffer, contentType);
+        return sendFile(fileBuffer, "image/webp");
     } catch (err) {
         const error = err as NodeJS.ErrnoException;
         if (error.code === "ENOENT") return NextResponse.json({ error: "File not found" }, { status: 404 });

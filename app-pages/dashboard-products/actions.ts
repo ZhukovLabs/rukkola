@@ -194,6 +194,7 @@ export async function toggleProductVisibility(
     await product.save()
 
     revalidatePath('/');
+    revalidatePath('/dashboard/products');
 
     return {
         success: true,
@@ -218,6 +219,7 @@ export async function toggleProductAlcohol(
     await product.save()
 
     revalidatePath('/');
+    revalidatePath('/dashboard/products');
 
     return {
         success: true,
@@ -239,6 +241,7 @@ export async function deleteProduct(productId: string): Promise<ActionResponse<{
     await product.deleteOne();
 
     revalidatePath('/');
+    revalidatePath('/dashboard/products');
 
     return {
         success: true,
@@ -273,6 +276,7 @@ export async function updateProductData(
 
     await Product.findByIdAndUpdate(id, updatedData)
     revalidatePath('/')
+    revalidatePath('/dashboard/products');
 
     return {
         success: true,
@@ -341,8 +345,8 @@ export async function createProduct(
 
     await product.save()
 
-    revalidatePath('/dashboard/products')
     revalidatePath('/')
+    revalidatePath('/dashboard/products');
 
     return {
         success: true,

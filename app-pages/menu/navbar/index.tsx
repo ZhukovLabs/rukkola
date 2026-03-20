@@ -251,7 +251,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                                                         fontSize="10px"
                                                         lineHeight="1"
                                                         transition="transform 0.2s"
-                                                        transform={isExpanded ? "rotate(-90deg)" : "rotate(0deg)"}
+                                                        transform={isExpanded ? "rotate(-180deg)" : "rotate(0deg)"}
                                                     >
                                                         ▶
                                                     </Box>
@@ -337,6 +337,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                                         size="sm"
                                         variant="ghost"
                                         color="white"
+                                        ml='auto'
                                         mr={2}
                                     >
                                         <FiMenu/>

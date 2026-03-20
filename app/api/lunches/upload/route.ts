@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { NextRequest, NextResponse } from 'next/server'
 import { Lunch } from '@/models/lunch'
+import { optimizeImage } from '@/lib/image-optimize'
 
 export const POST = async (req: NextRequest) => {
     const formData = await req.formData()
@@ -13,11 +14,12 @@ export const POST = async (req: NextRequest) => {
     if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true })
 
     const ext = path.extname(file.name)
-    const safeName = `lunch-${Date.now()}${ext}`
+    const safeName = `lunch-${Date.now()}.webp`
     const filePath = path.join(uploadDir, safeName)
 
     const buffer = Buffer.from(await file.arrayBuffer())
-    fs.writeFileSync(filePath, buffer)
+    const optimizedBuffer = await optimizeImage(buffer, { quality: 80 })
+    fs.writeFileSync(filePath, optimizedBuffer)
 
     const imageUrl = `/api/lunches/image/${safeName}`
 
