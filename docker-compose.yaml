@@ -1,15 +1,49 @@
 version: '3.8'
 
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rukkola
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - AUTH_SECRET=${AUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - AUTH_TRUST_HOST=${AUTH_TRUST_HOST:-true}
+      - NODE_ENV=production
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      - mongodb
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
   mongodb:
-    image: mongo:latest
+    image: mongo:7
     container_name: mongodb
-    restart: always
+    restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: secret
-      MONGO_INITDB_DATABASE: mydatabase
+      MONGO_INITDB_DATABASE: rukkola
     ports:
       - "27017:27017"
     volumes:
-      - ./data:/data/db
+      - mongodb_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  uploads:
+  mongodb_data:

@@ -6,6 +6,7 @@ const withBundleAnalyzer = bundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
+    output: 'standalone',
     allowedDevOrigins: ['192.168.0.120'],
     images: {
         remotePatterns: [{
