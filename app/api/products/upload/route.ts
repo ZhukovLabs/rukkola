@@ -51,7 +51,7 @@ export const POST = async (req: NextRequest) => {
                 try {
                     await deleteFile(`products/${decodeURIComponent(oldFileName)}`);
                     invalidateImageCache(decodeURIComponent(oldFileName));
-                } catch (e) {
+                } catch {
                     // Old file may not exist
                 }
             }

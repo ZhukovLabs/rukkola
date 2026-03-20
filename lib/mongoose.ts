@@ -5,22 +5,8 @@ interface MongooseCache {
     promise: Promise<typeof mongoose> | null;
 }
 
-interface GlobalWithMongooseCache {
-    mongooseCache?: MongooseCache;
-}
-
 declare global {
-    // eslint-disable-next-line no-var
     var mongooseCache: MongooseCache | undefined;
-}
-
-let cached: MongooseCache = globalThis.mongooseCache ?? {
-    conn: null,
-    promise: null,
-};
-
-if (!globalThis.mongooseCache) {
-    globalThis.mongooseCache = cached;
 }
 
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -30,34 +16,27 @@ if (!MONGODB_URI && typeof window === 'undefined') {
 }
 
 const MONGODB_OPTIONS = {
-    serverSelectionTimeoutMS: 30000,
-    socketTimeoutMS: 45000,
-    maxPoolSize: 10,
-    minPoolSize: 2,
+    serverSelectionTimeoutMS: 10000,
+    socketTimeoutMS: 30000,
+    maxPoolSize: 20,
+    minPoolSize: 5,
     connectTimeoutMS: 10000,
+    heartbeatFrequencyMS: 10000,
 };
 
-async function connectMongoose(): Promise<typeof mongoose> {
-    if (!MONGODB_URI) {
-        throw new Error('MONGODB_URI не задан в переменных окружения');
-    }
+const cached: MongooseCache = globalThis.mongooseCache ?? {
+    conn: null,
+    promise: null,
+};
 
-    cached.promise = mongoose.connect(MONGODB_URI, MONGODB_OPTIONS);
-    
-    cached.promise.catch((err) => {
-        console.error('MongoDB connection error:', err);
-        cached.promise = null;
-    });
-
-    return cached.promise;
+if (!globalThis.mongooseCache) {
+    globalThis.mongooseCache = cached;
 }
 
 mongoose.connection.on('error', (err) => {
     console.error('MongoDB connection error:', err);
-    if (cached.conn) {
-        cached.conn = null;
-        cached.promise = null;
-    }
+    cached.conn = null;
+    cached.promise = null;
 });
 
 mongoose.connection.on('disconnected', () => {
@@ -66,10 +45,8 @@ mongoose.connection.on('disconnected', () => {
     cached.promise = null;
 });
 
-process.on('beforeExit', async () => {
-    if (mongoose.connection.readyState === 1) {
-        await mongoose.disconnect();
-    }
+mongoose.connection.on('reconnected', () => {
+    console.log('MongoDB reconnected');
 });
 
 export async function connectToDatabase(): Promise<typeof mongoose> {
@@ -81,15 +58,24 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
         return cached.conn;
     }
 
-    if (!cached.promise) {
-        cached.promise = connectMongoose();
+    if (cached.promise) {
+        try {
+            cached.conn = await cached.promise;
+            return cached.conn;
+        } catch {
+            cached.promise = null;
+            cached.conn = null;
+        }
     }
+
+    cached.promise = mongoose.connect(MONGODB_URI, MONGODB_OPTIONS);
 
     try {
         cached.conn = await cached.promise;
-    } catch (error) {
+    } catch {
         cached.promise = null;
-        throw error;
+        cached.conn = null;
+        throw new Error('Failed to connect to MongoDB');
     }
 
     return cached.conn;

@@ -1,15 +1,27 @@
 'use server'
 
 import {Lunch, LunchType} from '@/models/lunch'
-import {revalidatePath} from 'next/cache'
+import {revalidatePath, revalidateTag} from 'next/cache'
 import {connectToDatabase} from '@/lib/mongoose'
 import fs from 'fs/promises'
 import path from 'path'
 import {checkAuth} from '@/lib/auth/check-auth'
 import {ActionResponse} from '@/types'
+import {CACHE_TAGS} from '@/app-pages/menu/config';
 
 function revalidateMenuCache() {
     revalidatePath('/', 'layout');
+    const tags = [
+        CACHE_TAGS.CATEGORIES,
+        CACHE_TAGS.LUNCHES,
+        CACHE_TAGS.MENU_WITH_ALCOHOL,
+        CACHE_TAGS.MENU_NO_ALCOHOL,
+        CACHE_TAGS.PRODUCTS_WITH_ALCOHOL,
+        CACHE_TAGS.PRODUCTS_NO_ALCOHOL,
+    ];
+    for (const tag of tags) {
+        revalidateTag(tag, '');
+    }
 }
 
 type LunchData = {

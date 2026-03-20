@@ -3,8 +3,7 @@ import { Lunch } from '@/models/lunch'
 import { optimizeImage } from '@/lib/image-optimize'
 import { auth } from '@/lib/auth'
 import { connectToDatabase } from '@/lib/mongoose'
-import { uploadFile, deleteFile } from '@/lib/minio'
-import { invalidateLunchImageCache } from '../image/[filename]/route'
+import { uploadFile } from '@/lib/minio'
 
 const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp'])
 const MAX_FILE_SIZE = 10 * 1024 * 1024

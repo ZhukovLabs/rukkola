@@ -2,14 +2,26 @@
 
 import {connectToDatabase} from '@/lib/mongoose'
 import {Category} from '@/models/category'
-import {revalidatePath} from "next/cache"
+import {revalidatePath, revalidateTag} from "next/cache"
 import {checkAuth} from '@/lib/auth/check-auth'
 import {ActionResponse} from "@/types";
 import {ObjectId} from "mongodb";
 import {Product} from "@/models/product";
+import {CACHE_TAGS} from '@/app-pages/menu/config';
 
 function revalidateMenuCache() {
     revalidatePath('/', 'layout');
+    const tags = [
+        CACHE_TAGS.CATEGORIES,
+        CACHE_TAGS.LUNCHES,
+        CACHE_TAGS.MENU_WITH_ALCOHOL,
+        CACHE_TAGS.MENU_NO_ALCOHOL,
+        CACHE_TAGS.PRODUCTS_WITH_ALCOHOL,
+        CACHE_TAGS.PRODUCTS_NO_ALCOHOL,
+    ];
+    for (const tag of tags) {
+        revalidateTag(tag, '');
+    }
 }
 
 export async function toggleCategoryField(id: string, field: 'isMenuItem' | 'showGroupTitle'): Promise<ActionResponse> {

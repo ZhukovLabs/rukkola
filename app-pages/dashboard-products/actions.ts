@@ -1,7 +1,7 @@
 'use server'
 
 import {ObjectId} from 'mongodb'
-import {revalidatePath} from 'next/cache'
+import {revalidatePath, revalidateTag} from 'next/cache'
 
 import {connectToDatabase} from '@/lib/mongoose'
 import {checkAuth} from '@/lib/auth/check-auth'
@@ -12,6 +12,7 @@ import {Category, CategoryType} from '@/models/category'
 import {productSchema} from './validation'
 import {ActionResponse} from "@/types";
 import {Types} from "mongoose";
+import {CACHE_TAGS} from '@/app-pages/menu/config';
 
 export async function getProducts(
     page = 1,
@@ -208,6 +209,17 @@ export async function getProductById(id: string): Promise<ActionResponse<Product
 
 function revalidateMenuCache() {
     revalidatePath('/', 'layout');
+    const tags = [
+        CACHE_TAGS.CATEGORIES,
+        CACHE_TAGS.LUNCHES,
+        CACHE_TAGS.MENU_WITH_ALCOHOL,
+        CACHE_TAGS.MENU_NO_ALCOHOL,
+        CACHE_TAGS.PRODUCTS_WITH_ALCOHOL,
+        CACHE_TAGS.PRODUCTS_NO_ALCOHOL,
+    ];
+    for (const tag of tags) {
+        revalidateTag(tag, '');
+    }
 }
 
 export async function toggleProductVisibility(

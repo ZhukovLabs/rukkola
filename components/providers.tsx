@@ -13,10 +13,22 @@ function makeQueryClient() {
     return new QueryClient({
         defaultOptions: {
             queries: {
-                staleTime: 60 * 1000,
+                staleTime: 30 * 1000,
                 gcTime: 5 * 60 * 1000,
-                retry: 1,
+                retry: (failureCount, error) => {
+                    if (failureCount >= 2) return false;
+                    const message = (error as { message?: string })?.message;
+                    if (message?.includes('401') || message?.includes('403')) return false;
+                    return true;
+                },
+                retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
                 refetchOnWindowFocus: false,
+                refetchOnReconnect: true,
+                networkMode: 'online',
+            },
+            mutations: {
+                retry: 1,
+                retryDelay: 1000,
             },
         },
     })

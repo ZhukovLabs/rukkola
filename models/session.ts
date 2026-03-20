@@ -16,8 +16,9 @@ const SessionSchema = new Schema<SessionType>(
             type: Schema.Types.ObjectId,
             ref: "User",
             required: true,
+            index: true,
         },
-        token: {type: String, required: true},
+        token: {type: String, required: true, unique: true, index: true},
         ip: {type: String},
         userAgent: {type: String},
         expiresAt: {type: Date, required: true},
@@ -26,6 +27,7 @@ const SessionSchema = new Schema<SessionType>(
 );
 
 SessionSchema.index({expiresAt: 1}, {expireAfterSeconds: 0});
+SessionSchema.index({userId: 1});
 
 export const Session =
     mongoose.models?.Session ||
