@@ -34,10 +34,9 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
     
     const [isFixed, setIsFixed] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
-    const navHeightRef = useRef<number>(60);
+    const [navHeight, setNavHeight] = useState(60);
     const [openIds, setOpenIds] = useState<string[]>([]);
     const [isMobile, setIsMobile] = useState(false);
-    const [expandedId, setExpandedId] = useState<string | null>(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
 
     useEffect(() => {
@@ -48,18 +47,16 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
     }, []);
 
     useLayoutEffect(() => {
-        if (drawerOpen) return;
-        
         const measure = () => {
             if (navRef.current) {
                 const height = navRef.current.offsetHeight || 60;
-                if (height !== navHeightRef.current) {
-                    navHeightRef.current = height;
+                if (height !== navHeight) {
+                    setNavHeight(height);
                 }
             }
         };
         measure();
-    }, [items, drawerOpen]);
+    }, [items, navHeight]);
 
     const allSectionIds = useMemo(() => {
         const ids: string[] = [];
@@ -83,10 +80,10 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
     const handleClick = useCallback((id: string) => {
         const section = document.getElementById(id);
         if (!section) return;
-        const currentHeight = navRef.current?.offsetHeight || navHeightRef.current || 60;
+        const currentHeight = navRef.current?.offsetHeight || navHeight || 60;
         const y = section.getBoundingClientRect().top + window.scrollY - currentHeight;
         window.scrollTo({top: y, behavior: "smooth"});
-    }, [navHeightRef.current]);
+    }, [navHeight]);
 
     useEffect(() => {
         if (!allSectionIds.length) return;
@@ -100,7 +97,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                     }
                 }
             },
-            {rootMargin: `-${navHeightRef.current + 16}px 0px -60% 0px`}
+            {rootMargin: `-${navHeight + 16}px 0px -60% 0px`}
         );
 
         for (const id of allSectionIds) {
@@ -109,7 +106,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
         }
 
         return () => observer.disconnect();
-    }, [allSectionIds, navHeightRef.current]);
+    }, [allSectionIds, navHeight]);
 
     useEffect(() => {
         if (!items.length) return;
@@ -117,17 +114,14 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
         const threshold = document.getElementById(items[0].id)?.offsetTop ?? 0;
         
         const handleScroll = () => {
-            setIsFixed(window.scrollY > threshold - navHeightRef.current - 8);
+            if (drawerOpen) return;
+            setIsFixed(window.scrollY > threshold - navHeight - 8);
         };
 
         handleScroll();
         window.addEventListener("scroll", handleScroll, {passive: true});
         return () => window.removeEventListener("scroll", handleScroll);
-    }, [items, navHeightRef.current]);
-
-    const handleSetOpenIds = useCallback((ids: string[]) => {
-        setOpenIds(ids);
-    }, []);
+    }, [items, navHeight, drawerOpen]);
 
     if (searchParams.has(CART_QUERY_KEY)) return null;
 
@@ -137,7 +131,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
 
     return (
         <Box position="relative" zIndex="10">
-            {isFixed && <Box height={isMobile ? '53px' : `${navHeightRef.current}px`}/>}
+            {isFixed && <Box height={isMobile ? '53px' : `${navHeight}px`}/>}
 
             <MotionNav
                 ref={navRef}
@@ -153,233 +147,74 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                 animate={motionAnimate}
                 transition={motionTransition}
             >
-                <Box display={{base: "flex", md: "none"}} alignItems="center" position="relative">
-                    {!isFixed ? (
-                        <>
-                            <Box
-                                position="absolute"
-                                left={0}
-                                top={0}
-                                bottom={0}
-                                w={6}
-                                bgGradient="linear(to-r, rgba(26,32,44,0.9), transparent)"
-                                zIndex={1}
-                                pointerEvents="none"
-                            />
-                            <Box
-                                position="absolute"
-                                right={0}
-                                top={0}
-                                bottom={0}
-                                w={6}
-                                bgGradient="linear(to-l, rgba(26,32,44,0.9), transparent)"
-                                zIndex={1}
-                                pointerEvents="none"
-                            />
-                            <Box
-                                display="flex"
-                                overflowX="auto"
-                                gap={1}
-                                px={4}
-                                flex="1"
-                                py={1}
-                                position="relative"
-                                zIndex={0}
-                                css={{
-                                    scrollbarWidth: "none",
-                                    "&::-webkit-scrollbar": { display: "none" },
-                                    scrollSnapType: "x mandatory",
-                                    "& > *": { scrollSnapAlign: "start" },
-                                }}
-                            >
-                                <Box minW={2} />
-                                {items.map((item) => {
-                                    const hasChildren = !!item.children?.length;
-                                    const isGroupActive = activeId === item.id || item.children?.some((c) => c.id === activeId);
-                                    const isAnyChildActive = item.children?.some((c) => c.id === activeId);
-                                    const isExpanded = expandedId === item.id;
-                                    return (
-                                        <MotionBox
-                                            key={item.id}
-                                            layout
-                                            display="flex"
-                                            alignItems="center"
-                                            gap={1}
-                                            flexShrink={0}
-                                        >
-                                            <Box
-                                                display="flex"
-                                                alignItems="center"
-                                                gap={1}
-                                                px={3}
-                                                py={1}
-                                                borderRadius="full"
-                                                bg={isGroupActive ? "teal.500" : "whiteAlpha.100"}
-                                                boxShadow={isGroupActive ? "0 2px 6px rgba(45,199,180,0.3)" : "none"}
-                                                onClick={() => {
-                                                    if (hasChildren) {
-                                                        setExpandedId(isExpanded ? null : item.id);
-                                                    } else {
-                                                        handleClick(item.id);
-                                                    }
-                                                }}
-                                                cursor="pointer"
-                                                transition="all 0.2s"
-                                                _hover={{ 
-                                                    bg: isGroupActive ? "teal.400" : "whiteAlpha.200",
-                                                }}
-                                                css={{
-                                                    WebkitTapHighlightColor: "transparent",
-                                                }}
-                                            >
-                                                <Box
-                                                    w={1.5}
-                                                    h={1.5}
-                                                    borderRadius="full"
-                                                    bg={isGroupActive ? "white" : "gray.400"}
-                                                    flexShrink={0}
-                                                />
-                                                <Box
-                                                    color={isGroupActive || isAnyChildActive ? "white" : "gray.300"}
-                                                    fontWeight="semibold"
-                                                    fontSize="xs"
-                                                    whiteSpace="nowrap"
-                                                >
-                                                    {item.name}
-                                                </Box>
-                                                {hasChildren && (
-                                                    <Box
-                                                        ml={1}
-                                                        color="whiteAlpha.700"
-                                                        fontSize="10px"
-                                                        lineHeight="1"
-                                                        transition="transform 0.2s"
-                                                        transform={isExpanded ? "rotate(-180deg)" : "rotate(0deg)"}
-                                                    >
-                                                        ▶
-                                                    </Box>
-                                                )}
-                                            </Box>
-                                            <Box
-                                                display="flex"
-                                                gap={1}
-                                                overflow="hidden"
-                                                transition="all 0.25s ease"
-                                                maxW={isExpanded ? "500px" : "0"}
-                                                opacity={isExpanded ? 1 : 0}
-                                            >
-                                                {item.children?.map((child) => (
-                                                    <Box
-                                                        key={child.id}
-                                                        px={2}
-                                                        py={1}
-                                                        borderRadius="full"
-                                                        bg={activeId === child.id ? "teal.400" : "whiteAlpha.50"}
-                                                        color={activeId === child.id ? "white" : "gray.400"}
-                                                        fontWeight={activeId === child.id ? "semibold" : "medium"}
-                                                        fontSize="xs"
-                                                        whiteSpace="nowrap"
-                                                        cursor="pointer"
-                                                        transition="all 0.15s"
-                                                        border="1px solid"
-                                                        borderColor={activeId === child.id ? "teal.300" : "whiteAlpha.200"}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleClick(child.id);
-                                                        }}
-                                                        _hover={{ 
-                                                            bg: activeId === child.id ? "teal.300" : "whiteAlpha.200",
-                                                            color: "white"
-                                                        }}
-                                                        css={{
-                                                            WebkitTapHighlightColor: "transparent",
-                                                        }}
-                                                    >
-                                                        {child.name}
-                                                    </Box>
-                                                ))}
-                                            </Box>
-                                        </MotionBox>
-                                    );
-                                })}
-                                <Box minW={2} />
-                            </Box>
-                        </>
-                    ) : (
-                        <>
-                            <MotionBox
-                                initial={disableMotion ? undefined : {opacity: 0, x: -20}}
-                                animate={disableMotion ? undefined : {opacity: 1, x: 0}}
-                                transition={disableMotion ? undefined : {duration: 0.4}}
-                                display="flex"
-                                alignItems="center"
-                                gap={2}
-                                px={4}
-                            >
-                                <Box
-                                    w={2}
-                                    h={6}
-                                    borderRadius="full"
-                                    bgGradient="linear(to-b, teal.400, teal.600)"
-                                />
+                <Box display={{base: "flex", md: "none"}} justifyContent="space-between" px={4} alignItems="center">
+                    <MotionBox
+                        initial={disableMotion ? undefined : {opacity: 0, x: -20}}
+                        animate={disableMotion ? undefined : {opacity: 1, x: 0}}
+                        transition={disableMotion ? undefined : {duration: 0.4}}
+                        display="flex"
+                        alignItems="center"
+                        gap={2}
+                    >
+                        <Box
+                            w={2}
+                            h={6}
+                            borderRadius="full"
+                            bgGradient="linear(to-b, teal.400, teal.600)"
+                        />
 
-                                <Text
-                                    fontSize="sm"
-                                    fontWeight="bold"
-                                    color="whiteAlpha.900"
-                                    textShadow="0 1px 4px rgba(0,0,0,0.3)"
+                        <Text
+                            fontSize="sm"
+                            fontWeight="bold"
+                            color="whiteAlpha.900"
+                            textShadow="0 1px 4px rgba(0,0,0,0.3)"
+                        >
+                            {activeItem?.name ?? items[0]?.name}
+                        </Text>
+                    </MotionBox>
+
+                    <Drawer.Root 
+                        placement="bottom" 
+                        open={drawerOpen}
+                        onOpenChange={(e) => setDrawerOpen(e.open)}
+                        onExitComplete={() => setOpenIds([])}
+                    >
+                        <Drawer.Trigger asChild>
+                            <IconButton
+                                aria-label="Открыть меню"
+                                size="sm"
+                                variant="ghost"
+                                color="white"
+                            >
+                                <FiMenu/>
+                            </IconButton>
+                        </Drawer.Trigger>
+
+                        <Portal>
+                            <Drawer.Backdrop/>
+                            <Drawer.Positioner>
+                                <Drawer.Content 
+                                    bg="gray.800" 
+                                    borderTopRadius="lg"
+                                    maxH="85vh"
                                 >
-                                    {activeItem?.name ?? items[0]?.name}
-                                </Text>
-                            </MotionBox>
+                                    <Drawer.Header px={4} pt={4} pb={2}>
+                                        <HStack justify="space-between">
+                                            <Drawer.Title fontSize="sm" color="whitesmoke">Разделы</Drawer.Title>
+                                            <Drawer.CloseTrigger asChild>
+                                                <CloseButton
+                                                    size="sm"
+                                                    color="white"
+                                                    onClick={() => {
+                                                        setDrawerOpen(false);
+                                                        setOpenIds([]);
+                                                    }}
+                                                />
+                                            </Drawer.CloseTrigger>
+                                        </HStack>
+                                    </Drawer.Header>
 
-                            <Drawer.Root 
-                                placement="bottom" 
-                                open={drawerOpen} 
-                                onOpenChange={(details) => {
-                                    setDrawerOpen(details.open);
-                                    if (!details.open) setOpenIds([]);
-                                }}
-                            >
-                                <Drawer.Trigger asChild>
-                                    <IconButton
-                                        aria-label="Открыть меню"
-                                        size="sm"
-                                        variant="ghost"
-                                        color="white"
-                                        ml="auto"
-                                        mr={2}
-                                        onClick={() => setDrawerOpen(true)}
-                                    >
-                                        <FiMenu/>
-                                    </IconButton>
-                                </Drawer.Trigger>
-
-                                <Portal>
-                                    <Drawer.Backdrop />
-                                    <Drawer.Positioner>
-                                        <Drawer.Content 
-                                            bg="gray.800" 
-                                            borderTopRadius="lg"
-                                            maxH="85vh"
-                                        >
-                                            <Drawer.Header px={4} pt={4} pb={2}>
-                                                <HStack justify="space-between">
-                                                    <Drawer.Title fontSize="sm" color="whitesmoke">Разделы</Drawer.Title>
-                                                    <Drawer.CloseTrigger asChild>
-                                                        <CloseButton
-                                                            size="sm"
-                                                            color="white"
-                                                            onClick={() => {
-                                                                setDrawerOpen(false);
-                                                                setOpenIds([]);
-                                                            }}
-                                                        />
-                                                    </Drawer.CloseTrigger>
-                                                </HStack>
-                                            </Drawer.Header>
-
-                                            <Drawer.Body
+                                    <Drawer.Body
                                                 px={4}
                                                 pb={4}
                                                 overflowY="auto"
@@ -485,12 +320,10 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                                                     })}
                                                 </VStack>
                                             </Drawer.Body>
-                                        </Drawer.Content>
-                                    </Drawer.Positioner>
-                                </Portal>
-                            </Drawer.Root>
-                        </>
-                    )}
+                                </Drawer.Content>
+                            </Drawer.Positioner>
+                        </Portal>
+                    </Drawer.Root>
                 </Box>
 
                 <Box
