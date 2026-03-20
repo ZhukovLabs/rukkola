@@ -9,6 +9,7 @@ import { AdminFloatButton } from "@/components/admin-float-button";
 
 const Navbar = dynamic(() => import("./navbar").then(m => m.Navbar));
 const ScrollToFooterButton = dynamic(() => import("./scroll-footer-button").then(m => m.ScrollToFooterButton));
+const ScrollToTopButton = dynamic(() => import("./scroll-top-button").then(m => m.ScrollToTopButton));
 const ProductModal = dynamic(() => import("./product-modal").then(m => m.ProductModal));
 const CartModal = dynamic(() => import("./cart-modal").then(m => m.CartModal));
 const ActiveLunch = dynamic(() => import("./active-lunch").then(m => m.ActiveLunch));
@@ -42,7 +43,8 @@ export const MenuPageClient = ({ activeLunch, navbar }: MenuPageClientProps) => 
             </Suspense>
 
             <AdminFloatButton />
-
+            <ScrollToTopButton />
+            
             <Suspense fallback={null}>
                 <CartComponents />
             </Suspense>
