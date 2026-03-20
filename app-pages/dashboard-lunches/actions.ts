@@ -6,17 +6,37 @@ import {connectToDatabase} from '@/lib/mongoose'
 import fs from 'fs'
 import path from 'path'
 import {checkAuth} from '@/lib/auth/check-auth'
+import {clearMenuCache} from '@/app-pages/menu/config'
+import {ActionResponse} from '@/types'
 
-export const getAllLunches = async () => {
-    await checkAuth()
-    await connectToDatabase()
-
-    const lunches = await Lunch.find().sort({createdAt: -1}).lean()
-    return JSON.parse(JSON.stringify(lunches))
+type LunchData = {
+    _id: { toString: () => string }
+    image: string
+    active: boolean
 }
 
-export async function activeLunch(id: string) {
-    await checkAuth()
+export const getAllLunches = async (): Promise<ActionResponse<LunchData[]>> => {
+    const user = await checkAuth()
+    if (!user) {
+        return {success: false, message: 'Необходима авторизация'}
+    }
+    
+    await connectToDatabase()
+
+    const lunches = await Lunch.find().sort({createdAt: -1}).lean<LunchType[]>()
+    return {
+        success: true,
+        message: 'Список обедов получен',
+        data: JSON.parse(JSON.stringify(lunches))
+    }
+}
+
+export async function activeLunch(id: string): Promise<ActionResponse<{ _id: string; image: string; active: boolean }>> {
+    const user = await checkAuth()
+    if (!user) {
+        return {success: false, message: 'Необходима авторизация'}
+    }
+    
     await connectToDatabase()
 
     const lunch: LunchType | null = await Lunch.findById(id)
@@ -28,6 +48,7 @@ export async function activeLunch(id: string) {
     lunch.active = true
     await lunch.save()
 
+    clearMenuCache();
     revalidatePath('/')
     revalidatePath('/dashboard/lunches')
 
@@ -42,20 +63,29 @@ export async function activeLunch(id: string) {
     }
 }
 
-export async function deactivateLunch() {
-    await checkAuth()
+export async function deactivateLunch(): Promise<ActionResponse> {
+    const user = await checkAuth()
+    if (!user) {
+        return {success: false, message: 'Необходима авторизация'}
+    }
+    
     await connectToDatabase()
 
     await Lunch.updateMany({}, {$set: {active: false}})
 
+    clearMenuCache();
     revalidatePath('/')
     revalidatePath('/dashboard/lunches')
 
     return {success: true, message: 'Все обеды деактивированы'}
 }
 
-export async function deleteLunch(id: string) {
-    await checkAuth()
+export async function deleteLunch(id: string): Promise<ActionResponse> {
+    const user = await checkAuth()
+    if (!user) {
+        return {success: false, message: 'Необходима авторизация'}
+    }
+    
     await connectToDatabase()
 
     const lunch = await Lunch.findById(id)
@@ -83,8 +113,9 @@ export async function deleteLunch(id: string) {
 
     await Lunch.deleteOne({_id: id})
 
+    clearMenuCache();
     revalidatePath('/')
     revalidatePath('/dashboard/lunches')
 
-    return {success: true, message: 'Обед удалён', data: lunch}
+    return {success: true, message: 'Обед удалён'}
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect, useRef, useState, useCallback, memo, useMemo, useLayoutEffect, Fragment} from "react";
+import {useEffect, useRef, useState, useCallback, memo, useMemo, useLayoutEffect} from "react";
 import {
     Box,
     HStack,
@@ -14,7 +14,7 @@ import {
     Icon,
 } from "@chakra-ui/react";
 import {motion, AnimatePresence} from "framer-motion";
-import {FiMenu, FiChevronRight, FiChevronDown} from "react-icons/fi";
+import {FiMenu, FiChevronRight} from "react-icons/fi";
 import {useSearchParams} from "next/navigation";
 
 import {NavItem} from "./nav-item";
@@ -33,6 +33,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
     const searchParams = useSearchParams();
     const navRef = useRef<HTMLDivElement>(null);
     const disableMotion = useIsLowPerformanceDevice();
+    const initialTopRef = useRef<number | null>(null);
     
     const [isFixed, setIsFixed] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -55,10 +56,31 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                 if (height !== navHeight) {
                     setNavHeight(height);
                 }
+                const rect = navRef.current.getBoundingClientRect();
+                const currentTop = rect.top + window.scrollY;
+                if (initialTopRef.current === null || currentTop < initialTopRef.current) {
+                    initialTopRef.current = currentTop;
+                }
             }
         };
         measure();
+        
+        const rafId = requestAnimationFrame(measure);
+        return () => cancelAnimationFrame(rafId);
     }, [items, navHeight]);
+
+    useEffect(() => {
+        const handleResize = () => {
+            initialTopRef.current = null;
+            if (navRef.current) {
+                const rect = navRef.current.getBoundingClientRect();
+                initialTopRef.current = rect.top + window.scrollY;
+            }
+        };
+        
+        window.addEventListener('resize', handleResize, { passive: true });
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const allSectionIds = useMemo(() => {
         const ids: string[] = [];
@@ -123,27 +145,31 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
     useEffect(() => {
         if (!items.length) return;
         
-        const threshold = document.getElementById(items[0].id)?.offsetTop ?? 0;
-        
         const handleScroll = () => {
             if (drawerOpen) return;
-            setIsFixed(window.scrollY > threshold - navHeight - 8);
+            
+            const threshold = initialTopRef.current ?? 0;
+            setIsFixed(window.scrollY > threshold);
         };
 
         handleScroll();
         window.addEventListener("scroll", handleScroll, {passive: true});
         return () => window.removeEventListener("scroll", handleScroll);
-    }, [items, navHeight, drawerOpen]);
+    }, [items, drawerOpen]);
 
     if (searchParams.has(CART_QUERY_KEY)) return null;
 
-    const motionTransition = disableMotion ? undefined : {duration: 0.3};
-    const motionInitial = disableMotion ? undefined : {opacity: 0, y: -12};
+    const motionTransition = disableMotion ? undefined : {duration: 0.25, ease: "easeOut" as const};
+    const motionInitial = disableMotion ? undefined : {opacity: 0, y: -10};
     const motionAnimate = disableMotion ? undefined : {opacity: 1, y: 0};
+    
+    const mobileAnimTransition = disableMotion ? undefined : {duration: 0.2, ease: "easeOut" as const};
+    const mobileFixedInitial = disableMotion ? undefined : {opacity: 0};
+    const mobileFixedAnimate = disableMotion ? undefined : {opacity: 1};
 
     return (
         <Box position="relative" zIndex="10">
-            {isFixed && <Box height={isMobile ? '53px' : `${navHeight}px`}/>}
+            {isFixed && <Box height={isMobile ? '53px' : `${navHeight}px`} transition="height 0.2s ease"/>}
 
             <MotionNav
                 ref={navRef}
@@ -158,15 +184,20 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                 initial={motionInitial}
                 animate={motionAnimate}
                 transition={motionTransition}
+                style={{
+                    transition: "backdrop-filter 0.3s ease, border-bottom 0.3s ease"
+                }}
             >
                 <Box display={{base: "flex", md: "none"}} flexDirection="column" gap={isFixed ? 0 : 2} px={isFixed ? 0 : 4}>
                     {isFixed ? (
-                        <>
+                        <MotionBox
+                            key="fixed-mobile"
+                            initial={mobileFixedInitial}
+                            animate={mobileFixedAnimate}
+                            transition={mobileAnimTransition}
+                        >
                             <Flex justifyContent="space-between" alignItems="center">
-                                <MotionBox
-                                    initial={disableMotion ? undefined : {opacity: 0, x: -20}}
-                                    animate={disableMotion ? undefined : {opacity: 1, x: 0}}
-                                    transition={disableMotion ? undefined : {duration: 0.4}}
+                                <Box
                                     display="flex"
                                     alignItems="center"
                                     gap={2}
@@ -186,7 +217,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                                     >
                                         {activeItem?.name ?? items[0]?.name}
                                     </Text>
-                                </MotionBox>
+                                </Box>
 
                                 <Drawer.Root 
                                     placement="bottom" 
@@ -339,7 +370,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                                     </Portal>
                                 </Drawer.Root>
                             </Flex>
-                        </>
+                        </MotionBox>
                     ) : (
                         <Box
                             ref={scrollContainerRef}

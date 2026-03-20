@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link'
 import {PlusIcon} from 'lucide-react'
 import {Button, Box} from '@chakra-ui/react'

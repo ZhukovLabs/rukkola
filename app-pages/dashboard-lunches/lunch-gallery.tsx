@@ -93,7 +93,10 @@ function reducer(state: State, action: Action): State {
 export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
     const [state, dispatch] = useReducer(reducer, {
         ...initialState,
-        lunches: initialLunches,
+        lunches: initialLunches.map(l => ({
+            ...l,
+            _id: typeof l._id === 'string' ? l._id : (l._id as { toString(): string }).toString()
+        })),
     });
 
     const [isPending, startTransition] = useTransition();
@@ -109,6 +112,8 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                 if (res?.success) {
                     dispatch({type: 'REMOVE_LUNCH', payload: id});
                     toast.showSuccess('Изображение удалено');
+                } else {
+                    toast.showError(res?.message || 'Не удалось удалить изображение');
                 }
             } catch (err) {
                 console.error('Delete error', err);
@@ -137,8 +142,8 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                 dispatch({type: 'ADD_LUNCH', payload: {id: data.id, image: data.image}});
                 toast.showSuccess('Изображение успешно загружено');
             } else {
-                console.error('Upload failed', await res.text());
-                toast.showError('Не удалось загрузить изображение');
+                const errorData = await res.json();
+                toast.showError(errorData?.error || 'Не удалось загрузить изображение');
             }
         } catch (err) {
             console.error('Upload error', err);
@@ -157,12 +162,16 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                     if (res?.success) {
                         dispatch({type: 'DEACTIVATE_ALL'});
                         toast.showInfo('Отображение обеда выключено');
+                    } else {
+                        toast.showError(res?.message || 'Не удалось выключить отображение');
                     }
                 } else {
                     const res = await activeLunch(id);
                     if (res?.success) {
                         dispatch({type: 'UPDATE_ACTIVE', payload: {id, active: true}});
                         toast.showSuccess('Обед активирован для отображения');
+                    } else {
+                        toast.showError(res?.message || 'Не удалось активировать обед');
                     }
                 }
             } catch (err) {
@@ -178,6 +187,8 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
             if (res?.success) {
                 dispatch({type: 'DEACTIVATE_ALL'});
                 toast.showInfo('Отображение обеда выключено');
+            } else {
+                toast.showError(res?.message || 'Не удалось выключить отображение');
             }
         } catch (err) {
             console.error('Deactivate all error', err);
@@ -221,116 +232,117 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                         <Button
                             size="md"
                             onClick={handleDeactivateAll}
-                        variant="outline"
-                        borderColor="teal.600"
-                        color="teal.200"
-                        _hover={{bg: 'teal.900', transform: 'translateY(-2px)'}}
-                        borderRadius="xl"
-                        px={6}
-                    >
-                        <FiPower/> Выключить отображение обеда
-                    </Button>
-                </Flex>
-
-                <VStack gap={6} align="stretch">
-                    <Box
-                        border="2px dashed"
-                        borderColor={file ? 'teal.400' : isDragOver ? 'teal.500' : 'gray.600'}
-                        borderRadius="2xl"
-                        p={8}
-                        textAlign="center"
-                        bg={isDragOver ? 'teal.900/30' : 'gray.800/50'}
-                        cursor="pointer"
-                        transition="all 0.3s ease"
-                        _hover={{borderColor: 'teal.400', bg: 'teal.900/20'}}
-                        onClick={() => document.getElementById('lunch-image-input')?.click()}
-                        onDragOver={e => {
-                            e.preventDefault();
-                            dispatch({type: 'SET_DRAG_OVER', payload: true});
-                        }}
-                        onDragLeave={e => {
-                            e.preventDefault();
-                            dispatch({type: 'SET_DRAG_OVER', payload: false});
-                        }}
-                        onDrop={e => {
-                            e.preventDefault();
-                            dispatch({type: 'SET_DRAG_OVER', payload: false});
-                            const dropped = e.dataTransfer.files[0];
-                            if (dropped?.type.startsWith('image/')) {
-                                dispatch({type: 'SET_FILE', payload: dropped});
-                            }
-                        }}
-                    >
-                        <input
-                            id="lunch-image-input"
-                            type="file"
-                            accept="image/*"
-                            hidden
-                            onChange={e => dispatch({type: 'SET_FILE', payload: e.target.files?.[0] ?? null})}
-                        />
-
-                        {file ? (
-                            <VStack gap={4}>
-                                <Image
-                                    src={URL.createObjectURL(file)}
-                                    alt="preview"
-                                    maxH="240px"
-                                    borderRadius="xl"
-                                    objectFit="cover"
-                                    boxShadow="lg"
-                                />
-                                <Text fontSize="sm" color="gray.300">
-                                    {file.name}
-                                </Text>
-                            </VStack>
-                        ) : (
-                            <Text color="gray.400" fontSize="lg">
-                                Перетащите изображение сюда или нажмите для выбора
-                            </Text>
-                        )}
-                    </Box>
-
-                    {file && (
-                        <Button
-                            onClick={handleUpload}
-                            size="md" // уменьшили с lg на md
-                            colorScheme="teal"
-                            variant="solid"
-                            borderRadius="full" // полностью скруглённая для современного вида
-                            px={8}
-                            py={5}
-                            fontWeight="bold"
-                            fontSize="md"
-                            height="auto"
-                            minH="48px" // фиксированная комфортная высота
-                            bgGradient="linear(to-r, teal.500, cyan.500)"
-                            _hover={{
-                                bgGradient: "linear(to-r, teal.600, cyan.600)",
-                                transform: "translateY(-3px)",
-                                boxShadow: "0 12px 25px rgba(45, 212, 191, 0.3)",
-                            }}
-                            _active={{
-                                transform: "translateY(0)",
-                            }}
-                            boxShadow="0 8px 20px rgba(45, 212, 191, 0.2)"
-                            transition="all 0.3s ease"
-                            display="flex"
-                            alignItems="center"
-                            gap={3}
-                            mx="auto"
-                            maxW="320px"
+                            variant="outline"
+                            borderColor="teal.600"
+                            color="teal.200"
+                            _hover={{bg: 'teal.900', transform: 'translateY(-2px)'}}
+                            borderRadius="xl"
+                            px={6}
                         >
-                            <FiUpload size={20}/>
-                            <Text
-                                bgGradient="linear(to-r, whiteAlpha.900, teal.50)"
-                                fontWeight="extrabold"
-                            >
-                                Загрузить новый обед
-                            </Text>
+                            <FiPower/> Выключить отображение обеда
                         </Button>
-                    )}
+                    </Flex>
 
-                    <Box position="relative" minH="200px">
+                    <VStack gap={6} align="stretch">
+                        <Box
+                            border="2px dashed"
+                            borderColor={file ? 'teal.400' : isDragOver ? 'teal.500' : 'gray.600'}
+                            borderRadius="2xl"
+                            p={8}
+                            textAlign="center"
+                            bg={isDragOver ? 'teal.900/30' : 'gray.800/50'}
+                            cursor="pointer"
+                            transition="all 0.3s ease"
+                            _hover={{borderColor: 'teal.400', bg: 'teal.900/20'}}
+                            onClick={() => document.getElementById('lunch-image-input')?.click()}
+                            onDragOver={e => {
+                                e.preventDefault();
+                                dispatch({type: 'SET_DRAG_OVER', payload: true});
+                            }}
+                            onDragLeave={e => {
+                                e.preventDefault();
+                                dispatch({type: 'SET_DRAG_OVER', payload: false});
+                            }}
+                            onDrop={e => {
+                                e.preventDefault();
+                                dispatch({type: 'SET_DRAG_OVER', payload: false});
+                                const dropped = e.dataTransfer.files[0];
+                                if (dropped?.type.startsWith('image/')) {
+                                    dispatch({type: 'SET_FILE', payload: dropped});
+                                }
+                            }}
+                        >
+                            <input
+                                id="lunch-image-input"
+                                type="file"
+                                accept="image/*"
+                                hidden
+                                onChange={e => dispatch({type: 'SET_FILE', payload: e.target.files?.[0] ?? null})}
+                            />
+
+                            {file ? (
+                                <VStack gap={4}>
+                                    <Image
+                                        src={URL.createObjectURL(file)}
+                                        alt="preview"
+                                        maxH="240px"
+                                        borderRadius="xl"
+                                        objectFit="cover"
+                                        boxShadow="lg"
+                                    />
+                                    <Text fontSize="sm" color="gray.300">
+                                        {file.name}
+                                    </Text>
+                                </VStack>
+                            ) : (
+                                <Text color="gray.400" fontSize="lg">
+                                    Перетащите изображение сюда или нажмите для выбора
+                                </Text>
+                            )}
+                        </Box>
+
+                        {file && (
+                            <Button
+                                onClick={handleUpload}
+                                size="md"
+                                colorScheme="teal"
+                                variant="solid"
+                                borderRadius="full"
+                                px={8}
+                                py={5}
+                                fontWeight="bold"
+                                fontSize="md"
+                                height="auto"
+                                minWidth="48px"
+                                bgGradient="linear(to-r, teal.500, cyan.500)"
+                                _hover={{
+                                    bgGradient: "linear(to-r, teal.600, cyan.600)",
+                                    transform: "translateY(-3px)",
+                                    boxShadow: "0 12px 25px rgba(45, 212, 191, 0.3)",
+                                }}
+                                _active={{
+                                    transform: "translateY(0)",
+                                }}
+                                boxShadow="0 8px 20px rgba(45, 212, 191, 0.2)"
+                                transition="all 0.3s ease"
+                                display="flex"
+                                alignItems="center"
+                                gap={3}
+                                mx="auto"
+                                maxWidth="320px"
+                            >
+                                <FiUpload size={20}/>
+                                <Text
+                                    bgGradient="linear(to-r, whiteAlpha.900, teal.50)"
+                                    fontWeight="extrabold"
+                                >
+                                    Загрузить новый обед
+                                </Text>
+                            </Button>
+                        )}
+                    </VStack>
+
+                    <Box position="relative" minHeight="200px" marginTop={6}>
                         {isPending && (
                             <Center position="absolute" inset={0} bg="blackAlpha.600" borderRadius="xl" zIndex={10}>
                                 <VStack bg="gray.800/80" px={8} py={5} borderRadius="xl" backdropFilter="blur(8px)">
@@ -363,8 +375,8 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                     <Image
                                         src={lunch.image}
                                         alt="Обед"
-                                        w="full"
-                                        h="200px"
+                                        width="full"
+                                        height="200px"
                                         objectFit="cover"
                                         transition="transform 0.4s ease"
                                         _groupHover={{transform: 'scale(1.05)'}}
@@ -406,7 +418,6 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                             ))}
                         </SimpleGrid>
                     </Box>
-                </VStack>
                 </Card.Body>
             </Card.Root>
 

@@ -30,7 +30,7 @@ export const ProductRow = ({
                                onDelete,
                                loadingId,
                                deletePending,
-                               togglingAlcoholId
+                               togglingAlcoholId,
                            }: ProductRowProps) => {
     const router = useRouter();
 
@@ -110,7 +110,6 @@ export const ProductRow = ({
 
             <Table.Cell p={4}>
                 <Stack direction="row" gap={2} align="center">
-                    {/* Кнопка алкоголь/безалкогольный */}
                     <Tooltip
                         content={p.isAlcohol ? 'Алкогольный продукт' : 'Безалкогольный продукт'}
                         openDelay={400}
@@ -143,7 +142,6 @@ export const ProductRow = ({
                         </Button>
                     </Tooltip>
 
-                    {/* Кнопка показать/скрыть */}
                     <Tooltip content={p.hidden ? 'Сейчас товар скрыт' : 'Сейчас товар отображается'}
                              openDelay={400}>
                         <Button

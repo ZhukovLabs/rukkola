@@ -3,32 +3,42 @@
 import {connectToDatabase} from '@/lib/mongoose'
 import {Category} from '@/models/category'
 import {revalidatePath} from "next/cache"
-import {checkAuth} from '@/lib/auth/check-auth'
+import {checkAuth, checkAdminAuth} from '@/lib/auth/check-auth'
+import {clearMenuCache} from '@/app-pages/menu/config'
 import {ActionResponse} from "@/types";
 import {ObjectId} from "mongodb";
 import {Product} from "@/models/product";
 
-export async function toggleCategoryField(id: string, field: 'isMenuItem' | 'showGroupTitle') {
-    await checkAuth();
+export async function toggleCategoryField(id: string, field: 'isMenuItem' | 'showGroupTitle'): Promise<ActionResponse> {
+    const user = await checkAuth();
+    if (!user) {
+        return {success: false, message: 'Необходима авторизация'};
+    }
 
     await connectToDatabase()
     const category = await Category.findById(id)
-    if (!category) return
+    if (!category) return {success: false, message: 'Категория не найдена'}
 
     category[field] = !category[field]
     await category.save()
 
+    clearMenuCache();
     revalidatePath('/dashboard/categories')
     revalidatePath('/')
+    
+    return {success: true, message: 'Категория обновлена'}
 }
 
-export async function moveCategory(id: string, direction: 'up' | 'down') {
-    await checkAuth();
+export async function moveCategory(id: string, direction: 'up' | 'down'): Promise<ActionResponse> {
+    const user = await checkAuth();
+    if (!user) {
+        return {success: false, message: 'Необходима авторизация'};
+    }
 
     await connectToDatabase()
 
     const current = await Category.findById(id)
-    if (!current) return
+    if (!current) return {success: false, message: 'Категория не найдена'}
 
     const siblings = await Category.find({parent: current.parent})
         .sort({order: 1})
@@ -37,7 +47,7 @@ export async function moveCategory(id: string, direction: 'up' | 'down') {
     const index = siblings.findIndex((c) => c._id.toString() === current._id.toString())
     const swapIndex = direction === 'up' ? index - 1 : index + 1
 
-    if (swapIndex < 0 || swapIndex >= siblings.length) return
+    if (swapIndex < 0 || swapIndex >= siblings.length) return {success: false, message: 'Невозможно переместить'}
 
     const target = siblings[swapIndex]
 
@@ -49,8 +59,11 @@ export async function moveCategory(id: string, direction: 'up' | 'down') {
 
     await adjustChildrenOrders(current._id.toString(), temp, direction)
 
+    clearMenuCache();
     revalidatePath('/dashboard/categories')
     revalidatePath('/')
+    
+    return {success: true, message: 'Категория перемещена'}
 }
 
 async function adjustChildrenOrders(parentId: string, baseOrder: number, direction: 'up' | 'down') {
@@ -68,20 +81,31 @@ async function adjustChildrenOrders(parentId: string, baseOrder: number, directi
     }
 }
 
-export async function updateCategoryName(id: string, name: string) {
-    await checkAuth()
+export async function updateCategoryName(id: string, name: string): Promise<ActionResponse> {
+    const user = await checkAuth();
+    if (!user) {
+        return {success: false, message: 'Необходима авторизация'};
+    }
 
     await connectToDatabase()
     const category = await Category.findById(id)
-    if (!category) return
+    if (!category) return {success: false, message: 'Категория не найдена'}
+    
     category.name = name
     await category.save()
+    
+    clearMenuCache();
     revalidatePath('/dashboard/categories')
     revalidatePath('/')
+    
+    return {success: true, message: 'Название обновлено'}
 }
 
-export async function deleteCategory(id: string) {
-    await checkAuth()
+export async function deleteCategory(id: string): Promise<ActionResponse> {
+    const user = await checkAuth();
+    if (!user) {
+        return {success: false, message: 'Необходима авторизация'};
+    }
 
     await connectToDatabase()
 
@@ -94,8 +118,12 @@ export async function deleteCategory(id: string) {
     }
 
     await deleteRecursive(id)
+    
+    clearMenuCache();
     revalidatePath('/dashboard/categories')
     revalidatePath('/')
+    
+    return {success: true, message: 'Категория удалена'}
 }
 
 export async function createCategory({
@@ -108,8 +136,11 @@ export async function createCategory({
     parentId?: string | null
     isMenuItem?: boolean
     showGroupTitle?: boolean
-}) {
-    await checkAuth()
+}): Promise<ActionResponse<{ id: string }>> {
+    const user = await checkAuth();
+    if (!user) {
+        return {success: false, message: 'Необходима авторизация'};
+    }
 
     await connectToDatabase()
 
@@ -127,20 +158,28 @@ export async function createCategory({
     });
 
     await cat.save();
+    
+    clearMenuCache();
     revalidatePath('/dashboard/categories');
 
-    return cat.toObject();
+    return {
+        success: true,
+        message: 'Категория создана',
+        data: {id: cat._id.toString()},
+    };
 }
 
 
 export async function markCategoryProductsAlcohol(
     categoryId: string,
 ): Promise<ActionResponse<{ updatedCount: number }>> {
-    await checkAuth();
+    const user = await checkAuth();
+    if (!user) {
+        return {success: false, message: 'Необходима авторизация'};
+    }
     await connectToDatabase();
 
     try {
-        // Находим все ID категорий (текущая и все вложенные)
         const categories = await Category.aggregate([
             {$match: {_id: new ObjectId(categoryId)}},
             {
@@ -167,7 +206,6 @@ export async function markCategoryProductsAlcohol(
 
         const categoryIds = categories[0].allCategoryIds;
 
-        // Обновляем все продукты в этих категориях
         const result = await Product.updateMany(
             {
                 categories: {$in: categoryIds}
@@ -177,6 +215,7 @@ export async function markCategoryProductsAlcohol(
             }
         );
 
+        clearMenuCache();
         revalidatePath('/');
 
         return {
@@ -194,11 +233,13 @@ export async function markCategoryProductsAlcohol(
 export async function markCategoryProductsNonAlcohol(
     categoryId: string,
 ): Promise<ActionResponse<{ updatedCount: number }>> {
-    await checkAuth();
+    const user = await checkAuth();
+    if (!user) {
+        return {success: false, message: 'Необходима авторизация'};
+    }
     await connectToDatabase();
 
     try {
-        // Находим все ID категорий (текущая и все вложенные)
         const categories = await Category.aggregate([
             {$match: {_id: new ObjectId(categoryId)}},
             {
@@ -225,7 +266,6 @@ export async function markCategoryProductsNonAlcohol(
 
         const categoryIds = categories[0].allCategoryIds;
 
-        // Обновляем все продукты в этих категориях
         const result = await Product.updateMany(
             {
                 categories: {$in: categoryIds}
@@ -235,6 +275,7 @@ export async function markCategoryProductsNonAlcohol(
             }
         );
 
+        clearMenuCache();
         revalidatePath('/');
 
         return {

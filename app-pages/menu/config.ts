@@ -4,8 +4,15 @@ import {Category} from "@/models/category";
 import {Product, type ProductType} from "@/models/product";
 import type {GroupWithProducts} from "@/app-pages/menu/products/types";
 
-const MENU_CACHE_TTL = 60 * 1000;
+const MENU_CACHE_TTL = 30 * 1000;
 const MAX_CACHE_SIZE = 10;
+
+export const CACHE_KEYS = {
+    MENU_WITH_ALCOHOL: 'menu_with_alcohol',
+    MENU_NO_ALCOHOL: 'menu_no_alcohol',
+    PRODUCTS_WITH_ALCOHOL: 'products_with_alcohol',
+    PRODUCTS_NO_ALCOHOL: 'products_no_alcohol',
+} as const;
 
 interface MenuCache {
     lunch: Awaited<ReturnType<typeof getLunch>>;
@@ -20,6 +27,10 @@ interface ProductsCache {
 }
 
 const menuCache = new Map<string, MenuCache | ProductsCache>();
+
+export function clearMenuCache() {
+    menuCache.clear();
+}
 
 function cleanupCache() {
     if (menuCache.size >= MAX_CACHE_SIZE) {
@@ -123,7 +134,7 @@ const getUncategorizedProducts = () => (
 );
 
 function getCacheKey(getAlcohol: boolean): string {
-    return getAlcohol ? 'withAlcohol' : 'noAlcohol';
+    return getAlcohol ? CACHE_KEYS.MENU_WITH_ALCOHOL : CACHE_KEYS.MENU_NO_ALCOHOL;
 }
 
 export const getMenuData = async ({getAlcohol}: { getAlcohol: boolean }) => {
@@ -150,7 +161,7 @@ export const getMenuData = async ({getAlcohol}: { getAlcohol: boolean }) => {
 export const getProducts = async ({getAlcohol}: { getAlcohol: boolean }) => {
     await connectToDatabase();
 
-    const cacheKey = `products_${getCacheKey(getAlcohol)}`;
+    const cacheKey = getAlcohol ? CACHE_KEYS.PRODUCTS_WITH_ALCOHOL : CACHE_KEYS.PRODUCTS_NO_ALCOHOL;
     const cached = menuCache.get(cacheKey) as ProductsCache | undefined;
 
     if (cached && Date.now() - cached.timestamp < MENU_CACHE_TTL) {

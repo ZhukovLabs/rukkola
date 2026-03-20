@@ -41,3 +41,14 @@ export const checkAuth = async (): Promise<CheckAuthUser | null> => {
         role: user.role,
     };
 }
+
+export const checkAdminAuth = async (): Promise<{ id: string; role: 'admin' } | null> => {
+    const user = await checkAuth();
+    if (!user) return null;
+    
+    if (user.role !== 'admin') {
+        return null;
+    }
+    
+    return { id: user.id, role: 'admin' };
+}

@@ -4,7 +4,8 @@ import {ObjectId} from 'mongodb'
 import {revalidatePath} from 'next/cache'
 
 import {connectToDatabase} from '@/lib/mongoose'
-import {checkAuth} from '@/lib/auth/check-auth'
+import {checkAuth, checkAdminAuth} from '@/lib/auth/check-auth'
+import {clearMenuCache} from '@/app-pages/menu/config'
 
 import {Product, PortionPrice, ProductType} from '@/models/product'
 import {Category, CategoryType} from '@/models/category'
@@ -23,7 +24,10 @@ export async function getProducts(
     total: number
     totalPages: number
 }>> {
-    await checkAuth()
+    const user = await checkAuth()
+    if (!user) {
+        return {success: false, message: 'Необходима авторизация'}
+    }
     await connectToDatabase()
 
     const skip = (page - 1) * limit
@@ -151,7 +155,10 @@ export async function getProducts(
 }
 
 export async function getProductById(id: string): Promise<ActionResponse<ProductType>> {
-    await checkAuth();
+    const user = await checkAuth();
+    if (!user) {
+        return {success: false, message: 'Необходима авторизация'};
+    }
     await connectToDatabase();
 
     const result = await Product.aggregate([
@@ -203,7 +210,10 @@ export async function getProductById(id: string): Promise<ActionResponse<Product
 export async function toggleProductVisibility(
     productId: string,
 ): Promise<ActionResponse<{ id: string; hidden: boolean }>> {
-    await checkAuth();
+    const user = await checkAuth();
+    if (!user) {
+        return {success: false, message: 'Необходима авторизация'};
+    }
     await connectToDatabase();
 
     const product = await Product.findById(productId)
@@ -212,6 +222,7 @@ export async function toggleProductVisibility(
     product.hidden = !product.hidden
     await product.save()
 
+    clearMenuCache();
     revalidatePath('/');
     revalidatePath('/dashboard/products');
 
@@ -228,7 +239,10 @@ export async function toggleProductVisibility(
 export async function toggleProductAlcohol(
     productId: string,
 ): Promise<ActionResponse<{ id: string; isAlcohol: boolean }>> {
-    await checkAuth();
+    const user = await checkAuth();
+    if (!user) {
+        return {success: false, message: 'Необходима авторизация'};
+    }
     await connectToDatabase();
 
     const product = await Product.findById(productId)
@@ -237,6 +251,7 @@ export async function toggleProductAlcohol(
     product.isAlcohol = !product.isAlcohol;
     await product.save()
 
+    clearMenuCache();
     revalidatePath('/');
     revalidatePath('/dashboard/products');
 
@@ -251,7 +266,10 @@ export async function toggleProductAlcohol(
 }
 
 export async function deleteProduct(productId: string): Promise<ActionResponse<{ id: string }>> {
-    await checkAuth();
+    const user = await checkAuth();
+    if (!user) {
+        return {success: false, message: 'Необходима авторизация'};
+    }
     await connectToDatabase();
 
     const product = await Product.findById(productId);
@@ -259,6 +277,7 @@ export async function deleteProduct(productId: string): Promise<ActionResponse<{
 
     await product.deleteOne();
 
+    clearMenuCache();
     revalidatePath('/');
     revalidatePath('/dashboard/products');
 
@@ -282,7 +301,10 @@ export async function updateProductData(
     id: string,
     data: UpdateProductDataPayload,
 ): Promise<ActionResponse<{ id: string }>> {
-    await checkAuth()
+    const user = await checkAuth();
+    if (!user) {
+        return {success: false, message: 'Необходима авторизация'};
+    }
     await connectToDatabase()
 
     const product = await Product.findById(id);
@@ -294,6 +316,8 @@ export async function updateProductData(
     }
 
     await Product.findByIdAndUpdate(id, updatedData)
+    
+    clearMenuCache();
     revalidatePath('/')
     revalidatePath('/dashboard/products');
 
@@ -305,7 +329,10 @@ export async function updateProductData(
 }
 
 export async function getCategories(): Promise<ActionResponse<CategoryType[]>> {
-    await checkAuth();
+    const user = await checkAuth();
+    if (!user) {
+        return {success: false, message: 'Необходима авторизация'};
+    }
     await connectToDatabase();
 
     const categories = await Category.aggregate([
@@ -338,7 +365,10 @@ export type CreateProductInput = {
 export async function createProduct(
     data: CreateProductInput,
 ): Promise<ActionResponse<{ id: string }>> {
-    await checkAuth()
+    const user = await checkAuth();
+    if (!user) {
+        return {success: false, message: 'Необходима авторизация'};
+    }
     await connectToDatabase()
 
     const parsed = productSchema.safeParse(data)
@@ -364,6 +394,7 @@ export async function createProduct(
 
     await product.save()
 
+    clearMenuCache();
     revalidatePath('/')
     revalidatePath('/dashboard/products');
 

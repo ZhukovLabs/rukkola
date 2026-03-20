@@ -42,9 +42,9 @@ export const ProductsTable = memo(() => {
         loadingId,
         deletePending,
         toggleVisibility,
-        deleteMutation,
         togglingAlcoholId,
-        toggleAlcohol
+        toggleAlcohol,
+        deleteMutation
     } = useProductsTable();
 
     const {openDialog, ConfirmationDialog} = useConfirmationDialog({
