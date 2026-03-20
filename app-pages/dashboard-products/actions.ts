@@ -40,20 +40,33 @@ export async function getProducts(
         try {
             const categoryId = new ObjectId(category);
 
-            // Рекурсивная функция для поиска всех потомков
-            const getAllDescendantIds = async (parentId: ObjectId): Promise<ObjectId[]> => {
-                const children = await Category.find({ parent: parentId }).lean();
-                let allIds: ObjectId[] = [parentId];
+            const descendants = await Category.aggregate([
+                {
+                    $graphLookup: {
+                        from: 'categories',
+                        startWith: '$_id',
+                        connectFromField: '_id',
+                        connectToField: 'parent',
+                        as: 'descendants',
+                        depthField: 'depth',
+                    },
+                },
+                {
+                    $match: { _id: categoryId },
+                },
+                {
+                    $project: {
+                        allIds: {
+                            $concatArrays: [
+                                ['$_id'],
+                                '$descendants._id',
+                            ],
+                        },
+                    },
+                },
+            ]);
 
-                for (const child of children) {
-                    const childIds = await getAllDescendantIds(child._id);
-                    allIds = [...allIds, ...childIds];
-                }
-
-                return [...new Set(allIds)]; // Убираем дубликаты
-            };
-
-            const allCategoryIds = await getAllDescendantIds(categoryId);
+            const allCategoryIds = descendants[0]?.allIds ?? [];
 
             if (allCategoryIds.length > 0) {
                 filter.categories = { $in: allCategoryIds };

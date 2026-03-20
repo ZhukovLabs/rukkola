@@ -29,7 +29,8 @@ export async function connectToDatabase() {
 
     if (!cached.promise) {
         cached.promise = mongoose.connect(MONGODB_URI, {
-            bufferCommands: false,
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
         });
     }
 
@@ -43,16 +44,18 @@ export async function connectToDatabase() {
     mongoose.connection.on('disconnected', () => {
         console.log('MongoDB disconnected. Reconnecting...');
         cached.conn = null;
+        cached.promise = null;
 
         const reconnect = async () => {
             while (true) {
                 try {
                     await mongoose.connect(MONGODB_URI, {
-                        bufferCommands: false,
+                        serverSelectionTimeoutMS: 5000,
+                        socketTimeoutMS: 45000,
                     });
                     console.log('MongoDB reconnected');
                     break;
-                } catch (e) {
+                } catch {
                     console.log('Reconnection failed. Retrying in 5s...');
                     await new Promise((resolve) => setTimeout(resolve, 5000));
                 }
@@ -60,6 +63,10 @@ export async function connectToDatabase() {
         };
 
         reconnect();
+    });
+
+    mongoose.connection.on('error', (err) => {
+        console.error('MongoDB connection error:', err);
     });
 
     return cached.conn;
