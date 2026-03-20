@@ -34,7 +34,7 @@ export const ActiveLunch = ({image}: ActiveLunchProps) => {
                             src={image}
                             alt="Обеденное меню"
                             fill
-                            sizes="(max-width: 480px) 90vw, (max-width: 768px) 80vw, 640px"
+                            sizes="(max-width: 480px) 90vw, (max-width: 768px) 80vw, 320px"
                             style={{objectFit: "contain", borderRadius: "12px"}}
                             priority
                             fetchPriority="high"

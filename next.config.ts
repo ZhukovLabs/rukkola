@@ -20,6 +20,7 @@ const nextConfig: NextConfig = {
     compiler: {
         removeConsole: process.env.NODE_ENV === "production",
     },
+    productionBrowserSourceMaps: false,
     experimental: {
         optimizePackageImports: ['@chakra-ui/react', 'framer-motion', 'react-icons', 'lucide-react'],
         scrollRestoration: true,

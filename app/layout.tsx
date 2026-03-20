@@ -368,6 +368,10 @@ export default function RootLayout({
             <link rel="alternate" type="application/rss+xml" title="Руккола RSS" href="/rss.xml" />
             
             <link rel="canonical" href={BASE_URL} />
+            <link rel="preconnect" href="https://mc.yandex.ru" crossOrigin="anonymous" />
+            <link rel="dns-prefetch" href="https://mc.yandex.ru" />
+            <link rel="preconnect" href="https://fonts.googleapis.com" />
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
             <link rel="preload" as="image" href="/og-image.webp" />
             
             {schemas.map((schema, index) => (
@@ -381,7 +385,7 @@ export default function RootLayout({
             <Script
                 id="ym-tag"
                 src="https://mc.yandex.ru/metrika/tag.js?id=106114023"
-                strategy="lazyOnload"
+                strategy="worker"
             />
             <Script
                 id="ym-init"
