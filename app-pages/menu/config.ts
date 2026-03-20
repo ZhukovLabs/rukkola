@@ -1,59 +1,24 @@
-import {connectToDatabase} from "@/lib/mongoose";
-import {Lunch} from "@/models/lunch";
-import {Category} from "@/models/category";
-import {Product, type ProductType} from "@/models/product";
-import type {GroupWithProducts} from "@/app-pages/menu/products/types";
+import { unstable_cache } from 'next/cache';
+import { connectToDatabase } from "@/lib/mongoose";
+import { Lunch } from "@/models/lunch";
+import { Category } from "@/models/category";
+import { Product, type ProductType } from "@/models/product";
+import type { GroupWithProducts } from "@/app-pages/menu/products/types";
 
-const MENU_CACHE_TTL = 30 * 1000;
-const MAX_CACHE_SIZE = 10;
-
-export const CACHE_KEYS = {
+export const CACHE_TAGS = {
     MENU_WITH_ALCOHOL: 'menu_with_alcohol',
     MENU_NO_ALCOHOL: 'menu_no_alcohol',
     PRODUCTS_WITH_ALCOHOL: 'products_with_alcohol',
     PRODUCTS_NO_ALCOHOL: 'products_no_alcohol',
+    LUNCHES: 'lunches',
+    CATEGORIES: 'categories',
 } as const;
 
-interface MenuCache {
-    lunch: Awaited<ReturnType<typeof getLunch>>;
-    categories: Awaited<ReturnType<typeof getCategories>>;
-    timestamp: number;
-}
+export const CACHE_REVALIDATE = 60; // seconds
 
-interface ProductsCache {
-    groupedProducts: unknown[];
-    uncategorizedProduct: unknown[];
-    timestamp: number;
-}
-
-const menuCache = new Map<string, MenuCache | ProductsCache>();
-
-export function clearMenuCache() {
-    menuCache.clear();
-}
-
-function cleanupCache() {
-    if (menuCache.size >= MAX_CACHE_SIZE) {
-        const now = Date.now();
-        let oldestKey: string | null = null;
-        let oldestTime = now;
-
-        for (const [key, value] of menuCache.entries()) {
-            if (value.timestamp < oldestTime) {
-                oldestTime = value.timestamp;
-                oldestKey = key;
-            }
-        }
-
-        if (oldestKey) {
-            menuCache.delete(oldestKey);
-        }
-    }
-}
-
-const getLunch = () => (
-    Lunch.findOne({active: true}).lean()
-);
+const getLunch = async () => {
+    return Lunch.findOne({ active: true }).lean();
+};
 
 const getCategories = async (withAlcohol: boolean) => {
     const productMatch: Record<string, unknown> = {
@@ -63,8 +28,8 @@ const getCategories = async (withAlcohol: boolean) => {
 
     if (!withAlcohol) {
         productMatch.$or = [
-            {isAlcohol: false},
-            {isAlcohol: { $exists: false }}
+            { isAlcohol: false },
+            { isAlcohol: { $exists: false } }
         ];
     }
 
@@ -83,7 +48,7 @@ const getCategories = async (withAlcohol: boolean) => {
         .lean();
 };
 
-const getGroupedProducts = (withAlcohol: boolean) => {
+const getGroupedProducts = async (withAlcohol: boolean) => {
     const matchStage: Record<string, unknown> = {
         hidden: { $ne: true },
         categories: { $exists: true, $ne: [], $type: 'array', $not: { $size: 0 } }
@@ -122,66 +87,82 @@ const getGroupedProducts = (withAlcohol: boolean) => {
     ]);
 };
 
-const getUncategorizedProducts = () => (
-    Product.find({
+const getUncategorizedProducts = async () => {
+    return Product.find({
         $and: [
             { $or: [{ hidden: { $exists: false } }, { hidden: false }] },
             { $or: [{ categories: { $exists: false } }, { categories: { $size: 0 } }] },
         ],
     })
         .lean<ProductType[]>()
-        .exec()
+        .exec();
+};
+
+const cachedGetLunch = (withAlcohol: boolean) => 
+    unstable_cache(
+        async () => {
+            await connectToDatabase();
+            return getLunch();
+        },
+        [CACHE_TAGS.LUNCHES, withAlcohol ? 'with-alcohol' : 'no-alcohol'],
+        { 
+            revalidate: CACHE_REVALIDATE,
+            tags: [CACHE_TAGS.LUNCHES, withAlcohol ? CACHE_TAGS.MENU_WITH_ALCOHOL : CACHE_TAGS.MENU_NO_ALCOHOL] 
+        }
+    );
+
+const cachedGetCategories = (withAlcohol: boolean) =>
+    unstable_cache(
+        async () => {
+            await connectToDatabase();
+            return getCategories(withAlcohol);
+        },
+        [CACHE_TAGS.CATEGORIES, withAlcohol ? 'with-alcohol' : 'no-alcohol'],
+        { 
+            revalidate: CACHE_REVALIDATE,
+            tags: [CACHE_TAGS.CATEGORIES, withAlcohol ? CACHE_TAGS.MENU_WITH_ALCOHOL : CACHE_TAGS.MENU_NO_ALCOHOL] 
+        }
+    );
+
+const cachedGetGroupedProducts = (withAlcohol: boolean) =>
+    unstable_cache(
+        async () => {
+            await connectToDatabase();
+            return getGroupedProducts(withAlcohol);
+        },
+        ['grouped-products', withAlcohol ? 'with-alcohol' : 'no-alcohol'],
+        { 
+            revalidate: CACHE_REVALIDATE,
+            tags: [withAlcohol ? CACHE_TAGS.PRODUCTS_WITH_ALCOHOL : CACHE_TAGS.PRODUCTS_NO_ALCOHOL] 
+        }
+    );
+
+const cachedGetUncategorizedProducts = unstable_cache(
+    async () => {
+        await connectToDatabase();
+        return getUncategorizedProducts();
+    },
+    ['uncategorized-products'],
+    { 
+        revalidate: CACHE_REVALIDATE,
+        tags: [CACHE_TAGS.PRODUCTS_WITH_ALCOHOL, CACHE_TAGS.PRODUCTS_NO_ALCOHOL] 
+    }
 );
 
-function getCacheKey(getAlcohol: boolean): string {
-    return getAlcohol ? CACHE_KEYS.MENU_WITH_ALCOHOL : CACHE_KEYS.MENU_NO_ALCOHOL;
-}
-
-export const getMenuData = async ({getAlcohol}: { getAlcohol: boolean }) => {
-    await connectToDatabase();
-
-    const cacheKey = getCacheKey(getAlcohol);
-    const cached = menuCache.get(cacheKey) as MenuCache | undefined;
-    
-    if (cached && Date.now() - cached.timestamp < MENU_CACHE_TTL) {
-        return { activeLunch: cached.lunch, categories: cached.categories };
-    }
-
+export const getMenuData = async ({ getAlcohol }: { getAlcohol: boolean }) => {
     const [activeLunch, categories] = await Promise.all([
-        getLunch(),
-        getCategories(getAlcohol)
+        cachedGetLunch(getAlcohol)(),
+        cachedGetCategories(getAlcohol)()
     ]);
-
-    cleanupCache();
-    menuCache.set(cacheKey, { lunch: activeLunch, categories, timestamp: Date.now() });
 
     return { activeLunch, categories };
 };
 
-export const getProducts = async ({getAlcohol}: { getAlcohol: boolean }) => {
-    await connectToDatabase();
-
-    const cacheKey = getAlcohol ? CACHE_KEYS.PRODUCTS_WITH_ALCOHOL : CACHE_KEYS.PRODUCTS_NO_ALCOHOL;
-    const cached = menuCache.get(cacheKey) as ProductsCache | undefined;
-
-    if (cached && Date.now() - cached.timestamp < MENU_CACHE_TTL) {
-        return {
-            groupedProducts: cached.groupedProducts,
-            uncategorizedProduct: cached.uncategorizedProduct
-        };
-    }
-
+export const getProducts = async ({ getAlcohol }: { getAlcohol: boolean }) => {
     const [groupedProducts, uncategorizedProduct] = await Promise.all([
-        getGroupedProducts(getAlcohol),
-        getUncategorizedProducts()
+        cachedGetGroupedProducts(getAlcohol)(),
+        cachedGetUncategorizedProducts()
     ]);
-
-    cleanupCache();
-    menuCache.set(cacheKey, {
-        groupedProducts,
-        uncategorizedProduct,
-        timestamp: Date.now()
-    });
 
     return { groupedProducts, uncategorizedProduct };
 };

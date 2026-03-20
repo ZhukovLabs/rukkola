@@ -1,4 +1,4 @@
-import fs from 'fs'
+import fs from 'fs/promises'
 import path from 'path'
 import { NextRequest, NextResponse } from 'next/server'
 import { Lunch } from '@/models/lunch'
@@ -6,34 +6,58 @@ import { optimizeImage } from '@/lib/image-optimize'
 import { auth } from '@/lib/auth'
 import { connectToDatabase } from '@/lib/mongoose'
 
+const UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'lunches')
+const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp'])
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+
 export const POST = async (req: NextRequest) => {
-    const session = await auth()
-    if (!session?.user?.id) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    try {
+        const session = await auth()
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const formData = await req.formData()
+        const file = formData.get('file') as File
+
+        if (!file) {
+            return NextResponse.json({ error: 'Файл не предоставлен' }, { status: 400 })
+        }
+
+        if (file.size > MAX_FILE_SIZE) {
+            return NextResponse.json({ error: 'Размер файла превышает 10MB' }, { status: 400 })
+        }
+
+        const ext = path.extname(file.name).toLowerCase()
+        if (!ALLOWED_EXTENSIONS.has(ext)) {
+            return NextResponse.json({ error: 'Неподдерживаемый формат файла' }, { status: 400 })
+        }
+
+        await connectToDatabase()
+
+        await fs.mkdir(UPLOAD_DIR, { recursive: true })
+
+        const safeName = `lunch-${Date.now()}.webp`
+        const filePath = path.join(UPLOAD_DIR, safeName)
+        
+        const normalizedPath = path.normalize(filePath)
+        if (!normalizedPath.startsWith(UPLOAD_DIR)) {
+            return NextResponse.json({ error: 'Некорректный путь файла' }, { status: 400 })
+        }
+
+        const buffer = Buffer.from(await file.arrayBuffer())
+        const optimizedBuffer = await optimizeImage(buffer, { quality: 80 })
+        
+        await fs.writeFile(filePath, optimizedBuffer)
+
+        const imageUrl = `/api/lunches/image/${safeName}`
+
+        const lunch = new Lunch({ image: imageUrl })
+        await lunch.save()
+
+        return NextResponse.json({ image: imageUrl, id: lunch._id.toString() })
+    } catch (error) {
+        console.error('Error uploading lunch image:', error)
+        return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })
     }
-
-    const formData = await req.formData()
-    const file = formData.get('file') as File
-
-    if (!file) return NextResponse.json({ error: 'Missing file' }, { status: 400 })
-
-    await connectToDatabase()
-
-    const uploadDir = path.join(process.cwd(), 'uploads', 'lunches')
-    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true })
-
-    const ext = path.extname(file.name)
-    const safeName = `lunch-${Date.now()}.webp`
-    const filePath = path.join(uploadDir, safeName)
-
-    const buffer = Buffer.from(await file.arrayBuffer())
-    const optimizedBuffer = await optimizeImage(buffer, { quality: 80 })
-    fs.writeFileSync(filePath, optimizedBuffer)
-
-    const imageUrl = `/api/lunches/image/${safeName}`
-
-    const lunch = new Lunch({ image: imageUrl })
-    await lunch.save()
-
-    return NextResponse.json({ image: imageUrl, id: lunch._id })
 }

@@ -1,11 +1,11 @@
-import fs from 'fs'
+import fs from 'fs/promises'
 import path from 'path'
 import { NextRequest, NextResponse } from 'next/server'
 import sharp from 'sharp'
 import { LRUCache } from 'lru-cache'
 
-const cache = new LRUCache<string, { buffer: Buffer; contentType: string; width?: number }>({ max: 200 });
-const uploadDir = path.join(process.cwd(), 'uploads', 'lunches')
+const cache = new LRUCache<string, { buffer: Buffer; contentType: string }>({ max: 200 })
+const UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'lunches')
 
 function sendFile(buffer: Buffer, contentType: string) {
     return new NextResponse(buffer as unknown as BodyInit, {
@@ -14,37 +14,63 @@ function sendFile(buffer: Buffer, contentType: string) {
             'Content-Type': contentType,
             'Cache-Control': 'public, max-age=86400, immutable',
         },
-    });
+    })
 }
 
 export const GET = async (
     req: NextRequest,
     { params }: { params: Promise<{ filename: string }> }
 ) => {
-    const { filename } = await params;
-    const { searchParams } = new URL(req.url);
-    const width = searchParams.get('w') ? parseInt(searchParams.get('w')!) : undefined;
-    const cacheKey = `${filename}-${width || 'original'}`;
+    try {
+        const { filename } = await params
+        
+        if (!filename || typeof filename !== 'string') {
+            return NextResponse.json({ error: 'Имя файла не указано' }, { status: 400 })
+        }
 
-    const cached = cache.get(cacheKey);
-    if (cached) return sendFile(cached.buffer, cached.contentType);
+        const sanitizedFilename = path.basename(filename)
+        if (sanitizedFilename !== filename || filename.includes('..')) {
+            return NextResponse.json({ error: 'Некорректное имя файла' }, { status: 400 })
+        }
 
-    const filePath = path.join(uploadDir, filename)
+        const { searchParams } = new URL(req.url)
+        const width = searchParams.get('w') ? parseInt(searchParams.get('w')!, 10) : undefined
+        
+        if (searchParams.get('w') && isNaN(width as number)) {
+            return NextResponse.json({ error: 'Некорректная ширина' }, { status: 400 })
+        }
 
-    if (!fs.existsSync(filePath))
-        return NextResponse.json({ error: 'Image not found' }, { status: 404 })
+        const cacheKey = `${filename}-${width || 'original'}`
 
-    const originalBuffer = fs.readFileSync(filePath);
-    let fileBuffer = originalBuffer;
+        const cached = cache.get(cacheKey)
+        if (cached) return sendFile(cached.buffer, cached.contentType)
 
-    if (width) {
-        fileBuffer = Buffer.from(await sharp(originalBuffer)
-            .resize(width, undefined, { fit: 'inside', withoutEnlargement: true })
-            .webp({ quality: 80 })
-            .toBuffer());
+        const filePath = path.join(UPLOAD_DIR, sanitizedFilename)
+        const normalizedPath = path.normalize(filePath)
+        
+        if (!normalizedPath.startsWith(UPLOAD_DIR)) {
+            return NextResponse.json({ error: 'Некорректный путь' }, { status: 400 })
+        }
+
+        const originalBuffer = await fs.readFile(filePath)
+        let fileBuffer = originalBuffer
+
+        if (width && width > 0) {
+            fileBuffer = Buffer.from(await sharp(originalBuffer)
+                .resize(width, undefined, { fit: 'inside', withoutEnlargement: true })
+                .webp({ quality: 80 })
+                .toBuffer())
+        }
+
+        cache.set(cacheKey, { buffer: fileBuffer, contentType: 'image/webp' })
+
+        return sendFile(fileBuffer, 'image/webp')
+    } catch (error) {
+        const err = error as NodeJS.ErrnoException
+        if (err.code === 'ENOENT') {
+            return NextResponse.json({ error: 'Файл не найден' }, { status: 404 })
+        }
+        console.error('Error serving lunch image:', error)
+        return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })
     }
-
-    cache.set(cacheKey, { buffer: fileBuffer, contentType: 'image/webp', width });
-
-    return sendFile(fileBuffer, 'image/webp');
 }

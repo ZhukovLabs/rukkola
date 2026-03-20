@@ -8,7 +8,8 @@ import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongoose';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'products');
-const ALLOWED_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp']);
+const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export const POST = async (req: NextRequest) => {
     try {
@@ -23,24 +24,40 @@ export const POST = async (req: NextRequest) => {
         const id = formData.get('id') as string;
         const file = formData.get('file') as File;
 
-        if (!id) return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });
-        if (!file) return NextResponse.json({ error: 'File is required' }, { status: 400 });
+        if (!id) {
+            return NextResponse.json({ error: 'ID продукта обязателен' }, { status: 400 });
+        }
+        
+        if (!file) {
+            return NextResponse.json({ error: 'Файл не предоставлен' }, { status: 400 });
+        }
+
+        if (file.size > MAX_FILE_SIZE) {
+            return NextResponse.json({ error: 'Размер файла превышает 10MB' }, { status: 400 });
+        }
 
         const ext = path.extname(file.name).toLowerCase();
-        if (!ALLOWED_EXT.has(ext)) return NextResponse.json({ error: 'Unsupported file type' }, { status: 400 });
+        if (!ALLOWED_EXTENSIONS.has(ext)) {
+            return NextResponse.json({ error: 'Неподдерживаемый формат файла' }, { status: 400 });
+        }
 
         const product = await Product.findById(id);
-        if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+        if (!product) {
+            return NextResponse.json({ error: 'Продукт не найден' }, { status: 404 });
+        }
 
-        // Delete old image if exists
         if (product.image) {
             const oldFileName = product.image.split('/').pop();
             if (oldFileName) {
                 const oldFilePath = path.join(UPLOAD_DIR, oldFileName);
-                try {
-                    await fs.unlink(oldFilePath);
-                } catch {
-                    // Ignore if file doesn't exist
+                const normalizedOldPath = path.normalize(oldFilePath);
+                
+                if (normalizedOldPath.startsWith(UPLOAD_DIR)) {
+                    try {
+                        await fs.unlink(normalizedOldPath);
+                    } catch {
+                        // Игнорируем ошибку, если файл не существует
+                    }
                 }
             }
         }
@@ -49,6 +66,11 @@ export const POST = async (req: NextRequest) => {
 
         const fileName = sanitizeFileName(product.name, '.webp');
         const filePath = path.join(UPLOAD_DIR, fileName);
+        
+        const normalizedPath = path.normalize(filePath);
+        if (!normalizedPath.startsWith(UPLOAD_DIR)) {
+            return NextResponse.json({ error: 'Некорректный путь файла' }, { status: 400 });
+        }
 
         const originalBuffer = Buffer.from(await file.arrayBuffer());
         const optimizedBuffer = await optimizeImage(originalBuffer, { quality: 80 });
@@ -59,7 +81,7 @@ export const POST = async (req: NextRequest) => {
 
         return NextResponse.json({ image: product.image });
     } catch (err) {
-        console.error(err);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        console.error('Error uploading product image:', err);
+        return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 });
     }
 };

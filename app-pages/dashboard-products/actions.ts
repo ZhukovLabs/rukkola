@@ -4,8 +4,7 @@ import {ObjectId} from 'mongodb'
 import {revalidatePath} from 'next/cache'
 
 import {connectToDatabase} from '@/lib/mongoose'
-import {checkAuth, checkAdminAuth} from '@/lib/auth/check-auth'
-import {clearMenuCache} from '@/app-pages/menu/config'
+import {checkAuth} from '@/lib/auth/check-auth'
 
 import {Product, PortionPrice, ProductType} from '@/models/product'
 import {Category, CategoryType} from '@/models/category'
@@ -46,7 +45,7 @@ export async function getProducts(
 
             const descendants = await Category.aggregate([
                 {
-                    $match: { _id: categoryId },
+                    $match: {_id: categoryId},
                 },
                 {
                     $graphLookup: {
@@ -69,12 +68,12 @@ export async function getProducts(
                         },
                     },
                 },
-            ], { maxTimeMS: 30000 });
+            ], {maxTimeMS: 30000});
 
             const allCategoryIds = descendants[0]?.allIds ?? [];
 
             if (allCategoryIds.length > 0) {
-                filter.categories = { $in: allCategoryIds };
+                filter.categories = {$in: allCategoryIds};
             } else {
                 return {
                     success: true,
@@ -207,6 +206,10 @@ export async function getProductById(id: string): Promise<ActionResponse<Product
     }
 }
 
+function revalidateMenuCache() {
+    revalidatePath('/', 'layout');
+}
+
 export async function toggleProductVisibility(
     productId: string,
 ): Promise<ActionResponse<{ id: string; hidden: boolean }>> {
@@ -222,8 +225,7 @@ export async function toggleProductVisibility(
     product.hidden = !product.hidden
     await product.save()
 
-    clearMenuCache();
-    revalidatePath('/');
+    revalidateMenuCache();
     revalidatePath('/dashboard/products');
 
     return {
@@ -249,10 +251,9 @@ export async function toggleProductAlcohol(
     if (!product) return {success: false, message: 'Товар не найден'};
 
     product.isAlcohol = !product.isAlcohol;
-    await product.save()
+    await product.save();
 
-    clearMenuCache();
-    revalidatePath('/');
+    revalidateMenuCache();
     revalidatePath('/dashboard/products');
 
     return {
@@ -277,8 +278,7 @@ export async function deleteProduct(productId: string): Promise<ActionResponse<{
 
     await product.deleteOne();
 
-    clearMenuCache();
-    revalidatePath('/');
+    revalidateMenuCache();
     revalidatePath('/dashboard/products');
 
     return {
@@ -316,9 +316,8 @@ export async function updateProductData(
     }
 
     await Product.findByIdAndUpdate(id, updatedData)
-    
-    clearMenuCache();
-    revalidatePath('/')
+
+    revalidateMenuCache();
     revalidatePath('/dashboard/products');
 
     return {
@@ -394,8 +393,7 @@ export async function createProduct(
 
     await product.save()
 
-    clearMenuCache();
-    revalidatePath('/')
+    revalidateMenuCache();
     revalidatePath('/dashboard/products');
 
     return {

@@ -3,11 +3,14 @@
 import {connectToDatabase} from '@/lib/mongoose'
 import {Category} from '@/models/category'
 import {revalidatePath} from "next/cache"
-import {checkAuth, checkAdminAuth} from '@/lib/auth/check-auth'
-import {clearMenuCache} from '@/app-pages/menu/config'
+import {checkAuth} from '@/lib/auth/check-auth'
 import {ActionResponse} from "@/types";
 import {ObjectId} from "mongodb";
 import {Product} from "@/models/product";
+
+function revalidateMenuCache() {
+    revalidatePath('/', 'layout');
+}
 
 export async function toggleCategoryField(id: string, field: 'isMenuItem' | 'showGroupTitle'): Promise<ActionResponse> {
     const user = await checkAuth();
@@ -22,9 +25,8 @@ export async function toggleCategoryField(id: string, field: 'isMenuItem' | 'sho
     category[field] = !category[field]
     await category.save()
 
-    clearMenuCache();
+    revalidateMenuCache();
     revalidatePath('/dashboard/categories')
-    revalidatePath('/')
     
     return {success: true, message: 'Категория обновлена'}
 }
@@ -59,9 +61,8 @@ export async function moveCategory(id: string, direction: 'up' | 'down'): Promis
 
     await adjustChildrenOrders(current._id.toString(), temp, direction)
 
-    clearMenuCache();
+    revalidateMenuCache();
     revalidatePath('/dashboard/categories')
-    revalidatePath('/')
     
     return {success: true, message: 'Категория перемещена'}
 }
@@ -94,9 +95,8 @@ export async function updateCategoryName(id: string, name: string): Promise<Acti
     category.name = name
     await category.save()
     
-    clearMenuCache();
+    revalidateMenuCache();
     revalidatePath('/dashboard/categories')
-    revalidatePath('/')
     
     return {success: true, message: 'Название обновлено'}
 }
@@ -119,9 +119,8 @@ export async function deleteCategory(id: string): Promise<ActionResponse> {
 
     await deleteRecursive(id)
     
-    clearMenuCache();
+    revalidateMenuCache();
     revalidatePath('/dashboard/categories')
-    revalidatePath('/')
     
     return {success: true, message: 'Категория удалена'}
 }
@@ -159,7 +158,7 @@ export async function createCategory({
 
     await cat.save();
     
-    clearMenuCache();
+    revalidateMenuCache();
     revalidatePath('/dashboard/categories');
 
     return {
@@ -215,8 +214,7 @@ export async function markCategoryProductsAlcohol(
             }
         );
 
-        clearMenuCache();
-        revalidatePath('/');
+        revalidateMenuCache();
 
         return {
             success: true,
@@ -275,8 +273,7 @@ export async function markCategoryProductsNonAlcohol(
             }
         );
 
-        clearMenuCache();
-        revalidatePath('/');
+        revalidateMenuCache();
 
         return {
             success: true,

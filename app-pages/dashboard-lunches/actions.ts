@@ -3,11 +3,14 @@
 import {Lunch, LunchType} from '@/models/lunch'
 import {revalidatePath} from 'next/cache'
 import {connectToDatabase} from '@/lib/mongoose'
-import fs from 'fs'
+import fs from 'fs/promises'
 import path from 'path'
 import {checkAuth} from '@/lib/auth/check-auth'
-import {clearMenuCache} from '@/app-pages/menu/config'
 import {ActionResponse} from '@/types'
+
+function revalidateMenuCache() {
+    revalidatePath('/', 'layout');
+}
 
 type LunchData = {
     _id: { toString: () => string }
@@ -48,8 +51,7 @@ export async function activeLunch(id: string): Promise<ActionResponse<{ _id: str
     lunch.active = true
     await lunch.save()
 
-    clearMenuCache();
-    revalidatePath('/')
+    revalidateMenuCache();
     revalidatePath('/dashboard/lunches')
 
     return {
@@ -73,8 +75,7 @@ export async function deactivateLunch(): Promise<ActionResponse> {
 
     await Lunch.updateMany({}, {$set: {active: false}})
 
-    clearMenuCache();
-    revalidatePath('/')
+    revalidateMenuCache();
     revalidatePath('/dashboard/lunches')
 
     return {success: true, message: 'Все обеды деактивированы'}
@@ -103,7 +104,7 @@ export async function deleteLunch(id: string): Promise<ActionResponse> {
         const fullPath = path.join(uploadsDir, relativeImagePath)
 
         try {
-            await fs.promises.unlink(fullPath)
+            await fs.unlink(fullPath)
         } catch (err) {
             if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
                 console.error('Ошибка при удалении файла:', err)
@@ -113,8 +114,7 @@ export async function deleteLunch(id: string): Promise<ActionResponse> {
 
     await Lunch.deleteOne({_id: id})
 
-    clearMenuCache();
-    revalidatePath('/')
+    revalidateMenuCache();
     revalidatePath('/dashboard/lunches')
 
     return {success: true, message: 'Обед удалён'}
