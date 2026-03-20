@@ -16,7 +16,7 @@ import {useSearchParams, usePathname, useRouter} from "next/navigation";
 import {FiShoppingCart, FiX} from "react-icons/fi";
 import {addToCart, clearCart, type CartItem} from "@/lib/local-storage";
 import {useCart, useCartActions, useCartTotal} from "@/hooks/use-cart";
-import {CART_QUERY_KEY } from "../config";
+import {CART_QUERY_KEY } from "../constants";
 import {CartItem as CartItemComponent} from "@/app-pages/menu/cart-modal/cart-item";
 
 const emptyCartContent = (

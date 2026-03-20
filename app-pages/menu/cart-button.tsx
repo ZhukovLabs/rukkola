@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Box, Badge, IconButton } from "@chakra-ui/react";
 import { FiShoppingCart, FiX } from "react-icons/fi";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { CART_QUERY_KEY } from "./config";
+import { CART_QUERY_KEY } from "./constants";
 import { useCartCount } from "@/hooks/use-cart";
 
 const MotionBox = motion.create(Box);

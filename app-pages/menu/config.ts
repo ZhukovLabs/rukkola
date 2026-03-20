@@ -4,8 +4,6 @@ import {Category} from "@/models/category";
 import {Product, type ProductType} from "@/models/product";
 import type {GroupWithProducts} from "@/app-pages/menu/products/types";
 
-export const CART_QUERY_KEY = 'cart';
-
 const MENU_CACHE_TTL = 60 * 1000;
 const MAX_CACHE_SIZE = 10;
 

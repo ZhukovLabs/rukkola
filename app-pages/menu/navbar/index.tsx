@@ -17,7 +17,7 @@ import {useSearchParams} from "next/navigation";
 
 import {NavItem} from "./nav-item";
 import {NavbarItem} from "./types";
-import {CART_QUERY_KEY} from "@/app-pages/menu/config";
+import {CART_QUERY_KEY} from "../constants";
 import {useIsLowPerformanceDevice} from "@/hooks/use-is-low-performance-device";
 
 const MotionNav = motion.create(Box);
@@ -34,7 +34,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
     
     const [isFixed, setIsFixed] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
-    const [navHeight, setNavHeight] = useState(60);
+    const navHeightRef = useRef<number>(60);
     const [openIds, setOpenIds] = useState<string[]>([]);
     const [isMobile, setIsMobile] = useState(false);
     const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -48,16 +48,18 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
     }, []);
 
     useLayoutEffect(() => {
+        if (drawerOpen) return;
+        
         const measure = () => {
             if (navRef.current) {
                 const height = navRef.current.offsetHeight || 60;
-                if (height !== navHeight) {
-                    setNavHeight(height);
+                if (height !== navHeightRef.current) {
+                    navHeightRef.current = height;
                 }
             }
         };
         measure();
-    }, [items, navHeight]);
+    }, [items, drawerOpen]);
 
     const allSectionIds = useMemo(() => {
         const ids: string[] = [];
@@ -81,10 +83,10 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
     const handleClick = useCallback((id: string) => {
         const section = document.getElementById(id);
         if (!section) return;
-        const currentHeight = navRef.current?.offsetHeight || navHeight || 60;
+        const currentHeight = navRef.current?.offsetHeight || navHeightRef.current || 60;
         const y = section.getBoundingClientRect().top + window.scrollY - currentHeight;
         window.scrollTo({top: y, behavior: "smooth"});
-    }, [navHeight]);
+    }, [navHeightRef.current]);
 
     useEffect(() => {
         if (!allSectionIds.length) return;
@@ -98,7 +100,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                     }
                 }
             },
-            {rootMargin: `-${navHeight + 16}px 0px -60% 0px`}
+            {rootMargin: `-${navHeightRef.current + 16}px 0px -60% 0px`}
         );
 
         for (const id of allSectionIds) {
@@ -107,7 +109,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
         }
 
         return () => observer.disconnect();
-    }, [allSectionIds, navHeight]);
+    }, [allSectionIds, navHeightRef.current]);
 
     useEffect(() => {
         if (!items.length) return;
@@ -115,13 +117,13 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
         const threshold = document.getElementById(items[0].id)?.offsetTop ?? 0;
         
         const handleScroll = () => {
-            setIsFixed(window.scrollY > threshold - navHeight - 8);
+            setIsFixed(window.scrollY > threshold - navHeightRef.current - 8);
         };
 
         handleScroll();
         window.addEventListener("scroll", handleScroll, {passive: true});
         return () => window.removeEventListener("scroll", handleScroll);
-    }, [items, navHeight]);
+    }, [items, navHeightRef.current]);
 
     const handleSetOpenIds = useCallback((ids: string[]) => {
         setOpenIds(ids);
@@ -135,7 +137,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
 
     return (
         <Box position="relative" zIndex="10">
-            {isFixed && <Box height={isMobile ? '53px' : `${navHeight}px`}/>}
+            {isFixed && <Box height={isMobile ? '53px' : `${navHeightRef.current}px`}/>}
 
             <MotionNav
                 ref={navRef}
