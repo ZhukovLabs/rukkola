@@ -14,21 +14,9 @@ export async function optimizeImage(
     const { width = 1920, height, quality = 80, format = 'webp' } = options;
 
     const pipeline = sharp(buffer);
-    const metadata = await pipeline.metadata();
+    await pipeline.metadata();
 
-    const rotationMap: Record<number, number> = {
-        3: 180,
-        5: 90,
-        6: 270,
-        7: 180,
-        8: 90,
-    };
-    const rotation = metadata.orientation ? rotationMap[metadata.orientation] : undefined;
-
-    let image = sharp(buffer);
-    if (rotation) {
-        image = image.rotate(rotation);
-    }
+    let image = sharp(buffer).withMetadata();
 
     image = image.resize(width, height, {
         fit: 'inside',
