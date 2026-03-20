@@ -23,7 +23,7 @@ export const ProductsPage = () => {
     const searchParams = useSearchParams();
     const router = useRouter();
 
-    const {refetch, page, data: {totalPages}} = useProductsTable();
+    const {page, data: {totalPages}} = useProductsTable();
 
     const setPageParam = (newPage: number) => {
         const params = new URLSearchParams(searchParams)
@@ -68,8 +68,8 @@ export const ProductsPage = () => {
                 </Card.Footer>
             </Card.Root>
 
-            <CreateProductModal refetch={refetch}/>
-            <EditProductModal refetch={refetch}/>
+            <CreateProductModal/>
+            <EditProductModal/>
         </Box>
     )
 }

@@ -1,19 +1,16 @@
 'use client'
 
 import {useSearchParams, useRouter} from 'next/navigation'
-import {useQuery} from '@tanstack/react-query'
+import {useQuery, useQueryClient} from '@tanstack/react-query'
 import {getProductById, updateProductData} from '../actions'
 import {ProductFormValues} from '@/app-pages/dashboard-products/validation'
 import {BaseProductModal} from './base-product-modal'
 import {uploadImageToApi} from "@/app-pages/dashboard-products/modals/api";
 
-type Props = {
-    refetch?: VoidFunction
-}
-
-export const EditProductModal = ({refetch}: Props) => {
+export const EditProductModal = () => {
     const searchParams = useSearchParams()
     const router = useRouter()
+    const queryClient = useQueryClient()
     const productId = searchParams.get('edit') ?? ''
     const isOpen = Boolean(productId)
 
@@ -46,7 +43,7 @@ export const EditProductModal = ({refetch}: Props) => {
 
         if (file) await uploadImageToApi(productId, file);
 
-        refetch?.();
+        queryClient.invalidateQueries({queryKey: ['products']});
     }
 
     return (
@@ -72,7 +69,6 @@ export const EditProductModal = ({refetch}: Props) => {
             }
             isLoadingInitial={isProductLoading}
             productIdForImageUpload={productId}
-            refetch={refetch}
         />
     )
 }

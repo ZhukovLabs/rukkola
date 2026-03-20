@@ -1,6 +1,7 @@
 'use client'
 
 import {useSearchParams, useRouter} from 'next/navigation'
+import {useQueryClient} from '@tanstack/react-query'
 import {createProduct} from '../actions'
 import {ProductFormValues} from '@/app-pages/dashboard-products/validation'
 import {BaseProductModal} from './base-product-modal'
@@ -14,11 +15,10 @@ const initialValues = {
     hidden: false,
 };
 
-type Props = { refetch?: VoidFunction }
-
-export const CreateProductModal = ({refetch}: Props) => {
+export const CreateProductModal = () => {
     const searchParams = useSearchParams();
     const router = useRouter();
+    const queryClient = useQueryClient();
     const isOpen = searchParams.has('create');
 
     const close = () => {
@@ -39,7 +39,7 @@ export const CreateProductModal = ({refetch}: Props) => {
 
         if (id && file) await uploadImageToApi(id, file);
 
-        refetch?.()
+        queryClient.invalidateQueries({queryKey: ['products']});
     }
 
     return (
@@ -51,7 +51,6 @@ export const CreateProductModal = ({refetch}: Props) => {
             submitLoadingText="Создание..."
             onSubmit={handleSubmit}
             initialValues={initialValues}
-            refetch={refetch}
         />
     )
 }

@@ -42,7 +42,6 @@ type ProductModalProps = {
     initialValues?: Partial<ProductFormValues> & { image?: string }
     isLoadingInitial?: boolean
     productIdForImageUpload?: string
-    refetch?: VoidFunction
 }
 
 export const BaseProductModal = ({
