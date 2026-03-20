@@ -8,8 +8,14 @@ const getMinioConfig = () => ({
     useSSL: process.env.MINIO_USE_SSL === 'true',
 })
 
+console.log('[MinIO] Initializing client with config:', {
+    endPoint: process.env.MINIO_ENDPOINT,
+    port: process.env.MINIO_PORT,
+    useSSL: process.env.MINIO_USE_SSL,
+    bucket: process.env.MINIO_BUCKET,
+})
+
 const config = getMinioConfig()
-console.log('MinIO config:', { endPoint: config.endPoint, port: config.port, useSSL: config.useSSL })
 
 export const minioClient = new Minio.Client({
     endPoint: config.endPoint,
@@ -22,23 +28,33 @@ export const minioClient = new Minio.Client({
 export const BUCKET_NAME = process.env.MINIO_BUCKET || 'rukkola'
 
 export const ensureBucket = async (): Promise<void> => {
-    const exists = await minioClient.bucketExists(BUCKET_NAME)
-    if (!exists) {
-        await minioClient.makeBucket(BUCKET_NAME)
-        await minioClient.setBucketPolicy(
-            BUCKET_NAME,
-            JSON.stringify({
-                Version: '2012-10-17',
-                Statement: [
-                    {
-                        Effect: 'Allow',
-                        Principal: { AWS: ['*'] },
-                        Action: ['s3:GetObject'],
-                        Resource: [`arn:aws:s3:::${BUCKET_NAME}/*`],
-                    },
-                ],
-            })
-        )
+    console.log('[MinIO] Checking bucket existence:', BUCKET_NAME)
+    try {
+        const exists = await minioClient.bucketExists(BUCKET_NAME)
+        console.log('[MinIO] Bucket exists:', exists)
+        if (!exists) {
+            console.log('[MinIO] Creating bucket:', BUCKET_NAME)
+            await minioClient.makeBucket(BUCKET_NAME)
+            console.log('[MinIO] Setting bucket policy...')
+            await minioClient.setBucketPolicy(
+                BUCKET_NAME,
+                JSON.stringify({
+                    Version: '2012-10-17',
+                    Statement: [
+                        {
+                            Effect: 'Allow',
+                            Principal: { AWS: ['*'] },
+                            Action: ['s3:GetObject'],
+                            Resource: [`arn:aws:s3:::${BUCKET_NAME}/*`],
+                        },
+                    ],
+                })
+            )
+            console.log('[MinIO] Bucket created and configured')
+        }
+    } catch (error) {
+        console.error('[MinIO] ensureBucket error:', error)
+        throw error
     }
 }
 
@@ -47,14 +63,19 @@ export const uploadFile = async (
     buffer: Buffer,
     contentType: string = 'image/webp'
 ): Promise<string> => {
-    console.log('ensureBucket starting...');
+    console.log('[MinIO] Starting upload:', objectName, 'size:', buffer.length)
     await ensureBucket()
-    console.log('Bucket ensured, uploading object:', objectName);
-    await minioClient.putObject(BUCKET_NAME, objectName, buffer, buffer.length, {
-        'Content-Type': contentType,
-    })
-    console.log('Upload complete:', objectName);
-    return objectName
+    console.log('[MinIO] Bucket ready, uploading...')
+    try {
+        await minioClient.putObject(BUCKET_NAME, objectName, buffer, buffer.length, {
+            'Content-Type': contentType,
+        })
+        console.log('[MinIO] Upload successful:', objectName)
+        return objectName
+    } catch (error) {
+        console.error('[MinIO] Upload error:', error)
+        throw error
+    }
 }
 
 export const getFile = async (objectName: string): Promise<Buffer | null> => {
