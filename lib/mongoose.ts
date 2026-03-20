@@ -12,7 +12,7 @@ declare global {
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI && typeof window === 'undefined') {
-    console.warn('MONGODB_URI is not defined in environment variables');
+    console.error('CRITICAL: MONGODB_URI is not defined in environment variables');
 }
 
 const MONGODB_OPTIONS = {
@@ -40,7 +40,7 @@ mongoose.connection.on('error', (err) => {
 });
 
 mongoose.connection.on('disconnected', () => {
-    console.log('MongoDB disconnected');
+    console.warn('MongoDB disconnected');
     cached.conn = null;
     cached.promise = null;
 });
@@ -72,10 +72,11 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
 
     try {
         cached.conn = await cached.promise;
-    } catch {
+    } catch (err) {
         cached.promise = null;
         cached.conn = null;
-        throw new Error('Failed to connect to MongoDB');
+        console.error('Failed to connect to MongoDB:', err);
+        throw new Error('Не удалось подключиться к базе данных');
     }
 
     return cached.conn;

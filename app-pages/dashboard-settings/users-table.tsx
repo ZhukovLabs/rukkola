@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Flex, Spinner, Text, Button, Card, Table } from '@chakra-ui/react'
+import { Flex, Spinner, Text, Button, Card, Table, Box } from '@chakra-ui/react'
 import { getUsers } from './actions'
 import { AddUserModal } from './add-user-modal'
 import { UserRow } from './user-row'
@@ -78,56 +78,58 @@ export const UsersTable = () => {
                             <Spinner size="xl" color="teal.300"/>
                         </Flex>
                     ) : (
-                        <Table.Root size="md" variant="outline" w="full">
-                            <Table.Header bg="gray.900" borderBottomWidth="2px" borderColor="gray.700">
-                                <Table.Row>
-                                    <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider">
-                                        Логин
-                                    </Table.ColumnHeader>
-                                    <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider">
-                                        Имя
-                                    </Table.ColumnHeader>
-                                    <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider">
-                                        Фамилия
-                                    </Table.ColumnHeader>
-                                    <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider">
-                                        Отчество
-                                    </Table.ColumnHeader>
-                                    <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider">
-                                        Роль
-                                    </Table.ColumnHeader>
-                                    <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider">
-                                        Действия
-                                    </Table.ColumnHeader>
-                                </Table.Row>
-                            </Table.Header>
-
-                            <Table.Body>
-                                {users.length > 0 ? (
-                                    users.map((user) => (
-                                        <UserRow
-                                            key={user._id}
-                                            user={user}
-                                            onUserUpdate={(updated) => {
-                                                setUsers((prev) =>
-                                                    prev.map((u) => (u._id === updated._id ? updated : u))
-                                                )
-                                            }}
-                                            onUserDelete={(id) => {
-                                                setUsers((prev) => prev.filter((u) => u._id !== id))
-                                            }}
-                                            isOwnAccount={user._id === authenticatedUserId}
-                                        />
-                                    ))
-                                ) : (
+                        <Box overflowX="auto">
+                            <Table.Root size="md" variant="outline" w="full" minWidth="700px">
+                                <Table.Header bg="gray.900" borderBottomWidth="2px" borderColor="gray.700">
                                     <Table.Row>
-                                        <Table.Cell colSpan={6} textAlign="center" py={8}>
-                                            <Text color="gray.500">Нет пользователей</Text>
-                                        </Table.Cell>
+                                        <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">
+                                            Логин
+                                        </Table.ColumnHeader>
+                                        <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">
+                                            Имя
+                                        </Table.ColumnHeader>
+                                        <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">
+                                            Фамилия
+                                        </Table.ColumnHeader>
+                                        <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">
+                                            Отчество
+                                        </Table.ColumnHeader>
+                                        <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">
+                                            Роль
+                                        </Table.ColumnHeader>
+                                        <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">
+                                            Действия
+                                        </Table.ColumnHeader>
                                     </Table.Row>
-                                )}
-                            </Table.Body>
-                        </Table.Root>
+                                </Table.Header>
+
+                                <Table.Body>
+                                    {users.length > 0 ? (
+                                        users.map((user) => (
+                                            <UserRow
+                                                key={user._id}
+                                                user={user}
+                                                onUserUpdate={(updated) => {
+                                                    setUsers((prev) =>
+                                                        prev.map((u) => (u._id === updated._id ? updated : u))
+                                                    )
+                                                }}
+                                                onUserDelete={(id) => {
+                                                    setUsers((prev) => prev.filter((u) => u._id !== id))
+                                                }}
+                                                isOwnAccount={user._id === authenticatedUserId}
+                                            />
+                                        ))
+                                    ) : (
+                                        <Table.Row>
+                                            <Table.Cell colSpan={6} textAlign="center" py={8}>
+                                                <Text color="gray.500">Нет пользователей</Text>
+                                            </Table.Cell>
+                                        </Table.Row>
+                                    )}
+                                </Table.Body>
+                            </Table.Root>
+                        </Box>
                     )}
                 </Card.Body>
             </Card.Root>

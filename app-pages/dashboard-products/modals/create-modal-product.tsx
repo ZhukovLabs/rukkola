@@ -6,6 +6,7 @@ import {createProduct} from '../actions'
 import {ProductFormValues} from '@/app-pages/dashboard-products/validation'
 import {BaseProductModal} from './base-product-modal'
 import {uploadImageToApi} from "@/app-pages/dashboard-products/modals/api";
+import {useToast} from '@/components/toast-container';
 
 const initialValues = {
     name: '',
@@ -19,6 +20,7 @@ export const CreateProductModal = () => {
     const searchParams = useSearchParams();
     const router = useRouter();
     const queryClient = useQueryClient();
+    const toast = useToast();
     const isOpen = searchParams.has('create');
 
     const close = () => {
@@ -28,18 +30,24 @@ export const CreateProductModal = () => {
     }
 
     const handleSubmit = async (values: Omit<ProductFormValues, 'imageFile'>, file?: File) => {
-        const {data: {id} = {}} = await createProduct({
-            name: values.name,
-            description: values.description!,
-            prices: values.prices,
-            categories: values.categories ?? [],
-            hidden: values.hidden,
-            isAlcohol: values.isAlcohol
-        })
+        try {
+            const {data: {id} = {}} = await createProduct({
+                name: values.name,
+                description: values.description!,
+                prices: values.prices,
+                categories: values.categories ?? [],
+                hidden: values.hidden,
+                isAlcohol: values.isAlcohol
+            })
 
-        if (id && file) await uploadImageToApi(id, file);
+            if (id && file) await uploadImageToApi(id, file);
 
-        queryClient.invalidateQueries({queryKey: ['products']});
+            queryClient.invalidateQueries({queryKey: ['products']});
+            toast.showSuccess('Товар успешно создан')
+        } catch (err) {
+            toast.showError(err instanceof Error ? err.message : 'Ошибка при создании товара')
+            throw err
+        }
     }
 
     return (

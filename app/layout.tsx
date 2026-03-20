@@ -74,7 +74,7 @@ const restaurantSchema = {
     },
     amenityFeature: [
         { "@type": "LocationFeatureSpecification", name: "Wi-Fi", value: "True" },
-        { "@type": "LocationFeatureSpecification", name: "Wi-Fi", value: "True" }
+        { "@type": "LocationFeatureSpecification", name: "Parking", value: "True" }
     ],
     sameAs: [
         "https://www.instagram.com/rukkola.gomel",

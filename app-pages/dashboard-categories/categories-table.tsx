@@ -89,13 +89,19 @@ export default function CategoriesTable({categories: initialCategories}: Props) 
     const toggleMutation = useMutation({
         mutationFn: ({id, field}: { id: string; field: 'isMenuItem' | 'showGroupTitle' }) =>
             toggleCategoryField(id, field),
-        onSuccess: () => queryClient.invalidateQueries({queryKey: ['categories']}),
+        onSuccess: () => {
+            queryClient.invalidateQueries({queryKey: ['categories']})
+            toast.showSuccess('Настройки категории обновлены')
+        },
         onError: () => toast.showError('Не удалось обновить настройки категории'),
     })
 
     const moveMutation = useMutation({
         mutationFn: ({id, dir}: { id: string; dir: 'up' | 'down' }) => moveCategory(id, dir),
-        onSuccess: () => queryClient.invalidateQueries({queryKey: ['categories']}),
+        onSuccess: () => {
+            queryClient.invalidateQueries({queryKey: ['categories']})
+            toast.showSuccess('Позиция категории изменена')
+        },
         onError: () => toast.showError('Не удалось изменить позицию категории'),
     })
 

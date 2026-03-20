@@ -17,6 +17,7 @@ import { FiAlertTriangle, FiCheckCircle, FiEye, FiEyeOff, FiLock } from 'react-i
 import { updatePassword } from './actions'
 import { useSession } from 'next-auth/react'
 import { passwordSchema, type PasswordFormData } from './validation'
+import { useToast } from '@/components/toast-container'
 
 export const PasswordChangeForm = () => {
     const { data } = useSession()
@@ -26,6 +27,7 @@ export const PasswordChangeForm = () => {
     const [showOld, setShowOld] = useState(false)
     const [showNew, setShowNew] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false)
+    const toast = useToast()
 
     const { register, handleSubmit, reset, formState: { errors } } = useForm<PasswordFormData>({
         resolver: zodResolver(passwordSchema)
@@ -39,6 +41,7 @@ export const PasswordChangeForm = () => {
             (async () => {
                 if (!data) {
                     setServerError('Пользователь не авторизован')
+                    toast.showError('Пользователь не авторизован')
                     return
                 }
 
@@ -47,14 +50,16 @@ export const PasswordChangeForm = () => {
 
                     if (res?.success) {
                         setServerSuccess(res.message ?? 'Пароль успешно изменён')
+                        toast.showSuccess(res.message ?? 'Пароль успешно изменён')
                         reset()
                     } else {
-                        // возвращаемое сообщение от сервера
                         setServerError(res?.message ?? 'Ошибка при изменении пароля')
+                        toast.showError(res?.message ?? 'Ошибка при изменении пароля')
                     }
                 } catch (e) {
-                    // на случай неожиданных ошибок (network, runtime и т.д.)
-                    setServerError((e as { message?: string })?.message ?? 'Ошибка при изменении пароля')
+                    const message = (e as { message?: string })?.message ?? 'Ошибка при изменении пароля'
+                    setServerError(message)
+                    toast.showError(message)
                 }
             })()
         })

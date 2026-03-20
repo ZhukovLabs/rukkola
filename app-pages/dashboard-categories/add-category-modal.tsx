@@ -13,9 +13,11 @@ import {
 } from '@chakra-ui/react'
 import {useState, useTransition} from 'react'
 import {useSearchParams, useRouter, usePathname} from 'next/navigation'
+import {useQueryClient} from '@tanstack/react-query'
 import {createCategory} from './actions'
 import {CategoryType} from '@/models/category'
 import {createListCollection} from '@chakra-ui/react'
+import {useToast} from '@/components/toast-container'
 
 type Props = { categories: CategoryType[] }
 
@@ -24,6 +26,8 @@ export const AddCategoryDialog = ({categories}: Props) => {
     const isOpen = searchParams.has('addCategory')
     const router = useRouter()
     const pathname = usePathname()
+    const queryClient = useQueryClient()
+    const toast = useToast()
     const [isPending, startTransition] = useTransition()
 
     const [name, setName] = useState('')
@@ -49,15 +53,23 @@ export const AddCategoryDialog = ({categories}: Props) => {
         if (!name.trim()) return
         startTransition(async () => {
             try {
-                await createCategory({
+                const result = await createCategory({
                     name: name.trim(),
                     parentId: parent || undefined,
                     isMenuItem,
                     showGroupTitle,
                 })
-                close()
+                if (result.success) {
+                    queryClient.invalidateQueries({queryKey: ['categories']})
+                    toast.showSuccess('Категория успешно создана')
+                    resetForm()
+                    close()
+                } else {
+                    toast.showError(result.message || 'Ошибка при создании категории')
+                }
             } catch (err) {
                 console.error('createCategory error', err)
+                toast.showError('Ошибка при создании категории')
             }
         })
     }

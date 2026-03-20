@@ -6,11 +6,13 @@ import {getProductById, updateProductData} from '../actions'
 import {ProductFormValues} from '@/app-pages/dashboard-products/validation'
 import {BaseProductModal} from './base-product-modal'
 import {uploadImageToApi} from "@/app-pages/dashboard-products/modals/api";
+import {useToast} from '@/components/toast-container';
 
 export const EditProductModal = () => {
     const searchParams = useSearchParams()
     const router = useRouter()
     const queryClient = useQueryClient()
+    const toast = useToast()
     const productId = searchParams.get('edit') ?? ''
     const isOpen = Boolean(productId)
 
@@ -32,19 +34,25 @@ export const EditProductModal = () => {
     }
 
     const handleSubmit = async (values: Omit<ProductFormValues, 'imageFile'>, file?: File) => {
-        await updateProductData(productId, {
-            name: values.name,
-            description: values.description ?? '',
-            prices: values.prices,
-            categories: values.categories ?? [],
-            hidden: values.hidden,
-            isAlcohol: values.isAlcohol,
-        })
+        try {
+            await updateProductData(productId, {
+                name: values.name,
+                description: values.description ?? '',
+                prices: values.prices,
+                categories: values.categories ?? [],
+                hidden: values.hidden,
+                isAlcohol: values.isAlcohol,
+            })
 
-        if (file) await uploadImageToApi(productId, file);
+            if (file) await uploadImageToApi(productId, file);
 
-        queryClient.invalidateQueries({queryKey: ['products']});
-        queryClient.invalidateQueries({queryKey: ['product', productId]});
+            queryClient.invalidateQueries({queryKey: ['products']});
+            queryClient.invalidateQueries({queryKey: ['product', productId]});
+            toast.showSuccess('Товар успешно обновлён')
+        } catch (err) {
+            toast.showError(err instanceof Error ? err.message : 'Ошибка при обновлении товара')
+            throw err
+        }
     }
 
     return (
