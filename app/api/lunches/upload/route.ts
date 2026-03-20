@@ -1,14 +1,12 @@
-import fs from 'fs/promises'
-import path from 'path'
 import { NextRequest, NextResponse } from 'next/server'
 import { Lunch } from '@/models/lunch'
 import { optimizeImage } from '@/lib/image-optimize'
 import { auth } from '@/lib/auth'
 import { connectToDatabase } from '@/lib/mongoose'
+import { uploadFile } from '@/lib/minio'
 
-const UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'lunches')
 const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp'])
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024
 
 export const POST = async (req: NextRequest) => {
     try {
@@ -28,29 +26,21 @@ export const POST = async (req: NextRequest) => {
             return NextResponse.json({ error: 'Размер файла превышает 10MB' }, { status: 400 })
         }
 
-        const ext = path.extname(file.name).toLowerCase()
-        if (!ALLOWED_EXTENSIONS.has(ext)) {
+        const ext = file.name.split('.').pop()?.toLowerCase() || ''
+        if (!ALLOWED_EXTENSIONS.has(`.${ext}`)) {
             return NextResponse.json({ error: 'Неподдерживаемый формат файла' }, { status: 400 })
         }
 
         await connectToDatabase()
 
-        await fs.mkdir(UPLOAD_DIR, { recursive: true })
-
-        const safeName = `lunch-${Date.now()}.webp`
-        const filePath = path.join(UPLOAD_DIR, safeName)
-        
-        const normalizedPath = path.normalize(filePath)
-        if (!normalizedPath.startsWith(UPLOAD_DIR)) {
-            return NextResponse.json({ error: 'Некорректный путь файла' }, { status: 400 })
-        }
+        const fileName = `lunch-${Date.now()}.webp`
 
         const buffer = Buffer.from(await file.arrayBuffer())
         const optimizedBuffer = await optimizeImage(buffer, { quality: 80 })
         
-        await fs.writeFile(filePath, optimizedBuffer)
+        await uploadFile(`lunches/${fileName}`, optimizedBuffer, 'image/webp')
 
-        const imageUrl = `/api/lunches/image/${safeName}`
+        const imageUrl = `/api/lunches/image/${encodeURIComponent(fileName)}`
 
         const lunch = new Lunch({ image: imageUrl })
         await lunch.save()

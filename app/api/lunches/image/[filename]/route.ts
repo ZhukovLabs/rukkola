@@ -1,11 +1,9 @@
-import fs from 'fs/promises'
-import path from 'path'
 import { NextRequest, NextResponse } from 'next/server'
 import sharp from 'sharp'
 import { LRUCache } from 'lru-cache'
+import { getFile } from '@/lib/minio'
 
 const cache = new LRUCache<string, { buffer: Buffer; contentType: string }>({ max: 200 })
-const UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'lunches')
 
 function sendFile(buffer: Buffer, contentType: string) {
     return new NextResponse(buffer as unknown as BodyInit, {
@@ -28,8 +26,9 @@ export const GET = async (
             return NextResponse.json({ error: 'Имя файла не указано' }, { status: 400 })
         }
 
-        const sanitizedFilename = path.basename(filename)
-        if (sanitizedFilename !== filename || filename.includes('..')) {
+        const objectName = decodeURIComponent(filename)
+        
+        if (objectName.includes('..') || objectName.includes('/') === false) {
             return NextResponse.json({ error: 'Некорректное имя файла' }, { status: 400 })
         }
 
@@ -40,19 +39,16 @@ export const GET = async (
             return NextResponse.json({ error: 'Некорректная ширина' }, { status: 400 })
         }
 
-        const cacheKey = `${filename}-${width || 'original'}`
+        const cacheKey = `${objectName}-${width || 'original'}`
 
         const cached = cache.get(cacheKey)
         if (cached) return sendFile(cached.buffer, cached.contentType)
 
-        const filePath = path.join(UPLOAD_DIR, sanitizedFilename)
-        const normalizedPath = path.normalize(filePath)
-        
-        if (!normalizedPath.startsWith(UPLOAD_DIR)) {
-            return NextResponse.json({ error: 'Некорректный путь' }, { status: 400 })
+        const originalBuffer = await getFile(objectName)
+        if (!originalBuffer) {
+            return NextResponse.json({ error: 'Файл не найден' }, { status: 404 })
         }
 
-        const originalBuffer = await fs.readFile(filePath)
         let fileBuffer = originalBuffer
 
         if (width && width > 0) {
@@ -66,10 +62,6 @@ export const GET = async (
 
         return sendFile(fileBuffer, 'image/webp')
     } catch (error) {
-        const err = error as NodeJS.ErrnoException
-        if (err.code === 'ENOENT') {
-            return NextResponse.json({ error: 'Файл не найден' }, { status: 404 })
-        }
         console.error('Error serving lunch image:', error)
         return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })
     }

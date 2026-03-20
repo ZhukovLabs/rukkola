@@ -1,10 +1,19 @@
-version: '3.8'
-
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        MONGODB_URI: ${MONGODB_URI}
+        AUTH_SECRET: ${AUTH_SECRET}
+        NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+        AUTH_TRUST_HOST: ${AUTH_TRUST_HOST:-true}
+        MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio}
+        MINIO_PORT: ${MINIO_PORT:-9000}
+        MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+        MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+        MINIO_BUCKET: ${MINIO_BUCKET:-rukkola}
+        MINIO_USE_SSL: ${MINIO_USE_SSL:-false}
     container_name: rukkola
     restart: unless-stopped
     ports:
@@ -15,10 +24,15 @@ services:
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
       - AUTH_TRUST_HOST=${AUTH_TRUST_HOST:-true}
       - NODE_ENV=production
-    volumes:
-      - uploads:/app/uploads
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-minio}
+      - MINIO_PORT=${MINIO_PORT:-9000}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_BUCKET=${MINIO_BUCKET:-rukkola}
+      - MINIO_USE_SSL=${MINIO_USE_SSL:-false}
     depends_on:
       - mongodb
+      - minio
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000"]
       interval: 30s
@@ -44,6 +58,25 @@ services:
       timeout: 10s
       retries: 3
 
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
-  uploads:
   mongodb_data:
+  minio_data:

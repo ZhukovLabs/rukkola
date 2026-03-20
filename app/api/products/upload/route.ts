@@ -1,22 +1,22 @@
-import fs from 'fs/promises';
-import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 import { Product } from '@/models/product';
 import { sanitizeFileName } from "@/lib/sanitize";
 import { optimizeImage } from '@/lib/image-optimize';
 import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongoose';
+import { uploadFile, deleteFile } from '@/lib/minio';
 
-const UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'products');
 const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export const POST = async (req: NextRequest) => {
     try {
+        console.log('Starting product upload...');
         const session = await auth();
         if (!session?.user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+        console.log('User authenticated:', session.user.id);
 
         await connectToDatabase();
 
@@ -36,8 +36,8 @@ export const POST = async (req: NextRequest) => {
             return NextResponse.json({ error: 'Размер файла превышает 10MB' }, { status: 400 });
         }
 
-        const ext = path.extname(file.name).toLowerCase();
-        if (!ALLOWED_EXTENSIONS.has(ext)) {
+        const ext = file.name.split('.').pop()?.toLowerCase() || '';
+        if (!ALLOWED_EXTENSIONS.has(`.${ext}`)) {
             return NextResponse.json({ error: 'Неподдерживаемый формат файла' }, { status: 400 });
         }
 
@@ -49,39 +49,30 @@ export const POST = async (req: NextRequest) => {
         if (product.image) {
             const oldFileName = product.image.split('/').pop();
             if (oldFileName) {
-                const oldFilePath = path.join(UPLOAD_DIR, oldFileName);
-                const normalizedOldPath = path.normalize(oldFilePath);
-                
-                if (normalizedOldPath.startsWith(UPLOAD_DIR)) {
-                    try {
-                        await fs.unlink(normalizedOldPath);
-                    } catch {
-                        // Игнорируем ошибку, если файл не существует
-                    }
+                try {
+                    await deleteFile(`products/${decodeURIComponent(oldFileName)}`);
+                } catch (e) {
+                    console.log('Old file delete error:', e);
                 }
             }
         }
 
-        await fs.mkdir(UPLOAD_DIR, { recursive: true });
-
         const fileName = sanitizeFileName(product.name, '.webp');
-        const filePath = path.join(UPLOAD_DIR, fileName);
-        
-        const normalizedPath = path.normalize(filePath);
-        if (!normalizedPath.startsWith(UPLOAD_DIR)) {
-            return NextResponse.json({ error: 'Некорректный путь файла' }, { status: 400 });
-        }
+        const objectName = `products/${fileName}`;
 
         const originalBuffer = Buffer.from(await file.arrayBuffer());
         const optimizedBuffer = await optimizeImage(originalBuffer, { quality: 80 });
-        await fs.writeFile(filePath, optimizedBuffer);
+        
+        console.log('Uploading to MinIO:', objectName);
+        await uploadFile(objectName, optimizedBuffer, 'image/webp');
+        console.log('Upload complete');
 
-        product.image = `/api/products/image/${fileName}`;
+        product.image = `/api/products/image/${encodeURIComponent(fileName)}`;
         await product.save();
 
         return NextResponse.json({ image: product.image });
     } catch (err) {
         console.error('Error uploading product image:', err);
-        return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 });
+        return NextResponse.json({ error: 'Ошибка сервера', details: err instanceof Error ? err.message : 'Unknown error' }, { status: 500 });
     }
 };
