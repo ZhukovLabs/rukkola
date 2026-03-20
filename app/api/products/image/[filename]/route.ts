@@ -10,10 +10,15 @@ function sendFile(buffer: Buffer, contentType: string) {
         status: 200,
         headers: {
             "Content-Type": contentType,
-            "Cache-Control": "public, max-age=86400, immutable",
+            "Cache-Control": "public, max-age=3600, must-revalidate",
         },
     });
 }
+
+export const invalidateImageCache = (filename: string) => {
+    const keys = [...cache.keys()].filter(key => key.startsWith(`products/${filename}`));
+    keys.forEach(key => cache.delete(key));
+};
 
 export async function GET(
     req: NextRequest,

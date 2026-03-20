@@ -10,9 +10,14 @@ function sendFile(buffer: Buffer, contentType: string) {
         status: 200,
         headers: {
             'Content-Type': contentType,
-            'Cache-Control': 'public, max-age=86400, immutable',
+            'Cache-Control': 'public, max-age=3600, must-revalidate',
         },
     })
+}
+
+export const invalidateLunchImageCache = (filename: string) => {
+    const keys = [...cache.keys()].filter(key => key.startsWith(`lunches/${filename}`));
+    keys.forEach(key => cache.delete(key));
 }
 
 export const GET = async (
@@ -26,11 +31,13 @@ export const GET = async (
             return NextResponse.json({ error: 'Имя файла не указано' }, { status: 400 })
         }
 
-        const objectName = decodeURIComponent(filename)
+        const decodedFilename = decodeURIComponent(filename)
         
-        if (objectName.includes('..') || objectName.includes('/') === false) {
+        if (decodedFilename.includes('..') || decodedFilename.includes('/')) {
             return NextResponse.json({ error: 'Некорректное имя файла' }, { status: 400 })
         }
+
+        const objectName = `lunches/${decodedFilename}`
 
         const { searchParams } = new URL(req.url)
         const width = searchParams.get('w') ? parseInt(searchParams.get('w')!, 10) : undefined
