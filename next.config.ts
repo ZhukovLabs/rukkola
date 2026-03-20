@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
     compress: true,
     poweredByHeader: false,
     compiler: {
-        removeConsole: false,
+        removeConsole: process.env.NODE_ENV === "production",
     },
     productionBrowserSourceMaps: false,
     experimental: {

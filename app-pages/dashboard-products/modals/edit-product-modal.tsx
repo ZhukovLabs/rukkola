@@ -44,6 +44,7 @@ export const EditProductModal = () => {
         if (file) await uploadImageToApi(productId, file);
 
         queryClient.invalidateQueries({queryKey: ['products']});
+        queryClient.invalidateQueries({queryKey: ['product', productId]});
     }
 
     return (
