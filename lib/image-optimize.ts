@@ -17,6 +17,7 @@ export async function optimizeImage(
     const metadata = await pipeline.metadata();
 
     const rotationMap: Record<number, number> = {
+        3: 180,
         5: 90,
         6: 270,
         7: 180,

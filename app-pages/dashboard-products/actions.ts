@@ -42,17 +42,18 @@ export async function getProducts(
 
             const descendants = await Category.aggregate([
                 {
+                    $match: { _id: categoryId },
+                },
+                {
                     $graphLookup: {
                         from: 'categories',
                         startWith: '$_id',
                         connectFromField: '_id',
                         connectToField: 'parent',
                         as: 'descendants',
+                        maxDepth: 10,
                         depthField: 'depth',
                     },
-                },
-                {
-                    $match: { _id: categoryId },
                 },
                 {
                     $project: {
@@ -64,7 +65,7 @@ export async function getProducts(
                         },
                     },
                 },
-            ]);
+            ], { maxTimeMS: 30000 });
 
             const allCategoryIds = descendants[0]?.allIds ?? [];
 
