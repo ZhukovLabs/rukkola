@@ -385,7 +385,7 @@ export default function RootLayout({
             <Script
                 id="ym-tag"
                 src="https://mc.yandex.ru/metrika/tag.js?id=106114023"
-                strategy="worker"
+                strategy="lazyOnload"
             />
             <Script
                 id="ym-init"
@@ -396,7 +396,7 @@ export default function RootLayout({
                             ym(106114023, 'init', {
                                 clickmap: true,
                                 ecommerce: "dataLayer",
-                                accurateTrackBounce: true,
+                                accurateTrackBounce: false,
                                 trackLinks: true,
                                 params: {}
                             });
