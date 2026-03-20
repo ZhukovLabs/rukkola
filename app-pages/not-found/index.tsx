@@ -1,5 +1,6 @@
 "use client";
 
+import {useEffect} from "react";
 import {Box, Flex, Heading, Text, Button, Icon} from "@chakra-ui/react";
 import {motion} from "framer-motion";
 import {FiHome, FiAlertTriangle} from "react-icons/fi";
@@ -11,6 +12,28 @@ const MotionText = motion(Text);
 const MotionButton = motion(Button);
 
 export const NotFound = () => {
+    const reducedMotion = typeof window !== "undefined" 
+        ? window.matchMedia("(prefers-reduced-motion: reduce)").matches 
+        : false;
+
+    useEffect(() => {
+        if (!reducedMotion) return;
+        const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+        const handler = (e: MediaQueryListEvent) => {
+            if (e.matches) location.reload();
+        };
+        mq.addEventListener("change", handler);
+        return () => mq.removeEventListener("change", handler);
+    }, [reducedMotion]);
+
+    const bgBlobProps = (delay = 0) => reducedMotion
+        ? {initial: {opacity: 0}, animate: {opacity: 0.12}, transition: {duration: 0}}
+        : {
+            initial: {scale: 0.8, opacity: 0},
+            animate: {scale: [1, 1.1, 1], opacity: 1},
+            transition: {duration: 12, repeat: Infinity, ease: "easeInOut" as const, delay},
+        };
+
     return (
         <Box
             minH="100vh"
@@ -24,42 +47,29 @@ export const NotFound = () => {
         >
             <MotionBox
                 position="absolute"
-                top="-20%"
-                left="-20%"
-                w="800px"
-                h="800px"
+                top="-30%"
+                left="-30%"
+                w={{base: "350px", md: "700px"}}
+                h={{base: "350px", md: "700px"}}
                 bgGradient="radial(circle, teal.500 0%, transparent 60%)"
-                opacity={0.15}
+                opacity={0.12}
                 borderRadius="full"
-                filter="blur(100px)"
-                animate={{
-                    scale: [1, 1.2, 1],
-                    rotate: [0, 90, 0],
-                }}
-                transition={{
-                    duration: 20,
-                    repeat: Infinity,
-                    ease: "linear",
-                }}
+                filter="blur(50px)"
+                willChange="transform"
+                {...bgBlobProps()}
             />
             <MotionBox
                 position="absolute"
-                bottom="-30%"
-                right="-25%"
-                w="1000px"
-                h="1000px"
+                bottom="-40%"
+                right="-35%"
+                w={{base: "400px", md: "900px"}}
+                h={{base: "400px", md: "900px"}}
                 bgGradient="radial(circle, purple.600 0%, transparent 70%)"
                 opacity={0.1}
                 borderRadius="full"
-                filter="blur(120px)"
-                animate={{
-                    scale: [1.1, 0.9, 1.1],
-                }}
-                transition={{
-                    duration: 15,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                }}
+                filter="blur(60px)"
+                willChange="transform"
+                {...bgBlobProps(4)}
             />
 
             <Flex
@@ -76,14 +86,14 @@ export const NotFound = () => {
                     transition={{type: "spring", stiffness: 200, damping: 10}}
                 >
                     <MotionBox
-                        animate={{
+                        animate={reducedMotion ? {} : {
                             scale: [1, 1.15, 1],
                             rotate: [0, -5, 5, 0],
                         }}
                         transition={{
                             duration: 2,
                             repeat: Infinity,
-                            ease: "easeInOut",
+                            ease: "easeInOut" as const,
                         }}
                     >
                         <Icon
@@ -116,14 +126,14 @@ export const NotFound = () => {
                         display="inline-block"
                         mx={2}
                         color="teal.400"
-                        animate={{
+                        animate={reducedMotion ? {} : {
                             y: [0, -15, 0],
                             rotate: [0, -10, 10, 0],
                         }}
                         transition={{
                             duration: 2,
                             repeat: Infinity,
-                            ease: "easeInOut",
+                            ease: "easeInOut" as const,
                         }}
                         filter="drop-shadow(0 0 15px rgba(56, 178, 172, 0.6))"
                     >
