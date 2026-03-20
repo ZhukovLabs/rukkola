@@ -37,6 +37,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
     const [navHeight, setNavHeight] = useState(60);
     const [openIds, setOpenIds] = useState<string[]>([]);
     const [isMobile, setIsMobile] = useState(false);
+    const [expandedId, setExpandedId] = useState<string | null>(null);
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -149,189 +150,356 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                 animate={motionAnimate}
                 transition={motionTransition}
             >
-                <Box display={{base: "flex", md: "none"}} justifyContent="space-between" px={4} alignItems="center">
-                    <MotionBox
-                        initial={disableMotion ? undefined : {opacity: 0, x: -20}}
-                        animate={disableMotion ? undefined : {opacity: 1, x: 0}}
-                        transition={disableMotion ? undefined : {duration: 0.4}}
-                        display="flex"
-                        alignItems="center"
-                        gap={2}
-                    >
-                        <Box
-                            w={2}
-                            h={6}
-                            borderRadius="full"
-                            bgGradient="linear(to-b, teal.400, teal.600)"
-                        />
-
-                        <Text
-                            fontSize="sm"
-                            fontWeight="bold"
-                            color="whiteAlpha.900"
-                            textShadow="0 1px 4px rgba(0,0,0,0.3)"
-                        >
-                            {activeItem?.name ?? items[0]?.name}
-                        </Text>
-                    </MotionBox>
-
-                    <Drawer.Root placement="bottom" onExitComplete={() => setOpenIds([])}>
-                        <Drawer.Trigger asChild>
-                            <IconButton
-                                aria-label="Открыть меню"
-                                size="sm"
-                                variant="ghost"
-                                color="white"
+                <Box display={{base: "flex", md: "none"}} alignItems="center" position="relative">
+                    {!isFixed ? (
+                        <>
+                            <Box
+                                position="absolute"
+                                left={0}
+                                top={0}
+                                bottom={0}
+                                w={6}
+                                bgGradient="linear(to-r, rgba(26,32,44,0.9), transparent)"
+                                zIndex={1}
+                                pointerEvents="none"
+                            />
+                            <Box
+                                position="absolute"
+                                right={0}
+                                top={0}
+                                bottom={0}
+                                w={6}
+                                bgGradient="linear(to-l, rgba(26,32,44,0.9), transparent)"
+                                zIndex={1}
+                                pointerEvents="none"
+                            />
+                            <Box
+                                display="flex"
+                                overflowX="auto"
+                                gap={1}
+                                px={4}
+                                flex="1"
+                                py={1}
+                                position="relative"
+                                zIndex={0}
+                                css={{
+                                    scrollbarWidth: "none",
+                                    "&::-webkit-scrollbar": { display: "none" },
+                                    scrollSnapType: "x mandatory",
+                                    "& > *": { scrollSnapAlign: "start" },
+                                }}
                             >
-                                <FiMenu/>
-                            </IconButton>
-                        </Drawer.Trigger>
-
-                        <Portal>
-                            <Drawer.Backdrop/>
-                            <Drawer.Positioner>
-                                <Drawer.Content 
-                                    bg="gray.800" 
-                                    borderTopRadius="lg"
-                                    maxH="85vh"
-                                >
-                                    <Drawer.Header px={4} pt={4} pb={2}>
-                                        <HStack justify="space-between">
-                                            <Drawer.Title fontSize="sm" color="whitesmoke">Разделы</Drawer.Title>
-                                            <Drawer.CloseTrigger asChild>
-                                                <CloseButton
-                                                    size="sm"
-                                                    color="white"
-                                                    onClick={() => handleSetOpenIds([])}
-                                                />
-                                            </Drawer.CloseTrigger>
-                                        </HStack>
-                                    </Drawer.Header>
-
-                                    <Drawer.Context>
-                                        {(store) => (
-                                            <Drawer.Body
-                                                px={4}
-                                                pb={4}
-                                                overflowY="auto"
+                                <Box minW={2} />
+                                {items.map((item) => {
+                                    const hasChildren = !!item.children?.length;
+                                    const isGroupActive = activeId === item.id || item.children?.some((c) => c.id === activeId);
+                                    const isAnyChildActive = item.children?.some((c) => c.id === activeId);
+                                    const isExpanded = expandedId === item.id;
+                                    return (
+                                        <MotionBox
+                                            key={item.id}
+                                            layout
+                                            display="flex"
+                                            alignItems="center"
+                                            gap={1}
+                                            flexShrink={0}
+                                        >
+                                            <Box
+                                                display="flex"
+                                                alignItems="center"
+                                                gap={1}
+                                                px={3}
+                                                py={1}
+                                                borderRadius="full"
+                                                bg={isGroupActive ? "teal.500" : "whiteAlpha.100"}
+                                                boxShadow={isGroupActive ? "0 2px 6px rgba(45,199,180,0.3)" : "none"}
+                                                onClick={() => {
+                                                    if (hasChildren) {
+                                                        setExpandedId(isExpanded ? null : item.id);
+                                                    } else {
+                                                        handleClick(item.id);
+                                                    }
+                                                }}
+                                                cursor="pointer"
+                                                transition="all 0.2s"
+                                                _hover={{ 
+                                                    bg: isGroupActive ? "teal.400" : "whiteAlpha.200",
+                                                }}
                                                 css={{
-                                                    WebkitOverflowScrolling: "touch",
-                                                    "&::-webkit-scrollbar": {
-                                                        width: "4px",
-                                                    },
-                                                    "&::-webkit-scrollbar-thumb": {
-                                                        background: "rgba(255,255,255,0.2)",
-                                                        borderRadius: "2px",
-                                                    },
+                                                    WebkitTapHighlightColor: "transparent",
                                                 }}
                                             >
-                                                <VStack align="stretch" gap={1}>
-                                                    {items.map((item) => {
-                                                        const hasChildren = !!item.children?.length;
-                                                        const isGroupActive =
-                                                            activeId === item.id ||
-                                                            item.children?.some((child) => child.id === activeId);
+                                                <Box
+                                                    w={1.5}
+                                                    h={1.5}
+                                                    borderRadius="full"
+                                                    bg={isGroupActive ? "white" : "gray.400"}
+                                                    flexShrink={0}
+                                                />
+                                                <Box
+                                                    color={isGroupActive || isAnyChildActive ? "white" : "gray.300"}
+                                                    fontWeight="semibold"
+                                                    fontSize="xs"
+                                                    whiteSpace="nowrap"
+                                                >
+                                                    {item.name}
+                                                </Box>
+                                                {hasChildren && (
+                                                    <Box
+                                                        ml={1}
+                                                        color="whiteAlpha.700"
+                                                        fontSize="10px"
+                                                        lineHeight="1"
+                                                        transition="transform 0.2s"
+                                                        transform={isExpanded ? "rotate(-90deg)" : "rotate(0deg)"}
+                                                    >
+                                                        ▶
+                                                    </Box>
+                                                )}
+                                            </Box>
+                                            <Box
+                                                display="flex"
+                                                gap={1}
+                                                overflow="hidden"
+                                                transition="all 0.25s ease"
+                                                maxW={isExpanded ? "500px" : "0"}
+                                                opacity={isExpanded ? 1 : 0}
+                                            >
+                                                {item.children?.map((child) => (
+                                                    <Box
+                                                        key={child.id}
+                                                        px={2}
+                                                        py={1}
+                                                        borderRadius="full"
+                                                        bg={activeId === child.id ? "teal.400" : "whiteAlpha.50"}
+                                                        color={activeId === child.id ? "white" : "gray.400"}
+                                                        fontWeight={activeId === child.id ? "semibold" : "medium"}
+                                                        fontSize="xs"
+                                                        whiteSpace="nowrap"
+                                                        cursor="pointer"
+                                                        transition="all 0.15s"
+                                                        border="1px solid"
+                                                        borderColor={activeId === child.id ? "teal.300" : "whiteAlpha.200"}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleClick(child.id);
+                                                        }}
+                                                        _hover={{ 
+                                                            bg: activeId === child.id ? "teal.300" : "whiteAlpha.200",
+                                                            color: "white"
+                                                        }}
+                                                        css={{
+                                                            WebkitTapHighlightColor: "transparent",
+                                                        }}
+                                                    >
+                                                        {child.name}
+                                                    </Box>
+                                                ))}
+                                            </Box>
+                                        </MotionBox>
+                                    );
+                                })}
+                                <Box minW={2} />
+                            </Box>
+                        </>
+                    ) : (
+                        <>
+                            <MotionBox
+                                initial={disableMotion ? undefined : {opacity: 0, x: -20}}
+                                animate={disableMotion ? undefined : {opacity: 1, x: 0}}
+                                transition={disableMotion ? undefined : {duration: 0.4}}
+                                display="flex"
+                                alignItems="center"
+                                gap={2}
+                                px={4}
+                            >
+                                <Box
+                                    w={2}
+                                    h={6}
+                                    borderRadius="full"
+                                    bgGradient="linear(to-b, teal.400, teal.600)"
+                                />
 
-                                                        const whileHover = !disableMotion ? {
-                                                            scale: 1.03,
-                                                            backgroundColor: "teal.600"
-                                                        } : undefined;
+                                <Text
+                                    fontSize="sm"
+                                    fontWeight="bold"
+                                    color="whiteAlpha.900"
+                                    textShadow="0 1px 4px rgba(0,0,0,0.3)"
+                                >
+                                    {activeItem?.name ?? items[0]?.name}
+                                </Text>
+                            </MotionBox>
 
-                                                        return (
-                                                            <Box key={item.id}>
-                                                                <MotionBox
-                                                                    px={3}
-                                                                    py={2}
-                                                                    borderRadius="md"
-                                                                    bg={isGroupActive ? "teal.500" : "transparent"}
-                                                                    color={isGroupActive ? "white" : "gray.200"}
-                                                                    fontWeight="medium"
-                                                                    cursor="pointer"
-                                                                    whileHover={whileHover}
-                                                                    onClick={() => {
-                                                                        if (!hasChildren) {
-                                                                            store.setOpen(false);
-                                                                            setTimeout(() => {
-                                                                                handleClick(item.id);
-                                                                                setOpenIds([]);
-                                                                            }, 50);
-                                                                        } else {
-                                                                            setOpenIds((prev) =>
-                                                                                prev.includes(item.id)
-                                                                                    ? prev.filter((id) => id !== item.id)
-                                                                                    : [...prev, item.id]
-                                                                            );
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    {item.name}
-                                                                </MotionBox>
+                            <Drawer.Root placement="bottom" onExitComplete={() => setOpenIds([])}>
+                                <Drawer.Trigger asChild>
+                                    <IconButton
+                                        aria-label="Открыть меню"
+                                        size="sm"
+                                        variant="ghost"
+                                        color="white"
+                                        mr={2}
+                                    >
+                                        <FiMenu/>
+                                    </IconButton>
+                                </Drawer.Trigger>
 
-                                                                <AnimatePresence>
-                                                                    {hasChildren && openIds.includes(item.id) && (
-                                                                        <Box
-                                                                            overflowY="auto"
-                                                                            maxH="200px"
-                                                                            css={{
-                                                                                WebkitOverflowScrolling: "touch",
-                                                                                "&::-webkit-scrollbar": {
-                                                                                    width: "4px",
-                                                                                },
-                                                                                "&::-webkit-scrollbar-thumb": {
-                                                                                    background: "rgba(255,255,255,0.2)",
-                                                                                    borderRadius: "2px",
-                                                                                },
+                                <Portal>
+                                    <Drawer.Backdrop/>
+                                    <Drawer.Positioner>
+                                        <Drawer.Content 
+                                            bg="gray.800" 
+                                            borderTopRadius="lg"
+                                            maxH="85vh"
+                                        >
+                                            <Drawer.Header px={4} pt={4} pb={2}>
+                                                <HStack justify="space-between">
+                                                    <Drawer.Title fontSize="sm" color="whitesmoke">Разделы</Drawer.Title>
+                                                    <Drawer.CloseTrigger asChild>
+                                                        <CloseButton
+                                                            size="sm"
+                                                            color="white"
+                                                            onClick={() => handleSetOpenIds([])}
+                                                        />
+                                                    </Drawer.CloseTrigger>
+                                                </HStack>
+                                            </Drawer.Header>
+
+                                            <Drawer.Context>
+                                                {(store) => (
+                                                    <Drawer.Body
+                                                        px={4}
+                                                        pb={4}
+                                                        overflowY="auto"
+                                                        css={{
+                                                            WebkitOverflowScrolling: "touch",
+                                                            "&::-webkit-scrollbar": {
+                                                                width: "4px",
+                                                            },
+                                                            "&::-webkit-scrollbar-thumb": {
+                                                                background: "rgba(255,255,255,0.2)",
+                                                                borderRadius: "2px",
+                                                            },
+                                                        }}
+                                                    >
+                                                        <VStack align="stretch" gap={1}>
+                                                            {items.map((item) => {
+                                                                const hasChildren = !!item.children?.length;
+                                                                const isGroupActive =
+                                                                    activeId === item.id ||
+                                                                    item.children?.some((child) => child.id === activeId);
+
+                                                                const whileHover = !disableMotion ? {
+                                                                    scale: 1.03,
+                                                                    backgroundColor: "teal.600"
+                                                                } : undefined;
+
+                                                                return (
+                                                                    <Box key={item.id}>
+                                                                        <MotionBox
+                                                                            px={3}
+                                                                            py={2}
+                                                                            borderRadius="md"
+                                                                            bg={isGroupActive ? "teal.500" : "transparent"}
+                                                                            color={isGroupActive ? "white" : "gray.200"}
+                                                                            fontWeight="medium"
+                                                                            cursor="pointer"
+                                                                            whileHover={whileHover}
+                                                                            onClick={() => {
+                                                                                if (!hasChildren) {
+                                                                                    store.setOpen(false);
+                                                                                    setTimeout(() => {
+                                                                                        handleClick(item.id);
+                                                                                        setOpenIds([]);
+                                                                                    }, 50);
+                                                                                } else {
+                                                                                    setOpenIds((prev) =>
+                                                                                        prev.includes(item.id)
+                                                                                            ? prev.filter((id) => id !== item.id)
+                                                                                            : [...prev, item.id]
+                                                                                    );
+                                                                                }
                                                                             }}
                                                                         >
-                                                                            <VStack pl={4} mt={1} align="stretch"
-                                                                                    gap={1}>
-                                                                                {item.children!.map((child) => (
-                                                                                    <MotionBox
-                                                                                        key={child.id}
-                                                                                        px={3}
-                                                                                        py={2}
-                                                                                        borderRadius="md"
-                                                                                        bg={activeId === child.id ? "teal.400" : "gray.700"}
-                                                                                        color={activeId === child.id ? "white" : "gray.200"}
-                                                                                        fontWeight="medium"
-                                                                                        cursor="pointer"
-                                                                                        whileHover={whileHover}
-                                                                                        onClick={() => {
-                                                                                            store.setOpen(false);
-                                                                                            setTimeout(() => {
-                                                                                                handleClick(child.id);
-                                                                                                setOpenIds([]);
-                                                                                            }, 50);
-                                                                                        }}
-                                                                                    >
-                                                                                        {child.name}
-                                                                                    </MotionBox>
-                                                                                ))}
-                                                                             </VStack>
-                                                                        </Box>
-                                                                    )}
-                                                                </AnimatePresence>
-                                                            </Box>
-                                                        );
-                                                    })}
-                                                </VStack>
-                                            </Drawer.Body>
-                                        )}
-                                    </Drawer.Context>
-                                </Drawer.Content>
-                            </Drawer.Positioner>
-                        </Portal>
-                    </Drawer.Root>
+                                                                            {item.name}
+                                                                        </MotionBox>
+
+                                                                        <AnimatePresence>
+                                                                            {hasChildren && openIds.includes(item.id) && (
+                                                                                <Box
+                                                                                    overflowY="auto"
+                                                                                    maxH="200px"
+                                                                                    css={{
+                                                                                        WebkitOverflowScrolling: "touch",
+                                                                                        "&::-webkit-scrollbar": {
+                                                                                            width: "4px",
+                                                                                        },
+                                                                                        "&::-webkit-scrollbar-thumb": {
+                                                                                            background: "rgba(255,255,255,0.2)",
+                                                                                            borderRadius: "2px",
+                                                                                        },
+                                                                                    }}
+                                                                                >
+                                                                                    <VStack pl={4} mt={1} align="stretch"
+                                                                                            gap={1}>
+                                                                                        {item.children!.map((child) => (
+                                                                                            <MotionBox
+                                                                                                key={child.id}
+                                                                                                px={3}
+                                                                                                py={2}
+                                                                                                borderRadius="md"
+                                                                                                bg={activeId === child.id ? "teal.400" : "gray.700"}
+                                                                                                color={activeId === child.id ? "white" : "gray.200"}
+                                                                                                fontWeight="medium"
+                                                                                                cursor="pointer"
+                                                                                                whileHover={whileHover}
+                                                                                                onClick={() => {
+                                                                                                    store.setOpen(false);
+                                                                                                    setTimeout(() => {
+                                                                                                        handleClick(child.id);
+                                                                                                        setOpenIds([]);
+                                                                                                    }, 50);
+                                                                                                }}
+                                                                                            >
+                                                                                                {child.name}
+                                                                                            </MotionBox>
+                                                                                        ))}
+                                                                                     </VStack>
+                                                                                </Box>
+                                                                            )}
+                                                                        </AnimatePresence>
+                                                                    </Box>
+                                                                );
+                                                            })}
+                                                        </VStack>
+                                                    </Drawer.Body>
+                                                )}
+                                            </Drawer.Context>
+                                        </Drawer.Content>
+                                    </Drawer.Positioner>
+                                </Portal>
+                            </Drawer.Root>
+                        </>
+                    )}
                 </Box>
 
                 <Box
                     display={{base: "none", md: "flex"}}
                     justifyContent="center"
-                    flexWrap="wrap"
-                    gap={4}
-                    px={4}
+                    flexWrap={isFixed ? "nowrap" : "wrap"}
+                    overflowX={isFixed ? "auto" : "visible"}
+                    gap={isFixed ? 0 : 4}
+                    px={isFixed ? 0 : 4}
                     maxWidth="100%"
                     mx="auto"
+                    css={isFixed ? {
+                        scrollbarWidth: "thin",
+                        scrollbarColor: "rgba(255,255,255,0.2) transparent",
+                        "&::-webkit-scrollbar": { height: "4px" },
+                        "&::-webkit-scrollbar-thumb": {
+                            background: "rgba(255,255,255,0.2)",
+                            borderRadius: "2px"
+                        },
+                    } : {}}
                 >
                     {items.map((item) => (
                         <NavItem
