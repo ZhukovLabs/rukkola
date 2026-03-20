@@ -40,5 +40,27 @@ export async function connectToDatabase() {
         throw e;
     }
 
+    mongoose.connection.on('disconnected', () => {
+        console.log('MongoDB disconnected. Reconnecting...');
+        cached.conn = null;
+
+        const reconnect = async () => {
+            while (true) {
+                try {
+                    await mongoose.connect(MONGODB_URI, {
+                        bufferCommands: false,
+                    });
+                    console.log('MongoDB reconnected');
+                    break;
+                } catch (e) {
+                    console.log('Reconnection failed. Retrying in 5s...');
+                    await new Promise((resolve) => setTimeout(resolve, 5000));
+                }
+            }
+        };
+
+        reconnect();
+    });
+
     return cached.conn;
 }
