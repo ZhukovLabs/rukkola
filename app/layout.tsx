@@ -1,5 +1,6 @@
 import type {Metadata, Viewport} from "next";
 import {Geist, Geist_Mono} from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import {Providers} from "@/components/providers";
 
@@ -320,6 +321,8 @@ export default function RootLayout({
             <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
             <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
             <link rel="dns-prefetch" href="https://rukkola-production.up.railway.app" />
+            <link rel="preconnect" href="https://mc.yandex.ru" />
+            <link rel="dns-prefetch" href="https://mc.yandex.ru" />
             
             <meta name="geo.region" content="BY-GO" />
             <meta name="geo.placename" content="Гомель" />
@@ -372,6 +375,7 @@ export default function RootLayout({
             <link rel="alternate" type="application/rss+xml" title="Руккола RSS" href="/rss.xml" />
             
             <link rel="canonical" href={BASE_URL} />
+            <link rel="preload" as="image" href="/og-image.webp" />
             
             {schemas.map((schema, index) => (
                 <script
@@ -381,16 +385,26 @@ export default function RootLayout({
                 />
             ))}
 
-            <script
+            <Script
+                id="ym-tag"
+                src="https://mc.yandex.ru/metrika/tag.js?id=106114023"
+                strategy="lazyOnload"
+            />
+            <Script
+                id="ym-init"
                 dangerouslySetInnerHTML={{
                     __html: `
-                    (function(m,e,t,r,i,k,a){
-                        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-                        m[i].l=1*new Date();
-                        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-                        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
-                    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=106114023', 'ym');
-                    ym(106114023, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", accurateTrackBounce:true, trackLinks:true, params: {}});
+                    window.addEventListener('load', function() {
+                        if (window.ym) {
+                            ym(106114023, 'init', {
+                                clickmap: true,
+                                ecommerce: "dataLayer",
+                                accurateTrackBounce: true,
+                                trackLinks: true,
+                                params: {}
+                            });
+                        }
+                    }, { once: true });
                     `,
                 }}
             />

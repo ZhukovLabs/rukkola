@@ -62,6 +62,7 @@ export const MenuPage = async ({searchParams}: MenuPageProps) => {
                     height={200}
                     style={{width: "100%", height: "auto", objectFit: "contain"}}
                     priority
+                    fetchPriority="high"
                 />
             </Box>
 
