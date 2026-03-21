@@ -89,28 +89,40 @@ export default function CategoriesTable({categories: initialCategories}: Props) 
     const toggleMutation = useMutation({
         mutationFn: ({id, field}: { id: string; field: 'isMenuItem' | 'showGroupTitle' }) =>
             toggleCategoryField(id, field),
-        onSuccess: () => {
+        onSuccess: (result) => {
             queryClient.invalidateQueries({queryKey: ['categories']})
-            toast.showSuccess('Настройки категории обновлены')
+            if (result.success) {
+                toast.showSuccess('Настройки категории обновлены')
+            } else {
+                toast.showError(result.message || 'Не удалось обновить настройки категории')
+            }
         },
         onError: () => toast.showError('Не удалось обновить настройки категории'),
     })
 
     const moveMutation = useMutation({
         mutationFn: ({id, dir}: { id: string; dir: 'up' | 'down' }) => moveCategory(id, dir),
-        onSuccess: () => {
+        onSuccess: (result) => {
             queryClient.invalidateQueries({queryKey: ['categories']})
-            toast.showSuccess('Позиция категории изменена')
+            if (result.success) {
+                toast.showSuccess('Позиция категории изменена')
+            } else {
+                toast.showError(result.message || 'Не удалось изменить позицию категории')
+            }
         },
         onError: () => toast.showError('Не удалось изменить позицию категории'),
     })
 
     const updateNameMutation = useMutation({
         mutationFn: ({id, name}: { id: string; name: string }) => updateCategoryName(id, name),
-        onSuccess: () => {
+        onSuccess: (result) => {
             setEditingId(null)
             queryClient.invalidateQueries({queryKey: ['categories']})
-            toast.showSuccess('Название категории обновлено')
+            if (result.success) {
+                toast.showSuccess('Название категории обновлено')
+            } else {
+                toast.showError(result.message || 'Не удалось обновить название')
+            }
         },
         onError: () => {
             setEditingId(null)
@@ -120,27 +132,39 @@ export default function CategoriesTable({categories: initialCategories}: Props) 
 
     const deleteMutation = useMutation({
         mutationFn: deleteCategory,
-        onSuccess: () => {
+        onSuccess: (result) => {
             queryClient.invalidateQueries({queryKey: ['categories']})
-            toast.showSuccess('Категория удалена')
+            if (result.success) {
+                toast.showSuccess('Категория удалена')
+            } else {
+                toast.showError(result.message || 'Не удалось удалить категорию')
+            }
         },
         onError: () => toast.showError('Не удалось удалить категорию'),
     })
 
     const markAlcoholMutation = useMutation({
         mutationFn: (categoryId: string) => markCategoryProductsAlcohol(categoryId),
-        onSuccess: () => {
+        onSuccess: (result) => {
             queryClient.invalidateQueries({queryKey: ['products']})
-            toast.showSuccess('Продукты помечены как алкогольные')
+            if (result.success) {
+                toast.showSuccess(result.message || 'Продукты помечены как алкогольные')
+            } else {
+                toast.showError(result.message || 'Не удалось пометить продукты')
+            }
         },
         onError: () => toast.showError('Не удалось пометить продукты'),
     })
 
     const markNonAlcoholMutation = useMutation({
         mutationFn: (categoryId: string) => markCategoryProductsNonAlcohol(categoryId),
-        onSuccess: () => {
+        onSuccess: (result) => {
             queryClient.invalidateQueries({queryKey: ['products']})
-            toast.showSuccess('Продукты помечены как безалкогольные')
+            if (result.success) {
+                toast.showSuccess(result.message || 'Продукты помечены как безалкогольные')
+            } else {
+                toast.showError(result.message || 'Не удалось пометить продукты')
+            }
         },
         onError: () => toast.showError('Не удалось пометить продукты'),
     })

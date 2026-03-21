@@ -31,7 +31,7 @@ export const CreateProductModal = () => {
 
     const handleSubmit = async (values: Omit<ProductFormValues, 'imageFile'>, file?: File) => {
         try {
-            const {data: {id} = {}} = await createProduct({
+            const result = await createProduct({
                 name: values.name,
                 description: values.description!,
                 prices: values.prices,
@@ -40,12 +40,22 @@ export const CreateProductModal = () => {
                 isAlcohol: values.isAlcohol
             })
 
+            if (!result.success) {
+                toast.showError(result.message || 'Ошибка при создании товара')
+                throw new Error(result.message || 'Ошибка при создании товара')
+            }
+
+            const id = result.data?.id
             if (id && file) await uploadImageToApi(id, file);
 
             queryClient.invalidateQueries({queryKey: ['products']});
             toast.showSuccess('Товар успешно создан')
         } catch (err) {
-            toast.showError(err instanceof Error ? err.message : 'Ошибка при создании товара')
+            if (!err || typeof err === 'object' && 'message' in err) {
+                // Error already shown via toast above
+            } else {
+                toast.showError('Ошибка при создании товара')
+            }
             throw err
         }
     }

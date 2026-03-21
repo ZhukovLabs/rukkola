@@ -64,7 +64,7 @@ export const LoginPage = () => {
         } catch (error) {
             showAlert(error instanceof Error ? error.message : defaultErrorMessage, "error");
         }
-    }, [router, showAlert, successMessage, defaultErrorMessage]);
+    }, [router, showAlert]);
 
     if (status === "loading") {
         return (

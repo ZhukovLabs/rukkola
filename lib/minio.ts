@@ -1,21 +1,23 @@
 import * as Minio from 'minio'
 
-const getMinioConfig = () => ({
-    endPoint: process.env.MINIO_ENDPOINT || 'localhost',
-    port: parseInt(process.env.MINIO_PORT || '9000', 10),
-    accessKey: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-    secretKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
-    useSSL: process.env.MINIO_USE_SSL === 'true',
-})
+const MINIO_ENDPOINT = process.env.MINIO_ENDPOINT
+const MINIO_PORT = process.env.MINIO_PORT
+const MINIO_ACCESS_KEY = process.env.MINIO_ACCESS_KEY
+const MINIO_SECRET_KEY = process.env.MINIO_SECRET_KEY
+const MINIO_USE_SSL = process.env.MINIO_USE_SSL === 'true'
 
-const config = getMinioConfig()
+if (!MINIO_ENDPOINT || !MINIO_ACCESS_KEY || !MINIO_SECRET_KEY) {
+    throw new Error('MINIO_ENDPOINT, MINIO_ACCESS_KEY, and MINIO_SECRET_KEY must be set in environment variables')
+}
+
+const port = MINIO_PORT ? parseInt(MINIO_PORT, 10) : 9000
 
 export const minioClient = new Minio.Client({
-    endPoint: config.endPoint,
-    port: config.port,
-    accessKey: config.accessKey,
-    secretKey: config.secretKey,
-    useSSL: config.useSSL,
+    endPoint: MINIO_ENDPOINT,
+    port: port,
+    accessKey: MINIO_ACCESS_KEY,
+    secretKey: MINIO_SECRET_KEY,
+    useSSL: MINIO_USE_SSL,
 })
 
 export const BUCKET_NAME = process.env.MINIO_BUCKET || 'rukkola'

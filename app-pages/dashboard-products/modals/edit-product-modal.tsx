@@ -35,7 +35,7 @@ export const EditProductModal = () => {
 
     const handleSubmit = async (values: Omit<ProductFormValues, 'imageFile'>, file?: File) => {
         try {
-            await updateProductData(productId, {
+            const result = await updateProductData(productId, {
                 name: values.name,
                 description: values.description ?? '',
                 prices: values.prices,
@@ -44,13 +44,22 @@ export const EditProductModal = () => {
                 isAlcohol: values.isAlcohol,
             })
 
+            if (!result.success) {
+                toast.showError(result.message || 'Ошибка при обновлении товара')
+                throw new Error(result.message || 'Ошибка при обновлении товара')
+            }
+
             if (file) await uploadImageToApi(productId, file);
 
             queryClient.invalidateQueries({queryKey: ['products']});
             queryClient.invalidateQueries({queryKey: ['product', productId]});
             toast.showSuccess('Товар успешно обновлён')
         } catch (err) {
-            toast.showError(err instanceof Error ? err.message : 'Ошибка при обновлении товара')
+            if (!err || typeof err === 'object' && 'message' in err) {
+                // Error already shown via toast above
+            } else {
+                toast.showError('Ошибка при обновлении товара')
+            }
             throw err
         }
     }

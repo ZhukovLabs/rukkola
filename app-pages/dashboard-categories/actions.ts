@@ -2,81 +2,76 @@
 
 import {connectToDatabase} from '@/lib/mongoose'
 import {Category} from '@/models/category'
-import {revalidatePath, revalidateTag} from "next/cache"
+import {revalidatePath} from "next/cache"
 import {checkAuth} from '@/lib/auth/check-auth'
+import {revalidateMenuCache} from '@/lib/cache'
 import {ActionResponse} from "@/types";
 import {ObjectId} from "mongodb";
 import {Product} from "@/models/product";
-import {CACHE_TAGS} from '@/app-pages/menu/config';
-
-function revalidateMenuCache() {
-    revalidatePath('/', 'layout');
-    const tags = [
-        CACHE_TAGS.CATEGORIES,
-        CACHE_TAGS.LUNCHES,
-        CACHE_TAGS.MENU_WITH_ALCOHOL,
-        CACHE_TAGS.MENU_NO_ALCOHOL,
-        CACHE_TAGS.PRODUCTS_WITH_ALCOHOL,
-        CACHE_TAGS.PRODUCTS_NO_ALCOHOL,
-    ];
-    for (const tag of tags) {
-        revalidateTag(tag, '');
-    }
-}
 
 export async function toggleCategoryField(id: string, field: 'isMenuItem' | 'showGroupTitle'): Promise<ActionResponse> {
-    const user = await checkAuth();
-    if (!user) {
-        return {success: false, message: 'Необходима авторизация'};
+    try {
+        const user = await checkAuth();
+        if (!user) {
+            return {success: false, message: 'Необходима авторизация'};
+        }
+
+        await connectToDatabase()
+        const category = await Category.findById(id)
+        if (!category) return {success: false, message: 'Категория не найдена'}
+
+        category[field] = !category[field]
+        await category.save()
+
+        revalidateMenuCache();
+        revalidatePath('/dashboard/categories')
+        
+        return {success: true, message: 'Категория обновлена'}
+    } catch (error) {
+        console.error('toggleCategoryField error:', error);
+        return {success: false, message: 'Ошибка при обновлении категории'};
     }
-
-    await connectToDatabase()
-    const category = await Category.findById(id)
-    if (!category) return {success: false, message: 'Категория не найдена'}
-
-    category[field] = !category[field]
-    await category.save()
-
-    revalidateMenuCache();
-    revalidatePath('/dashboard/categories')
-    
-    return {success: true, message: 'Категория обновлена'}
 }
 
 export async function moveCategory(id: string, direction: 'up' | 'down'): Promise<ActionResponse> {
-    const user = await checkAuth();
-    if (!user) {
-        return {success: false, message: 'Необходима авторизация'};
+    try {
+        const user = await checkAuth();
+        if (!user) {
+            return {success: false, message: 'Необходима авторизация'};
+        }
+
+        await connectToDatabase()
+
+        const current = await Category.findById(id)
+        if (!current) return {success: false, message: 'Категория не найдена'}
+
+        const siblings = await Category.find({parent: current.parent})
+            .sort({order: 1})
+            .lean()
+
+        const index = siblings.findIndex((c) => c._id.toString() === current._id.toString())
+        const swapIndex = direction === 'up' ? index - 1 : index + 1
+
+        if (swapIndex < 0 || swapIndex >= siblings.length) return {success: false, message: 'Невозможно переместить'}
+
+        const target = siblings[swapIndex]
+
+        const temp = current.order
+        await Category.updateOne({_id: current._id}, {$set: {order: -1}})
+
+        await Category.updateOne({_id: target._id}, {$set: {order: temp}})
+        await Category.updateOne({_id: current._id}, {$set: {order: target.order}})
+
+        await adjustChildrenOrders(current._id.toString(), temp, direction)
+
+        revalidateMenuCache();
+        revalidatePath('/dashboard/categories')
+        
+        return {success: true, message: 'Категория перемещена'}
+    } catch (error) {
+        console.error('moveCategory error:', error);
+        return {success: false, message: 'Ошибка при перемещении категории'};
     }
-
-    await connectToDatabase()
-
-    const current = await Category.findById(id)
-    if (!current) return {success: false, message: 'Категория не найдена'}
-
-    const siblings = await Category.find({parent: current.parent})
-        .sort({order: 1})
-        .lean()
-
-    const index = siblings.findIndex((c) => c._id.toString() === current._id.toString())
-    const swapIndex = direction === 'up' ? index - 1 : index + 1
-
-    if (swapIndex < 0 || swapIndex >= siblings.length) return {success: false, message: 'Невозможно переместить'}
-
-    const target = siblings[swapIndex]
-
-    const temp = current.order
-    await Category.updateOne({_id: current._id}, {$set: {order: -1}})
-
-    await Category.updateOne({_id: target._id}, {$set: {order: temp}})
-    await Category.updateOne({_id: current._id}, {$set: {order: target.order}})
-
-    await adjustChildrenOrders(current._id.toString(), temp, direction)
-
-    revalidateMenuCache();
-    revalidatePath('/dashboard/categories')
-    
-    return {success: true, message: 'Категория перемещена'}
 }
 
 async function adjustChildrenOrders(parentId: string, baseOrder: number, direction: 'up' | 'down') {
@@ -95,46 +90,56 @@ async function adjustChildrenOrders(parentId: string, baseOrder: number, directi
 }
 
 export async function updateCategoryName(id: string, name: string): Promise<ActionResponse> {
-    const user = await checkAuth();
-    if (!user) {
-        return {success: false, message: 'Необходима авторизация'};
-    }
+    try {
+        const user = await checkAuth();
+        if (!user) {
+            return {success: false, message: 'Необходима авторизация'};
+        }
 
-    await connectToDatabase()
-    const category = await Category.findById(id)
-    if (!category) return {success: false, message: 'Категория не найдена'}
-    
-    category.name = name
-    await category.save()
-    
-    revalidateMenuCache();
-    revalidatePath('/dashboard/categories')
-    
-    return {success: true, message: 'Название обновлено'}
+        await connectToDatabase()
+        const category = await Category.findById(id)
+        if (!category) return {success: false, message: 'Категория не найдена'}
+        
+        category.name = name
+        await category.save()
+        
+        revalidateMenuCache();
+        revalidatePath('/dashboard/categories')
+        
+        return {success: true, message: 'Название обновлено'}
+    } catch (error) {
+        console.error('updateCategoryName error:', error);
+        return {success: false, message: 'Ошибка при обновлении названия'};
+    }
 }
 
 export async function deleteCategory(id: string): Promise<ActionResponse> {
-    const user = await checkAuth();
-    if (!user) {
-        return {success: false, message: 'Необходима авторизация'};
-    }
-
-    await connectToDatabase()
-
-    const deleteRecursive = async (categoryId: string) => {
-        const children = await Category.find({parent: categoryId})
-        for (const child of children) {
-            await deleteRecursive(child._id.toString())
+    try {
+        const user = await checkAuth();
+        if (!user) {
+            return {success: false, message: 'Необходима авторизация'};
         }
-        await Category.findByIdAndDelete(categoryId)
-    }
 
-    await deleteRecursive(id)
-    
-    revalidateMenuCache();
-    revalidatePath('/dashboard/categories')
-    
-    return {success: true, message: 'Категория удалена'}
+        await connectToDatabase()
+
+        const deleteRecursive = async (categoryId: string) => {
+            const children = await Category.find({parent: categoryId})
+            for (const child of children) {
+                await deleteRecursive(child._id.toString())
+            }
+            await Category.findByIdAndDelete(categoryId)
+        }
+
+        await deleteRecursive(id)
+        
+        revalidateMenuCache();
+        revalidatePath('/dashboard/categories')
+        
+        return {success: true, message: 'Категория удалена'}
+    } catch (error) {
+        console.error('deleteCategory error:', error);
+        return {success: false, message: 'Ошибка при удалении категории'};
+    }
 }
 
 export async function createCategory({
@@ -148,36 +153,41 @@ export async function createCategory({
     isMenuItem?: boolean
     showGroupTitle?: boolean
 }): Promise<ActionResponse<{ id: string }>> {
-    const user = await checkAuth();
-    if (!user) {
-        return {success: false, message: 'Необходима авторизация'};
+    try {
+        const user = await checkAuth();
+        if (!user) {
+            return {success: false, message: 'Необходима авторизация'};
+        }
+
+        await connectToDatabase()
+
+        const parent = parentId ? parentId : null
+
+        const top = await Category.find().sort({order: -1}).limit(1).lean()
+        const nextOrder = top && top.length ? top[0].order + 1 : 1
+
+        const cat = new Category({
+            name,
+            parent: parent,
+            order: nextOrder,
+            isMenuItem,
+            showGroupTitle,
+        });
+
+        await cat.save();
+        
+        revalidateMenuCache();
+        revalidatePath('/dashboard/categories');
+
+        return {
+            success: true,
+            message: 'Категория создана',
+            data: {id: cat._id.toString()},
+        };
+    } catch (error) {
+        console.error('createCategory error:', error);
+        return {success: false, message: 'Ошибка при создании категории'};
     }
-
-    await connectToDatabase()
-
-    const parent = parentId ? parentId : null
-
-    const top = await Category.find().sort({order: -1}).limit(1).lean()
-    const nextOrder = top && top.length ? top[0].order + 1 : 1
-
-    const cat = new Category({
-        name,
-        parent: parent,
-        order: nextOrder,
-        isMenuItem,
-        showGroupTitle,
-    });
-
-    await cat.save();
-    
-    revalidateMenuCache();
-    revalidatePath('/dashboard/categories');
-
-    return {
-        success: true,
-        message: 'Категория создана',
-        data: {id: cat._id.toString()},
-    };
 }
 
 

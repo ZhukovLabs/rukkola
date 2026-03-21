@@ -29,6 +29,8 @@ export const useProductsTable = () => {
             queryClient.invalidateQueries({queryKey: ['products']})
             if (result.success && result.data) {
                 toast.showSuccess(result.data.hidden ? 'Товар скрыт' : 'Товар отображается')
+            } else {
+                toast.showError(result.message || 'Не удалось изменить видимость товара')
             }
         },
         onError: () => toast.showError('Не удалось изменить видимость товара'),
@@ -42,6 +44,8 @@ export const useProductsTable = () => {
             queryClient.invalidateQueries({queryKey: ['products']})
             if (result.success && result.data) {
                 toast.showSuccess(result.data.isAlcohol ? 'Товар помечен как алкогольный' : 'Товар помечен как безалкогольный')
+            } else {
+                toast.showError(result.message || 'Не удалось изменить статус алкоголя')
             }
         },
         onError: () => toast.showError('Не удалось изменить статус алкоголя'),

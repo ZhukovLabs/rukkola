@@ -15,47 +15,23 @@ type AuthCacheEntry = {
 
 type PendingRequest = {
     promise: Promise<CheckAuthUser | null>;
-    createdAt: number;
 };
 
 const authCache = new Map<string, AuthCacheEntry>();
-const AUTH_CACHE_TTL = 30 * 1000;
-const PENDING_REQUEST_TTL = 60_000;
 const pendingRequests = new Map<string, PendingRequest>();
 
-let cleanupInterval: ReturnType<typeof setInterval> | null = null;
+const AUTH_CACHE_TTL = 30 * 1000;
 
-function startCleanup() {
-    if (cleanupInterval) return;
-    cleanupInterval = setInterval(() => {
-        const now = Date.now();
-        for (const [key, entry] of authCache.entries()) {
-            if (entry.expiresAt < now) {
-                authCache.delete(key);
-            }
+function cleanExpiredCache() {
+    const now = Date.now();
+    for (const [key, entry] of authCache.entries()) {
+        if (entry.expiresAt < now) {
+            authCache.delete(key);
         }
-        for (const [key, pending] of pendingRequests.entries()) {
-            if (pending.createdAt < now - PENDING_REQUEST_TTL) {
-                pendingRequests.delete(key);
-            }
-        }
-    }, 60_000);
-}
-
-function stopCleanup() {
-    if (cleanupInterval) {
-        clearInterval(cleanupInterval);
-        cleanupInterval = null;
     }
 }
 
-if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'test') {
-    startCleanup();
-    
-    if (typeof process !== 'undefined' && process.on) {
-        process.on('beforeExit', stopCleanup);
-    }
-}
+setInterval(cleanExpiredCache, 60_000);
 
 export const checkAuth = async (): Promise<CheckAuthUser | null> => {
     const session = await auth();
@@ -66,15 +42,15 @@ export const checkAuth = async (): Promise<CheckAuthUser | null> => {
 
     const {id, role: sessionRole, sessionToken} = session.user;
 
+    const cacheKey = `${sessionToken}:${id}`;
     const now = Date.now();
-    const cached = authCache.get(sessionToken);
-
+    
+    const cached = authCache.get(cacheKey);
     if (cached && cached.expiresAt > now && cached.user.id === id && cached.user.role === sessionRole) {
         return cached.user;
     }
 
-    const pendingKey = `${sessionToken}:${id}`;
-    const existingPending = pendingRequests.get(pendingKey);
+    const existingPending = pendingRequests.get(cacheKey);
     if (existingPending) {
         return existingPending.promise;
     }
@@ -89,9 +65,9 @@ export const checkAuth = async (): Promise<CheckAuthUser | null> => {
                 .maxTimeMS(5000);
 
             if (!sessionRecord || sessionRecord.expiresAt < new Date()) {
-                authCache.delete(sessionToken);
+                authCache.delete(cacheKey);
                 await Session.deleteOne({token: sessionToken}).catch(() => {});
-                await signOut().catch(() => {});
+                signOut().catch(() => {});
                 return null;
             }
 
@@ -101,13 +77,13 @@ export const checkAuth = async (): Promise<CheckAuthUser | null> => {
                 .maxTimeMS(5000);
 
             if (!user || !user.isActive || user.role !== sessionRole) {
-                authCache.delete(sessionToken);
+                authCache.delete(cacheKey);
                 await Session.deleteOne({token: sessionToken}).catch(() => {});
-                await signOut().catch(() => {});
+                signOut().catch(() => {});
                 return null;
             }
 
-            authCache.set(sessionToken, {
+            authCache.set(cacheKey, {
                 user: {id, role: user.role},
                 expiresAt: now + AUTH_CACHE_TTL,
             });
@@ -117,11 +93,11 @@ export const checkAuth = async (): Promise<CheckAuthUser | null> => {
                 role: user.role,
             };
         } finally {
-            pendingRequests.delete(pendingKey);
+            pendingRequests.delete(cacheKey);
         }
     })();
 
-    pendingRequests.set(pendingKey, { promise: requestPromise, createdAt: now });
+    pendingRequests.set(cacheKey, { promise: requestPromise });
     return requestPromise;
 };
 

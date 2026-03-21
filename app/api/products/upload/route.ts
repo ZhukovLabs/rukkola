@@ -6,8 +6,7 @@ import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongoose';
 import { uploadFile, deleteFile } from '@/lib/minio';
 import { invalidateImageCache } from '../image/[filename]/route';
-import { revalidatePath, revalidateTag } from 'next/cache';
-import { CACHE_TAGS } from '@/app-pages/menu/config';
+import { revalidateMenuCache } from '@/lib/cache';
 
 const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -70,10 +69,7 @@ export const POST = async (req: NextRequest) => {
         product.image = `/api/products/image/${encodeURIComponent(fileName)}`;
         await product.save();
 
-        revalidatePath('/', 'layout');
-        for (const tag of Object.values(CACHE_TAGS)) {
-            revalidateTag(tag, '');
-        }
+        revalidateMenuCache();
 
         return NextResponse.json({ image: product.image });
     } catch (err) {

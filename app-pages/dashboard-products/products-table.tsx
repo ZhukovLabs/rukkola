@@ -16,7 +16,6 @@ import {ProductRow} from './product-row';
 import {SkeletonRows} from './skeleton-rows';
 import {useProductsTable} from './hooks/use-products-table';
 import {useConfirmationDialog} from '@/hooks/use-confirmation-dialog';
-import {useToast} from '@/components/toast-container';
 
 type Column = {
     key: string;
@@ -34,7 +33,6 @@ const COLUMNS: Column[] = [
 ];
 
 export const ProductsTable = memo(() => {
-    const toast = useToast();
     const {
         data: {products},
         isFetching,
@@ -49,10 +47,7 @@ export const ProductsTable = memo(() => {
 
     const {openDialog, ConfirmationDialog} = useConfirmationDialog({
         onConfirm: (id: string) => {
-            deleteMutation.mutate(id, {
-                onSuccess: () => toast.showSuccess('Товар удалён'),
-                onError: () => toast.showError('Не удалось удалить товар'),
-            })
+            deleteMutation.mutate(id)
         }
     });
 

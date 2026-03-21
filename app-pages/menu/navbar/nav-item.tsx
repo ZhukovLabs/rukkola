@@ -61,7 +61,11 @@ export const NavItem = ({
     const handleTriggerClick = useCallback(
         (e: React.MouseEvent) => {
             e.stopPropagation();
-            hasChildren ? setIsOpen(v => !v) : onClick(id);
+            if (hasChildren) {
+                setIsOpen(v => !v);
+            } else {
+                onClick(id);
+            }
         },
         [hasChildren, id, onClick]
     );

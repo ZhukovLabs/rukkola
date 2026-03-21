@@ -1,10 +1,11 @@
 'use server'
 
 import {ObjectId} from 'mongodb'
-import {revalidatePath, revalidateTag} from 'next/cache'
+import {revalidatePath} from 'next/cache'
 
 import {connectToDatabase} from '@/lib/mongoose'
 import {checkAuth} from '@/lib/auth/check-auth'
+import {revalidateMenuCache} from '@/lib/cache'
 
 import {Product, PortionPrice, ProductType} from '@/models/product'
 import {Category, CategoryType} from '@/models/category'
@@ -12,7 +13,6 @@ import {Category, CategoryType} from '@/models/category'
 import {productSchema} from './validation'
 import {ActionResponse} from "@/types";
 import {Types} from "mongoose";
-import {CACHE_TAGS} from '@/app-pages/menu/config';
 
 export async function getProducts(
     page = 1,
@@ -155,149 +155,154 @@ export async function getProducts(
 }
 
 export async function getProductById(id: string): Promise<ActionResponse<ProductType>> {
-    const user = await checkAuth();
-    if (!user) {
-        return {success: false, message: 'Необходима авторизация'};
-    }
-    await connectToDatabase();
-
-    const result = await Product.aggregate([
-        {
-            $match: {_id: new Types.ObjectId(id)},
-        },
-        {
-            $lookup: {
-                from: 'categories',
-                localField: 'categories',
-                foreignField: '_id',
-                as: 'categories',
-                pipeline: [
-                    {
-                        $project: {
-                            _id: 0,
-                            id: {$toString: '$_id'},
-                            name: 1,
-                        },
-                    },
-                ],
-            },
-        }, {
-            $project: {
-                _id: 0,
-                id: {$toString: '$_id'},
-                name: 1,
-                description: 1,
-                prices: 1,
-                image: 1,
-                categories: 1,
-                hidden: 1,
-                isAlcohol: 1
-            }
+    try {
+        const user = await checkAuth();
+        if (!user) {
+            return {success: false, message: 'Необходима авторизация'};
         }
-    ]);
+        await connectToDatabase();
 
-    const product = result[0] || null;
+        const result = await Product.aggregate([
+            {
+                $match: {_id: new Types.ObjectId(id)},
+            },
+            {
+                $lookup: {
+                    from: 'categories',
+                    localField: 'categories',
+                    foreignField: '_id',
+                    as: 'categories',
+                    pipeline: [
+                        {
+                            $project: {
+                                _id: 0,
+                                id: {$toString: '$_id'},
+                                name: 1,
+                            },
+                        },
+                    ],
+                },
+            }, {
+                $project: {
+                    _id: 0,
+                    id: {$toString: '$_id'},
+                    name: 1,
+                    description: 1,
+                    prices: 1,
+                    image: 1,
+                    categories: 1,
+                    hidden: 1,
+                    isAlcohol: 1
+                }
+            }
+        ]);
 
-    if (!product) return {success: false, message: 'Товар не найден'};
+        const product = result[0] || null;
 
-    return {
-        success: true,
-        message: 'Товар найден',
-        data: JSON.parse(JSON.stringify(product)),
-    }
-}
+        if (!product) return {success: false, message: 'Товар не найден'};
 
-function revalidateMenuCache() {
-    revalidatePath('/', 'layout');
-    const tags = [
-        CACHE_TAGS.CATEGORIES,
-        CACHE_TAGS.LUNCHES,
-        CACHE_TAGS.MENU_WITH_ALCOHOL,
-        CACHE_TAGS.MENU_NO_ALCOHOL,
-        CACHE_TAGS.PRODUCTS_WITH_ALCOHOL,
-        CACHE_TAGS.PRODUCTS_NO_ALCOHOL,
-    ];
-    for (const tag of tags) {
-        revalidateTag(tag, '');
+        return {
+            success: true,
+            message: 'Товар найден',
+            data: JSON.parse(JSON.stringify(product)),
+        }
+    } catch (error) {
+        console.error('getProductById error:', error);
+        return {success: false, message: 'Ошибка при получении товара'};
     }
 }
 
 export async function toggleProductVisibility(
     productId: string,
 ): Promise<ActionResponse<{ id: string; hidden: boolean }>> {
-    const user = await checkAuth();
-    if (!user) {
-        return {success: false, message: 'Необходима авторизация'};
-    }
-    await connectToDatabase();
+    try {
+        const user = await checkAuth();
+        if (!user) {
+            return {success: false, message: 'Необходима авторизация'};
+        }
+        await connectToDatabase();
 
-    const product = await Product.findById(productId)
-    if (!product) return {success: false, message: 'Товар не найден'};
+        const product = await Product.findById(productId)
+        if (!product) return {success: false, message: 'Товар не найден'};
 
-    product.hidden = !product.hidden
-    await product.save()
+        product.hidden = !product.hidden
+        await product.save()
 
-    revalidateMenuCache();
-    revalidatePath('/dashboard/products');
+        revalidateMenuCache();
+        revalidatePath('/dashboard/products');
 
-    return {
-        success: true,
-        message: product.hidden ? 'Товар скрыт' : 'Товар отображается',
-        data: {
-            id: productId,
-            hidden: product.hidden,
-        },
+        return {
+            success: true,
+            message: product.hidden ? 'Товар скрыт' : 'Товар отображается',
+            data: {
+                id: productId,
+                hidden: product.hidden,
+            },
+        }
+    } catch (error) {
+        console.error('toggleProductVisibility error:', error);
+        return {success: false, message: 'Ошибка при изменении видимости товара'};
     }
 }
 
 export async function toggleProductAlcohol(
     productId: string,
 ): Promise<ActionResponse<{ id: string; isAlcohol: boolean }>> {
-    const user = await checkAuth();
-    if (!user) {
-        return {success: false, message: 'Необходима авторизация'};
-    }
-    await connectToDatabase();
+    try {
+        const user = await checkAuth();
+        if (!user) {
+            return {success: false, message: 'Необходима авторизация'};
+        }
+        await connectToDatabase();
 
-    const product = await Product.findById(productId)
-    if (!product) return {success: false, message: 'Товар не найден'};
+        const product = await Product.findById(productId)
+        if (!product) return {success: false, message: 'Товар не найден'};
 
-    product.isAlcohol = !product.isAlcohol;
-    await product.save();
+        product.isAlcohol = !product.isAlcohol;
+        await product.save();
 
-    revalidateMenuCache();
-    revalidatePath('/dashboard/products');
+        revalidateMenuCache();
+        revalidatePath('/dashboard/products');
 
-    return {
-        success: true,
-        message: product.isAlcohol ? 'Товар помечен как алкогольный' : 'Товар помечен как безалкогольный',
-        data: {
-            id: productId,
-            isAlcohol: product.isAlcohol,
-        },
+        return {
+            success: true,
+            message: product.isAlcohol ? 'Товар помечен как алкогольный' : 'Товар помечен как безалкогольный',
+            data: {
+                id: productId,
+                isAlcohol: product.isAlcohol,
+            },
+        }
+    } catch (error) {
+        console.error('toggleProductAlcohol error:', error);
+        return {success: false, message: 'Ошибка при изменении статуса алкоголя'};
     }
 }
 
 export async function deleteProduct(productId: string): Promise<ActionResponse<{ id: string }>> {
-    const user = await checkAuth();
-    if (!user) {
-        return {success: false, message: 'Необходима авторизация'};
+    try {
+        const user = await checkAuth();
+        if (!user) {
+            return {success: false, message: 'Необходима авторизация'};
+        }
+        await connectToDatabase();
+
+        const product = await Product.findById(productId);
+        if (!product) return {success: false, message: 'Товар не найден'};
+
+        await product.deleteOne();
+
+        revalidateMenuCache();
+        revalidatePath('/dashboard/products');
+
+        return {
+            success: true,
+            message: 'Товар удалён',
+            data: {id: productId},
+        };
+    } catch (error) {
+        console.error('deleteProduct error:', error);
+        return {success: false, message: 'Ошибка при удалении товара'};
     }
-    await connectToDatabase();
-
-    const product = await Product.findById(productId);
-    if (!product) return {success: false, message: 'Товар не найден'};
-
-    await product.deleteOne();
-
-    revalidateMenuCache();
-    revalidatePath('/dashboard/products');
-
-    return {
-        success: true,
-        message: 'Товар удалён',
-        data: {id: productId},
-    };
 }
 
 type UpdateProductDataPayload = {
@@ -313,29 +318,34 @@ export async function updateProductData(
     id: string,
     data: UpdateProductDataPayload,
 ): Promise<ActionResponse<{ id: string }>> {
-    const user = await checkAuth();
-    if (!user) {
-        return {success: false, message: 'Необходима авторизация'};
-    }
-    await connectToDatabase()
+    try {
+        const user = await checkAuth();
+        if (!user) {
+            return {success: false, message: 'Необходима авторизация'};
+        }
+        await connectToDatabase()
 
-    const product = await Product.findById(id);
-    if (!product) return {success: false, message: 'Товар не найден'};
+        const product = await Product.findById(id);
+        if (!product) return {success: false, message: 'Товар не найден'};
 
-    const updatedData = {
-        ...data,
-        image: product.image,
-    }
+        const updatedData = {
+            ...data,
+            image: product.image,
+        }
 
-    await Product.findByIdAndUpdate(id, updatedData)
+        await Product.findByIdAndUpdate(id, updatedData)
 
-    revalidateMenuCache();
-    revalidatePath('/dashboard/products');
+        revalidateMenuCache();
+        revalidatePath('/dashboard/products');
 
-    return {
-        success: true,
-        message: 'Товар обновлён',
-        data: {id},
+        return {
+            success: true,
+            message: 'Товар обновлён',
+            data: {id},
+        }
+    } catch (error) {
+        console.error('updateProductData error:', error);
+        return {success: false, message: 'Ошибка при обновлении товара'};
     }
 }
 
@@ -376,41 +386,46 @@ export type CreateProductInput = {
 export async function createProduct(
     data: CreateProductInput,
 ): Promise<ActionResponse<{ id: string }>> {
-    const user = await checkAuth();
-    if (!user) {
-        return {success: false, message: 'Необходима авторизация'};
-    }
-    await connectToDatabase()
+    try {
+        const user = await checkAuth();
+        if (!user) {
+            return {success: false, message: 'Необходима авторизация'};
+        }
+        await connectToDatabase()
 
-    const parsed = productSchema.safeParse(data)
-    if (!parsed.success) {
-        const messages = parsed.error.issues.map(
-            (issue) => `${issue.path.join('.')}: ${issue.message}`,
-        )
+        const parsed = productSchema.safeParse(data)
+        if (!parsed.success) {
+            const messages = parsed.error.issues.map(
+                (issue) => `${issue.path.join('.')}: ${issue.message}`,
+            )
+
+            return {
+                success: false,
+                message: `Ошибка валидации: ${messages.join('; ')}`,
+            }
+        }
+
+        const product = new Product({
+            name: parsed.data.name,
+            description: parsed.data.description ?? '',
+            prices: parsed.data.prices,
+            categories: parsed.data.categories ?? [],
+            hidden: Boolean(parsed.data.hidden),
+            isAlcohol: Boolean(parsed.data.isAlcohol),
+        })
+
+        await product.save()
+
+        revalidateMenuCache();
+        revalidatePath('/dashboard/products');
 
         return {
-            success: false,
-            message: `Ошибка валидации: ${messages.join('; ')}`,
+            success: true,
+            message: 'Товар создан',
+            data: {id: product.id},
         }
-    }
-
-    const product = new Product({
-        name: parsed.data.name,
-        description: parsed.data.description ?? '',
-        prices: parsed.data.prices,
-        categories: parsed.data.categories ?? [],
-        hidden: Boolean(parsed.data.hidden),
-        isAlcohol: Boolean(parsed.data.isAlcohol),
-    })
-
-    await product.save()
-
-    revalidateMenuCache();
-    revalidatePath('/dashboard/products');
-
-    return {
-        success: true,
-        message: 'Товар создан',
-        data: {id: product.id},
+    } catch (error) {
+        console.error('createProduct error:', error);
+        return {success: false, message: 'Ошибка при создании товара'};
     }
 }

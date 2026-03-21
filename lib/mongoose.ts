@@ -22,6 +22,8 @@ const MONGODB_OPTIONS = {
     minPoolSize: 5,
     connectTimeoutMS: 10000,
     heartbeatFrequencyMS: 10000,
+    maxIdleTimeMS: 30000,
+    waitQueueTimeoutMS: 10000,
 };
 
 const cached: MongooseCache = globalThis.mongooseCache ?? {
@@ -47,6 +49,10 @@ mongoose.connection.on('disconnected', () => {
 
 mongoose.connection.on('reconnected', () => {
     console.log('MongoDB reconnected');
+});
+
+mongoose.connection.on('close', () => {
+    console.log('MongoDB connection closed');
 });
 
 export async function connectToDatabase(): Promise<typeof mongoose> {
