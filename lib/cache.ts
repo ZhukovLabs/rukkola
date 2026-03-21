@@ -1,4 +1,4 @@
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidateTag, revalidatePath } from 'next/cache'
 import { CACHE_TAGS } from '@/app-pages/menu/config'
 
 export function revalidateMenuCache(): void {
@@ -14,6 +14,6 @@ export function revalidateMenuCache(): void {
     ] as string[]
     
     for (const tag of tags) {
-        (revalidateTag as (tag: string, _options?: { next?: { revalidate?: number | false } }) => void)(tag)
+        revalidateTag(tag, 'max')
     }
 }

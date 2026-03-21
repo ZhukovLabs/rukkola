@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import {PlusIcon} from 'lucide-react'
-import {Button, Box} from '@chakra-ui/react'
+import {Box} from '@chakra-ui/react'
 
 export const CreateProductButton = ({searchParams}: { searchParams?: Record<string, string> }) => {
     const params = new URLSearchParams(searchParams)
@@ -10,30 +10,36 @@ export const CreateProductButton = ({searchParams}: { searchParams?: Record<stri
 
     return (
         <Box display="flex" justifyContent="flex-end" mb={4}>
-            <Button
-                as={Link}
-                // @ts-expect-error — href от Link
+            <Link
                 href={`?${params.toString()}`}
-                px={3}
-                py={2}
-                size="sm"
-                colorScheme="teal"
-                bg="teal.500"
-                borderRadius="md"
-                fontWeight="500"
-                transition="all 0.15s ease-out"
-                _hover={{
-                    bg: 'teal.400',
-                    boxShadow: '0 2px 8px rgba(56,178,172,0.25)',
-                }}
-                _active={{
-                    bg: 'teal.600',
-                }}
                 scroll={false}
+                style={{ textDecoration: 'none' }}
             >
-                <PlusIcon size={16}/>
-                Добавить продукт
-            </Button>
+                <Box
+                    as="button"
+                    px={3}
+                    py={2}
+                    bg="teal.500"
+                    borderRadius="md"
+                    fontWeight="500"
+                    transition="all 0.15s ease-out"
+                    _hover={{
+                        bg: 'teal.400',
+                        boxShadow: '0 2px 8px rgba(56,178,172,0.25)',
+                    }}
+                    _active={{
+                        bg: 'teal.600',
+                    }}
+                    color="white"
+                    display="flex"
+                    alignItems="center"
+                    gap={2}
+                    cursor="pointer"
+                >
+                    <PlusIcon size={16}/>
+                    Добавить продукт
+                </Box>
+            </Link>
         </Box>
     )
 }

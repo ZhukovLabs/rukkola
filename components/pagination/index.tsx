@@ -1,7 +1,6 @@
-import { Button, Flex, Text } from "@chakra-ui/react";
+import { Box, Flex, Text } from "@chakra-ui/react";
 
 const navButtonStyles = {
-    size: "xs",
     bg: "teal.500",
     color: "white",
     _hover: { bg: "teal.600" },
@@ -11,6 +10,10 @@ const navButtonStyles = {
     minH: "36px",
     boxShadow: "md",
     p: 2,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
 } as const;
 
 interface PaginationProps {
@@ -35,14 +38,17 @@ export const Pagination = ({ page, totalPages, onPageChange }: PaginationProps) 
 
     return (
         <Flex justify="center" align="center" gap={2} flexWrap="wrap">
-            <Button
+            <Box
+                as="button"
                 onClick={() => onPageChange(Math.max(1, page - 1))}
-                disabled={page === 1}
                 {...navButtonStyles}
-                _disabled={{ opacity: 0.4, cursor: "not-allowed" }}
+                opacity={page === 1 ? 0.4 : 1}
+                cursor={page === 1 ? "not-allowed" : "pointer"}
+                fontSize="xs"
+                pointerEvents={page === 1 ? "none" : "auto"}
             >
                 ← Назад
-            </Button>
+            </Box>
 
             {pages.map((num, idx) =>
                 num === "..." ? (
@@ -50,9 +56,9 @@ export const Pagination = ({ page, totalPages, onPageChange }: PaginationProps) 
                         ...
                     </Text>
                 ) : (
-                    <Button
+                    <Box
                         key={`page-${num}-${idx}`}
-                        size="sm"
+                        as="button"
                         onClick={() => onPageChange(Number(num))}
                         bg={num === page ? "teal.500" : "gray.800"}
                         color={num === page ? "white" : "gray.300"}
@@ -62,20 +68,29 @@ export const Pagination = ({ page, totalPages, onPageChange }: PaginationProps) 
                         borderRadius="full"
                         minW="36px"
                         minH="36px"
+                        cursor="pointer"
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                        fontSize="sm"
+                        transition="all 0.15s ease"
                     >
                         {num}
-                    </Button>
+                    </Box>
                 )
             )}
 
-            <Button
+            <Box
+                as="button"
                 onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-                disabled={page === totalPages}
                 {...navButtonStyles}
-                _disabled={{ opacity: 0.4, cursor: "not-allowed" }}
+                opacity={page === totalPages ? 0.4 : 1}
+                cursor={page === totalPages ? "not-allowed" : "pointer"}
+                fontSize="xs"
+                pointerEvents={page === totalPages ? "none" : "auto"}
             >
                 Вперёд →
-            </Button>
+            </Box>
         </Flex>
     );
 };
