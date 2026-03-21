@@ -489,10 +489,29 @@ export async function moveProductToPosition(
             }
         }
 
-        const allProducts = await Product.find(filter)
-            .sort({ order: 1 })
-            .select('_id')
-            .lean();
+        const allProducts = await Product.aggregate([
+            { $match: filter },
+            {
+                $lookup: {
+                    from: 'categories',
+                    localField: 'categories',
+                    foreignField: '_id',
+                    as: 'categories',
+                },
+            },
+            {
+                $addFields: {
+                    minCategoryOrder: { $min: '$categories.order' },
+                    sortOrder: { $ifNull: ['$order', 0] },
+                },
+            },
+            { $sort: { minCategoryOrder: 1, sortOrder: 1 } },
+            {
+                $project: {
+                    _id: 1,
+                },
+            },
+        ]);
 
         const productIds = allProducts.map(p => p._id.toString());
         const currentIndex = productIds.indexOf(productId);

@@ -1,6 +1,6 @@
 'use client';
 
-import {memo, useState, useCallback, useMemo} from 'react';
+import {memo, useCallback, useMemo} from 'react';
 import {
     Box,
     Flex,
@@ -20,7 +20,6 @@ import {
     type DragEndEvent,
 } from '@dnd-kit/core';
 import {
-    arrayMove,
     SortableContext,
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
@@ -48,8 +47,6 @@ const COLUMNS: Column[] = [
     {key: 'actions', label: 'Действия', minW: 150},
 ];
 
-type ProductItem = { id: string; [key: string]: unknown };
-
 const PAGE_SIZE = 10;
 
 export const ProductsTable = memo(() => {
@@ -64,21 +61,11 @@ export const ProductsTable = memo(() => {
         togglingAlcoholId,
         toggleAlcohol,
         deleteMutation,
-        reorderMutation,
         moveMutation,
         movingId,
     } = useProductsTable();
 
-    const [draggedOrder, setDraggedOrder] = useState<ProductItem[] | null>(null);
-
     const productIds = useMemo(() => products.map((p) => p.id), [products]);
-    
-    const displayProducts = useMemo(() => {
-        if (draggedOrder) {
-            return draggedOrder;
-        }
-        return products;
-    }, [draggedOrder, products]);
 
     const {openDialog, ConfirmationDialog} = useConfirmationDialog({
         onConfirm: (id: string) => {
@@ -103,20 +90,17 @@ export const ProductsTable = memo(() => {
         const {active, over} = event;
 
         if (over && active.id !== over.id) {
-            const oldIndex = productIds.findIndex((id) => id === active.id);
             const newIndex = productIds.findIndex((id) => id === over.id);
 
-            const newOrder = arrayMove(products as unknown as ProductItem[], oldIndex, newIndex);
-            setDraggedOrder(newOrder);
+            const offset = (page - 1) * PAGE_SIZE;
+            const newGlobalPosition = offset + newIndex;
 
-            const updates = newOrder.map((p, index) => ({
-                id: p.id,
-                order: index,
-            }));
-
-            reorderMutation.mutate(updates);
+            moveMutation.mutate({ 
+                productId: active.id as string, 
+                newPosition: newGlobalPosition 
+            });
         }
-    }, [productIds, products, reorderMutation]);
+    }, [productIds, page, moveMutation]);
 
     const handleMoveToPosition = useCallback((productId: string, newPosition: number) => {
         moveMutation.mutate({ productId, newPosition });
@@ -139,8 +123,9 @@ export const ProductsTable = memo(() => {
     );
 
     const renderContent = () => {
-        if (displayProducts.length > 0) {
-            return displayProducts.map((product, index) => {
+        if (products.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return products.map((product: any, index: number) => {
                 const absolutePosition = (page - 1) * PAGE_SIZE + index;
                 return (
                     <SortableRow key={product.id} id={product.id}>
