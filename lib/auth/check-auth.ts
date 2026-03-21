@@ -42,7 +42,20 @@ function startCleanup() {
     }, 60_000);
 }
 
-startCleanup();
+function stopCleanup() {
+    if (cleanupInterval) {
+        clearInterval(cleanupInterval);
+        cleanupInterval = null;
+    }
+}
+
+if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'test') {
+    startCleanup();
+    
+    if (typeof process !== 'undefined' && process.on) {
+        process.on('beforeExit', stopCleanup);
+    }
+}
 
 export const checkAuth = async (): Promise<CheckAuthUser | null> => {
     const session = await auth();

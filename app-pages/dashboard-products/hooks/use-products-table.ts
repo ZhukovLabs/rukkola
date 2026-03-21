@@ -51,7 +51,15 @@ export const useProductsTable = () => {
     const deleteMutation = useMutation({
         mutationFn: deleteProduct,
         onMutate: (id: string) => setDeletePending(id),
-        onSuccess: () => queryClient.invalidateQueries({queryKey: ['products']}),
+        onSuccess: (result) => {
+            queryClient.invalidateQueries({queryKey: ['products']})
+            if (result.success) {
+                toast.showSuccess('Товар удалён')
+            } else {
+                toast.showError(result.message || 'Не удалось удалить товар')
+            }
+        },
+        onError: () => toast.showError('Не удалось удалить товар'),
         onSettled: () => setDeletePending(null),
     })
 
