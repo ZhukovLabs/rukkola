@@ -1,6 +1,7 @@
 type ValidCredentials = {
     username: string;
     password: string;
+    captchaToken?: string;
 };
 
 export function isValidCredentials(

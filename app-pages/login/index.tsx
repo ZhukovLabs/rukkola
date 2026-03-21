@@ -13,6 +13,9 @@ import {InputField} from "@/components/input-field";
 import {LOGIN_TEXTS} from "./config";
 import {LoginAlert} from "./alert";
 import {PasswordField} from "@/app-pages/login/password-field";
+import {HCaptcha} from "./hcaptcha";
+
+const HCAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY || "";
 
 const {
     pageTitle,
@@ -31,8 +34,19 @@ export const LoginPage = () => {
     const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
     const [alert, setAlert] = useState<{ message: string; status: "success" | "error" } | null>(null);
+    const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+
+    console.log("HCAPTCHA_SITE_KEY:", HCAPTCHA_SITE_KEY);
 
     const toggleShowPassword = useCallback(() => setShowPassword((v) => !v), []);
+
+    const handleCaptchaVerify = useCallback((token: string) => {
+        setCaptchaToken(token);
+    }, []);
+
+    const handleCaptchaExpire = useCallback(() => {
+        setCaptchaToken(null);
+    }, []);
 
     useEffect(() => {
         if (status === "authenticated") router.replace("/dashboard");
@@ -45,14 +59,19 @@ export const LoginPage = () => {
     const {register, handleSubmit, formState: {errors, isSubmitting, isValid}} = useForm<LoginFormData>({
         resolver: zodResolver(loginSchema),
         mode: "onTouched",
-        defaultValues: {username: "", password: ""},
+        defaultValues: {username: "", password: "", captchaToken: ""},
     });
 
     const onSubmit = useCallback(async (data: LoginFormData) => {
+        if (HCAPTCHA_SITE_KEY && !captchaToken) {
+            showAlert("Пройдите проверку CAPTCHA", "error");
+            return;
+        }
         try {
             const result = await signIn("credentials", {
                 username: data.username,
                 password: data.password,
+                captchaToken: captchaToken || undefined,
                 redirect: false,
             });
 
@@ -64,7 +83,7 @@ export const LoginPage = () => {
         } catch (error) {
             showAlert(error instanceof Error ? error.message : defaultErrorMessage, "error");
         }
-    }, [router, showAlert]);
+    }, [router, showAlert, captchaToken]);
 
     if (status === "loading") {
         return (
@@ -136,6 +155,17 @@ export const LoginPage = () => {
                             showPasswordText={showPasswordText}
                             hidePasswordText={hidePasswordText}
                         />
+                        {HCAPTCHA_SITE_KEY && (
+                            <Box w="full" display="flex" justifyContent="center">
+                                <HCaptcha
+                                    key="hcaptcha"
+                                    siteKey={HCAPTCHA_SITE_KEY}
+                                    onVerify={handleCaptchaVerify}
+                                    onExpire={handleCaptchaExpire}
+                                    onError={handleCaptchaExpire}
+                                />
+                            </Box>
+                        )}
                         <Button
                             type="submit"
                             w="full"

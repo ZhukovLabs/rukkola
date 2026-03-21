@@ -8,6 +8,8 @@ import {connectToDatabase} from "@/lib/mongoose";
 import {User} from "@/models/user";
 import {isValidCredentials} from "@/lib/auth/utils";
 import {Session} from "@/models/session";
+import {checkRateLimit} from "@/lib/auth/rate-limit";
+import {verifyCaptcha} from "@/lib/auth/captcha";
 
 export const authConfig: NextAuthConfig = {
     providers: [
@@ -16,10 +18,29 @@ export const authConfig: NextAuthConfig = {
             credentials: {
                 username: {label: "Логин", type: "text"},
                 password: {label: "Пароль", type: "password"},
+                captchaToken: {label: "CAPTCHA Token", type: "text"},
             },
 
             async authorize(credentials, req): Promise<NextAuthUser | { error: string }> {
                 if (!isValidCredentials(credentials)) return {error: "Некорректные учетные данные"};
+
+                const ip =
+                    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+                    req.headers.get("x-real-ip") ??
+                    "unknown";
+
+                const rateLimitResult = checkRateLimit(ip);
+                if (!rateLimitResult.allowed) {
+                    const remainingMinutes = rateLimitResult.blockedUntil
+                        ? Math.ceil((rateLimitResult.blockedUntil - Date.now()) / 60000)
+                        : 30;
+                    return {error: `Слишком много попыток входа. Попробуйте через ${remainingMinutes} мин.`};
+                }
+
+                const captchaResult = await verifyCaptcha(credentials!.captchaToken);
+                if (!captchaResult.success) {
+                    return {error: captchaResult.error || "CAPTCHA не пройдена"};
+                }
 
                 await connectToDatabase();
 
@@ -48,11 +69,6 @@ export const authConfig: NextAuthConfig = {
                 user.lockUntil = null;
 
                 await user.save();
-
-                const ip =
-                    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-                    req.headers.get("x-real-ip") ??
-                    "unknown";
 
                 const userAgent = req.headers.get("user-agent") ?? "unknown";
 
