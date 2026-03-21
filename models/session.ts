@@ -25,7 +25,7 @@ const SessionSchema = new Schema<SessionType>(
     {timestamps: true}
 );
 
-SessionSchema.index({expiresAt: 1}, {expireAfterSeconds: 60});
+SessionSchema.index({expiresAt: 1}, {expireAfterSeconds: 0});
 SessionSchema.index({userId: 1});
 
 export const Session =

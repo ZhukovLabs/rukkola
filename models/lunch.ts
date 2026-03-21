@@ -16,5 +16,7 @@ const LunchSchema = new Schema<LunchType>(
     { timestamps: true }
 )
 
+LunchSchema.index({ active: 1 })
+
 export const Lunch: Model<LunchType> =
     mongoose.models?.Lunch || mongoose.model<LunchType>('Lunch', LunchSchema)

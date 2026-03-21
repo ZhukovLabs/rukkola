@@ -4,6 +4,8 @@ import { optimizeImage } from '@/lib/image-optimize'
 import { auth } from '@/lib/auth'
 import { connectToDatabase } from '@/lib/mongoose'
 import { uploadFile } from '@/lib/minio'
+import { revalidatePath, revalidateTag } from 'next/cache'
+import { CACHE_TAGS } from '@/app-pages/menu/config'
 
 const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp'])
 const MAX_FILE_SIZE = 10 * 1024 * 1024
@@ -44,6 +46,11 @@ export const POST = async (req: NextRequest) => {
 
         const lunch = new Lunch({ image: imageUrl })
         await lunch.save()
+
+        revalidatePath('/', 'layout')
+        for (const tag of Object.values(CACHE_TAGS)) {
+            revalidateTag(tag, '')
+        }
 
         return NextResponse.json({ image: imageUrl, id: lunch._id.toString() })
     } catch (error) {

@@ -1,7 +1,7 @@
 import {Box, SimpleGrid, Heading, Text} from "@chakra-ui/react";
 import {connectToDatabase} from "@/lib/mongoose";
 import {auth} from "@/lib/auth";
-import {StatsGrid} from "./sats-grid";
+import {StatsGrid} from "./stats-grid";
 import {DASHBOARD_TEXTS, getDashboardData} from "./config";
 
 const {

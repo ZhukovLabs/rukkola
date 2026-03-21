@@ -13,9 +13,36 @@ type AuthCacheEntry = {
     expiresAt: number;
 };
 
+type PendingRequest = {
+    promise: Promise<CheckAuthUser | null>;
+    createdAt: number;
+};
+
 const authCache = new Map<string, AuthCacheEntry>();
 const AUTH_CACHE_TTL = 30 * 1000;
-const pendingRequests = new Map<string, Promise<CheckAuthUser | null>>();
+const PENDING_REQUEST_TTL = 60_000;
+const pendingRequests = new Map<string, PendingRequest>();
+
+let cleanupInterval: ReturnType<typeof setInterval> | null = null;
+
+function startCleanup() {
+    if (cleanupInterval) return;
+    cleanupInterval = setInterval(() => {
+        const now = Date.now();
+        for (const [key, entry] of authCache.entries()) {
+            if (entry.expiresAt < now) {
+                authCache.delete(key);
+            }
+        }
+        for (const [key, pending] of pendingRequests.entries()) {
+            if (pending.createdAt < now - PENDING_REQUEST_TTL) {
+                pendingRequests.delete(key);
+            }
+        }
+    }, 60_000);
+}
+
+startCleanup();
 
 export const checkAuth = async (): Promise<CheckAuthUser | null> => {
     const session = await auth();
@@ -36,7 +63,7 @@ export const checkAuth = async (): Promise<CheckAuthUser | null> => {
     const pendingKey = `${sessionToken}:${id}`;
     const existingPending = pendingRequests.get(pendingKey);
     if (existingPending) {
-        return existingPending;
+        return existingPending.promise;
     }
 
     const requestPromise = (async () => {
@@ -81,7 +108,7 @@ export const checkAuth = async (): Promise<CheckAuthUser | null> => {
         }
     })();
 
-    pendingRequests.set(pendingKey, requestPromise);
+    pendingRequests.set(pendingKey, { promise: requestPromise, createdAt: now });
     return requestPromise;
 };
 

@@ -59,12 +59,12 @@ interface StatBoxProps {
 }
 
 const StatBox = ({
-                     label,
-                     value,
-                     icon,
-                     helpText,
-                     hiddenValue,
-                 }: StatBoxProps) => (
+                      label,
+                      value,
+                      icon,
+                      helpText,
+                      hiddenValue,
+                  }: StatBoxProps) => (
     <MotionBox
         p={{ base: 5, md: 6 }}
         bg="gray.800"
@@ -85,6 +85,7 @@ const StatBox = ({
                 display="inline-flex"
                 alignItems="center"
                 justifyContent="center"
+                flexShrink={0}
             >
                 <Icon as={icon} boxSize={{ base: 6, md: 7 }} color="teal.300" />
             </Box>
@@ -93,6 +94,8 @@ const StatBox = ({
                 fontSize={{ base: "md", md: "lg" }}
                 fontWeight="medium"
                 color="gray.300"
+                lineClamp={2}
+                wordBreak="break-word"
             >
                 {label}
             </Text>
@@ -120,7 +123,7 @@ const StatBox = ({
             </Stack>
 
             {helpText && (
-                <Stat.Label mt={hiddenValue ? 2 : 3} color="gray.500" fontSize="sm">
+                <Stat.Label mt={hiddenValue ? 2 : 3} color="gray.500" fontSize="sm" lineClamp={2} wordBreak="break-word">
                     {helpText}
                 </Stat.Label>
             )}

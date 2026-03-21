@@ -1,6 +1,6 @@
 'use client';
 
-import {memo, useEffect} from 'react';
+import {memo} from 'react';
 import {
     Box,
     Flex,
@@ -55,18 +55,6 @@ export const ProductsTable = memo(() => {
             })
         }
     });
-
-    useEffect(() => {
-        if (toggleVisibility.isError) {
-            toast.showError('Не удалось изменить видимость товара');
-        }
-    }, [toggleVisibility.isError, toast]);
-
-    useEffect(() => {
-        if (toggleAlcohol.isError) {
-            toast.showError('Не удалось изменить статус алкоголя');
-        }
-    }, [toggleAlcohol.isError, toast]);
 
     const emptySize = useBreakpointValue({base: '24px', md: '32px'});
 

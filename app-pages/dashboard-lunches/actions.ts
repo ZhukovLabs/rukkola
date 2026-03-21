@@ -3,8 +3,7 @@
 import {Lunch, LunchType} from '@/models/lunch'
 import {revalidatePath, revalidateTag} from 'next/cache'
 import {connectToDatabase} from '@/lib/mongoose'
-import fs from 'fs/promises'
-import path from 'path'
+import {deleteFile} from '@/lib/minio'
 import {checkAuth} from '@/lib/auth/check-auth'
 import {ActionResponse} from '@/types'
 import {CACHE_TAGS} from '@/app-pages/menu/config';
@@ -106,20 +105,13 @@ export async function deleteLunch(id: string): Promise<ActionResponse> {
         return {success: false, message: 'Обед не найден'}
     }
 
-    const uploadsDir = path.resolve('uploads')
-    const relativeImagePath = lunch.image
-        ?.replace(/^\/?api\//, '')
-        .replace(/^\/?image\//, '')
-        .trim()
-
-    if (relativeImagePath) {
-        const fullPath = path.join(uploadsDir, relativeImagePath)
-
-        try {
-            await fs.unlink(fullPath)
-        } catch (err) {
-            if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
-                console.error('Ошибка при удалении файла:', err)
+    if (lunch.image) {
+        const fileName = lunch.image.split('/').pop()
+        if (fileName) {
+            try {
+                await deleteFile(`lunches/${decodeURIComponent(fileName)}`)
+            } catch {
+                // File may not exist in storage
             }
         }
     }
