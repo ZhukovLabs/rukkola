@@ -6,13 +6,12 @@ import type {ProductType} from "@/models/product";
 import type {ActionResponse} from "@/types";
 import type {UseMutateFunction} from "@tanstack/react-query";
 import type {CategoryType} from "@/models/category";
-import {PositionMenu} from "./position-menu";
+import {PositionDialog} from "./position-dialog";
 
 type ProductRowProps = {
     product: ProductType;
     position: number;
     totalItems: number;
-    currentPage: number;
     onToggle: UseMutateFunction<ActionResponse<{
         id: string;
         hidden: boolean;
@@ -33,7 +32,6 @@ export const ProductRow = ({
                                product: p,
                                position,
                                totalItems,
-                               currentPage,
                                onToggle,
                                onToggleAlcohol,
                                onDelete,
@@ -48,11 +46,10 @@ export const ProductRow = ({
     return (
         <>
             <Table.Cell p={2}>
-                <PositionMenu
+                <PositionDialog
                     currentPosition={position}
                     totalItems={totalItems}
-                    currentPage={currentPage}
-                    onMove={(pos) => onMoveToPosition(p.id, pos)}
+                    onMove={(pos: number) => onMoveToPosition(p.id, pos)}
                     isLoading={isMoving}
                 />
             </Table.Cell>

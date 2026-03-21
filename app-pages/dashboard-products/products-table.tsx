@@ -50,6 +50,8 @@ const COLUMNS: Column[] = [
 
 type ProductItem = { id: string; [key: string]: unknown };
 
+const PAGE_SIZE = 10;
+
 export const ProductsTable = memo(() => {
     const {
         data: {products, total},
@@ -138,24 +140,26 @@ export const ProductsTable = memo(() => {
 
     const renderContent = () => {
         if (displayProducts.length > 0) {
-            return displayProducts.map((product, index) => (
-                <SortableRow key={product.id} id={product.id}>
-                    <ProductRow
-                        product={product as never}
-                        position={index + 1}
-                        totalItems={total}
-                        currentPage={page}
-                        onToggle={toggleVisibility.mutate}
-                        onDelete={openDialog}
-                        loadingId={loadingId}
-                        deletePending={deletePending}
-                        onToggleAlcohol={toggleAlcohol.mutate}
-                        togglingAlcoholId={togglingAlcoholId}
-                        onMoveToPosition={handleMoveToPosition}
-                        isMoving={movingId === product.id}
-                    />
-                </SortableRow>
-            ));
+            return displayProducts.map((product, index) => {
+                const absolutePosition = (page - 1) * PAGE_SIZE + index;
+                return (
+                    <SortableRow key={product.id} id={product.id}>
+                        <ProductRow
+                            product={product as never}
+                            position={absolutePosition}
+                            totalItems={total}
+                            onToggle={toggleVisibility.mutate}
+                            onDelete={openDialog}
+                            loadingId={loadingId}
+                            deletePending={deletePending}
+                            onToggleAlcohol={toggleAlcohol.mutate}
+                            togglingAlcoholId={togglingAlcoholId}
+                            onMoveToPosition={handleMoveToPosition}
+                            isMoving={movingId === product.id}
+                        />
+                    </SortableRow>
+                );
+            });
         }
 
         return isPending ? <SkeletonRows columnsCount={COLUMNS.length + 1}/> : renderEmptyState();
