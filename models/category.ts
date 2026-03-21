@@ -13,7 +13,7 @@ export type CategoryType = {
 
 const CategorySchema = new Schema<CategoryType>({
     name: {type: String, required: true, unique: true, trim: true},
-    order: {type: Number, required: true, unique: true, index: true},
+    order: {type: Number, required: true, index: true},
     isMenuItem: {type: Boolean, required: true, unique: false, index: true},
     showGroupTitle: {type: Boolean, required: true, unique: false},
     parent: {type: Schema.Types.ObjectId, ref: 'Category', default: null, index: true},

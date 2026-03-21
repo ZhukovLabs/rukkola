@@ -30,9 +30,6 @@ import {
     useSensor,
     useSensors,
     DragEndEvent,
-    DragOverlay,
-    DragStartEvent,
-    UniqueIdentifier,
 } from '@dnd-kit/core'
 import {
     arrayMove,
@@ -41,7 +38,6 @@ import {
     verticalListSortingStrategy,
     useSortable,
 } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import { CategoryType } from '@/models/category'
 import {
     toggleCategoryField,
@@ -50,10 +46,12 @@ import {
     deleteCategory,
     markCategoryProductsAlcohol,
     markCategoryProductsNonAlcohol,
+    moveCategoryToPosition,
 } from './actions'
 import { Tooltip } from '@/components/tooltip'
 import { useConfirmationDialog } from "@/hooks/use-confirmation-dialog"
 import { useToast } from "@/components/toast-container"
+import { CategoryPositionDialog } from './category-position-dialog'
 
 type CategoryData = {
     id: string;
@@ -134,6 +132,8 @@ function flattenCategoryTree(
 interface SortableRowProps {
     category: CategoryWithChildren
     depth: number
+    position: number
+    totalSiblings: number
     isEditing: boolean
     tempName: string
     setTempName: (name: string) => void
@@ -144,11 +144,13 @@ interface SortableRowProps {
     onMarkAlcohol: (id: string) => void
     onMarkNonAlcohol: (id: string) => void
     onToggleField: (id: string, field: 'isMenuItem' | 'showGroupTitle') => void
+    onMoveToPosition: (id: string, position: number) => void
     isToggling: boolean
     isDeleting: boolean
     isUpdatingName: boolean
     isMarkingAlcohol: boolean
     isMarkingNonAlcohol: boolean
+    isMoving: boolean
     siblingsCount: number
     indexInSiblings: number
 }
@@ -156,6 +158,8 @@ interface SortableRowProps {
 function SortableRow({
     category,
     depth,
+    position,
+    totalSiblings,
     isEditing,
     tempName,
     setTempName,
@@ -166,11 +170,13 @@ function SortableRow({
     onMarkAlcohol,
     onMarkNonAlcohol,
     onToggleField,
+    onMoveToPosition,
     isToggling,
     isDeleting,
     isUpdatingName,
     isMarkingAlcohol,
     isMarkingNonAlcohol,
+    isMoving,
 }: SortableRowProps) {
     const {
         attributes,
@@ -182,7 +188,7 @@ function SortableRow({
     } = useSortable({ id: category._id.toString() })
 
     const style = {
-        transform: CSS.Transform.toString(transform),
+        transform: transform ? `translateY(${transform.y}px)` : undefined,
         transition,
         opacity: isDragging ? 0.5 : 1,
     }
@@ -198,6 +204,14 @@ function SortableRow({
         >
             <Table.Cell p={4}>
                 <Flex align="center" gap={3} pl={depth * 6}>
+                    <CategoryPositionDialog
+                        currentPosition={position}
+                        totalItems={totalSiblings}
+                        depth={depth}
+                        onMove={(pos) => onMoveToPosition(category._id.toString(), pos)}
+                        isLoading={isMoving}
+                    />
+
                     <Box
                         {...attributes}
                         {...listeners}
@@ -435,8 +449,6 @@ export default function CategoriesTable({ categories: initialCategories }: Props
         setLocalItems(flattenCategoryTree(buildCategoryTree(initialCategories)))
     }, [initialCategories])
 
-    const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
-
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
@@ -573,6 +585,24 @@ export default function CategoriesTable({ categories: initialCategories }: Props
         onError: () => toast.showError('Не удалось пометить продукты'),
     })
 
+    const moveMutation = useMutation({
+        mutationFn: ({ categoryId, newPosition }: { categoryId: string; newPosition: number }) =>
+            moveCategoryToPosition(categoryId, newPosition),
+        onSuccess: (result) => {
+            queryClient.invalidateQueries({ queryKey: ['categories'] })
+            if (result.success) {
+                toast.showSuccess('Позиция категории обновлена')
+            } else {
+                toast.showError(result.message || 'Не удалось обновить позицию')
+            }
+        },
+        onError: () => toast.showError('Не удалось обновить позицию'),
+    })
+
+    const handleMoveToPosition = (categoryId: string, newPosition: number) => {
+        moveMutation.mutate({ categoryId, newPosition })
+    }
+
     const handleEditStart = (category: CategoryData) => {
         setEditingId(category._id)
         setTempName(category.name)
@@ -588,13 +618,8 @@ export default function CategoriesTable({ categories: initialCategories }: Props
         setTempName('')
     }
 
-    const handleDragStart = (event: DragStartEvent) => {
-        setActiveId(event.active.id)
-    }
-
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event
-        setActiveId(null)
 
         if (!over || active.id === over.id) return
 
@@ -612,29 +637,29 @@ export default function CategoriesTable({ categories: initialCategories }: Props
 
         if (activeDepth !== overDepth) return
 
+        const activeParent = localItems[oldIndex].category.parent?.toString() || null
+        const overParent = localItems[newIndex].category.parent?.toString() || null
+
+        if (activeParent !== overParent) return
+
         const newItems = arrayMove(localItems, oldIndex, newIndex)
         setLocalItems(newItems)
 
-        const updates: { id: string; order: number }[] = []
-        let order = 0
+        const parentId = activeParent
+        const siblings = newItems.filter(
+            (item) => (item.category.parent?.toString() || null) === parentId
+        )
 
-        for (const item of newItems) {
+        const updates: { id: string; order: number }[] = []
+        siblings.forEach((item, index) => {
             updates.push({
                 id: item.category._id.toString(),
-                order: order++,
+                order: index,
             })
-        }
+        })
 
         reorderMutation.mutate(updates)
     }
-
-    const handleDragCancel = () => {
-        setActiveId(null)
-    }
-
-    const activeItem = activeId
-        ? localItems.find((item) => item.category._id.toString() === activeId)
-        : null
 
     return (
         <Box>
@@ -666,11 +691,11 @@ export default function CategoriesTable({ categories: initialCategories }: Props
                 <Card.Body px={0} py={0}>
                     <Box overflowX="auto" position="relative">
                         {(toggleMutation.isPending ||
-                            reorderMutation.isPending ||
                             updateNameMutation.isPending ||
                             deleteMutation.isPending ||
                             markAlcoholMutation.isPending ||
-                            markNonAlcoholMutation.isPending) && (
+                            markNonAlcoholMutation.isPending ||
+                            moveMutation.isPending) && (
                             <Flex
                                 position="absolute"
                                 top={0}
@@ -690,9 +715,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
                         <DndContext
                             sensors={sensors}
                             collisionDetection={closestCenter}
-                            onDragStart={handleDragStart}
                             onDragEnd={handleDragEnd}
-                            onDragCancel={handleDragCancel}
                         >
                             <Table.Root size="md" variant="outline" w="100%">
                                 <Table.Header bg="gray.800">
@@ -733,6 +756,9 @@ export default function CategoriesTable({ categories: initialCategories }: Props
                                                 const isMarkingNonAlcohol =
                                                     markNonAlcoholMutation.isPending &&
                                                     markNonAlcoholMutation.variables === category._id.toString()
+                                                const isMoving =
+                                                    moveMutation.isPending &&
+                                                    moveMutation.variables?.categoryId === category._id.toString()
 
                                                 const parentKey = category.parent
                                                     ? category.parent.toString()
@@ -750,6 +776,8 @@ export default function CategoriesTable({ categories: initialCategories }: Props
                                                         key={category._id.toString()}
                                                         category={category}
                                                         depth={depth}
+                                                        position={indexInSiblings}
+                                                        totalSiblings={siblings.length}
                                                         isEditing={isEditing}
                                                         tempName={tempName}
                                                         setTempName={setTempName}
@@ -762,11 +790,13 @@ export default function CategoriesTable({ categories: initialCategories }: Props
                                                         onToggleField={(id, field) =>
                                                             toggleMutation.mutate({ id, field })
                                                         }
+                                                        onMoveToPosition={handleMoveToPosition}
                                                         isToggling={isToggling}
                                                         isDeleting={isDeleting}
                                                         isUpdatingName={isUpdatingName}
                                                         isMarkingAlcohol={isMarkingAlcohol}
                                                         isMarkingNonAlcohol={isMarkingNonAlcohol}
+                                                        isMoving={isMoving}
                                                         siblingsCount={siblings.length}
                                                         indexInSiblings={indexInSiblings}
                                                     />
@@ -782,22 +812,6 @@ export default function CategoriesTable({ categories: initialCategories }: Props
                                     </SortableContext>
                                 </Table.Body>
                             </Table.Root>
-
-                            <DragOverlay>
-                                {activeItem && (
-                                    <Box
-                                        bg="gray.800"
-                                        borderRadius="md"
-                                        boxShadow="lg"
-                                        opacity={0.9}
-                                        p={4}
-                                    >
-                                        <Text fontWeight="semibold" color="teal.400">
-                                            {activeItem.category.name}
-                                        </Text>
-                                    </Box>
-                                )}
-                            </DragOverlay>
                         </DndContext>
                     </Box>
                 </Card.Body>

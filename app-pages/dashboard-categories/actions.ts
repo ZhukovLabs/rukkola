@@ -204,7 +204,7 @@ export async function reorderCategories(
 
         const bulkOps = updates.map(({ id, order }) => ({
             updateOne: {
-                filter: { _id: id },
+                filter: { _id: new ObjectId(id) },
                 update: { $set: { order } }
             }
         }));
@@ -218,6 +218,74 @@ export async function reorderCategories(
     } catch (error) {
         console.error('reorderCategories error:', error);
         return { success: false, message: 'Ошибка при обновлении порядка' };
+    }
+}
+
+export async function moveCategoryToPosition(
+    categoryId: string,
+    newPosition: number,
+): Promise<ActionResponse> {
+    try {
+        const user = await checkAuth();
+        if (!user) {
+            return { success: false, message: 'Необходима авторизация' };
+        }
+
+        await connectToDatabase();
+
+        const category = await Category.findById(categoryId).lean();
+        if (!category) {
+            return { success: false, message: 'Категория не найдена' };
+        }
+
+        const parentId = category.parent?.toString() || null;
+
+        const filter = parentId 
+            ? { parent: parentId } 
+            : { $or: [{ parent: null }, { parent: { $exists: false } }] };
+
+        const siblings = await Category.find(filter)
+            .sort({ order: 1 })
+            .select('_id')
+            .lean();
+
+        const siblingIds = siblings.map(s => s._id.toString());
+        const currentIndex = siblingIds.indexOf(categoryId);
+
+        if (currentIndex === -1) {
+            return { success: false, message: 'Категория не найдена в списке' };
+        }
+
+        if (newPosition < 0 || newPosition >= siblingIds.length) {
+            return { success: false, message: 'Некорректная позиция' };
+        }
+
+        if (currentIndex === newPosition) {
+            return { success: true, message: 'Позиция не изменилась' };
+        }
+
+        const newOrder = [...siblingIds];
+        newOrder.splice(currentIndex, 1);
+        newOrder.splice(newPosition, 0, categoryId);
+
+        const bulkOps = newOrder.map((id, index) => ({
+            updateOne: {
+                filter: { _id: new ObjectId(id) },
+                update: { $set: { order: index } }
+            }
+        }));
+
+        if (bulkOps.length > 0) {
+            await Category.bulkWrite(bulkOps);
+        }
+
+        revalidateMenuCache();
+        revalidatePath('/dashboard/categories');
+
+        return { success: true, message: 'Позиция категории обновлена' };
+    } catch (error) {
+        console.error('moveCategoryToPosition error:', error);
+        return { success: false, message: 'Ошибка при обновлении позиции' };
     }
 }
 

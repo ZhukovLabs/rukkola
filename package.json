@@ -18,6 +18,7 @@
     "seed:images": "ts-node --project tsconfig.seed.json seed/download_images.ts",
     "seed:build": "tsc --project tsconfig.seed.json && node dist/seed/index.js",
     "migrate:order": "npx ts-node --esm scripts/migrate-product-order.ts",
+    "migrate:cat-order": "npx ts-node --esm scripts/migrate-category-order.ts",
     "postbuild": "next-sitemap"
   },
   "dependencies": {

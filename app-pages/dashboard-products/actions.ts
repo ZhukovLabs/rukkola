@@ -104,16 +104,58 @@ export async function getProducts(
                 from: 'categories',
                 localField: 'categories',
                 foreignField: '_id',
-                as: 'categories',
+                as: 'productCategories',
+            },
+        },
+        {
+            $lookup: {
+                from: 'categories',
+                localField: 'productCategories.parent',
+                foreignField: '_id',
+                as: 'parentCategories',
             },
         },
         {
             $addFields: {
-                minCategoryOrder: {$min: '$categories.order'},
                 sortOrder: {$ifNull: ['$order', 0]},
+                rootOrder: {
+                    $min: {
+                        $concatArrays: [
+                            {
+                                $map: {
+                                    input: {
+                                        $filter: {
+                                            input: '$productCategories',
+                                            as: 'cat',
+                                            cond: { $eq: ['$$cat.parent', null] }
+                                        }
+                                    },
+                                    as: 'rootCat',
+                                    in: '$$rootCat.order'
+                                }
+                            },
+                            {
+                                $map: {
+                                    input: '$parentCategories',
+                                    as: 'parentCat',
+                                    in: '$$parentCat.order'
+                                }
+                            }
+                        ]
+                    }
+                },
+                categoryOrder: {
+                    $min: '$productCategories.order'
+                },
             },
         },
-        {$sort: {minCategoryOrder: 1, sortOrder: 1}},
+        {
+            $sort: {
+                rootOrder: 1,
+                categoryOrder: 1,
+                sortOrder: 1,
+            },
+        },
         {$skip: skip},
         {$limit: limit},
         {
@@ -131,7 +173,7 @@ export async function getProducts(
                 updatedAt: 1,
                 categories: {
                     $map: {
-                        input: '$categories',
+                        input: '$productCategories',
                         as: 'cat',
                         in: {
                             _id: 0,
