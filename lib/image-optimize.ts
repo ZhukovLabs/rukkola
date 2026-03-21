@@ -13,10 +13,28 @@ export async function optimizeImage(
 ): Promise<Buffer> {
     const { quality = 80, format = 'webp' } = options;
 
-    const pipeline = sharp(buffer);
-    await pipeline.metadata();
+    const metadata = await sharp(buffer).metadata();
+    const originalWidth = metadata.width || 0;
+    const originalHeight = metadata.height || 0;
 
-    let image = sharp(buffer).withMetadata();
+    const maxWidth = 1920;
+    const maxHeight = 1080;
+
+    let width = maxWidth;
+    let height = maxHeight;
+
+    if (originalWidth > maxWidth || originalHeight > maxHeight) {
+        const aspectRatio = originalWidth / originalHeight;
+        if (originalWidth > originalHeight) {
+            width = maxWidth;
+            height = Math.round(maxWidth / aspectRatio);
+        } else {
+            height = maxHeight;
+            width = Math.round(maxHeight * aspectRatio);
+        }
+    }
+
+    let image = sharp(buffer).rotate().resize(width, height, { fit: 'inside' }).withMetadata({ orientation: 1 });
 
     switch (format) {
         case 'jpeg':
