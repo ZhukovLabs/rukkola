@@ -15,6 +15,7 @@ export type ProductType = {
     categories: mongoose.Types.ObjectId[]
     hidden?: boolean
     isAlcohol?: boolean
+    order?: number
     createdAt?: Date
     updatedAt?: Date
 } & Document;
@@ -36,12 +37,14 @@ const ProductSchema = new Schema<ProductType>(
         categories: [{type: Schema.Types.ObjectId, ref: 'Category', required: false, index: true}],
         hidden: {type: Boolean, required: false, default: false, index: true},
         isAlcohol: {type: Boolean, required: false, default: false, index: true},
+        order: {type: Number, required: false, default: 0},
     },
     {timestamps: true}
 )
 
 ProductSchema.index({ hidden: 1, isAlcohol: 1 });
 ProductSchema.index({ categories: 1, hidden: 1 });
+ProductSchema.index({ categories: 1, order: 1 });
 
 ProductSchema.virtual('id').get(function (this: ProductType) {
     return this._id.toString();

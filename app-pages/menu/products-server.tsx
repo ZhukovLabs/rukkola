@@ -14,6 +14,7 @@ type RawProduct = {
     prices?: Array<{ size: string; price: number }>;
     hidden?: boolean;
     isAlcohol?: boolean;
+    order?: number;
 };
 
 type RawGroupedProduct = {
@@ -40,6 +41,7 @@ export async function ProductsServer({alcoholIsVisible}: ProductsServerProps) {
             prices: p.prices ?? [],
             hidden: p.hidden ?? false,
             isAlcohol: p.isAlcohol ?? false,
+            order: p.order ?? 0,
         })),
     }));
 
@@ -51,6 +53,7 @@ export async function ProductsServer({alcoholIsVisible}: ProductsServerProps) {
         prices: p.prices ?? [],
         hidden: p.hidden ?? false,
         isAlcohol: p.isAlcohol ?? false,
+        order: p.order ?? 0,
     }));
 
     return <Products grouped={grouped} uncategorized={uncategorized}/>;

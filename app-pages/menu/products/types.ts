@@ -11,6 +11,7 @@ export type ProductClientType = {
     prices: PortionPrice[];
     hidden?: boolean;
     isAlcohol?: boolean;
+    order?: number;
 };
 
 export type GroupWithProducts = {

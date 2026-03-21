@@ -191,6 +191,36 @@ export async function createCategory({
 }
 
 
+export async function reorderCategories(
+    updates: { id: string; order: number }[]
+): Promise<ActionResponse> {
+    try {
+        const user = await checkAuth();
+        if (!user) {
+            return { success: false, message: 'Необходима авторизация' };
+        }
+
+        await connectToDatabase();
+
+        const bulkOps = updates.map(({ id, order }) => ({
+            updateOne: {
+                filter: { _id: id },
+                update: { $set: { order } }
+            }
+        }));
+
+        await Category.bulkWrite(bulkOps);
+
+        revalidateMenuCache();
+        revalidatePath('/dashboard/categories');
+
+        return { success: true, message: 'Порядок категорий обновлен' };
+    } catch (error) {
+        console.error('reorderCategories error:', error);
+        return { success: false, message: 'Ошибка при обновлении порядка' };
+    }
+}
+
 export async function markCategoryProductsAlcohol(
     categoryId: string,
 ): Promise<ActionResponse<{ updatedCount: number }>> {

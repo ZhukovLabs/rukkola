@@ -63,6 +63,11 @@ const getGroupedProducts = async (withAlcohol: boolean) => {
 
     return Product.aggregate<GroupWithProducts>([
         { $match: matchStage },
+        {
+            $addFields: {
+                sortOrder: { $ifNull: ["$order", 0] }
+            }
+        },
         { $unwind: "$categories" },
         {
             $lookup: {
@@ -84,6 +89,16 @@ const getGroupedProducts = async (withAlcohol: boolean) => {
             },
         },
         { $sort: { categoryOrder: 1 } },
+        {
+            $set: {
+                products: {
+                    $sortArray: {
+                        input: "$products",
+                        sortBy: { sortOrder: 1 }
+                    }
+                }
+            }
+        }
     ]);
 };
 

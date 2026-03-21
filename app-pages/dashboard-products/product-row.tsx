@@ -6,9 +6,13 @@ import type {ProductType} from "@/models/product";
 import type {ActionResponse} from "@/types";
 import type {UseMutateFunction} from "@tanstack/react-query";
 import type {CategoryType} from "@/models/category";
+import {PositionMenu} from "./position-menu";
 
 type ProductRowProps = {
     product: ProductType;
+    position: number;
+    totalItems: number;
+    currentPage: number;
     onToggle: UseMutateFunction<ActionResponse<{
         id: string;
         hidden: boolean;
@@ -21,27 +25,37 @@ type ProductRowProps = {
     loadingId: string | null;
     deletePending: string | null;
     togglingAlcoholId: string | null;
+    onMoveToPosition: (productId: string, position: number) => void;
+    isMoving: boolean;
 }
 
 export const ProductRow = ({
                                product: p,
+                               position,
+                               totalItems,
+                               currentPage,
                                onToggle,
                                onToggleAlcohol,
                                onDelete,
                                loadingId,
                                deletePending,
                                togglingAlcoholId,
+                               onMoveToPosition,
+                               isMoving,
                            }: ProductRowProps) => {
     const router = useRouter();
 
     return (
-        <Table.Row
-            key={p.id}
-            bg="gray.900"
-            borderBottom="1px solid"
-            borderColor="gray.800"
-            _hover={{bg: 'gray.800', transition: '0.2s ease'}}
-        >
+        <>
+            <Table.Cell p={2}>
+                <PositionMenu
+                    currentPosition={position}
+                    totalItems={totalItems}
+                    currentPage={currentPage}
+                    onMove={(pos) => onMoveToPosition(p.id, pos)}
+                    isLoading={isMoving}
+                />
+            </Table.Cell>
             <Table.Cell p={4}>
                 <Image
                     src={p.image || '/placeholder.png'}
@@ -208,6 +222,6 @@ export const ProductRow = ({
                     </Tooltip>
                 </Stack>
             </Table.Cell>
-        </Table.Row>
-    )
+        </>
+    );
 }

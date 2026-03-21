@@ -1,6 +1,6 @@
 'use client';
 
-import {memo} from 'react';
+import {memo, useState, useCallback, useMemo} from 'react';
 import {
     Box,
     Flex,
@@ -10,9 +10,24 @@ import {
     useBreakpointValue,
 } from '@chakra-ui/react';
 import {FiSearch} from 'react-icons/fi';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 
-import {ProductType} from '@/models/product';
 import {ProductRow} from './product-row';
+import {SortableRow} from './sortable-row';
 import {SkeletonRows} from './skeleton-rows';
 import {useProductsTable} from './hooks/use-products-table';
 import {useConfirmationDialog} from '@/hooks/use-confirmation-dialog';
@@ -24,6 +39,7 @@ type Column = {
 };
 
 const COLUMNS: Column[] = [
+    {key: 'move', label: '#', minW: 50},
     {key: 'photo', label: 'Фото'},
     {key: 'name', label: 'Название', minW: 200},
     {key: 'description', label: 'Описание', minW: 250},
@@ -32,9 +48,12 @@ const COLUMNS: Column[] = [
     {key: 'actions', label: 'Действия', minW: 150},
 ];
 
+type ProductItem = { id: string; [key: string]: unknown };
+
 export const ProductsTable = memo(() => {
     const {
-        data: {products},
+        data: {products, total},
+        page,
         isFetching,
         isPending,
         loadingId,
@@ -42,8 +61,22 @@ export const ProductsTable = memo(() => {
         toggleVisibility,
         togglingAlcoholId,
         toggleAlcohol,
-        deleteMutation
+        deleteMutation,
+        reorderMutation,
+        moveMutation,
+        movingId,
     } = useProductsTable();
+
+    const [draggedOrder, setDraggedOrder] = useState<ProductItem[] | null>(null);
+
+    const productIds = useMemo(() => products.map((p) => p.id), [products]);
+    
+    const displayProducts = useMemo(() => {
+        if (draggedOrder) {
+            return draggedOrder;
+        }
+        return products;
+    }, [draggedOrder, products]);
 
     const {openDialog, ConfirmationDialog} = useConfirmationDialog({
         onConfirm: (id: string) => {
@@ -53,9 +86,43 @@ export const ProductsTable = memo(() => {
 
     const emptySize = useBreakpointValue({base: '24px', md: '32px'});
 
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const handleDragEnd = useCallback((event: DragEndEvent) => {
+        const {active, over} = event;
+
+        if (over && active.id !== over.id) {
+            const oldIndex = productIds.findIndex((id) => id === active.id);
+            const newIndex = productIds.findIndex((id) => id === over.id);
+
+            const newOrder = arrayMove(products as unknown as ProductItem[], oldIndex, newIndex);
+            setDraggedOrder(newOrder);
+
+            const updates = newOrder.map((p, index) => ({
+                id: p.id,
+                order: index,
+            }));
+
+            reorderMutation.mutate(updates);
+        }
+    }, [productIds, products, reorderMutation]);
+
+    const handleMoveToPosition = useCallback((productId: string, newPosition: number) => {
+        moveMutation.mutate({ productId, newPosition });
+    }, [moveMutation]);
+
     const renderEmptyState = () => (
         <Table.Row>
-            <Table.Cell colSpan={COLUMNS.length} textAlign="center" py={{base: 8, md: 12}}>
+            <Table.Cell colSpan={COLUMNS.length + 1} textAlign="center" py={{base: 8, md: 12}}>
                 <Flex direction="column" align="center" gap={3} color="gray.500">
                     <FiSearch size={emptySize}/>
                     <Text fontSize={{base: 'md', md: 'lg'}} fontWeight="medium">
@@ -70,22 +137,28 @@ export const ProductsTable = memo(() => {
     );
 
     const renderContent = () => {
-        if (products.length > 0) {
-            return products.map((product: ProductType) => (
-                <ProductRow
-                    key={product.id}
-                    product={product}
-                    onToggle={toggleVisibility.mutate}
-                    onDelete={openDialog}
-                    loadingId={loadingId}
-                    deletePending={deletePending}
-                    onToggleAlcohol={toggleAlcohol.mutate}
-                    togglingAlcoholId={togglingAlcoholId}
-                />
+        if (displayProducts.length > 0) {
+            return displayProducts.map((product, index) => (
+                <SortableRow key={product.id} id={product.id}>
+                    <ProductRow
+                        product={product as never}
+                        position={index + 1}
+                        totalItems={total}
+                        currentPage={page}
+                        onToggle={toggleVisibility.mutate}
+                        onDelete={openDialog}
+                        loadingId={loadingId}
+                        deletePending={deletePending}
+                        onToggleAlcohol={toggleAlcohol.mutate}
+                        togglingAlcoholId={togglingAlcoholId}
+                        onMoveToPosition={handleMoveToPosition}
+                        isMoving={movingId === product.id}
+                    />
+                </SortableRow>
             ));
         }
 
-        return isPending ? <SkeletonRows/> : renderEmptyState();
+        return isPending ? <SkeletonRows columnsCount={COLUMNS.length + 1}/> : renderEmptyState();
     };
 
     return (
@@ -111,31 +184,43 @@ export const ProductsTable = memo(() => {
                 </Flex>
             )}
 
-            <Table.Root size={{base: 'sm', md: 'md', lg: 'lg'}} variant="outline" w="full">
-                <Table.Header bg="gray.900" borderBottomWidth="2px" borderColor="gray.700">
-                    <Table.Row>
-                        {COLUMNS.map(({key, label, minW}) => (
-                            <Table.ColumnHeader
-                                key={key}
-                                minW={minW}
-                                color="gray.200"
-                                p={{base: 3, md: 4}}
-                                fontWeight="semibold"
-                                fontSize="sm"
-                                textTransform="uppercase"
-                                letterSpacing="wider"
-                                whiteSpace="nowrap"
-                            >
-                                {label}
-                            </Table.ColumnHeader>
-                        ))}
-                    </Table.Row>
-                </Table.Header>
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+            >
+                <Table.Root size={{base: 'sm', md: 'md', lg: 'lg'}} variant="outline" w="full">
+                    <Table.Header bg="gray.900" borderBottomWidth="2px" borderColor="gray.700">
+                        <Table.Row>
+                            <Table.ColumnHeader minW="40px" w="40px"/>
+                            {COLUMNS.map(({key, label, minW}) => (
+                                <Table.ColumnHeader
+                                    key={key}
+                                    minW={minW}
+                                    color="gray.200"
+                                    p={{base: 3, md: 4}}
+                                    fontWeight="semibold"
+                                    fontSize="sm"
+                                    textTransform="uppercase"
+                                    letterSpacing="wider"
+                                    whiteSpace="nowrap"
+                                >
+                                    {label}
+                                </Table.ColumnHeader>
+                            ))}
+                        </Table.Row>
+                    </Table.Header>
 
-                <Table.Body>
-                    {renderContent()}
-                </Table.Body>
-            </Table.Root>
+                    <Table.Body>
+                        <SortableContext
+                            items={productIds}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            {renderContent()}
+                        </SortableContext>
+                    </Table.Body>
+                </Table.Root>
+            </DndContext>
 
             <ConfirmationDialog/>
         </Box>

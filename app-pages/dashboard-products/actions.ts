@@ -110,9 +110,10 @@ export async function getProducts(
         {
             $addFields: {
                 minCategoryOrder: {$min: '$categories.order'},
+                sortOrder: {$ifNull: ['$order', 0]},
             },
         },
-        {$sort: {minCategoryOrder: 1}},
+        {$sort: {minCategoryOrder: 1, sortOrder: 1}},
         {$skip: skip},
         {$limit: limit},
         {
@@ -125,6 +126,7 @@ export async function getProducts(
                 prices: 1,
                 image: 1,
                 hidden: 1,
+                order: {$ifNull: ['$order', 0]},
                 createdAt: 1,
                 updatedAt: 1,
                 categories: {
@@ -192,7 +194,8 @@ export async function getProductById(id: string): Promise<ActionResponse<Product
                     image: 1,
                     categories: 1,
                     hidden: 1,
-                    isAlcohol: 1
+                    isAlcohol: 1,
+                    order: 1
                 }
             }
         ]);
@@ -427,5 +430,145 @@ export async function createProduct(
     } catch (error) {
         console.error('createProduct error:', error);
         return {success: false, message: 'Ошибка при создании товара'};
+    }
+}
+
+export async function moveProductToPosition(
+    productId: string,
+    newPosition: number,
+    search?: string,
+    category?: string,
+): Promise<ActionResponse<{ success: boolean }>> {
+    try {
+        const user = await checkAuth();
+        if (!user) {
+            return {success: false, message: 'Необходима авторизация'};
+        }
+        await connectToDatabase();
+
+        const filter: Record<string, unknown> = {};
+
+        if (search) {
+            filter.$or = [
+                {name: {$regex: search, $options: 'i'}},
+                {description: {$regex: search, $options: 'i'}},
+            ];
+        }
+
+        if (category) {
+            try {
+                const categoryId = new ObjectId(category);
+                const descendants = await Category.aggregate([
+                    { $match: { _id: categoryId } },
+                    {
+                        $graphLookup: {
+                            from: 'categories',
+                            startWith: '$_id',
+                            connectFromField: '_id',
+                            connectToField: 'parent',
+                            as: 'descendants',
+                            maxDepth: 10,
+                            depthField: 'depth',
+                        },
+                    },
+                    {
+                        $project: {
+                            allIds: {
+                                $concatArrays: [['$_id'], '$descendants._id'],
+                            },
+                        },
+                    },
+                ], { maxTimeMS: 30000 });
+
+                const allCategoryIds = descendants[0]?.allIds ?? [];
+                if (allCategoryIds.length > 0) {
+                    filter.categories = { $in: allCategoryIds };
+                }
+            } catch (error) {
+                console.error('Error processing category filter:', error);
+            }
+        }
+
+        const allProducts = await Product.find(filter)
+            .sort({ order: 1 })
+            .select('_id')
+            .lean();
+
+        const productIds = allProducts.map(p => p._id.toString());
+        const currentIndex = productIds.indexOf(productId);
+
+        if (currentIndex === -1) {
+            return { success: false, message: 'Товар не найден в списке' };
+        }
+
+        if (newPosition < 0 || newPosition >= productIds.length) {
+            return { success: false, message: 'Некорректная позиция' };
+        }
+
+        if (currentIndex === newPosition) {
+            return { success: true, message: 'Позиция не изменилась', data: { success: true } };
+        }
+
+        const newOrder = [...productIds];
+        newOrder.splice(currentIndex, 1);
+        newOrder.splice(newPosition, 0, productId);
+
+        const bulkOps = newOrder.map((id, index) => ({
+            updateOne: {
+                filter: { _id: new ObjectId(id) },
+                update: { $set: { order: index } }
+            }
+        }));
+
+        if (bulkOps.length > 0) {
+            await Product.bulkWrite(bulkOps);
+        }
+
+        revalidateMenuCache();
+        revalidatePath('/dashboard/products');
+
+        return {
+            success: true,
+            message: 'Позиция товара обновлена',
+            data: { success: true }
+        };
+    } catch (error) {
+        console.error('moveProductToPosition error:', error);
+        return { success: false, message: 'Ошибка при обновлении позиции товара' };
+    }
+}
+
+export async function reorderProducts(
+    updates: Array<{ id: string; order: number }>
+): Promise<ActionResponse<{ success: boolean }>> {
+    try {
+        const user = await checkAuth();
+        if (!user) {
+            return {success: false, message: 'Необходима авторизация'};
+        }
+        await connectToDatabase();
+
+        const bulkOps = updates.map(({ id, order }) => ({
+            updateOne: {
+                filter: { _id: new ObjectId(id) },
+                update: { $set: { order } }
+            }
+        }));
+
+        if (bulkOps.length > 0) {
+            await Product.bulkWrite(bulkOps);
+        }
+
+        revalidateMenuCache();
+        revalidatePath('/dashboard/products');
+
+        return {
+            success: true,
+            message: 'Порядок товаров обновлён',
+            data: { success: true }
+        };
+    } catch (error) {
+        console.error('reorderProducts error:', error);
+        return {success: false, message: 'Ошибка при обновлении порядка товаров'};
     }
 }
