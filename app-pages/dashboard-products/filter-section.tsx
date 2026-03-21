@@ -31,11 +31,13 @@ export const FilterSection = () => {
     const setParam = (key: string) => (e: ChangeEvent<HTMLInputElement>) => {
         const params = new URLSearchParams(searchParams);
         params.set(key, e.target.value);
+        params.delete('page');
         router.push(`?${params.toString()}`, {scroll: false});
     };
     const setCategory = (e: ValueChangeDetails<CategoryItem>) => {
         const params = new URLSearchParams(searchParams);
         params.set('category', e.value[0]);
+        params.delete('page');
         router.push(`?${params.toString()}`, {scroll: false});
     }
 
