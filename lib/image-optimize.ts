@@ -11,17 +11,12 @@ export async function optimizeImage(
     buffer: Buffer,
     options: OptimizeOptions = {}
 ): Promise<Buffer> {
-    const { width = 1920, height, quality = 80, format = 'webp' } = options;
+    const { quality = 80, format = 'webp' } = options;
 
     const pipeline = sharp(buffer);
     await pipeline.metadata();
 
     let image = sharp(buffer).withMetadata();
-
-    image = image.resize(width, height, {
-        fit: 'inside',
-        withoutEnlargement: true,
-    });
 
     switch (format) {
         case 'jpeg':
