@@ -1,33 +1,58 @@
 'use client';
 
 import {memo} from 'react';
-import {Box} from "@chakra-ui/react";
+import {Box, Heading} from "@chakra-ui/react";
 import {ProductGroup} from "./product-group";
-import type {ProductClientType} from "./types";
+import type {ProductClientType, ProductGroupClientType} from "./types";
 
 type ProductsProps = {
-    grouped: Array<{
-        id: string;
-        categoryName: string;
-        categoryOrder: number;
-        showGroupTitle: boolean;
-        products: ProductClientType[];
-    }>;
+    grouped: ProductGroupClientType[];
     uncategorized: ProductClientType[];
 }
 
 const ProductGroupMemo = memo(ProductGroup);
 
+const CategoryHeader = memo(function CategoryHeader({ title, id }: { title: string; id: string }) {
+    return (
+        <Heading
+            as="h2"
+            fontSize={{ base: "2xl", md: "3xl" }}
+            mb={6}
+            color="teal.300"
+            borderBottom="2px solid"
+            borderColor="teal.500"
+            pb={2}
+            id={id}
+        >
+            {title}
+        </Heading>
+    );
+});
+
 export const Products = memo(function Products({grouped, uncategorized}: ProductsProps) {
     return (
         <Box color="white" minH="100vh" p={2}>
             {grouped.map((cat) => (
-                <ProductGroupMemo
-                    key={cat.id}
-                    id={cat.id}
-                    title={cat.showGroupTitle ? cat.categoryName : undefined}
-                    products={cat.products}
-                />
+                <Box as="section" mb={12} key={cat.id}>
+                    {cat.showGroupTitle && (
+                        <CategoryHeader title={cat.categoryName} id={cat.id} />
+                    )}
+                    {cat.subgroups.map((sub) => (
+                        <ProductGroupMemo
+                            key={sub.id}
+                            id={sub.id}
+                            title={sub.showGroupTitle ? sub.name : undefined}
+                            products={sub.products}
+                        />
+                    ))}
+                    {cat.directProducts.length > 0 && (
+                        <ProductGroupMemo
+                            key={`${cat.id}-direct`}
+                            id={`${cat.id}-direct`}
+                            products={cat.directProducts}
+                        />
+                    )}
+                </Box>
             ))}
 
             {uncategorized.length > 0 && (

@@ -14,18 +14,21 @@ export type ProductClientType = {
     order?: number;
 };
 
-export type GroupWithProducts = {
-    _id: string;
-    categoryName: string;
-    categoryOrder: number;
+export type SubgroupType = {
+    id: string;
+    name: string;
+    order: number;
     showGroupTitle: boolean;
     products: ProductClientType[];
 };
 
-export type ProductGroupClientType = {
+export type GroupWithProducts = {
     id: string;
     categoryName: string;
     categoryOrder: number;
     showGroupTitle: boolean;
-    products: ProductClientType[];
+    subgroups: SubgroupType[];
+    directProducts: ProductClientType[];
 };
+
+export type ProductGroupClientType = GroupWithProducts;

@@ -3,7 +3,6 @@ import { connectToDatabase } from "@/lib/mongoose";
 import { Lunch } from "@/models/lunch";
 import { Category } from "@/models/category";
 import { Product, type ProductType } from "@/models/product";
-import type { GroupWithProducts } from "@/app-pages/menu/products/types";
 
 export const CACHE_TAGS = {
     MENU_WITH_ALCOHOL: 'menu_with_alcohol',
@@ -14,7 +13,7 @@ export const CACHE_TAGS = {
     CATEGORIES: 'categories',
 } as const;
 
-export const CACHE_REVALIDATE = 60; // seconds
+export const CACHE_REVALIDATE = 60;
 
 const getLunch = async () => {
     return Lunch.findOne({ active: true }).lean();
@@ -48,7 +47,41 @@ const getCategories = async (withAlcohol: boolean) => {
         .lean();
 };
 
-const getGroupedProducts = async (withAlcohol: boolean) => {
+type CategoryDoc = {
+    _id: { toString(): string };
+    name: string;
+    order: number;
+    parent: { toString(): string } | null;
+    showGroupTitle: boolean;
+    hidden?: boolean;
+};
+
+type ProductDoc = {
+    _id: { toString(): string };
+    name: string;
+    description?: string | null;
+    image?: string | null;
+    prices?: Array<{ size: string; price: number }>;
+    isAlcohol?: boolean;
+    order: number;
+};
+
+type MenuGroup = {
+    _id: string;
+    name: string;
+    order: number;
+    showGroupTitle: boolean;
+    subgroups: Array<{
+        _id: string;
+        name: string;
+        order: number;
+        showGroupTitle: boolean;
+        products: ProductDoc[];
+    }>;
+    directProducts: ProductDoc[];
+};
+
+const getGroupedProducts = async (withAlcohol: boolean): Promise<MenuGroup[]> => {
     const matchStage: Record<string, unknown> = {
         hidden: { $ne: true },
         categories: { $exists: true, $ne: [], $type: 'array', $not: { $size: 0 } }
@@ -61,45 +94,133 @@ const getGroupedProducts = async (withAlcohol: boolean) => {
         ];
     }
 
-    return Product.aggregate<GroupWithProducts>([
-        { $match: matchStage },
-        {
-            $addFields: {
-                sortOrder: { $ifNull: ["$order", 0] }
+    const categories = await Category.find({ isMenuItem: true, hidden: { $ne: true } })
+        .sort({ order: 1 })
+        .lean() as CategoryDoc[];
+
+    const rootCategories = categories.filter(c => !c.parent);
+    const subcategories = categories.filter(c => c.parent);
+
+    const categoryMap = new Map<string, CategoryDoc>();
+    for (const c of categories) {
+        categoryMap.set(c._id.toString(), c);
+    }
+
+    const subcategoryByParent = new Map<string, CategoryDoc[]>();
+    for (const sub of subcategories) {
+        const parentId = sub.parent?.toString() || 'null';
+        if (!subcategoryByParent.has(parentId)) {
+            subcategoryByParent.set(parentId, []);
+        }
+        subcategoryByParent.get(parentId)!.push(sub);
+    }
+
+    const subcategoryIds = new Set(subcategories.map(c => c._id.toString()));
+
+    const rawProducts = await Product.find(matchStage).lean() as Array<ProductDoc & { categories: Array<{ toString(): string }> }>;
+
+    const productGroups = new Map<string, Map<string, ProductDoc[]>>();
+
+    for (const product of rawProducts) {
+        let assignedSubcategory: string | null = null;
+        let assignedCategory: string | null = null;
+
+        for (const catId of product.categories) {
+            const catIdStr = catId.toString();
+            if (subcategoryIds.has(catIdStr)) {
+                assignedSubcategory = catIdStr;
+                const sub = categoryMap.get(catIdStr);
+                if (sub?.parent) {
+                    assignedCategory = sub.parent.toString();
+                }
+                break;
             }
-        },
-        { $unwind: "$categories" },
-        {
-            $lookup: {
-                from: "categories",
-                localField: "categories",
-                foreignField: "_id",
-                as: "categoryInfo",
-            },
-        },
-        { $unwind: "$categoryInfo" },
-        { $match: { "categoryInfo.hidden": { $ne: true }, "categoryInfo.isMenuItem": true } },
-        {
-            $group: {
-                _id: "$categoryInfo._id",
-                categoryName: { $first: "$categoryInfo.name" },
-                categoryOrder: { $first: "$categoryInfo.order" },
-                showGroupTitle: { $first: "$categoryInfo.showGroupTitle" },
-                products: { $push: "$$ROOT" },
-            },
-        },
-        { $sort: { categoryOrder: 1 } },
-        {
-            $set: {
-                products: {
-                    $sortArray: {
-                        input: "$products",
-                        sortBy: { sortOrder: 1 }
-                    }
+        }
+
+        if (!assignedSubcategory) {
+            for (const catId of product.categories) {
+                const catIdStr = catId.toString();
+                const cat = categoryMap.get(catIdStr);
+                if (cat && !cat.parent && !subcategoryIds.has(catIdStr)) {
+                    assignedCategory = catIdStr;
+                    break;
                 }
             }
         }
-    ]);
+
+        const productData: ProductDoc = {
+            _id: product._id,
+            name: product.name,
+            description: product.description,
+            image: product.image,
+            prices: product.prices,
+            isAlcohol: product.isAlcohol,
+            order: product.order ?? 0,
+        };
+
+        if (assignedCategory) {
+            if (!productGroups.has(assignedCategory)) {
+                productGroups.set(assignedCategory, new Map());
+            }
+            const categoryGroups = productGroups.get(assignedCategory)!;
+            const groupKey = assignedSubcategory || '__direct__';
+            if (!categoryGroups.has(groupKey)) {
+                categoryGroups.set(groupKey, []);
+            }
+            categoryGroups.get(groupKey)!.push(productData);
+        }
+    }
+
+    const result: MenuGroup[] = [];
+
+    for (const rootCat of rootCategories) {
+        const rootId = rootCat._id.toString();
+        const subs = subcategoryByParent.get(rootId) || [];
+
+        const subgroups: MenuGroup['subgroups'] = [];
+        let directProducts: ProductDoc[] = [];
+
+        const categoryGroups = productGroups.get(rootId);
+
+        if (categoryGroups) {
+            for (const sub of subs) {
+                const subProducts = categoryGroups.get(sub._id.toString()) || [];
+                if (subProducts.length > 0) {
+                    subProducts.sort((a, b) => a.order - b.order);
+                    subgroups.push({
+                        _id: sub._id.toString(),
+                        name: sub.name,
+                        order: sub.order,
+                        showGroupTitle: sub.showGroupTitle ?? true,
+                        products: subProducts,
+                    });
+                }
+            }
+
+            const direct = categoryGroups.get('__direct__') || [];
+            if (direct.length > 0) {
+                direct.sort((a, b) => a.order - b.order);
+                directProducts = direct;
+            }
+        }
+
+        subgroups.sort((a, b) => a.order - b.order);
+
+        if (subgroups.length > 0 || directProducts.length > 0) {
+            result.push({
+                _id: rootId,
+                name: rootCat.name,
+                order: rootCat.order,
+                showGroupTitle: rootCat.showGroupTitle ?? true,
+                subgroups,
+                directProducts,
+            });
+        }
+    }
+
+    result.sort((a, b) => a.order - b.order);
+
+    return result;
 };
 
 const getUncategorizedProducts = async () => {

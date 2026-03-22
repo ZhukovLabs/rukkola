@@ -95,7 +95,16 @@ export async function getProducts(
         }
     }
 
-    const total = await Product.countDocuments(filter);
+const total = await Product.countDocuments(filter);
+
+    const categories = await Category.find({ isMenuItem: true })
+        .sort({ order: 1 })
+        .lean();
+
+    const rootCategories = categories.filter(c => !c.parent);
+    const subcategories = categories.filter(c => c.parent);
+
+    const subcategoryIds = new Set(subcategories.map(c => c._id.toString()));
 
     const products = await Product.aggregate([
         {$match: filter},
@@ -108,50 +117,99 @@ export async function getProducts(
             },
         },
         {
-            $lookup: {
-                from: 'categories',
-                localField: 'productCategories.parent',
-                foreignField: '_id',
-                as: 'parentCategories',
+            $addFields: {
+                sortOrder: {$ifNull: ['$order', 0]},
             },
         },
         {
             $addFields: {
-                sortOrder: {$ifNull: ['$order', 0]},
-                rootOrder: {
-                    $min: {
-                        $concatArrays: [
-                            {
-                                $map: {
-                                    input: {
-                                        $filter: {
-                                            input: '$productCategories',
-                                            as: 'cat',
-                                            cond: { $eq: ['$$cat.parent', null] }
-                                        }
-                                    },
-                                    as: 'rootCat',
-                                    in: '$$rootCat.order'
-                                }
-                            },
-                            {
-                                $map: {
-                                    input: '$parentCategories',
-                                    as: 'parentCat',
-                                    in: '$$parentCat.order'
-                                }
-                            }
-                        ]
+                primarySubcategory: {
+                    $first: {
+                        $filter: {
+                            input: '$productCategories',
+                            as: 'cat',
+                            cond: {$in: ['$$cat._id', [...subcategoryIds]]}
+                        }
+                    }
+                },
+                primaryRootCategory: {
+                    $first: {
+                        $filter: {
+                            input: '$productCategories',
+                            as: 'cat',
+                            cond: {$and: [
+                                {$not: {$in: ['$$cat._id', [...subcategoryIds]]}},
+                                {$eq: ['$$cat.parent', null]}
+                            ]}
+                        }
+                    }
+                },
+            },
+        },
+        {
+            $addFields: {
+                parentCategoryId: {
+                    $cond: {
+                        if: {$and: [
+                            {$ne: ['$primarySubcategory', null]},
+                            {$ne: ['$primarySubcategory.parent', null]}
+                        ]},
+                        then: {$toString: '$primarySubcategory.parent'},
+                        else: {$toString: '$primaryRootCategory._id'}
+                    }
+                },
+                categoryId: {
+                    $cond: {
+                        if: {$ne: ['$primarySubcategory', null]},
+                        then: {$toString: '$primarySubcategory._id'},
+                        else: {$toString: '$primaryRootCategory._id'}
                     }
                 },
                 categoryOrder: {
-                    $min: '$productCategories.order'
+                    $cond: {
+                        if: {$ne: ['$primarySubcategory', null]},
+                        then: {$ifNull: ['$primarySubcategory.order', 0]},
+                        else: {$ifNull: ['$primaryRootCategory.order', 0]}
+                    }
+                },
+                parentCategoryOrder: {
+                    $ifNull: [
+                        {
+                            $let: {
+                                vars: {
+                                    parentId: {
+                                        $cond: {
+                                            if: {$and: [
+                                                {$ne: ['$primarySubcategory', null]},
+                                                {$ne: ['$primarySubcategory.parent', null]}
+                                            ]},
+                                            then: '$primarySubcategory.parent',
+                                            else: '$primaryRootCategory._id'
+                                        }
+                                    }
+                                },
+                                in: {
+                                    $arrayElemAt: [
+                                        {
+                                            $map: {
+                                                input: rootCategories,
+                                                as: 'rc',
+                                                in: {$cond: [{$eq: ['$$rc._id', '$$parentId']}, '$$rc.order', null]}
+                                            }
+                                        },
+                                        0
+                                    ]
+                                }
+                            }
+                        },
+                        0
+                    ]
                 },
             },
         },
         {
             $sort: {
-                rootOrder: 1,
+                parentCategoryOrder: 1,
                 categoryOrder: 1,
                 sortOrder: 1,
             },
@@ -171,6 +229,8 @@ export async function getProducts(
                 order: {$ifNull: ['$order', 0]},
                 createdAt: 1,
                 updatedAt: 1,
+                categoryId: 1,
+                parentCategoryId: 1,
                 categories: {
                     $map: {
                         input: '$productCategories',
