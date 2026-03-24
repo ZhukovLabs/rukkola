@@ -1,42 +1,63 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE_URL = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+
+async function proxyRequest(
+  request: NextRequest,
+  method: string,
+  pathString: string
+) {
+  const url = `${API_BASE_URL}/${pathString}${request.nextUrl.search}`;
+  
+  const headers: Record<string, string> = {};
+  
+  const cookieHeader = request.headers.get('cookie');
+  if (cookieHeader) {
+    headers['Cookie'] = cookieHeader;
+  }
+
+  let body: BodyInit | undefined;
+  if (method !== 'GET' && method !== 'HEAD') {
+    const contentType = request.headers.get('content-type') || '';
+    if (contentType.includes('multipart/form-data')) {
+      body = await request.formData();
+    } else {
+      body = JSON.stringify(await request.json());
+      headers['Content-Type'] = 'application/json';
+    }
+  }
+
+  try {
+    const response = await fetch(url, {
+      method,
+      headers,
+      body,
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    const nextResponse = NextResponse.json(data, { status: response.status });
+    
+    for (const cookie of response.headers.getSetCookie()) {
+      nextResponse.headers.append('Set-Cookie', cookie);
+    }
+    
+    return nextResponse;
+  } catch (error) {
+    console.error('Proxy error:', error);
+    return NextResponse.json(
+      { success: false, message: 'Ошибка соединения с сервером' },
+      { status: 502 }
+    );
+  }
+}
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
   const { path } = await params;
-  const pathString = path.join('/');
-  const url = `${API_BASE_URL}/${pathString}${request.nextUrl.search}`;
-
-  const headers: Record<string, string> = {};
-  const cookieHeader = request.headers.get('cookie');
-  if (cookieHeader) {
-    headers['Cookie'] = cookieHeader;
-  }
-
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers,
-      credentials: 'include',
-    });
-
-    const nextResponse = NextResponse.next();
-    
-    for (const cookie of response.headers.getSetCookie()) {
-      nextResponse.headers.append('Set-Cookie', cookie);
-    }
-    
-    const data = await response.json();
-    return NextResponse.json(data, { status: response.status, headers: nextResponse.headers });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, message: 'Ошибка соединения с сервером' },
-      { status: 500 }
-    );
-  }
+  return proxyRequest(request, 'GET', path.join('/'));
 }
 
 export async function POST(
@@ -44,40 +65,7 @@ export async function POST(
   { params }: { params: Promise<{ path: string[] }> }
 ) {
   const { path } = await params;
-  const pathString = path.join('/');
-  const url = `${API_BASE_URL}/${pathString}`;
-  const body = await request.json();
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  const cookieHeader = request.headers.get('cookie');
-  if (cookieHeader) {
-    headers['Cookie'] = cookieHeader;
-  }
-
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body),
-      credentials: 'include',
-    });
-
-    const nextResponse = NextResponse.next();
-    
-    for (const cookie of response.headers.getSetCookie()) {
-      nextResponse.headers.append('Set-Cookie', cookie);
-    }
-    
-    const data = await response.json();
-    return NextResponse.json(data, { status: response.status, headers: nextResponse.headers });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, message: 'Ошибка соединения с сервером' },
-      { status: 500 }
-    );
-  }
+  return proxyRequest(request, 'POST', path.join('/'));
 }
 
 export async function PATCH(
@@ -85,40 +73,7 @@ export async function PATCH(
   { params }: { params: Promise<{ path: string[] }> }
 ) {
   const { path } = await params;
-  const pathString = path.join('/');
-  const url = `${API_BASE_URL}/${pathString}`;
-  const body = await request.json();
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  const cookieHeader = request.headers.get('cookie');
-  if (cookieHeader) {
-    headers['Cookie'] = cookieHeader;
-  }
-
-  try {
-    const response = await fetch(url, {
-      method: 'PATCH',
-      headers,
-      body: JSON.stringify(body),
-      credentials: 'include',
-    });
-
-    const nextResponse = NextResponse.next();
-    
-    for (const cookie of response.headers.getSetCookie()) {
-      nextResponse.headers.append('Set-Cookie', cookie);
-    }
-    
-    const data = await response.json();
-    return NextResponse.json(data, { status: response.status, headers: nextResponse.headers });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, message: 'Ошибка соединения с сервером' },
-      { status: 500 }
-    );
-  }
+  return proxyRequest(request, 'PATCH', path.join('/'));
 }
 
 export async function DELETE(
@@ -126,34 +81,5 @@ export async function DELETE(
   { params }: { params: Promise<{ path: string[] }> }
 ) {
   const { path } = await params;
-  const pathString = path.join('/');
-  const url = `${API_BASE_URL}/${pathString}${request.nextUrl.search}`;
-
-  const headers: Record<string, string> = {};
-  const cookieHeader = request.headers.get('cookie');
-  if (cookieHeader) {
-    headers['Cookie'] = cookieHeader;
-  }
-
-  try {
-    const response = await fetch(url, {
-      method: 'DELETE',
-      headers,
-      credentials: 'include',
-    });
-
-    const nextResponse = NextResponse.next();
-    
-    for (const cookie of response.headers.getSetCookie()) {
-      nextResponse.headers.append('Set-Cookie', cookie);
-    }
-    
-    const data = await response.json();
-    return NextResponse.json(data, { status: response.status, headers: nextResponse.headers });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, message: 'Ошибка соединения с сервером' },
-      { status: 500 }
-    );
-  }
+  return proxyRequest(request, 'DELETE', path.join('/'));
 }
