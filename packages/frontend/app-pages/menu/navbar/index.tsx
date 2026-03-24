@@ -145,6 +145,15 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
     useEffect(() => {
         if (!items.length) return;
         
+        const updateInitialTop = () => {
+            if (navRef.current) {
+                const rect = navRef.current.getBoundingClientRect();
+                initialTopRef.current = rect.top + window.scrollY;
+            }
+        };
+
+        updateInitialTop();
+        
         const handleScroll = () => {
             if (drawerOpen) return;
             
@@ -152,9 +161,16 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
             setIsFixed(window.scrollY > threshold);
         };
 
-        handleScroll();
+        requestAnimationFrame(handleScroll);
+        const timeoutId = setTimeout(handleScroll, 100);
+        
         window.addEventListener("scroll", handleScroll, {passive: true});
-        return () => window.removeEventListener("scroll", handleScroll);
+        window.addEventListener("resize", updateInitialTop, {passive: true});
+        return () => {
+            clearTimeout(timeoutId);
+            window.removeEventListener("scroll", handleScroll);
+            window.removeEventListener("resize", updateInitialTop);
+        };
     }, [items, drawerOpen]);
 
     if (searchParams.has(CART_QUERY_KEY)) return null;

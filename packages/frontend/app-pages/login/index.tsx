@@ -152,6 +152,7 @@ export const LoginPage = () => {
                         {HCAPTCHA_SITE_KEY && (
                             <Box w="full" display="flex" justifyContent="center">
                                 <HCaptcha
+                                    theme="dark"
                                     key="hcaptcha"
                                     siteKey={HCAPTCHA_SITE_KEY}
                                     onVerify={handleCaptchaVerify}
