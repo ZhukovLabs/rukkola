@@ -58,7 +58,7 @@ const HOP_BY_HOP_HEADERS = new Set([
 ]);
 
 function normalizeServerRaw(raw?: string): URL {
-    const original = raw ?? process.env.NEXT_PUBLIC_API_URL ?? '';
+    const original = raw ?? process.env.INTERNAL_API_URL ?? '';
     console.log('normalizeServerRaw original:', original);
     const trimmed = original.trim();
 

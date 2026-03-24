@@ -5,7 +5,7 @@ const withBundleAnalyzer = bundleAnalyzer({
     enabled: process.env.ANALYZE === 'true',
 });
 
-const BACKEND_URL = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const BACKEND_URL = process.env.INTERNAL_API_URL || 'http://localhost:4000/api';
 // Strip trailing /api to get the backend base URL
 const BACKEND_BASE = BACKEND_URL.replace(/\/api\/?$/, '');
 
