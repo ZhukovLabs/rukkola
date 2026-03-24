@@ -54,6 +54,10 @@ export const authConfig: NextAuthConfig = {
                     return {error: "Слишком много попыток входа. Попробуйте позже."};
                 }
 
+                if (!user.name) {
+                    user.name = user.username;
+                }
+
                 const isValid = await user.comparePassword(credentials!.password as string);
                 if (!isValid) {
                     user.failedLoginAttempts = (user.failedLoginAttempts ?? 0) + 1;
@@ -75,7 +79,7 @@ export const authConfig: NextAuthConfig = {
                 return {
                     id: user._id.toString(),
                     username: user.username,
-                    name: user.name,
+                    name: user.name || user.username,
                     role: user.role ?? "moderator",
 
                     ip,

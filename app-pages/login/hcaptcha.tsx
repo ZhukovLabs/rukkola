@@ -29,20 +29,35 @@ export const HCaptcha: React.FC<HCaptchaProps> = ({
     theme = "dark",
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
+    const widgetIdRef = useRef<string | null>(null);
+    const onVerifyRef = useRef(onVerify);
+    const onExpireRef = useRef(onExpire);
+    const onErrorRef = useRef(onError);
+
+    useEffect(() => {
+        onVerifyRef.current = onVerify;
+        onExpireRef.current = onExpire;
+        onErrorRef.current = onError;
+    }, [onVerify, onExpire, onError]);
 
     useEffect(() => {
         if (!siteKey || !containerRef.current) return;
+
+        if (widgetIdRef.current) {
+            window.hcaptcha?.reset(widgetIdRef.current);
+            return;
+        }
 
         const renderCaptcha = () => {
             if (!window.hcaptcha || !containerRef.current) return;
 
             try {
-                window.hcaptcha.render(containerRef.current, {
+                widgetIdRef.current = window.hcaptcha.render(containerRef.current, {
                     sitekey: siteKey,
                     theme,
-                    callback: onVerify,
-                    "expired-callback": onExpire,
-                    "error-callback": onError,
+                    callback: (token: string) => onVerifyRef.current(token),
+                    "expired-callback": () => onExpireRef.current?.(),
+                    "error-callback": () => onErrorRef.current?.(),
                 });
             } catch (error) {
                 console.error("Error rendering hCaptcha:", error);
@@ -65,7 +80,13 @@ export const HCaptcha: React.FC<HCaptchaProps> = ({
                 document.head.appendChild(script);
             }
         }
-    }, [siteKey, theme, onVerify, onExpire, onError]);
+
+        return () => {
+            if (widgetIdRef.current) {
+                window.hcaptcha?.reset(widgetIdRef.current);
+            }
+        };
+    }, [siteKey, theme]);
 
     if (!siteKey) return null;
 

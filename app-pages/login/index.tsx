@@ -36,8 +36,6 @@ export const LoginPage = () => {
     const [alert, setAlert] = useState<{ message: string; status: "success" | "error" } | null>(null);
     const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
-    console.log("HCAPTCHA_SITE_KEY:", HCAPTCHA_SITE_KEY);
-
     const toggleShowPassword = useCallback(() => setShowPassword((v) => !v), []);
 
     const handleCaptchaVerify = useCallback((token: string) => {
