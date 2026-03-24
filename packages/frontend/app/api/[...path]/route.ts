@@ -18,7 +18,7 @@ const HOP_BY_HOP_HEADERS = new Set([
 ]);
 
 function normalizeServerRaw(raw?: string): URL {
-    const original = raw ?? '';
+    const original = raw ?? process.env.NEXT_PUBLIC_API_URL ?? '';
     const trimmed = original.trim();
 
     if (!trimmed) throw new Error('SERVER env is empty');
@@ -64,10 +64,11 @@ async function proxyRequest(request: NextRequest, paths: string[]): Promise<Next
     try {
         let serverUrl: URL;
         try {
+            console.log('SERVER env:', process.env.SERVER);
             serverUrl = normalizeServerRaw(process.env.SERVER);
         } catch (e) {
             return NextResponse.json(
-                {error: 'Invalid SERVER env', message: e instanceof Error ? e.message : String(e)},
+                {error: 'Invalid SERVER env', message: e instanceof Error ? e.message : String(e), serverValue: process.env.SERVER},
                 {status: 500}
             );
         }
