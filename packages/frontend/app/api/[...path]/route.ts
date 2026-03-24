@@ -58,7 +58,7 @@ const HOP_BY_HOP_HEADERS = new Set([
 ]);
 
 function normalizeServerRaw(raw?: string): URL {
-    const original = raw ?? process.env.INTERNAL_API_URL ?? '';
+    const original = raw ?? process.env.SERVER ?? process.env.INTERNAL_API_URL ?? '';
     console.log('normalizeServerRaw original:', original);
     const trimmed = original.trim();
 
@@ -128,6 +128,7 @@ async function proxyRequest(request: NextRequest, paths: string[]): Promise<Next
         }
 
         const targetUrl = buildTargetUrl(serverUrl, apiPaths, request.url);
+        console.log('targetUrl:', targetUrl.toString());
 
         const headers = new Headers();
         for (const [key, value] of request.headers) {
