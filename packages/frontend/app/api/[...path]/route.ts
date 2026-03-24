@@ -60,7 +60,14 @@ function buildTargetUrl(serverUrl: URL, paths: string[], originalRequestUrl: str
     return target;
 }
 
+const LOCAL_API_ROUTES = ['revalidate', 'health'];
+
 async function proxyRequest(request: NextRequest, paths: string[]): Promise<NextResponse> {
+    // Skip proxy for local API routes - let Next.js handle them
+    if (paths[0] && LOCAL_API_ROUTES.includes(paths[0])) {
+        return NextResponse.next();
+    }
+    
     try {
         let serverUrl: URL;
         try {
