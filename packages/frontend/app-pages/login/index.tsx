@@ -35,6 +35,7 @@ export const LoginPage = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [alert, setAlert] = useState<{ message: string; status: "success" | "error" } | null>(null);
     const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+    const [captchaResetKey, setCaptchaResetKey] = useState(0);
 
     const toggleShowPassword = useCallback(() => setShowPassword((v) => !v), []);
 
@@ -71,6 +72,7 @@ export const LoginPage = () => {
             if (!result.ok) {
                 showAlert(result.error || defaultErrorMessage, "error");
                 setCaptchaToken(null);
+                setCaptchaResetKey(k => k + 1);
                 return;
             }
             showAlert(successMessage, "success");
@@ -153,11 +155,12 @@ export const LoginPage = () => {
                             <Box w="full" display="flex" justifyContent="center">
                                 <HCaptcha
                                     theme="dark"
-                                    key="hcaptcha"
+                                    key={captchaResetKey}
                                     siteKey={HCAPTCHA_SITE_KEY}
                                     onVerify={handleCaptchaVerify}
                                     onExpire={handleCaptchaExpire}
                                     onError={handleCaptchaExpire}
+                                    resetKey={captchaResetKey}
                                 />
                             </Box>
                         )}

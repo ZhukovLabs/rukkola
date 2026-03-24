@@ -9,6 +9,7 @@ interface HCaptchaProps {
     onExpire?: () => void;
     onError?: () => void;
     theme?: "light" | "dark";
+    resetKey?: number;
 }
 
 declare global {
@@ -27,6 +28,7 @@ export const HCaptcha: React.FC<HCaptchaProps> = ({
     onExpire,
     onError,
     theme = "dark",
+    resetKey,
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const widgetIdRef = useRef<string | null>(null);
@@ -43,7 +45,12 @@ export const HCaptcha: React.FC<HCaptchaProps> = ({
     useEffect(() => {
         if (!siteKey || !containerRef.current) return;
 
-        if (widgetIdRef.current) {
+        if (widgetIdRef.current && !resetKey) {
+            window.hcaptcha?.reset(widgetIdRef.current);
+            return;
+        }
+
+        if (widgetIdRef.current && resetKey) {
             window.hcaptcha?.reset(widgetIdRef.current);
             return;
         }
@@ -86,7 +93,7 @@ export const HCaptcha: React.FC<HCaptchaProps> = ({
                 window.hcaptcha?.reset(widgetIdRef.current);
             }
         };
-    }, [siteKey, theme]);
+    }, [siteKey, theme, resetKey]);
 
     if (!siteKey) return null;
 
