@@ -41,6 +41,7 @@ services:
         INTERNAL_API_URL: ${INTERNAL_API_URL:-http://backend:4000/api}
         NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-http://localhost:3000}
         NEXT_PUBLIC_HCAPTCHA_SITE_KEY: ${NEXT_PUBLIC_HCAPTCHA_SITE_KEY:-}
+        JWT_SECRET: ${JWT_SECRET}
     container_name: rukkola-frontend
     restart: unless-stopped
     ports:

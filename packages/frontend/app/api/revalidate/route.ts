@@ -5,6 +5,9 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET = process.env.JWT_SECRET || process.env.INTERNAL_JWT_SECRET || '';
 
 export async function POST(request: NextRequest) {
+  console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'set' : 'NOT SET');
+  console.log('NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
+  
   try {
     // Check authorization header
     const authHeader = request.headers.get('authorization');

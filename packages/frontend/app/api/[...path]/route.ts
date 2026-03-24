@@ -1,4 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || '';
+
+async function handleRevalidate(request: NextRequest): Promise<NextResponse> {
+    console.log('handleRevalidate called, JWT_SECRET length:', JWT_SECRET.length);
+    
+    const authHeader = request.headers.get('authorization');
+    console.log('authHeader:', authHeader ? 'present' : 'missing');
+    
+    if (!authHeader?.startsWith('Bearer ')) {
+        return NextResponse.json({ success: false, error: 'Unauthorized', debug: 'no bearer' }, { status: 401 });
+    }
+
+    const token = authHeader.slice(7);
+    console.log('token:', token.substring(0, 20) + '...');
+    
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        console.log('token decoded:', decoded);
+    } catch (e) {
+        console.log('token verify error:', e);
+        return NextResponse.json({ success: false, error: 'Invalid token', debug: e instanceof Error ? e.message : 'unknown' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { path } = body;
+
+    if (path) {
+        revalidatePath(path);
+    }
+
+    return NextResponse.json({
+        success: true,
+        revalidated: path,
+        now: Date.now(),
+    });
+}
 
 type RouteParams = {
     params: Promise<{ path: string[] }>;
@@ -19,6 +58,7 @@ const HOP_BY_HOP_HEADERS = new Set([
 
 function normalizeServerRaw(raw?: string): URL {
     const original = raw ?? process.env.NEXT_PUBLIC_API_URL ?? '';
+    console.log('normalizeServerRaw original:', original);
     const trimmed = original.trim();
 
     if (!trimmed) throw new Error('SERVER env is empty');
@@ -60,12 +100,13 @@ function buildTargetUrl(serverUrl: URL, paths: string[], originalRequestUrl: str
     return target;
 }
 
-const LOCAL_API_ROUTES = ['revalidate', 'health'];
-
 async function proxyRequest(request: NextRequest, paths: string[]): Promise<NextResponse> {
-    // Skip proxy for local API routes - let Next.js handle them
-    if (paths[0] && LOCAL_API_ROUTES.includes(paths[0])) {
-        return NextResponse.next();
+    // Handle local routes directly
+    if (paths[0] === 'revalidate') {
+        return handleRevalidate(request);
+    }
+    if (paths[0] === 'health') {
+        return NextResponse.json({ status: 'ok' });
     }
     
     try {
@@ -130,6 +171,7 @@ async function proxyRequest(request: NextRequest, paths: string[]): Promise<Next
 
 async function handler(request: NextRequest, {params}: RouteParams) {
     const {path} = await params;
+    console.log('API request:', path);
     return proxyRequest(request, path ?? []);
 }
 
