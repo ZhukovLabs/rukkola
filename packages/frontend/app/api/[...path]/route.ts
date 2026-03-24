@@ -1,85 +1,134 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+type RouteParams = {
+    params: Promise<{ paths?: string[] }>;
+};
 
-async function proxyRequest(
-  request: NextRequest,
-  method: string,
-  pathString: string
-) {
-  const url = `${API_BASE_URL}/${pathString}${request.nextUrl.search}`;
-  
-  const headers: Record<string, string> = {};
-  
-  const cookieHeader = request.headers.get('cookie');
-  if (cookieHeader) {
-    headers['Cookie'] = cookieHeader;
-  }
+const HOP_BY_HOP_HEADERS = new Set([
+    'connection',
+    'keep-alive',
+    'proxy-authenticate',
+    'proxy-authorization',
+    'te',
+    'trailers',
+    'transfer-encoding',
+    'upgrade',
+    'host',
+    'content-length',
+]);
 
-  let body: BodyInit | undefined;
-  if (method !== 'GET' && method !== 'HEAD') {
-    const contentType = request.headers.get('content-type') || '';
-    if (contentType.includes('multipart/form-data')) {
-      body = await request.formData();
-    } else {
-      body = JSON.stringify(await request.json());
-      headers['Content-Type'] = 'application/json';
+function normalizeServerRaw(raw?: string): URL {
+    const original = raw ?? '';
+    const trimmed = original.trim();
+
+    if (!trimmed) throw new Error('SERVER env is empty');
+
+    const hasScheme = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(trimmed);
+    const candidate = hasScheme ? trimmed : `http://${trimmed}`;
+
+    let parsed: URL;
+    try {
+        parsed = new URL(candidate);
+    } catch (e) {
+        const err = e instanceof Error ? e.message : String(e);
+        throw new Error(`Invalid SERVER value "${original}": ${err}`);
     }
-  }
 
-  try {
-    const response = await fetch(url, {
-      method,
-      headers,
-      body,
-    });
-
-    const data = await response.json().catch(() => ({}));
-
-    const nextResponse = NextResponse.json(data, { status: response.status });
-    
-    for (const cookie of response.headers.getSetCookie()) {
-      nextResponse.headers.append('Set-Cookie', cookie);
+    if (!parsed.hostname) {
+        throw new Error(`Invalid SERVER value, missing hostname: "${original}"`);
     }
-    
-    return nextResponse;
-  } catch (error) {
-    console.error('Proxy error:', error);
-    return NextResponse.json(
-      { success: false, message: 'Ошибка соединения с сервером' },
-      { status: 502 }
-    );
-  }
+
+    return parsed;
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
-) {
-  const { path } = await params;
-  return proxyRequest(request, 'GET', path.join('/'));
+function buildTargetUrl(serverUrl: URL, paths: string[], originalRequestUrl: string): URL {
+    const basePath = (serverUrl.pathname || '').replace(/\/$/, '');
+
+    const target = new URL(serverUrl.origin);
+    target.pathname = basePath || '/';
+
+    const cleanedSegments = paths
+        .filter(Boolean)
+        .map((p) => String(p).replace(/^\/+|\/+$/g, ''))
+        .map((seg) => encodeURIComponent(seg));
+
+    target.pathname = [basePath, ...cleanedSegments].filter(Boolean).join('/') || '/';
+
+    const original = new URL(originalRequestUrl);
+    target.search = original.search;
+
+    return target;
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
-) {
-  const { path } = await params;
-  return proxyRequest(request, 'POST', path.join('/'));
+async function proxyRequest(request: NextRequest, paths: string[]): Promise<NextResponse> {
+    try {
+        let serverUrl: URL;
+        try {
+            serverUrl = normalizeServerRaw(process.env.SERVER);
+        } catch (e) {
+            return NextResponse.json(
+                {error: 'Invalid SERVER env', message: e instanceof Error ? e.message : String(e)},
+                {status: 500}
+            );
+        }
+
+        const targetUrl = buildTargetUrl(serverUrl, paths, request.url);
+
+        const headers = new Headers();
+        for (const [key, value] of request.headers) {
+            if (HOP_BY_HOP_HEADERS.has(key.toLowerCase())) continue;
+            headers.append(key, value);
+        }
+        headers.set('x-proxied-by', 'next-proxy');
+
+        const method = request.method.toUpperCase();
+        const init: RequestInit = {
+            method,
+            headers,
+            redirect: 'manual',
+            signal: request.signal,
+        };
+
+        if (method !== 'GET' && method !== 'HEAD') {
+            init.body = request.body;
+            // @ts-expect-error node fetch duplex
+            init.duplex = 'half';
+        }
+
+        const upstream = await fetch(targetUrl.toString(), init);
+
+        const responseHeaders = new Headers();
+        for (const [key, value] of upstream.headers) {
+            if (HOP_BY_HOP_HEADERS.has(key.toLowerCase())) continue;
+            responseHeaders.append(key, value);
+        }
+
+        return new NextResponse(upstream.body, {
+            status: upstream.status,
+            statusText: upstream.statusText,
+            headers: responseHeaders,
+        });
+    } catch (err) {
+        console.log(err)
+        return NextResponse.json(
+            {
+                error: 'Failed to proxy request',
+                message: err instanceof Error ? err.message : String(err),
+            },
+            {status: 500}
+        );
+    }
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
-) {
-  const { path } = await params;
-  return proxyRequest(request, 'PATCH', path.join('/'));
+async function handler(request: NextRequest, {params}: RouteParams) {
+    const {paths} = await params;
+    return proxyRequest(request, paths ?? []);
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
-) {
-  const { path } = await params;
-  return proxyRequest(request, 'DELETE', path.join('/'));
-}
+export const GET = handler;
+export const POST = handler;
+export const PUT = handler;
+export const DELETE = handler;
+export const PATCH = handler;
+export const HEAD = handler;
+export const OPTIONS = handler;
