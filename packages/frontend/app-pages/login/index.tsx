@@ -68,13 +68,15 @@ export const LoginPage = () => {
         try {
             const result = await login(data.username, data.password, captchaToken || undefined);
 
-            if (!result.ok) return showAlert(result.error || defaultErrorMessage, "error");
+            if (!result.ok) {
+                showAlert(result.error || defaultErrorMessage, "error");
+                return;
+            }
             showAlert(successMessage, "success");
-            router.replace("/dashboard");
         } catch (error) {
             showAlert(error instanceof Error ? error.message : defaultErrorMessage, "error");
         }
-    }, [router, showAlert, captchaToken, login]);
+    }, [showAlert, captchaToken, login]);
 
     if (status === "loading") {
         return (

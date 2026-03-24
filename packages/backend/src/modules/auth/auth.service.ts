@@ -3,11 +3,14 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
+import * as crypto from 'crypto';
 import { User } from '../../schemas/user.schema';
 import { Session } from '../../schemas/session.schema';
 import { RateLimitService } from './rate-limit.service';
 import { CaptchaService } from './captcha.service';
 import { LoginDto } from './dto/login.dto';
+
+const REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 @Injectable()
 export class AuthService {
@@ -19,12 +22,33 @@ export class AuthService {
     private captchaService: CaptchaService,
   ) {}
 
+  private generateTokens(user: any, sessionToken: string, refreshToken: string) {
+    const accessToken = this.jwtService.sign({
+      sub: user._id.toString(),
+      username: user.username,
+      role: user.role,
+      sessionToken,
+    });
+
+    const refreshTokenPayload = {
+      sub: user._id.toString(),
+      sessionToken,
+      refreshToken,
+    };
+    const refreshTokenSigned = this.jwtService.sign(refreshTokenPayload, {
+      expiresIn: '7d',
+    });
+
+    return { accessToken, refreshToken: refreshTokenSigned };
+  }
+
   async login(
     loginDto: LoginDto,
     ip: string,
     userAgent: string,
   ): Promise<{
     accessToken: string;
+    refreshToken: string;
     user: { id: string; username: string; name: string; role: string };
   }> {
     // Rate limit check
@@ -76,28 +100,29 @@ export class AuthService {
     user.lockUntil = null;
     await user.save();
 
-    // Create session
+    // Create session with both tokens
     const sessionToken = uuidv4();
+    const refreshToken = crypto.randomBytes(64).toString('hex');
+
     await this.sessionModel.create({
       userId: user._id,
       token: sessionToken,
+      refreshToken,
       ip,
       userAgent,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY),
     });
 
-    // Generate JWT
-    const jwtPayload = {
-      sub: user._id.toString(),
-      username: user.username,
-      role: user.role,
+    // Generate tokens
+    const { accessToken, refreshToken: signedRefreshToken } = this.generateTokens(
+      user,
       sessionToken,
-    };
-
-    const accessToken = this.jwtService.sign(jwtPayload);
+      refreshToken,
+    );
 
     return {
       accessToken,
+      refreshToken: signedRefreshToken,
       user: {
         id: user._id.toString(),
         username: user.username,
@@ -107,8 +132,63 @@ export class AuthService {
     };
   }
 
-  async logout(sessionToken: string): Promise<void> {
-    await this.sessionModel.deleteOne({ token: sessionToken });
+  async refresh(refreshTokenSigned: string): Promise<{
+    accessToken: string;
+    refreshToken: string;
+  }> {
+    // Verify refresh token
+    let decoded: any;
+    try {
+      decoded = this.jwtService.verify(refreshTokenSigned);
+    } catch {
+      throw new UnauthorizedException('Недействительный токен');
+    }
+
+    // Find session with the refresh token
+    const session = await this.sessionModel.findOne({
+      token: decoded.sessionToken,
+      refreshToken: decoded.refreshToken,
+    });
+
+    if (!session) {
+      throw new UnauthorizedException('Сессия не найдена');
+    }
+
+    if (session.expiresAt < new Date()) {
+      await this.sessionModel.deleteOne({ _id: session._id });
+      throw new UnauthorizedException('Сессия истекла');
+    }
+
+    // Get user
+    const user = await this.userModel.findById(session.userId);
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('Пользователь не найден');
+    }
+
+    // Generate new tokens (rotate refresh token)
+    const newSessionToken = uuidv4();
+    const newRefreshToken = crypto.randomBytes(64).toString('hex');
+
+    // Update session
+    await this.sessionModel.updateOne(
+      { _id: session._id },
+      {
+        token: newSessionToken,
+        refreshToken: newRefreshToken,
+        expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY),
+      },
+    );
+
+    return this.generateTokens(user, newSessionToken, newRefreshToken);
+  }
+
+  async logout(refreshTokenSigned: string): Promise<void> {
+    try {
+      const decoded = this.jwtService.verify(refreshTokenSigned);
+      await this.sessionModel.deleteOne({ token: decoded.sessionToken });
+    } catch {
+      // Token invalid, nothing to logout
+    }
   }
 
   async getMe(userId: string): Promise<{

@@ -4,6 +4,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { Request } from 'express';
 import { User } from '../../schemas/user.schema';
 import { Session } from '../../schemas/session.schema';
 
@@ -15,6 +16,14 @@ interface JwtPayload {
   iat?: number;
   exp?: number;
 }
+
+// Extract from cookie first, then fall back to Authorization header
+const extractJwtFromCookieOrHeader = (req: Request): string | null => {
+  if (req?.cookies?.access_token) {
+    return req.cookies.access_token;
+  }
+  return ExtractJwt.fromAuthHeaderAsBearerToken()(req);
+};
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -28,7 +37,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new Error('JWT_SECRET must be set');
     }
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: extractJwtFromCookieOrHeader,
       ignoreExpiration: false,
       secretOrKey: secret,
     });

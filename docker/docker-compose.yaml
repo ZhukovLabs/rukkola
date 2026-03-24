@@ -12,6 +12,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - PORT=4000
       - NODE_ENV=production
+      - CORS_ORIGIN=${CORS_ORIGIN}
       - MINIO_ENDPOINT=${MINIO_ENDPOINT:-minio}
       - MINIO_PORT=${MINIO_PORT:-9000}
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}

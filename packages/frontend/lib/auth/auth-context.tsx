@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { apiClient, getToken, setToken, removeToken } from '@/lib/api/client';
+import { apiClient } from '@/lib/api/client';
 
 type UserRole = 'admin' | 'moderator';
 
@@ -31,27 +31,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<'loading' | 'authenticated' | 'unauthenticated'>('loading');
 
   const fetchUser = useCallback(async () => {
-    const token = getToken();
-    if (!token) {
-      setUser(null);
-      setStatus('unauthenticated');
-      return;
-    }
-
     try {
       const response = await apiClient.get<{ success: boolean; data: AuthUser }>('/auth/me');
       if (response.success && response.data) {
         setUser(response.data);
         setStatus('authenticated');
       } else {
-        removeToken();
-        document.cookie = 'auth_token=; path=/; max-age=0';
         setUser(null);
         setStatus('unauthenticated');
       }
     } catch {
-      removeToken();
-      document.cookie = 'auth_token=; path=/; max-age=0';
       setUser(null);
       setStatus('unauthenticated');
     }
@@ -66,12 +55,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await apiClient.post<{
         success: boolean;
         message?: string;
-        data?: { accessToken: string; user: AuthUser };
+        data?: { user: AuthUser };
       }>('/auth/login', { username, password, captchaToken });
 
       if (response.success && response.data) {
-        setToken(response.data.accessToken);
-        document.cookie = `auth_token=${response.data.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
         setUser(response.data.user);
         setStatus('authenticated');
         return { ok: true };
@@ -90,8 +77,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Ignore errors during logout
     } finally {
-      removeToken();
-      document.cookie = 'auth_token=; path=/; max-age=0';
       setUser(null);
       setStatus('unauthenticated');
     }

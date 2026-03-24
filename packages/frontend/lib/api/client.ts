@@ -1,10 +1,10 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
-
 type RequestOptions = {
   method?: string;
   body?: unknown;
   headers?: Record<string, string>;
   signal?: AbortSignal;
+  skipAuth?: boolean;
+  skipRedirect?: boolean;
 };
 
 class ApiError extends Error {
@@ -17,56 +17,74 @@ class ApiError extends Error {
   }
 }
 
-function getToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('auth_token');
-}
+let isRefreshing = false;
+let refreshPromise: Promise<boolean | null> | null = null;
 
-function setToken(token: string): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem('auth_token', token);
-}
+async function refreshAccessToken(): Promise<boolean | null> {
+  if (isRefreshing) {
+    return refreshPromise;
+  }
 
-function removeToken(): void {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem('auth_token');
+  isRefreshing = true;
+  
+  refreshPromise = (async () => {
+    try {
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    } finally {
+      isRefreshing = false;
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
 }
 
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, headers = {}, signal } = options;
+  const { method = 'GET', body, headers = {}, signal, skipAuth = false, skipRedirect = false } = options;
 
-  const token = getToken();
   const requestHeaders: Record<string, string> = {
     ...headers,
   };
-
-  if (token) {
-    requestHeaders['Authorization'] = `Bearer ${token}`;
-  }
 
   if (body && !(body instanceof FormData)) {
     requestHeaders['Content-Type'] = 'application/json';
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const response = await fetch(`/api${endpoint}`, {
     method,
     headers: requestHeaders,
     body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
     signal,
+    credentials: 'include',
   });
 
   if (response.status === 401) {
+    if (!skipAuth && endpoint !== '/auth/login' && endpoint !== '/auth/refresh' && endpoint !== '/auth/me') {
+      const refreshed = await refreshAccessToken();
+      
+      if (refreshed) {
+        return request<T>(endpoint, options);
+      }
+    }
+
     const errorData = await response.json().catch(() => ({}));
     const errorMessage = errorData.message || 'Необходима авторизация';
 
-    // Only clear token and redirect if this is NOT a login attempt
-    const isLoginRequest = endpoint === '/auth/login';
-    if (!isLoginRequest) {
-      removeToken();
-      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
-      }
+    const isAuthRequest = endpoint === '/auth/login' || endpoint === '/auth/refresh' || endpoint === '/auth/me';
+    if (!isAuthRequest && !skipRedirect && typeof window !== 'undefined') {
+      window.location.href = '/login';
     }
+    
     throw new ApiError(401, errorMessage);
   }
 
@@ -78,7 +96,6 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     );
   }
 
-  // Handle image/binary responses
   const contentType = response.headers.get('content-type');
   if (contentType && contentType.startsWith('image/')) {
     return response as unknown as T;
@@ -88,20 +105,20 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 }
 
 export const apiClient = {
-  get: <T>(endpoint: string, signal?: AbortSignal) =>
-    request<T>(endpoint, { signal }),
+  get: <T>(endpoint: string, signal?: AbortSignal, skipRedirect = false) =>
+    request<T>(endpoint, { signal, skipRedirect }),
 
-  post: <T>(endpoint: string, body?: unknown) =>
-    request<T>(endpoint, { method: 'POST', body }),
+  post: <T>(endpoint: string, body?: unknown, skipRedirect = false) =>
+    request<T>(endpoint, { method: 'POST', body, skipRedirect }),
 
-  patch: <T>(endpoint: string, body?: unknown) =>
-    request<T>(endpoint, { method: 'PATCH', body }),
+  patch: <T>(endpoint: string, body?: unknown, skipRedirect = false) =>
+    request<T>(endpoint, { method: 'PATCH', body, skipRedirect }),
 
-  delete: <T>(endpoint: string) =>
-    request<T>(endpoint, { method: 'DELETE' }),
+  delete: <T>(endpoint: string, skipRedirect = false) =>
+    request<T>(endpoint, { method: 'DELETE', skipRedirect }),
 
-  upload: <T>(endpoint: string, formData: FormData) =>
-    request<T>(endpoint, { method: 'POST', body: formData }),
+  upload: <T>(endpoint: string, formData: FormData, skipRedirect = false) =>
+    request<T>(endpoint, { method: 'POST', body: formData, skipRedirect }),
 };
 
-export { getToken, setToken, removeToken, ApiError, API_BASE_URL };
+export { ApiError };

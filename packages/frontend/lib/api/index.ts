@@ -1,4 +1,4 @@
-export { apiClient, getToken, setToken, removeToken, ApiError, API_BASE_URL } from './client';
+export { apiClient, ApiError } from './client';
 
 export {
   getProducts,

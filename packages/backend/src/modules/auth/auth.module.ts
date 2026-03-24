@@ -19,7 +19,7 @@ import { Session, SessionSchema } from '../../schemas/session.schema';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '7d' },
+        signOptions: { expiresIn: '5m' }, // Access token: 5 minutes
       }),
     }),
     MongooseModule.forFeature([

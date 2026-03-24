@@ -9,6 +9,9 @@ export class Session extends Document {
   @Prop({ required: true, unique: true, index: true })
   token!: string;
 
+  @Prop({ required: true, unique: true, index: true })
+  refreshToken!: string;
+
   @Prop()
   ip?: string;
 
@@ -23,3 +26,4 @@ export const SessionSchema = SchemaFactory.createForClass(Session);
 
 SessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 SessionSchema.index({ userId: 1 });
+SessionSchema.index({ refreshToken: 1 });
