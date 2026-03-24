@@ -5,7 +5,8 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET = process.env.JWT_SECRET || '';
 
 async function handleRevalidate(request: NextRequest): Promise<NextResponse> {
-    console.log('handleRevalidate called, JWT_SECRET length:', JWT_SECRET.length);
+    console.log('=== handleRevalidate called ===');
+    console.log('JWT_SECRET length:', JWT_SECRET.length);
     
     const authHeader = request.headers.get('authorization');
     console.log('authHeader:', authHeader ? 'present' : 'missing');
@@ -101,13 +102,18 @@ function buildTargetUrl(serverUrl: URL, paths: string[], originalRequestUrl: str
 }
 
 async function proxyRequest(request: NextRequest, paths: string[]): Promise<NextResponse> {
-    // Handle local routes directly
+    // Handle local routes directly - paths = ['revalidate'] or ['health']
     if (paths[0] === 'revalidate') {
+        console.log('Handling revalidate locally');
         return handleRevalidate(request);
     }
     if (paths[0] === 'health') {
         return NextResponse.json({ status: 'ok' });
     }
+    
+    // All other paths go to backend
+    const apiPaths = paths;
+    console.log('Proxying to:', apiPaths);
     
     try {
         let serverUrl: URL;
@@ -121,7 +127,7 @@ async function proxyRequest(request: NextRequest, paths: string[]): Promise<Next
             );
         }
 
-        const targetUrl = buildTargetUrl(serverUrl, paths, request.url);
+        const targetUrl = buildTargetUrl(serverUrl, apiPaths, request.url);
 
         const headers = new Headers();
         for (const [key, value] of request.headers) {
@@ -172,6 +178,7 @@ async function proxyRequest(request: NextRequest, paths: string[]): Promise<Next
 async function handler(request: NextRequest, {params}: RouteParams) {
     const {path} = await params;
     console.log('API request:', path);
+    console.log('Method:', request.method);
     return proxyRequest(request, path ?? []);
 }
 

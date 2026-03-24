@@ -19,12 +19,15 @@ export async function POST(request: NextRequest) {
     }
 
     const token = authHeader.slice(7);
+    console.log('Token preview:', token.substring(0, 30) + '...');
 
     try {
-      jwt.verify(token, JWT_SECRET);
-    } catch {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      console.log('Decoded:', decoded);
+    } catch (e) {
+      console.log('JWT verify error:', e instanceof Error ? e.message : e);
       return NextResponse.json(
-        { success: false, error: 'Invalid token' },
+        { success: false, error: 'Invalid token', details: e instanceof Error ? e.message : 'unknown' },
         { status: 401 }
       );
     }
