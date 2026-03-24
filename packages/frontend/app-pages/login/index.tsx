@@ -70,6 +70,7 @@ export const LoginPage = () => {
 
             if (!result.ok) {
                 showAlert(result.error || defaultErrorMessage, "error");
+                setCaptchaToken(null);
                 return;
             }
             showAlert(successMessage, "success");
