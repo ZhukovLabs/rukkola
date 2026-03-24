@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 type RouteParams = {
-    params: Promise<{ paths?: string[] }>;
+    params: Promise<{ path: string[] }>;
 };
 
 const HOP_BY_HOP_HEADERS = new Set([
@@ -121,8 +121,8 @@ async function proxyRequest(request: NextRequest, paths: string[]): Promise<Next
 }
 
 async function handler(request: NextRequest, {params}: RouteParams) {
-    const {paths} = await params;
-    return proxyRequest(request, paths ?? []);
+    const {path} = await params;
+    return proxyRequest(request, path ?? []);
 }
 
 export const GET = handler;
