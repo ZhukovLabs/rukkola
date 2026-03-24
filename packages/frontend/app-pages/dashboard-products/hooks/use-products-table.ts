@@ -3,6 +3,7 @@ import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query'
 import {useSearchParams} from 'next/navigation'
 import {getProducts, toggleProductVisibility, deleteProduct, toggleProductAlcohol, reorderProducts, swapProductOrder, moveProductToPosition} from '../actions'
 import {useToast} from '@/components/toast-container'
+import {revalidateMenu} from '@/lib/api/revalidate'
 
 export const useProductsTable = () => {
     const searchParams = useSearchParams();
@@ -28,6 +29,7 @@ export const useProductsTable = () => {
         onMutate: (id: string) => setLoadingId(id),
         onSuccess: (result) => {
             queryClient.invalidateQueries({queryKey: ['products']})
+            revalidateMenu()
             if (result.success && result.data) {
                 toast.showSuccess(result.data.hidden ? 'Товар скрыт' : 'Товар отображается')
             } else {
@@ -43,6 +45,7 @@ export const useProductsTable = () => {
         onMutate: (id: string) => setTogglingAlcoholId(id),
         onSuccess: (result) => {
             queryClient.invalidateQueries({queryKey: ['products']})
+            revalidateMenu()
             if (result.success && result.data) {
                 toast.showSuccess(result.data.isAlcohol ? 'Товар помечен как алкогольный' : 'Товар помечен как безалкогольный')
             } else {
@@ -58,6 +61,7 @@ export const useProductsTable = () => {
         onMutate: (id: string) => setDeletePending(id),
         onSuccess: (result) => {
             queryClient.invalidateQueries({queryKey: ['products']})
+            revalidateMenu()
             if (result.success) {
                 toast.showSuccess('Товар удалён')
             } else {
@@ -72,6 +76,7 @@ export const useProductsTable = () => {
         mutationFn: reorderProducts,
         onSuccess: (result) => {
             queryClient.invalidateQueries({queryKey: ['products']})
+            revalidateMenu()
             if (!result.success) {
                 toast.showError(result.message || 'Не удалось обновить порядок')
             }
@@ -84,6 +89,7 @@ export const useProductsTable = () => {
             swapProductOrder(orderedIds, pageOffset),
         onSuccess: (result) => {
             queryClient.invalidateQueries({queryKey: ['products']})
+            revalidateMenu()
             if (!result.success) {
                 toast.showError(result.message || 'Не удалось обновить порядок')
             }
@@ -97,6 +103,7 @@ export const useProductsTable = () => {
         onMutate: ({productId}) => setMovingId(productId),
         onSuccess: (result) => {
             queryClient.invalidateQueries({queryKey: ['products']})
+            revalidateMenu()
             if (result.success) {
                 toast.showSuccess('Позиция товара обновлена')
             } else {

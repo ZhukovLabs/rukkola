@@ -27,6 +27,7 @@ type CategoryType = {
 }
 import {createListCollection} from '@chakra-ui/react'
 import {useToast} from '@/components/toast-container'
+import {revalidateMenu} from '@/lib/api/revalidate'
 
 type Props = { categories: CategoryType[] }
 
@@ -70,6 +71,7 @@ export const AddCategoryDialog = ({categories}: Props) => {
                 })
                 if (result.success) {
                     queryClient.invalidateQueries({queryKey: ['categories']})
+                    revalidateMenu()
                     toast.showSuccess('Категория успешно создана')
                     resetForm()
                     close()

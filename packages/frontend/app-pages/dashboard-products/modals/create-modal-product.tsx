@@ -7,6 +7,7 @@ import {ProductFormValues} from '@/app-pages/dashboard-products/validation'
 import {BaseProductModal} from './base-product-modal'
 import {uploadImageToApi} from "@/app-pages/dashboard-products/modals/api";
 import {useToast} from '@/components/toast-container';
+import {revalidateMenu} from '@/lib/api/revalidate';
 
 const initialValues = {
     name: '',
@@ -49,6 +50,7 @@ export const CreateProductModal = () => {
             if (id && file) await uploadImageToApi(id, file);
 
             queryClient.invalidateQueries({queryKey: ['products']});
+            revalidateMenu();
             toast.showSuccess('Товар успешно создан')
         } catch (err) {
             if (!err || typeof err === 'object' && 'message' in err) {

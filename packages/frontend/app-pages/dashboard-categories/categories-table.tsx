@@ -61,6 +61,7 @@ import { Tooltip } from '@/components/tooltip'
 import { useConfirmationDialog } from "@/hooks/use-confirmation-dialog"
 import { useToast } from "@/components/toast-container"
 import { CategoryPositionDialog } from './category-position-dialog'
+import { revalidateMenu } from '@/lib/api/revalidate'
 
 type CategoryData = {
     id: string;
@@ -516,6 +517,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
             toggleCategoryField(id, field),
         onSuccess: (result) => {
             queryClient.invalidateQueries({ queryKey: ['categories'] })
+            revalidateMenu()
             if (result.success) {
                 toast.showSuccess('Настройки категории обновлены')
             } else {
@@ -529,6 +531,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
         mutationFn: (updates: { id: string; order: number }[]) => reorderCategories(updates),
         onSuccess: (result) => {
             queryClient.invalidateQueries({ queryKey: ['categories'] })
+            revalidateMenu()
             if (result.success) {
                 toast.showSuccess('Порядок категорий обновлен')
             } else {
@@ -543,6 +546,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
         onSuccess: (result) => {
             setEditingId(null)
             queryClient.invalidateQueries({ queryKey: ['categories'] })
+            revalidateMenu()
             if (result.success) {
                 toast.showSuccess('Название категории обновлено')
             } else {
@@ -559,6 +563,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
         mutationFn: deleteCategory,
         onSuccess: (result) => {
             queryClient.invalidateQueries({ queryKey: ['categories'] })
+            revalidateMenu()
             if (result.success) {
                 toast.showSuccess('Категория удалена')
             } else {
@@ -572,6 +577,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
         mutationFn: (categoryId: string) => markCategoryProductsAlcohol(categoryId),
         onSuccess: (result) => {
             queryClient.invalidateQueries({ queryKey: ['products'] })
+            revalidateMenu()
             if (result.success) {
                 toast.showSuccess(result.message || 'Продукты помечены как алкогольные')
             } else {
@@ -585,6 +591,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
         mutationFn: (categoryId: string) => markCategoryProductsNonAlcohol(categoryId),
         onSuccess: (result) => {
             queryClient.invalidateQueries({ queryKey: ['products'] })
+            revalidateMenu()
             if (result.success) {
                 toast.showSuccess(result.message || 'Продукты помечены как безалкогольные')
             } else {
@@ -599,6 +606,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
             moveCategoryToPosition(categoryId, newPosition),
         onSuccess: (result) => {
             queryClient.invalidateQueries({ queryKey: ['categories'] })
+            revalidateMenu()
             if (result.success) {
                 toast.showSuccess('Позиция категории обновлена')
             } else {

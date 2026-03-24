@@ -7,6 +7,7 @@ import {ProductFormValues} from '@/app-pages/dashboard-products/validation'
 import {BaseProductModal} from './base-product-modal'
 import {uploadImageToApi} from "@/app-pages/dashboard-products/modals/api";
 import {useToast} from '@/components/toast-container';
+import {revalidateMenu} from '@/lib/api/revalidate';
 
 export const EditProductModal = () => {
     const searchParams = useSearchParams()
@@ -53,6 +54,7 @@ export const EditProductModal = () => {
 
             queryClient.invalidateQueries({queryKey: ['products']});
             queryClient.invalidateQueries({queryKey: ['product', productId]});
+            revalidateMenu();
             toast.showSuccess('Товар успешно обновлён')
         } catch (err) {
             if (!err || typeof err === 'object' && 'message' in err) {

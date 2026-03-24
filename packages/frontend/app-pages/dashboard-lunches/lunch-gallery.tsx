@@ -19,6 +19,7 @@ import {FiUpload, FiStar, FiTrash2, FiPower, FiImage} from 'react-icons/fi';
 import {activeLunch, deleteLunch, deactivateLunch} from './actions';
 import {useConfirmationDialog} from '@/hooks/use-confirmation-dialog';
 import {useToast} from '@/components/toast-container';
+import {revalidateMenu} from '@/lib/api/revalidate';
 
 type Lunch = {
     _id: string;
@@ -111,6 +112,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                 const res = await deleteLunch(id);
                 if (res?.success) {
                     dispatch({type: 'REMOVE_LUNCH', payload: id});
+                    revalidateMenu();
                     toast.showSuccess('Изображение удалено');
                 } else {
                     toast.showError(res?.message || 'Не удалось удалить изображение');
@@ -140,6 +142,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
             if (res.ok) {
                 const data = await res.json();
                 dispatch({type: 'ADD_LUNCH', payload: {id: data.id, image: data.image}});
+                revalidateMenu();
                 toast.showSuccess('Изображение успешно загружено');
             } else {
                 const errorData = await res.json();
@@ -161,6 +164,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                     const res = await deactivateLunch();
                     if (res?.success) {
                         dispatch({type: 'DEACTIVATE_ALL'});
+                        revalidateMenu();
                         toast.showInfo('Отображение обеда выключено');
                     } else {
                         toast.showError(res?.message || 'Не удалось выключить отображение');
@@ -169,6 +173,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                     const res = await activeLunch(id);
                     if (res?.success) {
                         dispatch({type: 'UPDATE_ACTIVE', payload: {id, active: true}});
+                        revalidateMenu();
                         toast.showSuccess('Обед активирован для отображения');
                     } else {
                         toast.showError(res?.message || 'Не удалось активировать обед');
