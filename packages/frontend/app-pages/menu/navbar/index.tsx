@@ -185,12 +185,13 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
 
     return (
         <Box position="relative" zIndex="10">
-            {isFixed && <Box height={isMobile ? '53px' : `${navHeight}px`} transition="height 0.2s ease"/>}
+            {isFixed && <Box height={isMobile ? 'calc(53px + env(safe-area-inset-top))' : `${navHeight}px`} transition="height 0.2s ease"/>}
 
             <MotionNav
                 ref={navRef}
                 position={isFixed ? "fixed" : "relative"}
                 top={0}
+                pt={isFixed && isMobile ? "env(safe-area-inset-top)" : 0}
                 insetX={0}
                 zIndex={100}
                 bgGradient="linear(to-r, rgba(26,32,44,0.9), rgba(26,32,44,0.8))"
