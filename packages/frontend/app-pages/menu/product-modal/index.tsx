@@ -100,19 +100,22 @@ export const ProductModal = () => {
             
             return () => {
                 document.body.style.cssText = originalStyle;
-                requestAnimationFrame(() => {
-                    window.scrollTo(0, scrollYRef.current);
-                });
             };
         }
     }, [isModalVisible]);
 
     const closeModal = useCallback(() => {
-        const current = new URLSearchParams(searchParams.toString());
-        current.delete("product");
-
-        router.replace(`${window.location.pathname}?${current.toString()}`, { scroll: false });
-    }, [router, searchParams]);
+        const scrollY = scrollYRef.current;
+        
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.top = '';
+        
+        window.scrollTo({ top: scrollY, behavior: 'instant' });
+        
+        router.replace(window.location.pathname, { scroll: false });
+    }, [router]);
 
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
