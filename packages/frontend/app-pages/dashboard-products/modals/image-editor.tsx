@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import Cropper, { Area } from 'react-easy-crop'
 import {
     Dialog,
@@ -44,52 +44,9 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
     const [crop, setCrop] = useState({ x: 0, y: 0 })
     const [zoom, setZoom] = useState(1)
     const [rotation, setRotation] = useState(0)
-    const [flip, setFlip] = useState({ horizontal: false, vertical: false })
+    const [flip, setFlip] = useState(initialFlip ?? { horizontal: false, vertical: false })
     const [aspect, setAspect] = useState<number | null>(null)
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
-
-    useEffect(() => {
-        if (!isOpen) {
-            setCrop({ x: 0, y: 0 })
-            setZoom(1)
-            setRotation(0)
-            setFlip({ horizontal: false, vertical: false })
-        } else if (initialFlip) {
-            setFlip(initialFlip)
-        }
-    }, [isOpen, initialFlip])
-
-    useEffect(() => {
-        const styleId = 'image-editor-flip-styles'
-        let styleEl = document.getElementById(styleId)
-        
-        if (!styleEl) {
-            styleEl = document.createElement('style')
-            styleEl.id = styleId
-            document.head.appendChild(styleEl)
-        }
-        
-        const transform = flip.horizontal || flip.vertical 
-            ? `scaleX(${flip.horizontal ? -1 : 1}) scaleY(${flip.vertical ? -1 : 1})`
-            : 'none'
-        
-        styleEl.textContent = `
-            .image-editor-cropper img {
-                transform: ${transform} !important;
-            }
-        `
-        
-        return () => {
-            if (styleEl) {
-                styleEl.textContent = ''
-            }
-        }
-    }, [flip])
-
-    const handleFlipChange = (newFlip: { horizontal: boolean; vertical: boolean }) => {
-        setFlip(newFlip)
-        onFlipChange?.(newFlip)
-    }
 
     const onCropComplete = useCallback((_: Area, croppedAreaPixelsArg: Area) => {
         setCroppedAreaPixels(croppedAreaPixelsArg)
@@ -139,12 +96,14 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
         setCrop({ x: 0, y: 0 })
         setZoom(1)
         setRotation(0)
+        setFlip({ horizontal: false, vertical: false })
+        onFlipChange?.({ horizontal: false, vertical: false })
     }
 
     const selectedAspectLabel = ASPECT_RATIOS.find(r => r.value === aspect)?.label || 'Свободно'
 
     return (
-        <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()}>
+        <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()} key={isOpen ? 'open' : 'closed'}>
             <Dialog.Backdrop bg="blackAlpha.800" backdropFilter="blur(8px)" />
             <Dialog.Positioner>
                 <Dialog.Content
@@ -182,7 +141,8 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                         overflow="hidden"
                         className="image-editor-cropper"
                     >
-                        <Cropper
+                            <Cropper
+                            key={imageSrc}
                             image={imageSrc}
                             crop={crop}
                             zoom={zoom}
@@ -190,10 +150,14 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                             aspect={aspect || 16 / 9}
                             onCropChange={setCrop}
                             onZoomChange={setZoom}
+                            onRotationChange={setRotation}
                             onCropComplete={onCropComplete}
                             showGrid={true}
                             style={{
                                 containerStyle: { background: '#1a1c1e' },
+                                mediaStyle: flip.horizontal || flip.vertical ? {
+                                    transform: `scaleX(${flip.horizontal ? -1 : 1}) scaleY(${flip.vertical ? -1 : 1})`,
+                                } : undefined,
                                 cropAreaStyle: { 
                                     border: '2px solid #38b2ac',
                                     boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
@@ -463,7 +427,7 @@ export function getCroppedImg(
                 return
             }
 
-            let rotRad = (rotation * Math.PI) / 180
+            const rotRad = (rotation * Math.PI) / 180
 
             const rad = Math.abs(rotation) % 180
             const swapDimensions = rad === 90 || rad === 270
