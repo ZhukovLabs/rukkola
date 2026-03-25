@@ -125,9 +125,6 @@ export function Navbar({items}: NavbarProps) {
                     transition="height 0.2s ease"
                 />
             )}
-            {isMobile && !isFixed && (
-                <Box height={`calc(53px + env(safe-area-inset-top, 0px))`} />
-            )}
 
             <MotionNav
                 ref={navRef}

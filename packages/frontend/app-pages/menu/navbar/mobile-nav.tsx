@@ -47,7 +47,7 @@ export const MobileNav = memo(function MobileNav({
     }, [activeId, items, openIds, scrollToElement, setOpenIds]);
 
     return (
-        <Box display={{base: "flex", md: "none"}} flexDirection="column" px={isFixed ? 0 : 4}>
+        <Box display={{base: "flex", md: "none"}} flexDirection="column" px={isFixed ? 4 : 0}>
             <Box ref={scrollContainerRef} overflowX="auto" overflowY="hidden" css={hiddenScrollbar}>
                 <Flex gap={2} pb={1} flexWrap="nowrap">
                     {items.map((item) => {
@@ -55,12 +55,8 @@ export const MobileNav = memo(function MobileNav({
                         const isGroupActive = activeId === item.id || item.children?.some((child) => child.id === activeId);
                         const isOpen = openIds.includes(item.id);
 
-                        if (activeId === '6912991568567769d9cd9044') {
-                            console.log('[MobileNav] Item:', item.id, 'isGroupActive:', isGroupActive, 'activeId:', activeId);
-                        }
-
                         return (
-                            <HStack key={item.id} data-nav-id={item.id} gap={1.5} flexShrink={0} align="start">
+                            <HStack key={item.id} data-nav-id={item.id} gap={1.5} flexShrink={0} align="start" alignItems="center">
                                 <Box as="button" flexShrink={0} display="inline-flex" alignItems="center" gap={1.5} px={4} py={2} borderRadius="full" borderWidth="1.5px" borderColor={isGroupActive || isOpen ? "teal.400" : "whiteAlpha.300"} bg={isGroupActive || isOpen ? "linear-gradient(135deg, teal.500 0%, teal.600 100%)" : "whiteAlpha.100"} color={isGroupActive || isOpen ? "white" : "whiteAlpha.800"} fontWeight="semibold" fontSize="sm" cursor="pointer" transition="all 0.2s cubic-bezier(0.4, 0, 0.2, 1)" _hover={{borderColor: "teal.400", bg: isGroupActive || isOpen ? "linear-gradient(135deg, teal.400 0%, teal.500 100%)" : "whiteAlpha.200", transform: "translateY(-1px)"}} _active={{transform: "translateY(0)"}} onClick={() => {
                                     if (hasChildren) {
                                         setOpenIds((prev) => {
