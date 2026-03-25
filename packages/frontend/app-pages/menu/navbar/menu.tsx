@@ -2,49 +2,51 @@
 
 import {NavbarItem} from "./types";
 import {Box} from "@chakra-ui/react";
-import {useEffect, useState, useRef} from "react";
+import {useEffect, useState} from "react";
 import {MenuItem} from "./menu-item";
 import {Arrow} from "./arrow";
 import {motion} from "framer-motion";
 
+function throttle(fn: (...args: unknown[]) => void, wait: number) {
+    let lastTime = 0;
+    return (...args: unknown[]) => {
+        const now = Date.now();
+        if (now - lastTime >= wait) {
+            lastTime = now;
+            fn(...args);
+        }
+    };
+}
+
 type MenuProps = {
     triggerRef: React.RefObject<HTMLButtonElement | null>;
+    menuRef: React.RefObject<HTMLDivElement | null>;
+    isMobile: boolean;
     items: NavbarItem[];
     onItemClick: (id: string) => void;
-    onClose: () => void;
 };
 
 const MotionBox = motion.create(Box);
 
 export const Menu = ({
                          triggerRef,
+                         menuRef,
+                         isMobile,
                          items,
                          onItemClick,
-                         onClose,
                      }: MenuProps) => {
-    const menuRef = useRef<HTMLDivElement>(null);
-    const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
+    const [position, setPosition] = useState<{top: number; left: number} | null>(null);
 
     useEffect(() => {
         if (!triggerRef.current) return;
 
-        const updatePosition = () => {
+        const updatePosition = throttle(() => {
             const rect = triggerRef.current!.getBoundingClientRect();
-            const menuRect = menuRef.current?.getBoundingClientRect();
-            
-            let left = rect.left + rect.width / 2;
-            const top = rect.bottom + 8;
-            
-            if (menuRect) {
-                if (left - menuRect.width / 2 < 10) {
-                    left = menuRect.width / 2 + 10;
-                } else if (left + menuRect.width / 2 > window.innerWidth - 10) {
-                    left = window.innerWidth - menuRect.width / 2 - 10;
-                }
-            }
-            
-            setPosition({top, left});
-        };
+            setPosition({
+                top: rect.bottom + 8,
+                left: isMobile ? window.innerWidth / 2 : rect.left,
+            });
+        }, 50);
 
         updatePosition();
         window.addEventListener("resize", updatePosition);
@@ -54,15 +56,7 @@ export const Menu = ({
             window.removeEventListener("resize", updatePosition);
             window.removeEventListener("scroll", updatePosition);
         };
-    }, [triggerRef]);
-
-    useEffect(() => {
-        if (!position) return;
-
-        const handleScroll = () => onClose();
-        window.addEventListener("scroll", handleScroll, {passive: true});
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, [position, onClose]);
+    }, [triggerRef, isMobile]);
 
     if (!position) return null;
 
@@ -71,34 +65,48 @@ export const Menu = ({
             ref={menuRef}
             position="fixed"
             top={`${position.top}px`}
-            left={`${position.left}px`}
-            transform="translateX(-50%)"
+            left={isMobile ? "50%" : `${position.left}px`}
+            transform={isMobile ? "translateX(-50%)" : undefined}
+            width={isMobile ? "90vw" : undefined}
+            maxW={isMobile ? "90vw" : "240px"}
+            minW={isMobile ? "90vw" : "180px"}
             zIndex={99999}
             initial={{opacity: 0, y: -8}}
             animate={{opacity: 1, y: 0}}
             transition={{duration: 0.15, ease: "easeOut"}}
-            onClick={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
+
         >
             <Box
-                bgGradient="linear(to-r, rgba(26, 32, 44, 0.95), rgba(26, 32, 44, 0.9))"
+                bgGradient="linear(to-r, rgba(26, 32, 44, 0.85), rgba(26, 32, 44, 0.75))"
                 backdropFilter="blur(14px)"
                 boxShadow="0 8px 30px rgba(0,0,0,0.35)"
                 borderRadius="lg"
-                border="1px solid rgba(255,255,255,0.08)"
-                minW="160px"
+                border="1px solid rgba(255,255,255,0.05)"
+                maxH={isMobile ? "50vh" : undefined}
+                overflowY={isMobile ? "auto" : "hidden"}
+                css={isMobile ? {
+                    WebkitOverflowScrolling: "touch",
+                    "&::-webkit-scrollbar": {
+                        width: "4px",
+                    },
+                    "&::-webkit-scrollbar-thumb": {
+                        background: "rgba(255,255,255,0.2)",
+                        borderRadius: "2px",
+                    },
+                } : undefined}
             >
-                <Box p={2} display="flex" flexDir="column" gap={1}>
+                <Box p={isMobile ? 3 : 2} display="flex" flexDir="column" gap={isMobile ? 2 : 1}>
                     {items.map((item) => (
                         <MenuItem
                             key={item.id}
                             item={item}
-                            isMobile={false}
+                            isMobile={isMobile}
                             onClick={() => onItemClick(item.id)}
                         />
                     ))}
                 </Box>
-                <Arrow/>
+
+                {!isMobile && <Arrow/>}
             </Box>
         </MotionBox>
     );

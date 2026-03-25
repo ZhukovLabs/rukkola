@@ -11,9 +11,10 @@ import {
     Portal,
     CloseButton,
     Flex,
+    Icon,
 } from "@chakra-ui/react";
-import {motion} from "framer-motion";
-import {FiMenu} from "react-icons/fi";
+import {motion, AnimatePresence} from "framer-motion";
+import {FiMenu, FiChevronRight} from "react-icons/fi";
 import {useSearchParams} from "next/navigation";
 
 import {NavItem} from "./nav-item";
@@ -21,6 +22,7 @@ import {NavbarItem} from "./types";
 import {CART_QUERY_KEY} from "../constants";
 
 const MotionNav = motion.create(Box);
+const MotionBox = motion.create(Box);
 
 type NavbarProps = {
     items: NavbarItem[];
@@ -31,11 +33,13 @@ const NAV_HEIGHT = 60;
 export const Navbar = memo(function Navbar({items}: NavbarProps) {
     const searchParams = useSearchParams();
     const navRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
     
     const [isFixed, setIsFixed] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [isMobile, setIsMobile] = useState(false);
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [openIds, setOpenIds] = useState<string[]>([]);
     const [navHeight, setNavHeight] = useState(NAV_HEIGHT);
     const initialTopRef = useRef<number | null>(null);
 
@@ -94,12 +98,20 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
     );
 
     const handleClick = useCallback((id: string) => {
-        const section = document.getElementById(`section-${id}`);
+        const section = document.getElementById(id);
         if (!section) return;
-        const currentHeight = navHeight;
+        const currentHeight = navRef.current?.offsetHeight || navHeight || 60;
         const y = section.getBoundingClientRect().top + window.scrollY - currentHeight;
         window.scrollTo({top: y, behavior: "smooth"});
     }, [navHeight]);
+
+    const scrollToElement = useCallback((elementId: string) => {
+        if (!scrollContainerRef.current) return;
+        const element = scrollContainerRef.current.querySelector(`[data-nav-id="${elementId}"]`);
+        if (element) {
+            element.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+        }
+    }, []);
 
     useEffect(() => {
         if (!allSectionIds.length) return;
@@ -118,7 +130,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                 let minDistance = Infinity;
 
                 for (const id of allSectionIds) {
-                    const el = document.getElementById(`section-${id}`);
+                    const el = document.getElementById(id);
                     if (!el) continue;
 
                     const rect = el.getBoundingClientRect();
@@ -186,7 +198,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                 animate={{opacity: 1, y: 0}}
                 transition={{duration: 0.25, ease: "easeOut"}}
             >
-                <Box display={{base: "flex", md: "none"}} flexDirection="column" px={4}>
+                <Box display={{base: "flex", md: "none"}} flexDirection="column" px={isFixed ? 0 : 4}>
                     {isFixed ? (
                         <Flex justifyContent="space-between" alignItems="center">
                             <Box
@@ -215,6 +227,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                             placement="bottom" 
                             open={drawerOpen}
                             onOpenChange={(e) => setDrawerOpen(e.open)}
+                            onExitComplete={() => setOpenIds([])}
                         >
                             <Drawer.Trigger asChild>
                                 <IconButton
@@ -242,7 +255,10 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                                                     <CloseButton
                                                         size="sm"
                                                         color="white"
-                                                        onClick={() => setDrawerOpen(false)}
+                                                        onClick={() => {
+                                                            setDrawerOpen(false);
+                                                            setOpenIds([]);
+                                                        }}
                                                     />
                                                 </Drawer.CloseTrigger>
                                             </HStack>
@@ -269,6 +285,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                                                     const isGroupActive =
                                                         activeId === item.id ||
                                                         item.children?.some((child) => child.id === activeId);
+                                                    const isOpen = openIds.includes(item.id);
 
                                                     return (
                                                         <Box key={item.id}>
@@ -284,14 +301,65 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                                                                 onClick={() => {
                                                                     if (!hasChildren) {
                                                                         setDrawerOpen(false);
-                                                                        setTimeout(() => handleClick(item.id), 50);
+                                                                        setTimeout(() => {
+                                                                            handleClick(item.id);
+                                                                            setOpenIds([]);
+                                                                        }, 50);
                                                                     } else {
-                                                                        setDrawerOpen(false);
+                                                                        setOpenIds((prev) =>
+                                                                            prev.includes(item.id)
+                                                                                ? prev.filter((id) => id !== item.id)
+                                                                                : [...prev, item.id]
+                                                                        );
                                                                     }
                                                                 }}
                                                             >
                                                                 {item.name}
                                                             </MotionBox>
+
+                                                            <AnimatePresence>
+                                                                {hasChildren && isOpen && (
+                                                                    <Box
+                                                                        overflowY="auto"
+                                                                        maxH="200px"
+                                                                        css={{
+                                                                            WebkitOverflowScrolling: "touch",
+                                                                            "&::-webkit-scrollbar": {
+                                                                                width: "4px",
+                                                                            },
+                                                                            "&::-webkit-scrollbar-thumb": {
+                                                                                background: "rgba(255,255,255,0.2)",
+                                                                                borderRadius: "2px",
+                                                                            },
+                                                                        }}
+                                                                    >
+                                                                        <VStack pl={4} mt={1} align="stretch" gap={1}>
+                                                                            {item.children!.map((child) => (
+                                                                                <MotionBox
+                                                                                    key={child.id}
+                                                                                    px={3}
+                                                                                    py={2}
+                                                                                    borderRadius="md"
+                                                                                    bg={activeId === child.id ? "teal.400" : "gray.700"}
+                                                                                    color={activeId === child.id ? "white" : "gray.200"}
+                                                                                    fontWeight="medium"
+                                                                                    cursor="pointer"
+                                                                                    whileHover={{scale: 1.02, backgroundColor: "teal.600"}}
+                                                                                    onClick={() => {
+                                                                                        setDrawerOpen(false);
+                                                                                        setTimeout(() => {
+                                                                                            handleClick(child.id);
+                                                                                            setOpenIds([]);
+                                                                                        }, 50);
+                                                                                    }}
+                                                                                >
+                                                                                    {child.name}
+                                                                                </MotionBox>
+                                                                            ))}
+                                                                        </VStack>
+                                                                    </Box>
+                                                                )}
+                                                            </AnimatePresence>
                                                         </Box>
                                                     );
                                                 })}
@@ -304,6 +372,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                     </Flex>
                     ) : (
                         <Box
+                            ref={scrollContainerRef}
                             overflowX="auto"
                             overflowY="hidden"
                             css={{
@@ -318,9 +387,10 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                                     const isGroupActive =
                                         activeId === item.id ||
                                         item.children?.some((child) => child.id === activeId);
+                                    const isOpen = openIds.includes(item.id);
 
                                     return (
-                                        <HStack key={item.id} gap={1.5} flexShrink={0}>
+                                        <HStack key={item.id} data-nav-id={item.id} gap={1.5} flexShrink={0} align="start">
                                             <Box
                                                 flexShrink={0}
                                                 display="inline-flex"
@@ -330,27 +400,77 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                                                 py={2}
                                                 borderRadius="full"
                                                 borderWidth="1.5px"
-                                                borderColor={isGroupActive ? "teal.400" : "whiteAlpha.300"}
-                                                bg={isGroupActive ? "linear-gradient(135deg, teal.500 0%, teal.600 100%)" : "whiteAlpha.100"}
-                                                color={isGroupActive ? "white" : "whiteAlpha.800"}
+                                                borderColor={isGroupActive || isOpen ? "teal.400" : "whiteAlpha.300"}
+                                                bg={isGroupActive || isOpen ? "linear-gradient(135deg, teal.500 0%, teal.600 100%)" : "whiteAlpha.100"}
+                                                color={isGroupActive || isOpen ? "white" : "whiteAlpha.800"}
                                                 fontWeight="semibold"
                                                 fontSize="sm"
                                                 cursor="pointer"
                                                 transition="all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
                                                 _hover={{
                                                     borderColor: "teal.400",
-                                                    bg: isGroupActive ? "linear-gradient(135deg, teal.400 0%, teal.500 100%)" : "whiteAlpha.200",
+                                                    bg: isGroupActive || isOpen ? "linear-gradient(135deg, teal.400 0%, teal.500 100%)" : "whiteAlpha.200",
                                                     transform: "translateY(-1px)",
                                                 }}
                                                 _active={{ transform: "translateY(0)" }}
                                                 onClick={() => {
-                                                    if (!hasChildren) {
+                                                    if (hasChildren) {
+                                                        setOpenIds((prev) => {
+                                                            const newOpenIds = prev.includes(item.id)
+                                                                ? prev.filter((id) => id !== item.id)
+                                                                : [...prev, item.id];
+                                                            if (!prev.includes(item.id)) {
+                                                                setTimeout(() => scrollToElement(item.id), 50);
+                                                            }
+                                                            return newOpenIds;
+                                                        });
+                                                    } else {
                                                         handleClick(item.id);
+                                                        setOpenIds([]);
                                                     }
                                                 }}
                                             >
                                                 {item.name}
+                                                {hasChildren && (
+                                                    <Icon
+                                                        as={FiChevronRight}
+                                                        boxSize={3.5}
+                                                        transition="transform 0.2s ease"
+                                                        transform={isOpen ? "rotate(90deg)" : "rotate(0deg)"}
+                                                    />
+                                                )}
                                             </Box>
+
+                                            {hasChildren && isOpen && item.children!.map((child) => (
+                                                <Box
+                                                    key={child.id}
+                                                    flexShrink={0}
+                                                    display="inline-flex"
+                                                    alignItems="center"
+                                                    px={3}
+                                                    py={1.5}
+                                                    borderRadius="full"
+                                                    borderWidth="1px"
+                                                    borderColor={activeId === child.id ? "teal.300" : "whiteAlpha.200"}
+                                                    bg={activeId === child.id ? "teal.500/90" : "whiteAlpha.50"}
+                                                    color={activeId === child.id ? "white" : "whiteAlpha.700"}
+                                                    fontSize="xs"
+                                                    fontWeight="medium"
+                                                    cursor="pointer"
+                                                    transition="all 0.15s ease"
+                                                    _hover={{
+                                                        borderColor: "teal.300",
+                                                        bg: "teal.500/80",
+                                                        color: "white",
+                                                    }}
+                                                    onClick={() => {
+                                                        handleClick(child.id);
+                                                        setOpenIds([]);
+                                                    }}
+                                                >
+                                                    {child.name}
+                                                </Box>
+                                            ))}
                                         </HStack>
                                     );
                                 })}
@@ -398,5 +518,3 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
         </Box>
     );
 });
-
-const MotionBox = motion.create(Box);

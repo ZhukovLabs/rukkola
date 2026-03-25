@@ -1,8 +1,9 @@
 'use client';
 
-import {Button} from "@chakra-ui/react";
+import {Button, Portal, useBreakpointValue} from "@chakra-ui/react";
 import {ChevronDownIcon} from "@chakra-ui/icons";
-import {useState, useRef, useEffect} from "react";
+import {useRef, useState, useEffect, useCallback} from "react";
+import {AnimatePresence} from "framer-motion";
 import {NavbarItem} from "./types";
 import {Menu} from "./menu";
 
@@ -25,6 +26,8 @@ export const NavItem = ({
                         }: NavItemProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const triggerRef = useRef<HTMLButtonElement>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const isMobile = useBreakpointValue({base: true, md: false});
     const hasChildren = !!childrenItems?.length;
     const isGroupActive = isActive || childrenItems?.some(child => child.id === activeId);
 
@@ -33,22 +36,37 @@ export const NavItem = ({
 
         const handleOutside = (e: Event) => {
             const target = e.target as Node;
-            if (triggerRef.current?.contains(target)) return;
+            if (triggerRef.current?.contains(target) || menuRef.current?.contains(target)) return;
             setIsOpen(false);
         };
 
         document.addEventListener("mousedown", handleOutside);
-        return () => document.removeEventListener("mousedown", handleOutside);
+        document.addEventListener("touchstart", handleOutside, {passive: true});
+
+        return () => {
+            document.removeEventListener("mousedown", handleOutside);
+            document.removeEventListener("touchstart", handleOutside);
+        };
     }, [isOpen]);
 
-    const handleClick = (e: React.MouseEvent) => {
-        e.preventDefault();
-        if (hasChildren) {
-            setIsOpen(v => !v);
-        } else {
-            onClick(id);
-        }
-    };
+    useEffect(() => {
+        if (!isOpen || !isMobile) return;
+        const handleScroll = () => setIsOpen(false);
+        window.addEventListener("touchmove", handleScroll, {passive: true});
+        return () => window.removeEventListener("touchmove", handleScroll);
+    }, [isOpen, isMobile]);
+
+    const handleTriggerClick = useCallback(
+        (e: React.MouseEvent) => {
+            e.stopPropagation();
+            if (hasChildren) {
+                setIsOpen(v => !v);
+            } else {
+                onClick(id);
+            }
+        },
+        [hasChildren, id, onClick]
+    );
 
     const handleChildClick = (childId: string) => {
         onClick(childId);
@@ -90,7 +108,7 @@ export const NavItem = ({
                 bg="transparent"
                 _hover={{color: "teal.200"}}
                 _active={{color: "teal.100"}}
-                onClick={handleClick}
+                onClick={handleTriggerClick}
                 style={{WebkitTapHighlightColor: "transparent"}}
             >
                 {title}
@@ -101,14 +119,19 @@ export const NavItem = ({
                 />
             </Button>
 
-            {isOpen && (
-                <Menu
-                    triggerRef={triggerRef}
-                    items={childrenItems}
-                    onItemClick={handleChildClick}
-                    onClose={() => setIsOpen(false)}
-                />
-            )}
+            <Portal>
+                <AnimatePresence>
+                    {isOpen && (
+                        <Menu
+                            triggerRef={triggerRef}
+                            menuRef={menuRef}
+                            isMobile={!!isMobile}
+                            items={childrenItems}
+                            onItemClick={handleChildClick}
+                        />
+                    )}
+                </AnimatePresence>
+            </Portal>
         </>
     );
 };
