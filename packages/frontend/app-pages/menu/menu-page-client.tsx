@@ -10,8 +10,8 @@ import { AdminFloatButton } from "@/components/admin-float-button";
 const Navbar = dynamic(() => import("./navbar").then(m => m.Navbar));
 const ScrollToFooterButton = dynamic(() => import("./scroll-footer-button").then(m => m.ScrollToFooterButton));
 const ScrollToTopButton = dynamic(() => import("./scroll-top-button").then(m => m.ScrollToTopButton));
-const ProductModal = dynamic(() => import("./product-modal").then(m => m.ProductModal));
-const CartModal = dynamic(() => import("./cart-modal").then(m => m.CartModal));
+const ProductModal = dynamic(() => import("./product-modal").then(m => m.ProductModal), { ssr: false });
+const CartModal = dynamic(() => import("./cart-modal").then(m => m.CartModal), { ssr: false });
 const ActiveLunch = dynamic(() => import("./active-lunch").then(m => m.ActiveLunch));
 
 type MenuPageClientProps = {

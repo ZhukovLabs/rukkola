@@ -146,6 +146,13 @@ export const Product = memo(function Product({
         [router, id, img]
     );
 
+    const handleHover = useCallback(() => {
+        if (img) {
+            router.prefetch(`?product=${id}`);
+            fetch(`/api/menu/product/${id}`, { method: 'HEAD' }).catch(() => {});
+        }
+    }, [router, id, img]);
+
     const Container = disableMotion ? Box : motion.div;
 
     return (
@@ -177,6 +184,7 @@ export const Product = memo(function Product({
                         overflow="hidden"
                         cursor="zoom-in"
                         onClick={openModal}
+                        onMouseEnter={handleHover}
                     >
                         {imgError ? (
                             <Center position="absolute" inset={0} bg="gray.700">

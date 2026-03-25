@@ -36,6 +36,7 @@ export const ProductModal = () => {
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
+    const [isModalVisible, setIsModalVisible] = useState(false);
 
     const fetchProduct = useCallback(async () => {
         if (!productId) {
@@ -72,8 +73,19 @@ export const ProductModal = () => {
     useEffect(() => {
         if (productId === prevProductIdRef.current) return;
         prevProductIdRef.current = productId;
+        
+        if (productId) {
+            setIsModalVisible(true);
+        }
+        
         fetchProduct();
     }, [fetchProduct, productId]);
+
+    useEffect(() => {
+        if (!productId && isModalVisible) {
+            setIsModalVisible(false);
+        }
+    }, [productId, isModalVisible]);
 
     const closeModal = useCallback(() => {
         const current = new URLSearchParams(searchParams.toString());
@@ -90,7 +102,7 @@ export const ProductModal = () => {
         return () => window.removeEventListener("keydown", handleEsc);
     }, [closeModal]);
 
-    if (!productId) return null;
+    if (!productId && !isModalVisible) return null;
 
     return (
         <Box
