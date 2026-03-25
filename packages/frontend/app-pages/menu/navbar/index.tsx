@@ -145,31 +145,29 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
     useEffect(() => {
         if (!items.length) return;
         
-        const updateInitialTop = () => {
-            if (navRef.current) {
-                const rect = navRef.current.getBoundingClientRect();
-                initialTopRef.current = rect.top + window.scrollY;
-            }
-        };
-
-        updateInitialTop();
+        let ticking = false;
         
         const handleScroll = () => {
             if (drawerOpen) return;
+            if (initialTopRef.current === null) return;
             
-            const threshold = initialTopRef.current ?? 0;
-            setIsFixed(window.scrollY > threshold);
+            if (!ticking) {
+                ticking = true;
+                requestAnimationFrame(() => {
+                    const shouldBeFixed = window.scrollY > initialTopRef.current!;
+                    setIsFixed(shouldBeFixed);
+                    ticking = false;
+                });
+            }
         };
 
         requestAnimationFrame(handleScroll);
-        const timeoutId = setTimeout(handleScroll, 100);
         
         window.addEventListener("scroll", handleScroll, {passive: true});
-        window.addEventListener("resize", updateInitialTop, {passive: true});
+        window.addEventListener("resize", handleScroll, {passive: true});
         return () => {
-            clearTimeout(timeoutId);
             window.removeEventListener("scroll", handleScroll);
-            window.removeEventListener("resize", updateInitialTop);
+            window.removeEventListener("resize", handleScroll);
         };
     }, [items, drawerOpen]);
 
