@@ -29,8 +29,8 @@ export const MobileNav = memo(function MobileNav({
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     return (
-        <Box display={{base: "flex", md: "none"}} flexDirection="column" px={isFixed ? 4 : 0}>
-            <Box ref={scrollContainerRef} overflowX="auto" overflowY="hidden" css={hiddenScrollbar}>
+        <Box display={{base: "flex", md: "none"}} flexDirection="column">
+            <Box ref={scrollContainerRef} overflowX="auto" overflowY="hidden" css={hiddenScrollbar} px={isFixed ? 5 : 0}>
                 <Flex gap={2} pb={1} flexWrap="nowrap">
                     {items.map((item) => {
                         const hasChildren = !!item.children?.length;
@@ -47,7 +47,7 @@ export const MobileNav = memo(function MobileNav({
                                             if (isOpening && scrollContainerRef.current) {
                                                 setTimeout(() => {
                                                     scrollContainerRef.current?.scrollBy({ left: 100, behavior: "smooth" });
-                                                }, 50);
+                                                });
                                             }
                                             return newOpenIds;
                                         });
