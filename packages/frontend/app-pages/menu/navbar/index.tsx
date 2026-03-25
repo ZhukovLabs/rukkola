@@ -28,6 +28,15 @@ export function Navbar({items}: NavbarProps) {
     const [openIds, setOpenIds] = useState<string[]>([]);
     const [navHeight, setNavHeight] = useState(NAV_HEIGHT);
     const initialTopRef = useRef<number | null>(null);
+    const prevIsFixedRef = useRef(false);
+
+    useEffect(() => {
+        if (prevIsFixedRef.current && !isFixed && navRef.current) {
+            const rect = navRef.current.getBoundingClientRect();
+            initialTopRef.current = rect.top + window.scrollY;
+        }
+        prevIsFixedRef.current = isFixed;
+    }, [isFixed]);
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -77,11 +86,10 @@ export function Navbar({items}: NavbarProps) {
             return;
         }
         
-        const threshold = initialTopRef.current;
-        
         const allIds = items.flatMap(item => [item.id, ...(item.children?.map(c => c.id) || [])]);
         
         const handleScroll = () => {
+            const threshold = initialTopRef.current ?? 0;
             setIsFixed(window.scrollY > threshold);
             
             let foundId: string | null = null;
