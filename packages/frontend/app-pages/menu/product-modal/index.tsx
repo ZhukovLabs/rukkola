@@ -114,7 +114,10 @@ export const ProductModal = () => {
         
         window.scrollTo({ top: scrollY, behavior: 'instant' });
         
-        router.replace(window.location.pathname, { scroll: false });
+        const params = new URLSearchParams(window.location.search);
+        params.delete("product");
+        const newPath = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+        router.replace(newPath, { scroll: false });
     }, [router]);
 
     useEffect(() => {

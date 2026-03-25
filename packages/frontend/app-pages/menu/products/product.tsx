@@ -14,7 +14,7 @@ import Image from "next/image";
 import { memo, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiCheck, FiImage } from "react-icons/fi";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { addToCart } from "@/lib/local-storage";
 import { useIsLowPerformanceDevice } from "@/hooks/use-is-low-performance-device";
 
@@ -92,6 +92,7 @@ export const Product = memo(function Product({
                                                  prices
                                              }: ProductInnerProps) {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [added, setAdded] = useState(false);
     const [selecting, setSelecting] = useState(false);
     const [selectedPrice, setSelectedPrice] = useState<Price | null>(null);
@@ -141,17 +142,21 @@ export const Product = memo(function Product({
         setSelectedPrice(null);
     }, []);
 
-    const openModal = useCallback(
-        () => img && router.push(`?product=${id}`, { scroll: false }),
-        [router, id, img]
-    );
+    const openModal = useCallback(() => {
+        if (!img) return;
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("product", id);
+        router.push(`?${params.toString()}`, { scroll: false });
+    }, [router, searchParams, id, img]);
 
     const handleHover = useCallback(() => {
         if (img) {
-            router.prefetch(`?product=${id}`);
+            const params = new URLSearchParams(searchParams.toString());
+            params.set("product", id);
+            router.prefetch(`?${params.toString()}`);
             fetch(`/api/menu/product/${id}`, { method: 'HEAD' }).catch(() => {});
         }
-    }, [router, id, img]);
+    }, [router, searchParams, id, img]);
 
     const Container = disableMotion ? Box : motion.div;
 
