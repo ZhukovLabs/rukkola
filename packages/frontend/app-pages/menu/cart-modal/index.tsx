@@ -33,7 +33,7 @@ export const CartModal = () => {
 
     const isMobile = useBreakpointValue({base: true, md: false});
     const dialogMaxWidth = useBreakpointValue({base: "100%", md: "600px", lg: "700px"});
-    const dialogHeight = useBreakpointValue({base: "calc(90vh - 40px)", md: "calc(100vh - 20px)"});
+    const dialogHeight = useBreakpointValue({base: "calc(90vh - 40px - env(safe-area-inset-bottom, 0px))", md: "calc(100vh - 20px - env(safe-area-inset-bottom, 0px))"});
 
     const items = useCart();
     const total = useCartTotal();
@@ -100,7 +100,7 @@ export const CartModal = () => {
                         alignItems: "flex-start",
                         justifyContent: "center",
                         paddingTop: isMobile ? "10px" : "20px",
-                        paddingBottom: isMobile ? "10px" : "20px",
+                        paddingBottom: isMobile ? "calc(10px + env(safe-area-inset-bottom, 0px))" : "20px",
                         zIndex: 9998,
                     }}
                 >

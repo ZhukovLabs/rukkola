@@ -87,6 +87,22 @@ export const ProductModal = () => {
         }
     }, [productId, isModalVisible]);
 
+    useEffect(() => {
+        if (isModalVisible) {
+            const originalStyle = document.body.style.cssText;
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
+            document.body.style.top = `-${window.scrollY}px`;
+            
+            return () => {
+                const scrollY = parseInt(document.body.style.top || '0', 10);
+                document.body.style.cssText = originalStyle;
+                window.scrollTo(0, -scrollY);
+            };
+        }
+    }, [isModalVisible]);
+
     const closeModal = useCallback(() => {
         const current = new URLSearchParams(searchParams.toString());
         current.delete("product");

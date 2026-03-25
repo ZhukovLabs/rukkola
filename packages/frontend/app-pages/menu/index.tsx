@@ -86,7 +86,19 @@ export const MenuPage = async ({searchParams}: MenuPageProps) => {
         }));
 
     return (
-        <Box display="flex" flexDirection="column" maxW="1440px" w="100%" mx="auto" p="20px">
+        <Box 
+            display="flex" 
+            flexDirection="column" 
+            maxW="1440px" 
+            w="100%" 
+            mx="auto" 
+            p="20px"
+            pb="env(safe-area-inset-bottom, 20px)"
+            css={{
+                minHeight: '100vh',
+                WebkitOverflowScrolling: 'touch',
+            }}
+        >
             <UnofficialNotice/>
 
             <Box mx="auto" w={{base: "80%", sm: "60%", md: "400px"}} maxW="90vw" mb={{base: 4, md: 6}}>

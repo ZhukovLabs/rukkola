@@ -139,13 +139,19 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
 
     return (
         <Box position="relative" zIndex="10">
-            {isFixed && <Box height={isMobile ? '53px' : `${navHeight}px`} transition="height 0.2s ease"/>}
+            {isFixed && (
+                <Box 
+                    height={isMobile ? `calc(53px + env(safe-area-inset-top, 0px))` : `${navHeight}px`} 
+                    transition="height 0.2s ease"
+                />
+            )}
 
             <MotionNav
                 ref={navRef}
                 position={isFixed ? "fixed" : "relative"}
                 top={0}
                 pt={isFixed && isMobile ? "env(safe-area-inset-top, 0px)" : 0}
+                pb={isFixed && isMobile ? "env(safe-area-inset-bottom, 0px)" : 0}
                 insetX={0}
                 zIndex={100}
                 bgGradient="linear(to-r, rgba(26,32,44,0.9), rgba(26,32,44,0.8))"
@@ -155,6 +161,10 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                 initial={{opacity: 0, y: -10}}
                 animate={{opacity: 1, y: 0}}
                 transition={{duration: 0.25, ease: "easeOut"}}
+                css={isFixed ? {
+                    WebkitOverflowScrolling: 'auto',
+                    overscrollBehavior: 'contain',
+                } : {}}
             >
                 <Box display={{base: "flex", md: "none"}} flexDirection="column" px={isFixed ? 0 : 4}>
                     {isFixed ? (
@@ -205,6 +215,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                                         bg="gray.800" 
                                         borderTopRadius="lg"
                                         maxH="85vh"
+                                        pb="env(safe-area-inset-bottom, 0px)"
                                     >
                                         <Drawer.Header px={4} pt={4} pb={2}>
                                             <HStack justify="space-between">

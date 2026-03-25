@@ -40,7 +40,15 @@ const CategoryHeader = memo(function CategoryHeader({ title, id }: { title: stri
 
 export const Products = memo(function Products({grouped, uncategorized}: ProductsProps) {
     return (
-        <Box color="white" minH="100vh" p={2}>
+        <Box 
+            color="white" 
+            minH="100vh" 
+            p={2}
+            css={{
+                WebkitOverflowScrolling: 'touch',
+                overscrollBehavior: 'contain',
+            }}
+        >
             {grouped.map((cat) => (
                 <Box as="section" mb={12} key={cat.id}>
                     {cat.showGroupTitle && (
