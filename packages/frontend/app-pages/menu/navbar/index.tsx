@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect, useRef, useState, useCallback, memo} from "react";
+import {useEffect, useRef, useState, useCallback} from "react";
 import {Box} from "@chakra-ui/react";
 import {motion} from "framer-motion";
 import {useSearchParams} from "next/navigation";
@@ -18,12 +18,12 @@ type NavbarProps = {
 
 const NAV_HEIGHT = 60;
 
-export const Navbar = memo(function Navbar({items}: NavbarProps) {
+export function Navbar({items}: NavbarProps) {
     const searchParams = useSearchParams();
     const navRef = useRef<HTMLDivElement>(null);
     
     const [isFixed, setIsFixed] = useState(false);
-    const [activeId] = useState<string | null>(null);
+    const [activeId, setActiveId] = useState<string | null>(null);
     const [isMobile, setIsMobile] = useState(false);
     const [openIds, setOpenIds] = useState<string[]>([]);
     const [navHeight, setNavHeight] = useState(NAV_HEIGHT);
@@ -73,23 +73,44 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
     }, [navHeight]);
 
     useEffect(() => {
-        if (!items.length || initialTopRef.current === null) return;
+        if (!items.length || initialTopRef.current === null) {
+            return;
+        }
         
         const threshold = initialTopRef.current;
-        let ticking = false;
+        
+        const allIds = items.flatMap(item => [item.id, ...(item.children?.map(c => c.id) || [])]);
         
         const handleScroll = () => {
-            if (ticking) return;
+            setIsFixed(window.scrollY > threshold);
             
-            ticking = true;
-            requestAnimationFrame(() => {
-                setIsFixed(window.scrollY > threshold);
-                ticking = false;
-            });
+            let foundId: string | null = null;
+            
+            console.log('[Navbar] allIds:', allIds);
+            
+            for (let i = allIds.length - 1; i >= 0; i--) {
+                const id = allIds[i];
+                const sectionId = `section-${id}`;
+                const section = document.getElementById(sectionId) || document.getElementById(id);
+                if (section) {
+                    const rect = section.getBoundingClientRect();
+                    if (rect.top <= window.innerHeight / 2) {
+                        foundId = id;
+                        break;
+                    }
+                }
+            }
+            
+            if (foundId) {
+                setActiveId(foundId);
+            } else if (window.scrollY <= threshold && allIds.length > 0) {
+                setActiveId(allIds[0]);
+            }
         };
 
-        window.addEventListener("scroll", handleScroll, {passive: true});
         handleScroll();
+        
+        window.addEventListener("scroll", handleScroll, {passive: true});
         
         return () => window.removeEventListener("scroll", handleScroll);
     }, [items]);
@@ -146,4 +167,4 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
             </MotionNav>
         </Box>
     );
-});
+}
