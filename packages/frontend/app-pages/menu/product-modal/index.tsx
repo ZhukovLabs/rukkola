@@ -81,6 +81,8 @@ export const ProductModal = () => {
         fetchProduct();
     }, [fetchProduct, productId]);
 
+    const scrollYRef = useRef(0);
+
     useEffect(() => {
         if (!productId && isModalVisible) {
             setIsModalVisible(false);
@@ -89,16 +91,18 @@ export const ProductModal = () => {
 
     useEffect(() => {
         if (isModalVisible) {
+            scrollYRef.current = window.scrollY;
             const originalStyle = document.body.style.cssText;
             document.body.style.overflow = 'hidden';
             document.body.style.position = 'fixed';
             document.body.style.width = '100%';
-            document.body.style.top = `-${window.scrollY}px`;
+            document.body.style.top = `-${scrollYRef.current}px`;
             
             return () => {
-                const scrollY = parseInt(document.body.style.top || '0', 10);
                 document.body.style.cssText = originalStyle;
-                window.scrollTo(0, -scrollY);
+                requestAnimationFrame(() => {
+                    window.scrollTo(0, scrollYRef.current);
+                });
             };
         }
     }, [isModalVisible]);
