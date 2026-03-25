@@ -14,18 +14,27 @@ const ProductGroupMemo = memo(ProductGroup);
 
 const CategoryHeader = memo(function CategoryHeader({ title, id }: { title: string; id: string }) {
     return (
-        <Heading
-            as="h2"
-            fontSize={{ base: "2xl", md: "3xl" }}
-            mb={6}
-            color="teal.300"
-            borderBottom="2px solid"
-            borderColor="teal.500"
-            pb={2}
-            id={id}
-        >
-            {title}
-        </Heading>
+        <Box position="relative">
+            <Box
+                id={`section-${id}`}
+                position="absolute"
+                top="-80px"
+                left={0}
+                right={0}
+            />
+            <Heading
+                as="h2"
+                fontSize={{ base: "2xl", md: "3xl" }}
+                mb={6}
+                color="teal.300"
+                borderBottom="2px solid"
+                borderColor="teal.500"
+                pb={2}
+                id={id}
+            >
+                {title}
+            </Heading>
+        </Box>
     );
 });
 

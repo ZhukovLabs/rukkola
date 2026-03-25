@@ -94,7 +94,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
     );
 
     const handleClick = useCallback((id: string) => {
-        const section = document.getElementById(id);
+        const section = document.getElementById(`section-${id}`);
         if (!section) return;
         const currentHeight = navHeight;
         const y = section.getBoundingClientRect().top + window.scrollY - currentHeight;
@@ -104,25 +104,45 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
     useEffect(() => {
         if (!allSectionIds.length) return;
 
-        const observer = new IntersectionObserver(
-            (entries) => {
-                for (const entry of entries) {
-                    if (entry.isIntersecting) {
-                        setActiveId(entry.target.id);
-                        break;
+        let ticking = false;
+
+        const updateActiveSection = () => {
+            if (ticking) return;
+            ticking = true;
+
+            requestAnimationFrame(() => {
+                const navHeightValue = navRef.current?.offsetHeight || 60;
+                const triggerY = navHeightValue;
+
+                let activeSectionId: string | null = null;
+                let minDistance = Infinity;
+
+                for (const id of allSectionIds) {
+                    const el = document.getElementById(`section-${id}`);
+                    if (!el) continue;
+
+                    const rect = el.getBoundingClientRect();
+                    const distance = Math.abs(rect.top - triggerY);
+
+                    if (rect.top <= triggerY && distance < minDistance) {
+                        minDistance = distance;
+                        activeSectionId = id;
                     }
                 }
-            },
-            {rootMargin: `-${navHeight + 16}px 0px -60% 0px`}
-        );
 
-        for (const id of allSectionIds) {
-            const el = document.getElementById(id);
-            if (el) observer.observe(el);
-        }
+                if (activeSectionId) {
+                    setActiveId(activeSectionId);
+                }
 
-        return () => observer.disconnect();
-    }, [allSectionIds, navHeight]);
+                ticking = false;
+            });
+        };
+
+        window.addEventListener("scroll", updateActiveSection, {passive: true});
+        updateActiveSection();
+
+        return () => window.removeEventListener("scroll", updateActiveSection);
+    }, [allSectionIds]);
 
     useEffect(() => {
         if (!items.length || drawerOpen || initialTopRef.current === null) return;
