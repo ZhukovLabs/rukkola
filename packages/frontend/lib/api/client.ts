@@ -69,7 +69,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   });
 
   if (response.status === 401) {
-    if (!skipAuth && endpoint !== '/auth/login' && endpoint !== '/auth/refresh' && endpoint !== '/auth/me') {
+    if (!skipAuth && endpoint !== '/auth/login' && endpoint !== '/auth/refresh') {
       const refreshed = await refreshAccessToken();
       
       if (refreshed) {
