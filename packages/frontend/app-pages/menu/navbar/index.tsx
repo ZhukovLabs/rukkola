@@ -114,51 +114,9 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
     }, []);
 
     useEffect(() => {
-        if (!allSectionIds.length) return;
-
-        let ticking = false;
-
-        const updateActiveSection = () => {
-            if (ticking) return;
-            ticking = true;
-
-            requestAnimationFrame(() => {
-                const navHeightValue = navRef.current?.offsetHeight || 60;
-                const triggerY = navHeightValue;
-
-                let activeSectionId: string | null = null;
-                let minDistance = Infinity;
-
-                for (const id of allSectionIds) {
-                    const el = document.getElementById(id);
-                    if (!el) continue;
-
-                    const rect = el.getBoundingClientRect();
-                    const distance = Math.abs(rect.top - triggerY);
-
-                    if (rect.top <= triggerY && distance < minDistance) {
-                        minDistance = distance;
-                        activeSectionId = id;
-                    }
-                }
-
-                if (activeSectionId) {
-                    setActiveId(activeSectionId);
-                }
-
-                ticking = false;
-            });
-        };
-
-        window.addEventListener("scroll", updateActiveSection, {passive: true});
-        updateActiveSection();
-
-        return () => window.removeEventListener("scroll", updateActiveSection);
-    }, [allSectionIds]);
-
-    useEffect(() => {
         if (!items.length || drawerOpen || initialTopRef.current === null) return;
         
+        const threshold = initialTopRef.current;
         let ticking = false;
         
         const handleScroll = () => {
@@ -166,7 +124,7 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
             
             ticking = true;
             requestAnimationFrame(() => {
-                setIsFixed(window.scrollY > initialTopRef.current!);
+                setIsFixed(window.scrollY > threshold);
                 ticking = false;
             });
         };

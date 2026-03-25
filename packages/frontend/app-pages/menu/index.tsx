@@ -48,6 +48,7 @@ export const MenuPage = async ({searchParams}: MenuPageProps) => {
     try {
         const res = await fetch(`${INTERNAL_API}/menu?showAlcohol=${alcoholIsVisible}`, {
             next: {revalidate: 60},
+            signal: AbortSignal.timeout(5000),
         });
 
         if (res.ok) {
@@ -97,6 +98,7 @@ export const MenuPage = async ({searchParams}: MenuPageProps) => {
                     style={{width: "100%", height: "auto", objectFit: "contain"}}
                     priority
                     fetchPriority="high"
+                    suppressHydrationWarning
                 />
             </Box>
 

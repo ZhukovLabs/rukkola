@@ -20,7 +20,7 @@ export function AdminFloatButton() {
             position="fixed"
             top="140px"
             right="20px"
-            zIndex={999998}
+            zIndex={9995}
             initial={{opacity: 0, x: 20}}
             animate={{opacity: 1, x: 0}}
             transition={{duration: 0.3}}

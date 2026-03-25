@@ -13,7 +13,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FiX } from "react-icons/fi";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { getProductById } from "./actions";
 
 type Product = {
@@ -23,10 +23,15 @@ type Product = {
     description: string | null;
 };
 
+const productCache = new Map<string, Product>();
+const cacheTimeout = 5 * 60 * 1000;
+const cacheTimestamp = new Map<string, number>();
+
 export const ProductModal = () => {
     const searchParams = useSearchParams();
     const router = useRouter();
     const productId = searchParams.get("product");
+    const prevProductIdRef = useRef<string | null>(null);
 
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState(false);
@@ -38,11 +43,24 @@ export const ProductModal = () => {
             return;
         }
 
+        const now = Date.now();
+        const cached = productCache.get(productId);
+        const cachedTime = cacheTimestamp.get(productId);
+
+        if (cached && cachedTime && now - cachedTime < cacheTimeout) {
+            setProduct(cached);
+            return;
+        }
+
         setLoading(true);
         setError(false);
 
         try {
             const data = await getProductById(productId);
+            if (data) {
+                productCache.set(productId, data);
+                cacheTimestamp.set(productId, now);
+            }
             setProduct(data);
         } catch {
             setError(true);
@@ -52,8 +70,10 @@ export const ProductModal = () => {
     }, [productId]);
 
     useEffect(() => {
+        if (productId === prevProductIdRef.current) return;
+        prevProductIdRef.current = productId;
         fetchProduct();
-    }, [fetchProduct]);
+    }, [fetchProduct, productId]);
 
     const closeModal = useCallback(() => {
         const current = new URLSearchParams(searchParams.toString());

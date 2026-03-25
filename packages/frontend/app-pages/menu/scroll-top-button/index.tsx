@@ -30,7 +30,7 @@ export const ScrollToTopButton = () => {
             position="fixed"
             top="80px"
             right="16px"
-            zIndex={999998}
+            zIndex={9996}
             initial={{ opacity: 0, scale: 0.8, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}

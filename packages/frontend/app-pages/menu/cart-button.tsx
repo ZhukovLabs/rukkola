@@ -14,16 +14,17 @@ export const CartButton = () => {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const isOpen = searchParams.has(CART_QUERY_KEY);
+    const isOpen = searchParams?.has(CART_QUERY_KEY) ?? false;
 
     const count = useCartCount();
+    const paramsString = searchParams?.toString() ?? '';
 
     const toggleCart = useCallback(() => {
-        const params = new URLSearchParams(searchParams.toString());
+        const params = new URLSearchParams(paramsString);
         if (isOpen) params.delete(CART_QUERY_KEY);
         else params.set(CART_QUERY_KEY, "open");
         router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    }, [isOpen, pathname, router, searchParams]);
+    }, [isOpen, pathname, router, paramsString]);
 
     const Icon = useMemo(() => (isOpen ? FiX : FiShoppingCart), [isOpen]);
 
@@ -35,7 +36,7 @@ export const CartButton = () => {
                 position="fixed"
                 bottom="28px"
                 right="28px"
-                zIndex={999999}
+                zIndex={9997}
                 initial={{ opacity: 0, scale: 0.8, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.8, y: 20 }}

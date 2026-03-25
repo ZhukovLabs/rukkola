@@ -101,6 +101,7 @@ export const CartModal = () => {
                         justifyContent: "center",
                         paddingTop: isMobile ? "10px" : "20px",
                         paddingBottom: isMobile ? "10px" : "20px",
+                        zIndex: 9998,
                     }}
                 >
                     <Dialog.Content

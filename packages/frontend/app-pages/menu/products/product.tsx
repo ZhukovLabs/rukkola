@@ -16,7 +16,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FiCheck, FiImage } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { addToCart } from "@/lib/local-storage";
-import { useInView } from "react-intersection-observer";
 import { useIsLowPerformanceDevice } from "@/hooks/use-is-low-performance-device";
 
 type Price = { size: string; price: number };
@@ -100,10 +99,9 @@ export const Product = memo(function Product({
 
     const disableMotion = useIsLowPerformanceDevice();
     const firstPrice = prices?.[0] ?? null;
-    const { ref, inView } = useInView({ triggerOnce: true });
 
     const handleAddClick = useCallback(() => {
-        if (!prices?.length) return;
+        if (!prices?.length || !firstPrice) return;
 
         if (prices.length > 1) {
             setSelecting(true);
@@ -113,8 +111,8 @@ export const Product = memo(function Product({
                 id,
                 name: title,
                 image: img ?? "",
-                price: firstPrice!.price,
-                size: firstPrice!.size
+                price: firstPrice.price,
+                size: firstPrice.size
             });
             setAdded(true);
             setTimeout(() => setAdded(false), 1200);
@@ -148,16 +146,15 @@ export const Product = memo(function Product({
         [router, id, img]
     );
 
-    const motionProps = !disableMotion && inView
-        ? {
-            initial: { opacity: 0, y: 24 },
-            animate: { opacity: 1, y: 0 },
-            transition: { duration: 0.4 }
-        }
-        : {};
+    const Container = disableMotion ? Box : motion.div;
 
     return (
-        <motion.div ref={ref} style={{ display: "flex" }} {...motionProps}>
+        <Container
+            initial={disableMotion ? undefined : { opacity: 0, y: 24 }}
+            animate={disableMotion ? undefined : { opacity: 1, y: 0 }}
+            transition={disableMotion ? undefined : { duration: 0.4 }}
+            style={{ display: "flex" }}
+        >
             <Flex
                 direction={{ base: "column", md: "row" }}
                 w="100%"
@@ -294,6 +291,6 @@ export const Product = memo(function Product({
                     </Flex>
                 </Flex>
             </Flex>
-        </motion.div>
+        </Container>
     );
 });
