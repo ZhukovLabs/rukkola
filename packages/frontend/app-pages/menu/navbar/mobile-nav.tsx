@@ -1,6 +1,6 @@
 'use client';
 
-import {useRef, useCallback, useEffect, memo} from "react";
+import {useRef, memo} from "react";
 import {
     Box,
     Flex,
@@ -28,24 +28,6 @@ export const MobileNav = memo(function MobileNav({
 }: MobileNavProps) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-    const scrollToElement = useCallback((elementId: string) => {
-        if (!scrollContainerRef.current) return;
-        const element = scrollContainerRef.current.querySelector(`[data-nav-id="${elementId}"]`);
-        if (element) {
-            element.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-        }
-    }, []);
-
-    useEffect(() => {
-        if (activeId) {
-            const parentItem = items.find(item => item.children?.some(c => c.id === activeId));
-            if (parentItem && !openIds.includes(parentItem.id)) {
-                setOpenIds(prev => [...prev, parentItem.id]);
-            }
-            setTimeout(() => scrollToElement(activeId), 100);
-        }
-    }, [activeId, items, openIds, scrollToElement, setOpenIds]);
-
     return (
         <Box display={{base: "flex", md: "none"}} flexDirection="column" px={isFixed ? 4 : 0}>
             <Box ref={scrollContainerRef} overflowX="auto" overflowY="hidden" css={hiddenScrollbar}>
@@ -57,12 +39,15 @@ export const MobileNav = memo(function MobileNav({
 
                         return (
                             <HStack key={item.id} data-nav-id={item.id} gap={1.5} flexShrink={0} align="start" alignItems="center">
-                                <Box as="button" flexShrink={0} display="inline-flex" alignItems="center" gap={1.5} px={4} py={2} borderRadius="full" borderWidth="1.5px" borderColor={isGroupActive || isOpen ? "teal.400" : "whiteAlpha.300"} bg={isGroupActive || isOpen ? "linear-gradient(135deg, teal.500 0%, teal.600 100%)" : "whiteAlpha.100"} color={isGroupActive || isOpen ? "white" : "whiteAlpha.800"} fontWeight="semibold" fontSize="sm" cursor="pointer" transition="all 0.2s cubic-bezier(0.4, 0, 0.2, 1)" _hover={{borderColor: "teal.400", bg: isGroupActive || isOpen ? "linear-gradient(135deg, teal.400 0%, teal.500 100%)" : "whiteAlpha.200", transform: "translateY(-1px)"}} _active={{transform: "translateY(0)"}} onClick={() => {
+                                <Box as="button" flexShrink={0} display="inline-flex" alignItems="center" gap={1.5} px={4} py={2} borderRadius="full" borderWidth="1.5px" borderColor={isGroupActive || isOpen ? "teal.400" : "whiteAlpha.300"} bg={isGroupActive || isOpen ? "linear-gradient(135deg, teal.500 0%, teal.600 100%)" : "whiteAlpha.100"} color={isGroupActive || isOpen ? "white" : "whiteAlpha.800"} fontWeight="semibold" fontSize="sm" cursor="pointer" transition="all 0.2s cubic-bezier(0.4, 0, 0.2, 1)" _hover={{borderColor: "teal.400", bg: isGroupActive || isOpen ? "linear-gradient(135deg, teal.400 0%, teal.500 100%)" : "whiteAlpha.200", transform: "translateY(-1px)"}} _active={{transform: "translateY(0)"}}                                 onClick={() => {
                                     if (hasChildren) {
                                         setOpenIds((prev) => {
-                                            const newOpenIds = prev.includes(item.id) ? prev.filter((id) => id !== item.id) : [...prev, item.id];
-                                            if (!prev.includes(item.id)) {
-                                                setTimeout(() => scrollToElement(item.id), 50);
+                                            const isOpening = !prev.includes(item.id);
+                                            const newOpenIds = isOpening ? [...prev, item.id] : prev.filter((id) => id !== item.id);
+                                            if (isOpening && scrollContainerRef.current) {
+                                                setTimeout(() => {
+                                                    scrollContainerRef.current?.scrollBy({ left: 100, behavior: "smooth" });
+                                                }, 50);
                                             }
                                             return newOpenIds;
                                         });
