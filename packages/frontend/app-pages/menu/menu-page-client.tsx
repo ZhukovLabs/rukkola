@@ -49,7 +49,9 @@ export const MenuPageClient = ({ activeLunch, navbar }: MenuPageClientProps) => 
                 <CartComponents />
             </Suspense>
 
-            <ProductModal />
+            <Suspense fallback={null}>
+                <ProductModal />
+            </Suspense>
         </Box>
     );
 }
