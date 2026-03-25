@@ -17,7 +17,7 @@ import {
     Alert,
     Separator,
 } from '@chakra-ui/react'
-import {useEffect, useState} from 'react'
+import {useEffect, useState, useRef} from 'react'
 import {useQuery} from '@tanstack/react-query'
 import {
     useForm,
@@ -31,6 +31,8 @@ import {getCategories} from '../actions'
 import {productSchema, ProductFormValues} from '@/app-pages/dashboard-products/validation'
 import {FiAlertCircle} from 'react-icons/fi'
 import {FaTrash} from 'react-icons/fa'
+import {FiEdit2} from 'react-icons/fi'
+import {ImageEditor, getCroppedImg} from './image-editor'
 
 type ProductModalProps = {
     isOpen: boolean
@@ -56,6 +58,10 @@ export const BaseProductModal = ({
                                      productIdForImageUpload
                                  }: ProductModalProps) => {
     const [isDragOver, setIsDragOver] = useState(false)
+    const [showImageEditor, setShowImageEditor] = useState(false)
+    const [imageEditorSrc, setImageEditorSrc] = useState('')
+    const [imageEditorFlip, setImageEditorFlip] = useState({ horizontal: false, vertical: false })
+    const imageSrcRef = useRef<string>('')
 
     const {data: {data: allCategories = []} = {}} = useQuery({
         queryKey: ['categories'],
@@ -143,28 +149,59 @@ export const BaseProductModal = ({
             ? 'Текущее изображение'
             : undefined
 
+    const handleOpenImageEditor = () => {
+        let src = imageFile ? URL.createObjectURL(imageFile) : initialValues?.image
+        if (src && !src.startsWith('http') && !src.startsWith('blob:')) {
+            src = `${window.location.origin}${src}`
+        }
+        if (src) {
+            imageSrcRef.current = src
+            setImageEditorSrc(src)
+            setImageEditorFlip({ horizontal: false, vertical: false })
+            setShowImageEditor(true)
+        }
+    }
+
+    const handleImageEditorSave = async (
+        croppedAreaPixels: { x: number; y: number; width: number; height: number },
+        rotation: number
+    ) => {
+        try {
+            let src = imageSrcRef.current
+            if (src && !src.startsWith('http') && !src.startsWith('blob:')) {
+                src = `${window.location.origin}${src}`
+            }
+            const croppedFile = await getCroppedImg(src, croppedAreaPixels, rotation, imageEditorFlip)
+            setImageFile(croppedFile)
+            clearErrors('imageFile')
+        } catch (error) {
+            console.error('Error cropping image:', error)
+        }
+    }
+
     return (
-        <Dialog.Root open={isOpen}>
-            <Dialog.Backdrop bg="blackAlpha.800" backdropFilter="blur(8px)"/>
-            <Dialog.Positioner>
-                <Dialog.Content
-                    bg="rgba(24,26,28,0.95)"
-                    borderRadius="2xl"
-                    shadow="2xl"
-                    border="1px solid"
-                    borderColor="gray.700"
-                    color="white"
-                    maxW="3xl"
-                    w="full"
-                    backdropFilter="blur(18px)"
-                    transition="all 0.25s ease"
-                >
-                    <Dialog.Header borderBottom="1px solid" borderColor="gray.700">
-                        <Flex justify="space-between" align="center" p={4}>
-                            <Heading size="md" color="teal.200" fontWeight="semibold" letterSpacing="0.3px">
-                                {title}
-                            </Heading>
-                            <Dialog.CloseTrigger asChild>
+        <>
+            <Dialog.Root open={isOpen}>
+                <Dialog.Backdrop bg="blackAlpha.800" backdropFilter="blur(8px)"/>
+                <Dialog.Positioner>
+                    <Dialog.Content
+                        bg="rgba(24,26,28,0.95)"
+                        borderRadius="2xl"
+                        shadow="2xl"
+                        border="1px solid"
+                        borderColor="gray.700"
+                        color="white"
+                        maxW="3xl"
+                        w="full"
+                        backdropFilter="blur(18px)"
+                        transition="all 0.25s ease"
+                    >
+                        <Dialog.Header borderBottom="1px solid" borderColor="gray.700">
+                            <Flex justify="space-between" align="center" p={4}>
+                                <Heading size="md" color="teal.200" fontWeight="semibold" letterSpacing="0.3px">
+                                    {title}
+                                </Heading>
+                                <Dialog.CloseTrigger asChild>
                                 <Button
                                     onClick={onClose}
                                     variant="ghost"
@@ -243,7 +280,7 @@ export const BaseProductModal = ({
 
                                     <Separator borderColor="gray.700"/>
 
-                                    {/* Изображение */}
+                                        {/* Изображение */}
                                     <Box>
                                         <Heading size="sm" mb={2} color="teal.200">Изображение</Heading>
                                         <Box
@@ -276,8 +313,28 @@ export const BaseProductModal = ({
                                         >
                                             {currentImageUrl ? (
                                                 <Flex direction="column" align="center" gap={2}>
-                                                    <Image src={currentImageUrl} alt="preview" borderRadius="md"
-                                                           maxH="160px" objectFit="cover"/>
+                                                    <Box position="relative">
+                                                        <Image src={currentImageUrl} alt="preview" borderRadius="md"
+                                                               maxH="160px" objectFit="cover"/>
+                                                        {(imageFile || initialValues?.image) && (
+                                                            <IconButton
+                                                                aria-label="Редактировать изображение"
+                                                                position="absolute"
+                                                                top={2}
+                                                                right={2}
+                                                                size="sm"
+                                                                bg="blackAlpha.700"
+                                                                color="white"
+                                                                _hover={{ bg: 'blackAlpha.800' }}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation()
+                                                                    handleOpenImageEditor()
+                                                                }}
+                                                            >
+                                                                <FiEdit2 />
+                                                            </IconButton>
+                                                        )}
+                                                    </Box>
                                                     {isUploadingImage ? (
                                                         <Flex align="center" gap={2} color="teal.300">
                                                             <Spinner size="xs"/>
@@ -591,5 +648,15 @@ export const BaseProductModal = ({
                 </Dialog.Content>
             </Dialog.Positioner>
         </Dialog.Root>
+
+            <ImageEditor
+                isOpen={showImageEditor}
+                onClose={() => setShowImageEditor(false)}
+                imageSrc={imageEditorSrc}
+                onSave={handleImageEditorSave}
+                initialFlip={imageEditorFlip}
+                onFlipChange={setImageEditorFlip}
+            />
+        </>
     )
 }
