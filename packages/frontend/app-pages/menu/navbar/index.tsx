@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect, useRef, useState, useCallback, memo, useMemo, useLayoutEffect} from "react";
+import {useEffect, useRef, useState, useCallback, memo, useMemo} from "react";
 import {
     Box,
     HStack,
@@ -11,66 +11,40 @@ import {
     Portal,
     CloseButton,
     Flex,
-    Icon,
 } from "@chakra-ui/react";
-import {motion, AnimatePresence} from "framer-motion";
-import {FiMenu, FiChevronRight} from "react-icons/fi";
+import {motion} from "framer-motion";
+import {FiMenu} from "react-icons/fi";
 import {useSearchParams} from "next/navigation";
 
 import {NavItem} from "./nav-item";
 import {NavbarItem} from "./types";
 import {CART_QUERY_KEY} from "../constants";
-import {useIsLowPerformanceDevice} from "@/hooks/use-is-low-performance-device";
 
 const MotionNav = motion.create(Box);
-const MotionBox = motion.create(Box);
 
 type NavbarProps = {
     items: NavbarItem[];
 };
 
+const NAV_HEIGHT = 60;
+
 export const Navbar = memo(function Navbar({items}: NavbarProps) {
     const searchParams = useSearchParams();
     const navRef = useRef<HTMLDivElement>(null);
-    const disableMotion = useIsLowPerformanceDevice();
-    const initialTopRef = useRef<number | null>(null);
     
     const [isFixed, setIsFixed] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
-    const [navHeight, setNavHeight] = useState(60);
-    const [openIds, setOpenIds] = useState<string[]>([]);
     const [isMobile, setIsMobile] = useState(false);
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [navHeight, setNavHeight] = useState(NAV_HEIGHT);
+    const initialTopRef = useRef<number | null>(null);
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
         checkMobile();
-        window.addEventListener('resize', checkMobile, { passive: true });
-        return () => window.removeEventListener('resize', checkMobile);
-    }, []);
-
-    useLayoutEffect(() => {
-        const measure = () => {
-            if (navRef.current) {
-                const height = navRef.current.offsetHeight || 60;
-                if (height !== navHeight) {
-                    setNavHeight(height);
-                }
-                const rect = navRef.current.getBoundingClientRect();
-                const currentTop = rect.top + window.scrollY;
-                if (initialTopRef.current === null || currentTop < initialTopRef.current) {
-                    initialTopRef.current = currentTop;
-                }
-            }
-        };
-        measure();
         
-        const rafId = requestAnimationFrame(measure);
-        return () => cancelAnimationFrame(rafId);
-    }, [items, navHeight]);
-
-    useEffect(() => {
         const handleResize = () => {
+            checkMobile();
             initialTopRef.current = null;
             if (navRef.current) {
                 const rect = navRef.current.getBoundingClientRect();
@@ -81,6 +55,24 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
         window.addEventListener('resize', handleResize, { passive: true });
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    useEffect(() => {
+        if (!navRef.current) return;
+        
+        const rect = navRef.current.getBoundingClientRect();
+        initialTopRef.current = rect.top + window.scrollY;
+        
+        const updateHeight = () => {
+            if (navRef.current) {
+                setNavHeight(navRef.current.offsetHeight);
+            }
+        };
+        
+        updateHeight();
+        
+        const timeout = setTimeout(updateHeight, 100);
+        return () => clearTimeout(timeout);
+    }, [items]);
 
     const allSectionIds = useMemo(() => {
         const ids: string[] = [];
@@ -104,20 +96,10 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
     const handleClick = useCallback((id: string) => {
         const section = document.getElementById(id);
         if (!section) return;
-        const currentHeight = navRef.current?.offsetHeight || navHeight || 60;
+        const currentHeight = navHeight;
         const y = section.getBoundingClientRect().top + window.scrollY - currentHeight;
         window.scrollTo({top: y, behavior: "smooth"});
     }, [navHeight]);
-
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-    const scrollToElement = useCallback((elementId: string) => {
-        if (!scrollContainerRef.current) return;
-        const element = scrollContainerRef.current.querySelector(`[data-nav-id="${elementId}"]`);
-        if (element) {
-            element.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
-        }
-    }, []);
 
     useEffect(() => {
         if (!allSectionIds.length) return;
@@ -143,252 +125,165 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
     }, [allSectionIds, navHeight]);
 
     useEffect(() => {
-        if (!items.length) return;
+        if (!items.length || drawerOpen || initialTopRef.current === null) return;
         
         let ticking = false;
         
         const handleScroll = () => {
-            if (drawerOpen) return;
-            if (initialTopRef.current === null) return;
+            if (ticking) return;
             
-            if (!ticking) {
-                ticking = true;
-                requestAnimationFrame(() => {
-                    const shouldBeFixed = window.scrollY > initialTopRef.current!;
-                    setIsFixed(shouldBeFixed);
-                    ticking = false;
-                });
-            }
+            ticking = true;
+            requestAnimationFrame(() => {
+                setIsFixed(window.scrollY > initialTopRef.current!);
+                ticking = false;
+            });
         };
 
-        requestAnimationFrame(handleScroll);
-        
         window.addEventListener("scroll", handleScroll, {passive: true});
-        window.addEventListener("resize", handleScroll, {passive: true});
-        return () => {
-            window.removeEventListener("scroll", handleScroll);
-            window.removeEventListener("resize", handleScroll);
-        };
+        handleScroll();
+        
+        return () => window.removeEventListener("scroll", handleScroll);
     }, [items, drawerOpen]);
 
     if (searchParams.has(CART_QUERY_KEY)) return null;
 
-    const motionTransition = disableMotion ? undefined : {duration: 0.25, ease: "easeOut" as const};
-    const motionInitial = disableMotion ? undefined : {opacity: 0, y: -10};
-    const motionAnimate = disableMotion ? undefined : {opacity: 1, y: 0};
-    
-    const mobileAnimTransition = disableMotion ? undefined : {duration: 0.2, ease: "easeOut" as const};
-    const mobileFixedInitial = disableMotion ? undefined : {opacity: 0};
-    const mobileFixedAnimate = disableMotion ? undefined : {opacity: 1};
-
     return (
         <Box position="relative" zIndex="10">
-            {isFixed && <Box height={isMobile ? 'calc(53px + var(--sat, 0px))' : `${navHeight}px`} transition="height 0.2s ease"/>}
+            {isFixed && <Box height={isMobile ? '53px' : `${navHeight}px`} transition="height 0.2s ease"/>}
 
             <MotionNav
                 ref={navRef}
                 position={isFixed ? "fixed" : "relative"}
                 top={0}
-                pt={isFixed && isMobile ? "max(var(--sat, 0px), env(safe-area-inset-top, 0px), 44px)" : 0}
+                pt={isFixed && isMobile ? "env(safe-area-inset-top, 0px)" : 0}
                 insetX={0}
                 zIndex={100}
                 bgGradient="linear(to-r, rgba(26,32,44,0.9), rgba(26,32,44,0.8))"
                 backdropFilter="blur(10px)"
                 borderBottom={isFixed ? "1px solid rgba(255,255,255,0.06)" : "none"}
                 py={{base: 2, md: 4}}
-                initial={motionInitial}
-                animate={motionAnimate}
-                transition={motionTransition}
-                style={{
-                    transition: "backdrop-filter 0.3s ease, border-bottom 0.3s ease"
-                }}
+                initial={{opacity: 0, y: -10}}
+                animate={{opacity: 1, y: 0}}
+                transition={{duration: 0.25, ease: "easeOut"}}
             >
-                <Box display={{base: "flex", md: "none"}} flexDirection="column" gap={isFixed ? 0 : 2} px={isFixed ? 0 : 4}>
+                <Box display={{base: "flex", md: "none"}} flexDirection="column" px={4}>
                     {isFixed ? (
-                        <MotionBox
-                            key="fixed-mobile"
-                            initial={mobileFixedInitial}
-                            animate={mobileFixedAnimate}
-                            transition={mobileAnimTransition}
-                        >
-                            <Flex justifyContent="space-between" alignItems="center">
+                        <Flex justifyContent="space-between" alignItems="center">
+                            <Box
+                                display="flex"
+                                alignItems="center"
+                                gap={2}
+                            >
                                 <Box
-                                    display="flex"
-                                    alignItems="center"
-                                    gap={2}
-                                >
-                                    <Box
-                                        w={2}
-                                        h={6}
-                                        borderRadius="full"
-                                        bgGradient="linear(to-b, teal.400, teal.600)"
-                                    />
+                                    w={2}
+                                    h={6}
+                                    borderRadius="full"
+                                    bgGradient="linear(to-b, teal.400, teal.600)"
+                                />
 
-                                    <Text
-                                        fontSize="sm"
-                                        fontWeight="bold"
-                                        color="whiteAlpha.900"
-                                        textShadow="0 1px 4px rgba(0,0,0,0.3)"
+                                <Text
+                                    fontSize="sm"
+                                    fontWeight="bold"
+                                    color="whiteAlpha.900"
+                                    textShadow="0 1px 4px rgba(0,0,0,0.3)"
+                                >
+                                    {activeItem?.name ?? items[0]?.name}
+                                </Text>
+                            </Box>
+
+                            <Drawer.Root 
+                            placement="bottom" 
+                            open={drawerOpen}
+                            onOpenChange={(e) => setDrawerOpen(e.open)}
+                        >
+                            <Drawer.Trigger asChild>
+                                <IconButton
+                                    aria-label="Открыть меню"
+                                    size="sm"
+                                    variant="ghost"
+                                    color="white"
+                                >
+                                    <FiMenu/>
+                                </IconButton>
+                            </Drawer.Trigger>
+
+                            <Portal>
+                                <Drawer.Backdrop bg="blackAlpha.600" backdropFilter="blur(4px)"/>
+                                <Drawer.Positioner>
+                                    <Drawer.Content 
+                                        bg="gray.800" 
+                                        borderTopRadius="lg"
+                                        maxH="85vh"
                                     >
-                                        {activeItem?.name ?? items[0]?.name}
-                                    </Text>
-                                </Box>
+                                        <Drawer.Header px={4} pt={4} pb={2}>
+                                            <HStack justify="space-between">
+                                                <Drawer.Title fontSize="sm" color="whitesmoke">Разделы</Drawer.Title>
+                                                <Drawer.CloseTrigger asChild>
+                                                    <CloseButton
+                                                        size="sm"
+                                                        color="white"
+                                                        onClick={() => setDrawerOpen(false)}
+                                                    />
+                                                </Drawer.CloseTrigger>
+                                            </HStack>
+                                        </Drawer.Header>
 
-                                <Drawer.Root 
-                                    placement="bottom" 
-                                    open={drawerOpen}
-                                    onOpenChange={(e) => setDrawerOpen(e.open)}
-                                    onExitComplete={() => setOpenIds([])}
-                                >
-                                    <Drawer.Trigger asChild>
-                                        <IconButton
-                                            aria-label="Открыть меню"
-                                            size="sm"
-                                            variant="ghost"
-                                            color="white"
+                                        <Drawer.Body
+                                            px={4}
+                                            pb={4}
+                                            overflowY="auto"
+                                            css={{
+                                                WebkitOverflowScrolling: "touch",
+                                                "&::-webkit-scrollbar": {
+                                                    width: "4px",
+                                                },
+                                                "&::-webkit-scrollbar-thumb": {
+                                                    background: "rgba(255,255,255,0.2)",
+                                                    borderRadius: "2px",
+                                                },
+                                            }}
                                         >
-                                            <FiMenu/>
-                                        </IconButton>
-                                    </Drawer.Trigger>
+                                            <VStack align="stretch" gap={1}>
+                                                {items.map((item) => {
+                                                    const hasChildren = !!item.children?.length;
+                                                    const isGroupActive =
+                                                        activeId === item.id ||
+                                                        item.children?.some((child) => child.id === activeId);
 
-                                    <Portal>
-                                        <Drawer.Backdrop bg="blackAlpha.600" backdropFilter="blur(4px)"/>
-                                        <Drawer.Positioner>
-                                            <Drawer.Content 
-                                                bg="gray.800" 
-                                                borderTopRadius="lg"
-                                                maxH="85vh"
-                                            >
-                                                <Drawer.Header px={4} pt={4} pb={2}>
-                                                    <HStack justify="space-between">
-                                                        <Drawer.Title fontSize="sm" color="whitesmoke">Разделы</Drawer.Title>
-                                                        <Drawer.CloseTrigger asChild>
-                                                            <CloseButton
-                                                                size="sm"
-                                                                color="white"
+                                                    return (
+                                                        <Box key={item.id}>
+                                                            <MotionBox
+                                                                px={3}
+                                                                py={2}
+                                                                borderRadius="md"
+                                                                bg={isGroupActive ? "teal.500" : "transparent"}
+                                                                color={isGroupActive ? "white" : "gray.200"}
+                                                                fontWeight="medium"
+                                                                cursor="pointer"
+                                                                whileHover={{scale: 1.02, backgroundColor: "teal.600"}}
                                                                 onClick={() => {
-                                                                    setDrawerOpen(false);
-                                                                    setOpenIds([]);
+                                                                    if (!hasChildren) {
+                                                                        setDrawerOpen(false);
+                                                                        setTimeout(() => handleClick(item.id), 50);
+                                                                    } else {
+                                                                        setDrawerOpen(false);
+                                                                    }
                                                                 }}
-                                                            />
-                                                        </Drawer.CloseTrigger>
-                                                    </HStack>
-                                                </Drawer.Header>
-
-                                                <Drawer.Body
-                                                        px={4}
-                                                        pb={4}
-                                                        overflowY="auto"
-                                                        css={{
-                                                            WebkitOverflowScrolling: "touch",
-                                                            "&::-webkit-scrollbar": {
-                                                                width: "4px",
-                                                            },
-                                                            "&::-webkit-scrollbar-thumb": {
-                                                                background: "rgba(255,255,255,0.2)",
-                                                                borderRadius: "2px",
-                                                            },
-                                                        }}
-                                                    >
-                                                        <VStack align="stretch" gap={1}>
-                                                            {items.map((item) => {
-                                                                const hasChildren = !!item.children?.length;
-                                                                const isGroupActive =
-                                                                    activeId === item.id ||
-                                                                    item.children?.some((child) => child.id === activeId);
-
-                                                                const whileHover = !disableMotion ? {
-                                                                    scale: 1.02,
-                                                                    backgroundColor: "teal.600"
-                                                                } : undefined;
-
-                                                                return (
-                                                                    <Box key={item.id}>
-                                                                        <MotionBox
-                                                                            px={3}
-                                                                            py={2}
-                                                                            borderRadius="md"
-                                                                            bg={isGroupActive ? "teal.500" : "transparent"}
-                                                                            color={isGroupActive ? "white" : "gray.200"}
-                                                                            fontWeight="medium"
-                                                                            cursor="pointer"
-                                                                            whileHover={whileHover}
-                                                                            onClick={() => {
-                                                                                if (!hasChildren) {
-                                                                                    setDrawerOpen(false);
-                                                                                    setTimeout(() => {
-                                                                                        handleClick(item.id);
-                                                                                        setOpenIds([]);
-                                                                                    }, 50);
-                                                                                } else {
-                                                                                    setOpenIds((prev) =>
-                                                                                        prev.includes(item.id)
-                                                                                            ? prev.filter((id) => id !== item.id)
-                                                                                            : [...prev, item.id]
-                                                                                    );
-                                                                                }
-                                                                            }}
-                                                                        >
-                                                                            {item.name}
-                                                                        </MotionBox>
-
-                                                                        <AnimatePresence>
-                                                                            {hasChildren && openIds.includes(item.id) && (
-                                                                                <Box
-                                                                                    overflowY="auto"
-                                                                                    maxH="200px"
-                                                                                    css={{
-                                                                                        WebkitOverflowScrolling: "touch",
-                                                                                        "&::-webkit-scrollbar": {
-                                                                                            width: "4px",
-                                                                                        },
-                                                                                        "&::-webkit-scrollbar-thumb": {
-                                                                                            background: "rgba(255,255,255,0.2)",
-                                                                                            borderRadius: "2px",
-                                                                                        },
-                                                                                    }}
-                                                                                >
-                                                                                    <VStack pl={4} mt={1} align="stretch" gap={1}>
-                                                                                        {item.children!.map((child) => (
-                                                                                            <MotionBox
-                                                                                                key={child.id}
-                                                                                                px={3}
-                                                                                                py={2}
-                                                                                                borderRadius="md"
-                                                                                                bg={activeId === child.id ? "teal.400" : "gray.700"}
-                                                                                                color={activeId === child.id ? "white" : "gray.200"}
-                                                                                                fontWeight="medium"
-                                                                                                cursor="pointer"
-                                                                                                whileHover={whileHover}
-                                                                                                onClick={() => {
-                                                                                                    setDrawerOpen(false);
-                                                                                                    setTimeout(() => {
-                                                                                                        handleClick(child.id);
-                                                                                                        setOpenIds([]);
-                                                                                                    }, 50);
-                                                                                                }}
-                                                                                            >
-                                                                                                {child.name}
-                                                                                            </MotionBox>
-                                                                                        ))}
-                                                                                    </VStack>
-                                                                                </Box>
-                                                                            )}
-                                                                        </AnimatePresence>
-                                                                    </Box>
-                                                                );
-                                                            })}
-                                                        </VStack>
-                                                    </Drawer.Body>
-                                            </Drawer.Content>
-                                        </Drawer.Positioner>
-                                    </Portal>
-                                </Drawer.Root>
-                            </Flex>
-                        </MotionBox>
+                                                            >
+                                                                {item.name}
+                                                            </MotionBox>
+                                                        </Box>
+                                                    );
+                                                })}
+                                            </VStack>
+                                        </Drawer.Body>
+                                    </Drawer.Content>
+                                </Drawer.Positioner>
+                            </Portal>
+                        </Drawer.Root>
+                    </Flex>
                     ) : (
                         <Box
-                            ref={scrollContainerRef}
                             overflowX="auto"
                             overflowY="hidden"
                             css={{
@@ -403,10 +298,9 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                                     const isGroupActive =
                                         activeId === item.id ||
                                         item.children?.some((child) => child.id === activeId);
-                                    const isOpen = openIds.includes(item.id);
 
                                     return (
-                                        <HStack key={item.id} gap={1.5} flexShrink={0} data-nav-id={item.id}>
+                                        <HStack key={item.id} gap={1.5} flexShrink={0}>
                                             <Box
                                                 flexShrink={0}
                                                 display="inline-flex"
@@ -432,61 +326,11 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                                                 onClick={() => {
                                                     if (!hasChildren) {
                                                         handleClick(item.id);
-                                                        setOpenIds([]);
-                                                    } else {
-                                                        setOpenIds((prev) => {
-                                                            const newOpenIds = prev.includes(item.id)
-                                                                ? prev.filter((id) => id !== item.id)
-                                                                : [...prev, item.id];
-                                                            if (!prev.includes(item.id)) {
-                                                                setTimeout(() => scrollToElement(item.id), 50);
-                                                            }
-                                                            return newOpenIds;
-                                                        });
                                                     }
                                                 }}
                                             >
                                                 {item.name}
-                                                {hasChildren && (
-                                                    <Icon
-                                                        as={FiChevronRight}
-                                                        boxSize={3.5}
-                                                        transition="transform 0.2s ease"
-                                                        transform={isOpen ? "rotate(90deg)" : "rotate(0deg)"}
-                                                    />
-                                                )}
                                             </Box>
-
-                                            {hasChildren && isOpen && item.children!.map((child) => (
-                                                <Box
-                                                    key={child.id}
-                                                    flexShrink={0}
-                                                    display="inline-flex"
-                                                    alignItems="center"
-                                                    px={3}
-                                                    py={1.5}
-                                                    borderRadius="full"
-                                                    borderWidth="1px"
-                                                    borderColor={activeId === child.id ? "teal.300" : "whiteAlpha.200"}
-                                                    bg={activeId === child.id ? "teal.500/90" : "whiteAlpha.50"}
-                                                    color={activeId === child.id ? "white" : "whiteAlpha.700"}
-                                                    fontSize="xs"
-                                                    fontWeight="medium"
-                                                    cursor="pointer"
-                                                    transition="all 0.15s ease"
-                                                    _hover={{
-                                                        borderColor: "teal.300",
-                                                        bg: "teal.500/80",
-                                                        color: "white",
-                                                    }}
-                                                    onClick={() => {
-                                                        handleClick(child.id);
-                                                        setOpenIds([]);
-                                                    }}
-                                                >
-                                                    {child.name}
-                                                </Box>
-                                            ))}
                                         </HStack>
                                     );
                                 })}
@@ -500,8 +344,8 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
                     justifyContent="center"
                     flexWrap={isFixed ? "nowrap" : "wrap"}
                     overflowX={isFixed ? "auto" : "visible"}
-                    gap={isFixed ? 0 : 4}
-                    px={isFixed ? 0 : 4}
+                    gap={4}
+                    px={4}
                     maxWidth="100%"
                     mx="auto"
                     css={isFixed ? {
@@ -534,3 +378,5 @@ export const Navbar = memo(function Navbar({items}: NavbarProps) {
         </Box>
     );
 });
+
+const MotionBox = motion.create(Box);

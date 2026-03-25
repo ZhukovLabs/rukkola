@@ -1,4 +1,4 @@
-import { NavbarItem } from "@/app-pages/menu/navbar/types";
+import { NavbarItem } from "./types";
 import { Box } from "@chakra-ui/react";
 
 type MenuItemProps = {

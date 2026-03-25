@@ -6,9 +6,9 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "yarn workspace @rukkola/frontend dev",
-    "dev:backend": "yarn workspace @rukkola/backend start:dev",
-    "dev:all": "concurrently \"yarn dev:backend\" \"yarn dev\"",
+    "dev:fe": "yarn workspace @rukkola/frontend dev",
+    "dev:be": "yarn workspace @rukkola/backend start:dev",
+    "dev": "concurrently \"yarn dev:be\" \"yarn dev:fe\"",
     "build": "yarn workspace @rukkola/backend build && yarn workspace @rukkola/frontend build",
     "build:frontend": "yarn workspace @rukkola/frontend build",
     "build:backend": "yarn workspace @rukkola/backend build",

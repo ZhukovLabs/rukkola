@@ -38,7 +38,7 @@ const nextConfig: NextConfig = {
     compress: true,
     poweredByHeader: false,
     compiler: {
-        removeConsole: false,
+        removeConsole: true,
     },
     productionBrowserSourceMaps: false,
     experimental: {

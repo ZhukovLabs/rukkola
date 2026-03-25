@@ -1,12 +1,10 @@
 'use client';
 
-import { Button, Portal, useBreakpointValue } from "@chakra-ui/react";
-import { ChevronDownIcon } from "@chakra-ui/icons";
-import { useRef, useState, useEffect, useCallback } from "react";
-import { AnimatePresence } from "framer-motion";
-import { NavbarItem } from "./types";
-import { Menu } from "./menu";
-import { useIsLowPerformanceDevice } from "@/hooks/use-is-low-performance-device";
+import {Button} from "@chakra-ui/react";
+import {ChevronDownIcon} from "@chakra-ui/icons";
+import {useState, useRef, useEffect} from "react";
+import {NavbarItem} from "./types";
+import {Menu} from "./menu";
 
 type NavItemProps = {
     id: string;
@@ -27,9 +25,6 @@ export const NavItem = ({
                         }: NavItemProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const triggerRef = useRef<HTMLButtonElement>(null);
-    const menuRef = useRef<HTMLDivElement>(null);
-    const isMobile = useBreakpointValue({ base: true, md: false });
-    const disableMotion = useIsLowPerformanceDevice();
     const hasChildren = !!childrenItems?.length;
     const isGroupActive = isActive || childrenItems?.some(child => child.id === activeId);
 
@@ -38,37 +33,22 @@ export const NavItem = ({
 
         const handleOutside = (e: Event) => {
             const target = e.target as Node;
-            if (triggerRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+            if (triggerRef.current?.contains(target)) return;
             setIsOpen(false);
         };
 
         document.addEventListener("mousedown", handleOutside);
-        document.addEventListener("touchstart", handleOutside, { passive: true });
-
-        return () => {
-            document.removeEventListener("mousedown", handleOutside);
-            document.removeEventListener("touchstart", handleOutside);
-        };
+        return () => document.removeEventListener("mousedown", handleOutside);
     }, [isOpen]);
 
-    useEffect(() => {
-        if (!isOpen || !isMobile) return;
-        const handleScroll = () => setIsOpen(false);
-        window.addEventListener("touchmove", handleScroll, { passive: true });
-        return () => window.removeEventListener("touchmove", handleScroll);
-    }, [isOpen, isMobile]);
-
-    const handleTriggerClick = useCallback(
-        (e: React.MouseEvent) => {
-            e.stopPropagation();
-            if (hasChildren) {
-                setIsOpen(v => !v);
-            } else {
-                onClick(id);
-            }
-        },
-        [hasChildren, id, onClick]
-    );
+    const handleClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (hasChildren) {
+            setIsOpen(v => !v);
+        } else {
+            onClick(id);
+        }
+    };
 
     const handleChildClick = (childId: string) => {
         onClick(childId);
@@ -86,10 +66,10 @@ export const NavItem = ({
                 fontWeight="medium"
                 color={isActive ? "teal.300" : "gray.200"}
                 bg="transparent"
-                _hover={{ color: "teal.200", transform: disableMotion ? undefined : "translateY(-2px)" }}
-                _active={{ color: "teal.100" }}
+                _hover={{color: "teal.200"}}
+                _active={{color: "teal.100"}}
                 onClick={() => onClick(id)}
-                style={{ WebkitTapHighlightColor: "transparent", transition: "transform 0.15s ease" }}
+                style={{WebkitTapHighlightColor: "transparent"}}
             >
                 {title}
             </Button>
@@ -108,10 +88,10 @@ export const NavItem = ({
                 fontWeight="medium"
                 color={isGroupActive ? "teal.300" : "gray.200"}
                 bg="transparent"
-                _hover={{ color: "teal.200", transform: disableMotion ? undefined : "translateY(-2px)" }}
-                _active={{ color: "teal.100" }}
-                onClick={handleTriggerClick}
-                style={{ WebkitTapHighlightColor: "transparent", transition: "transform 0.15s ease" }}
+                _hover={{color: "teal.200"}}
+                _active={{color: "teal.100"}}
+                onClick={handleClick}
+                style={{WebkitTapHighlightColor: "transparent"}}
             >
                 {title}
                 <ChevronDownIcon
@@ -121,19 +101,14 @@ export const NavItem = ({
                 />
             </Button>
 
-            <Portal>
-                <AnimatePresence>
-                    {isOpen && (
-                        <Menu
-                            triggerRef={triggerRef}
-                            menuRef={menuRef}
-                            isMobile={!!isMobile}
-                            items={childrenItems}
-                            onItemClick={handleChildClick}
-                        />
-                    )}
-                </AnimatePresence>
-            </Portal>
+            {isOpen && (
+                <Menu
+                    triggerRef={triggerRef}
+                    items={childrenItems}
+                    onItemClick={handleChildClick}
+                    onClose={() => setIsOpen(false)}
+                />
+            )}
         </>
     );
 };
