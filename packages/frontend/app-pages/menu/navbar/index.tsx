@@ -150,11 +150,11 @@ export function Navbar({items}: NavbarProps) {
                 initial={{opacity: 0, y: -10}}
                 animate={{opacity: 1, y: 0}}
                 transition={{duration: 0.25, ease: "easeOut"}}
-                layout
                 css={isFixed ? {
                     WebkitOverflowScrolling: 'auto',
                     overscrollBehavior: 'none',
                     touchAction: 'pan-x',
+                    overflow: 'visible',
                 } : {}}
             >
                 <MobileNav
