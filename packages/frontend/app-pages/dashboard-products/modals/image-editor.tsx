@@ -35,7 +35,7 @@ type ImageEditorProps = {
     isOpen: boolean
     onClose: VoidFunction
     imageSrc: string
-    onSave: (croppedAreaPixels: Area, rotation: number) => void
+    onSave: (croppedAreaPixels: Area, rotation: number, flip: { horizontal: boolean; vertical: boolean }) => void
     initialFlip?: { horizontal: boolean; vertical: boolean }
     onFlipChange?: (flip: { horizontal: boolean; vertical: boolean }) => void
 }
@@ -64,10 +64,18 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
         const newFlip = { ...flip, horizontal: !flip.horizontal }
         setFlip(newFlip)
         onFlipChange?.(newFlip)
+        setCrop({ x: 0, y: 0 })
     }
 
     const handleFlipVertical = () => {
         const newFlip = { ...flip, vertical: !flip.vertical }
+        setFlip(newFlip)
+        onFlipChange?.(newFlip)
+        setCrop({ x: 0, y: 0 })
+    }
+
+    const handleFlipReset = () => {
+        const newFlip = { horizontal: false, vertical: false }
         setFlip(newFlip)
         onFlipChange?.(newFlip)
     }
@@ -87,7 +95,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
 
     const handleSave = () => {
         if (croppedAreaPixels) {
-            onSave(croppedAreaPixels, rotation)
+            onSave(croppedAreaPixels, rotation, flip)
             onClose()
         }
     }
@@ -97,6 +105,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
         setZoom(1)
         setRotation(0)
         setFlip({ horizontal: false, vertical: false })
+        setAspect(null)
         onFlipChange?.({ horizontal: false, vertical: false })
     }
 
@@ -141,29 +150,35 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                         overflow="hidden"
                         className="image-editor-cropper"
                     >
+                        <Box
+                            position="absolute"
+                            inset={0}
+                            transform={`scaleX(${flip.horizontal ? -1 : 1}) scaleY(${flip.vertical ? -1 : 1})`}
+                            transformOrigin="center"
+                            transition="transform 0.3s ease"
+                            zIndex={1}
+                        >
                             <Cropper
-                            key={imageSrc}
-                            image={imageSrc}
-                            crop={crop}
-                            zoom={zoom}
-                            rotation={rotation}
-                            aspect={aspect || 16 / 9}
-                            onCropChange={setCrop}
-                            onZoomChange={setZoom}
-                            onRotationChange={setRotation}
-                            onCropComplete={onCropComplete}
-                            showGrid={true}
-                            style={{
-                                containerStyle: { background: '#1a1c1e' },
-                                mediaStyle: flip.horizontal || flip.vertical ? {
-                                    transform: `scaleX(${flip.horizontal ? -1 : 1}) scaleY(${flip.vertical ? -1 : 1})`,
-                                } : undefined,
-                                cropAreaStyle: { 
-                                    border: '2px solid #38b2ac',
-                                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
-                                },
-                            }}
-                        />
+                                key={imageSrc}
+                                image={imageSrc}
+                                crop={crop}
+                                zoom={zoom}
+                                rotation={rotation}
+                                aspect={aspect || 16 / 9}
+                                onCropChange={setCrop}
+                                onZoomChange={setZoom}
+                                onRotationChange={setRotation}
+                                onCropComplete={onCropComplete}
+                                showGrid={true}
+                                style={{
+                                    containerStyle: { background: '#1a1c1e' },
+                                    cropAreaStyle: { 
+                                        border: '2px solid #38b2ac',
+                                        boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
+                                    },
+                                }}
+                            />
+                        </Box>
                     </Box>
 
                     <Box mt={4}>
@@ -288,7 +303,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                             borderColor="gray.600"
                                             color="gray.300"
                                             _hover={{ borderColor: 'teal.400', color: 'teal.200' }}
-                                            onClick={() => setFlip({ horizontal: false, vertical: false })}
+                                            onClick={handleFlipReset}
                                         >
                                             Сброс
                                         </Button>
