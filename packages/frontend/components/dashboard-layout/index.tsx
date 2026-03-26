@@ -1,6 +1,6 @@
 "use client";
 
-import {Box, Flex, VStack, Text, Icon, IconButton} from "@chakra-ui/react";
+import {Box, Flex, VStack, Text, Icon, IconButton, Link} from "@chakra-ui/react";
 import {motion} from "framer-motion";
 import {
     FiHome,
@@ -10,6 +10,7 @@ import {
     FiMenu,
     FiGrid,
     FiCoffee,
+    FiShoppingBag,
 } from "react-icons/fi";
 import { MdDashboard } from "react-icons/md";
 import {useRouter, usePathname} from "next/navigation";
@@ -160,6 +161,24 @@ export const DashboardLayout = ({children}: { children: React.ReactNode }) => {
 
                 <Box mt={4}>
                     <Box my={4} h="1px" bg="gray.700"/>
+                    <Link
+                        href="/"
+                        display="flex"
+                        alignItems="center"
+                        gap={3}
+                        px={4}
+                        py={3}
+                        borderRadius="lg"
+                        color="gray.400"
+                        _hover={{bg: "rgba(56,178,172,0.1)", color: "teal.300"}}
+                        transition="all 0.2s ease"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        textDecoration="none"
+                    >
+                        <Icon as={FiShoppingBag} boxSize={5}/>
+                        <Text fontWeight="medium">Перейти в меню</Text>
+                    </Link>
                     <Flex
                         align="center"
                         gap={3}
