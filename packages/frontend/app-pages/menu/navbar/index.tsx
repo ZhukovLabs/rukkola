@@ -31,6 +31,7 @@ export function Navbar({items}: NavbarProps) {
     const [navHeight, setNavHeight] = useState(NAV_HEIGHT);
     const initialTopRef = useRef<number | null>(null);
     const prevIsFixedRef = useRef(false);
+    const isFixedRef = useRef(false);
 
     useEffect(() => {
         if (prevIsFixedRef.current && !isFixed && navRef.current) {
@@ -95,8 +96,27 @@ export function Navbar({items}: NavbarProps) {
         const allIds = items.flatMap(item => [item.id, ...(item.children?.map(c => c.id) || [])]);
         
         const handleScroll = () => {
-            const threshold = initialTopRef.current ?? 0;
-            setIsFixed(window.scrollY > threshold);
+            const currentScrollY = window.scrollY;
+            
+            if (initialTopRef.current === null && navRef.current) {
+                const navRect = navRef.current.getBoundingClientRect();
+                initialTopRef.current = navRect.top + currentScrollY;
+            }
+            
+            if (initialTopRef.current === null) return;
+            
+            const threshold = initialTopRef.current;
+            const shouldBeFixed = currentScrollY > threshold;
+            
+            if (currentScrollY === 0 && isFixedRef.current) {
+                initialTopRef.current = null;
+                isFixedRef.current = false;
+                setIsFixed(false);
+                return;
+            }
+            
+            isFixedRef.current = shouldBeFixed;
+            setIsFixed(shouldBeFixed);
             
             let foundId: string | null = null;
             
@@ -117,7 +137,7 @@ export function Navbar({items}: NavbarProps) {
             
             if (foundId) {
                 setActiveId(foundId);
-            } else if (window.scrollY <= threshold && allIds.length > 0) {
+            } else if (window.scrollY === 0 && allIds.length > 0) {
                 setActiveId(allIds[0]);
             }
         };
