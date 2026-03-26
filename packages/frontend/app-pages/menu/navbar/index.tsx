@@ -59,7 +59,9 @@ export function Navbar({items}: NavbarProps) {
         if (!navRef.current) return;
         
         const rect = navRef.current.getBoundingClientRect();
-        initialTopRef.current = rect.top + window.scrollY;
+        if (initialTopRef.current === null || rect.top > 0) {
+            initialTopRef.current = rect.top + window.scrollY;
+        }
         
         const updateHeight = () => {
             if (navRef.current) {
@@ -130,7 +132,6 @@ export function Navbar({items}: NavbarProps) {
             {isFixed && (
                 <Box 
                     height={isMobile ? `calc(53px + env(safe-area-inset-top, 0px))` : `${navHeight}px`} 
-                    transition="height 0.2s ease"
                 />
             )}
 
@@ -149,6 +150,7 @@ export function Navbar({items}: NavbarProps) {
                 initial={{opacity: 0, y: -10}}
                 animate={{opacity: 1, y: 0}}
                 transition={{duration: 0.25, ease: "easeOut"}}
+                layout
                 css={isFixed ? {
                     WebkitOverflowScrolling: 'auto',
                     overscrollBehavior: 'contain',
