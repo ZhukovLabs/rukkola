@@ -34,6 +34,8 @@ export function Navbar({items}: NavbarProps) {
         if (prevIsFixedRef.current && !isFixed && navRef.current) {
             const rect = navRef.current.getBoundingClientRect();
             initialTopRef.current = rect.top + window.scrollY;
+        } else if (!prevIsFixedRef.current && !isFixed && navRef.current && window.scrollY <= 10) {
+            initialTopRef.current = window.scrollY;
         }
         prevIsFixedRef.current = isFixed;
     }, [isFixed]);
