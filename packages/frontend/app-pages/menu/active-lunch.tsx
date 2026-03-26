@@ -68,9 +68,9 @@ export const ActiveLunch = ({image}: ActiveLunchProps) => {
                     </Box>
                 </Dialog.Trigger>
 
-                <Dialog.Backdrop bg="blackAlpha.900" />
+                <Dialog.Backdrop bg="blackAlpha.900" zIndex={99998} />
 
-                <Dialog.Positioner>
+                <Dialog.Positioner zIndex={99999}>
                     <Dialog.Content
                         w="100vw"
                         h="100vh"
@@ -79,6 +79,7 @@ export const ActiveLunch = ({image}: ActiveLunchProps) => {
                         m={0}
                         maxW="none"
                         borderRadius={0}
+                        zIndex={99999}
                     >
                         <Box position="relative" w="100%" h="100%" display="flex" alignItems="center" justifyContent="center">
                             <Image
@@ -102,7 +103,7 @@ export const ActiveLunch = ({image}: ActiveLunchProps) => {
                                 color="black"
                                 borderRadius="full"
                                 _hover={{bg: "white", transform: "scale(1.1)"}}
-                                zIndex={10}
+                                zIndex={99999}
                             >
                                 <FiX />
                             </IconButton>
