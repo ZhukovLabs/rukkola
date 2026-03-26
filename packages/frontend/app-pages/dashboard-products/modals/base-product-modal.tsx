@@ -164,14 +164,15 @@ export const BaseProductModal = ({
 
     const handleImageEditorSave = async (
         croppedAreaPixels: { x: number; y: number; width: number; height: number },
-        rotation: number
+        rotation: number,
+        flip: { horizontal: boolean; vertical: boolean }
     ) => {
         try {
             let src = imageSrcRef.current
             if (src && !src.startsWith('http') && !src.startsWith('blob:')) {
                 src = `${window.location.origin}${src}`
             }
-            const croppedFile = await getCroppedImg(src, croppedAreaPixels, rotation, imageEditorFlip)
+            const croppedFile = await getCroppedImg(src, croppedAreaPixels, rotation, flip)
             setImageFile(croppedFile)
             clearErrors('imageFile')
         } catch (error) {
