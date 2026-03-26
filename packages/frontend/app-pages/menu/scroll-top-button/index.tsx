@@ -21,6 +21,10 @@ export const ScrollToTopButton = () => {
 
     const handleClick = () => {
         window.scrollTo({ top: 0, behavior: "smooth" });
+        setTimeout(() => {
+            window.scrollTo(0, 0);
+            window.dispatchEvent(new Event("scroll"));
+        }, 350);
     };
 
     if (!isVisible) return null;
