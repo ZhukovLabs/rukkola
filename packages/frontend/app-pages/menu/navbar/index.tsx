@@ -10,6 +10,8 @@ import {CART_QUERY_KEY} from "../constants";
 import {MobileNav} from "./mobile-nav";
 import {DesktopNav} from "./desktop-nav";
 
+const PRODUCT_QUERY_KEY = "product";
+
 const MotionNav = motion.create(Box);
 
 type NavbarProps = {
@@ -127,7 +129,7 @@ export function Navbar({items}: NavbarProps) {
         return () => window.removeEventListener("scroll", handleScroll);
     }, [items]);
 
-    if (searchParams.has(CART_QUERY_KEY)) return null;
+    if (searchParams.has(CART_QUERY_KEY) || searchParams.has(PRODUCT_QUERY_KEY)) return null;
 
     return (
         <Box position="relative" zIndex="10">
