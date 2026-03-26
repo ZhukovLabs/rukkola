@@ -80,4 +80,8 @@ const hiddenScrollbar = {
     WebkitOverflowScrolling: "touch",
     scrollbarWidth: "none" as const,
     "&::-webkit-scrollbar": { display: "none" },
+    transform: "translateZ(0)",
+    WebkitTransform: "translate3d(0,0,0)",
+    backfaceVisibility: "hidden" as const,
+    overscrollBehavior: "none" as const,
 };

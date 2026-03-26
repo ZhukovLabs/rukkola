@@ -153,7 +153,8 @@ export function Navbar({items}: NavbarProps) {
                 layout
                 css={isFixed ? {
                     WebkitOverflowScrolling: 'auto',
-                    overscrollBehavior: 'contain',
+                    overscrollBehavior: 'none',
+                    touchAction: 'pan-x',
                 } : {}}
             >
                 <MobileNav
