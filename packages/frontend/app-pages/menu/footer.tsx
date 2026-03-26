@@ -1,9 +1,9 @@
 "use client";
 
-import { Box, Flex, Text, Icon, Stack, Link, Button } from "@chakra-ui/react";
-import { Phone, Clock, MapPin, ArrowUpRight, ArrowUp } from "lucide-react";
+import { Box, Flex, Text, Icon, Stack, Link } from "@chakra-ui/react";
+import { Phone, Clock, MapPin, ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
-import {ElementType, useCallback, useMemo} from "react";
+import {ElementType, useMemo} from "react";
 
 const MotionLink = motion(Link);
 
@@ -24,10 +24,6 @@ const FooterItem = ({ icon, title, children }: FooterItemProps) => (
 );
 
 export const Footer = () => {
-    const scrollToTop = useCallback(() => {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-    }, []);
-
     const year = useMemo(() => new Date().getFullYear(), []);
 
     const motionProps = { whileHover: { x: 2 }, transition: { duration: 0.2 } };
@@ -45,20 +41,6 @@ export const Footer = () => {
             color="gray.200"
             position="relative"
         >
-            <Box position="absolute" top={-6} right={6}>
-                <Button
-                    colorScheme="teal"
-                    borderRadius="full"
-                    w={12}
-                    h={12}
-                    p={0}
-                    onClick={scrollToTop}
-                    _hover={{ bg: "teal.400" }}
-                >
-                    <Icon as={ArrowUp} boxSize={5} />
-                </Button>
-            </Box>
-
             <Flex
                 direction={{ base: "column", md: "row" }}
                 justify="space-between"
@@ -69,7 +51,7 @@ export const Footer = () => {
             >
                 <FooterItem icon={MapPin} title="Адрес:">
                     <MotionLink
-                        href="https://www.google.com/maps/search/?api=1&query=ул.+Советская,+60,+новый+универмаг,+Руккола"
+                        href="https://yandex.by/maps/org/rukkola/22014226743/?ll=31.003680%2C52.438805&z=20.4"
                         fontWeight="medium"
                         color="gray.100"
                         cursor="pointer"
