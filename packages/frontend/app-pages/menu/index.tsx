@@ -44,6 +44,7 @@ export const MenuPage = async ({searchParams}: MenuPageProps) => {
 
     let activeLunch: { id: string; image: string | null; active: boolean } | null = null;
     let categories: { id: string; name: string; parent: string | null; order: number; showGroupTitle: boolean }[] = [];
+    let fetchError = false;
 
     try {
         const res = await fetch(`${INTERNAL_API}/menu?showAlcohol=${alcoholIsVisible}`, {
@@ -70,9 +71,12 @@ export const MenuPage = async ({searchParams}: MenuPageProps) => {
                     showGroupTitle: c.showGroupTitle ?? true,
                 }));
             }
+        } else {
+            fetchError = true;
         }
     } catch (error) {
         console.error('Failed to fetch menu data:', error);
+        fetchError = true;
     }
 
     const navItems = categories
@@ -120,7 +124,7 @@ export const MenuPage = async ({searchParams}: MenuPageProps) => {
             />
 
             <Suspense fallback={<MenuLoader/>}>
-                <ProductsServer alcoholIsVisible={alcoholIsVisible}/>
+                <ProductsServer alcoholIsVisible={alcoholIsVisible} hasError={fetchError || categories.length === 0}/>
             </Suspense>
 
             <Footer/>

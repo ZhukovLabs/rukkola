@@ -1,10 +1,12 @@
 import {Products} from './products';
 import type {ProductGroupClientType, ProductClientType} from "./products/types";
+import {ErrorFallback} from "./error-fallback";
 
 const INTERNAL_API = process.env.INTERNAL_API_URL || 'http://localhost:4000/api';
 
 type ProductsServerProps = {
     alcoholIsVisible: boolean;
+    hasError?: boolean;
 }
 
 type RawProduct = {
@@ -52,9 +54,10 @@ const transformProduct = (p: RawProduct): ProductClientType => ({
     order: p.order ?? 0,
 });
 
-export async function ProductsServer({alcoholIsVisible}: ProductsServerProps) {
+export async function ProductsServer({alcoholIsVisible, hasError}: ProductsServerProps) {
     let grouped: ProductGroupClientType[] = [];
     let uncategorized: ProductClientType[] = [];
+    let fetchError = hasError ?? false;
 
     try {
         const res = await fetch(`${INTERNAL_API}/menu/products?showAlcohol=${alcoholIsVisible}`, {
@@ -81,9 +84,16 @@ export async function ProductsServer({alcoholIsVisible}: ProductsServerProps) {
 
                 uncategorized = json.data.uncategorizedProduct.map(transformProduct);
             }
+        } else {
+            fetchError = true;
         }
     } catch (error) {
         console.error('Failed to fetch menu products:', error);
+        fetchError = true;
+    }
+
+    if (fetchError) {
+        return <ErrorFallback />;
     }
 
     return <Products grouped={grouped} uncategorized={uncategorized}/>;
