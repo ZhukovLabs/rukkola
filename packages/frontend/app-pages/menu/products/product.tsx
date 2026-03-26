@@ -42,7 +42,7 @@ const ProductImage = memo(function ProductImage({
 }) {
     return (
         <Image
-            src={img}
+            src={img.includes('?') ? `${img}&w=300` : `${img}?w=300`}
             alt={alt}
             fill
             loading="lazy"
@@ -51,6 +51,7 @@ const ProductImage = memo(function ProductImage({
             blurDataURL={BLUR_DATA_URL}
             style={{ objectFit: "cover", objectPosition: "center" }}
             onError={onError}
+            unoptimized
         />
     );
 });

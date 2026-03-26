@@ -1,7 +1,8 @@
 'use client';
 
 import {memo} from "react";
-import { Box, Flex, Image, Text, IconButton } from "@chakra-ui/react";
+import { Box, Flex, Text, IconButton } from "@chakra-ui/react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { ImCross } from "react-icons/im";
 import { AiOutlineMinus, AiOutlinePlus } from "react-icons/ai";
@@ -49,14 +50,16 @@ export const CartItem = memo(function CartItem({
         >
             <Flex align="center" gap={3}>
                 {image && (
-                    <Image
-                        src={image}
-                        alt={name}
-                        boxSize="50px"
-                        borderRadius="md"
-                        objectFit="cover"
-                        border="1px solid rgba(255,255,255,0.1)"
-                    />
+                    <Box position="relative" w="50px" h="50px" flexShrink={0}>
+                        <Image
+                            src={image.includes('?') ? `${image}&w=100` : `${image}?w=100`}
+                            alt={name}
+                            fill
+                            style={{ borderRadius: "6px", objectFit: "cover" }}
+                            loading="lazy"
+                            unoptimized
+                        />
+                    </Box>
                 )}
 
                 <Box flex="1">

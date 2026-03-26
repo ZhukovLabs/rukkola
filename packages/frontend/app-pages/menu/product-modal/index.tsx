@@ -184,7 +184,7 @@ export const ProductModal = () => {
                             <Box flex="1" position="relative" minH="0" onClick={(e) => e.stopPropagation()}>
                                 {product.image ? (
                                     <Image
-                                        src={product.image}
+                                        src={product.image.includes('?') ? `${product.image}&w=600` : `${product.image}?w=600`}
                                         alt={product.name}
                                         fill
                                         priority
