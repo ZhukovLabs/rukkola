@@ -1,8 +1,8 @@
 'use client';
-import {Box, Flex, IconButton, Dialog} from "@chakra-ui/react";
+import {Box, Flex, IconButton, Dialog, Badge, Text} from "@chakra-ui/react";
 import Image from "next/image";
 import {useIsLowPerformanceDevice} from "@/hooks/use-is-low-performance-device";
-import {FiX} from "react-icons/fi";
+import {FiX, FiClock} from "react-icons/fi";
 
 type ActiveLunchProps = { image: string; }
 
@@ -10,56 +10,82 @@ export const ActiveLunch = ({image}: ActiveLunchProps) => {
     const disableMotion = useIsLowPerformanceDevice();
 
     return (
-        <Flex justify="center" align="center" mt={4} mb={6}>
+        <Flex justify="center" align="center" mt={4} mb={6} px={4}>
             <Dialog.Root>
                 <Dialog.Trigger asChild>
                     <Box
                         position="relative"
                         overflow="hidden"
-                        rounded="xl"
-                        boxShadow="0 0 15px rgba(56,178,172,0.4)"
-                        border="1px solid"
-                        borderColor="teal.700"
+                        rounded="2xl"
+                        boxShadow="0 4px 20px rgba(0,0,0,0.1)"
+                        bg="white"
                         maxW="640px"
                         w="100%"
-                        h={{base: 200, sm: 300, md: 442}}
+                        h={{base: 180, sm: 240, md: 340}}
                         transition={!disableMotion ? "all 0.3s ease" : undefined}
                         _hover={!disableMotion ? {
-                            transform: "scale(1.015)",
-                            boxShadow: "0 0 25px rgba(56,178,172,0.5)"
+                            transform: "translateY(-4px) scale(1.02)",
+                            boxShadow: "0 12px 40px rgba(20,184,166,0.2)",
                         } : undefined}
-                        cursor="zoom-in"
+                        cursor="pointer"
+                        border="2px solid"
+                        borderColor="teal.400"
                     >
                         <Image
                             src={image}
                             alt="Обеденное меню"
                             fill
-                            sizes="(max-width: 480px) 90vw, (max-width: 768px) 80vw, 320px"
-                            style={{objectFit: "contain", borderRadius: "12px"}}
+                            sizes="(max-width: 640px) 100vw, 640px"
+                            style={{objectFit: "cover"}}
                             priority
                             fetchPriority="high"
                         />
+                        
+                        <Box
+                            position="absolute"
+                            bottom={0}
+                            left={0}
+                            right={0}
+                            p={{base: 3, sm: 4}}
+                            bgGradient="linear(to-t, blackAlpha.700, transparent)"
+                        >
+                            <Badge
+                                bg="teal.500"
+                                color="white"
+                                px={3}
+                                py={1.5}
+                                rounded="lg"
+                                fontSize="xs"
+                                fontWeight="bold"
+                                textTransform="none"
+                            >
+                                <Flex align="center" gap={1.5}>
+                                    <FiClock size={14} />
+                                    <Text>Обед</Text>
+                                </Flex>
+                            </Badge>
+                        </Box>
                     </Box>
                 </Dialog.Trigger>
 
-                <Dialog.Backdrop/>
+                <Dialog.Backdrop bg="blackAlpha.900" />
 
                 <Dialog.Positioner>
                     <Dialog.Content
-                        w="90vw"
-                        maxW="1200px"
-                        h={{base: "60vh", md: "80vh"}}
-                        bg="transparent"
-                        display="flex"
-                        justifyContent="center"
-                        alignItems="center"
+                        w="100vw"
+                        h="100vh"
+                        bg="black"
+                        p={0}
+                        m={0}
+                        maxW="none"
+                        borderRadius={0}
                     >
-                        <Box position="relative" w="100%" h="100%">
+                        <Box position="relative" w="100%" h="100%" display="flex" alignItems="center" justifyContent="center">
                             <Image
                                 src={image}
                                 alt="Обеденное меню"
                                 fill
-                                style={{objectFit: "contain", borderRadius: "12px"}}
+                                style={{objectFit: "contain"}}
                                 loading="eager"
                             />
                         </Box>
@@ -68,11 +94,18 @@ export const ActiveLunch = ({image}: ActiveLunchProps) => {
                             <IconButton
                                 aria-label="Закрыть"
                                 position="absolute"
-                                top={2}
-                                right={2}
-                                variant="ghost"
-                                size="lg"
-                                color="white"><FiX/></IconButton>
+                                top={4}
+                                right={4}
+                                variant="solid"
+                                size="md"
+                                bg="whiteAlpha.900"
+                                color="black"
+                                borderRadius="full"
+                                _hover={{bg: "white", transform: "scale(1.1)"}}
+                                zIndex={10}
+                            >
+                                <FiX />
+                            </IconButton>
                         </Dialog.CloseTrigger>
                     </Dialog.Content>
                 </Dialog.Positioner>
