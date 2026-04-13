@@ -159,7 +159,7 @@ export const Product = memo(function Product({
         }
     }, [router, searchParams, id, img]);
 
-    const Container = disableMotion ? Box : motion.div;
+    const Container = disableMotion ? Box : motion.article;
 
     return (
         <Container
@@ -199,7 +199,7 @@ export const Product = memo(function Product({
                         ) : (
                             <ProductImage
                                 img={img}
-                                alt={alt ?? ""}
+                                alt={alt || title}
                                 onError={() => setImgError(true)}
                             />
                         )}
@@ -209,6 +209,7 @@ export const Product = memo(function Product({
                 <Flex direction="column" flex="1" p={{ base: 3, md: 6 }}>
                     <Stack gap={{ base: 1, md: 4 }}>
                         <Heading
+                            as="h3"
                             fontSize={{ base: "md", md: "xl" }}
                             lineClamp={2}
                             color="whiteAlpha.900"
