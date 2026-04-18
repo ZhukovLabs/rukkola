@@ -31,7 +31,7 @@ export const DashboardCategoriesPage = () => {
     if (loading) {
         return (
             <Center minH="200px">
-                <Spinner size="xl" color="teal.300"/>
+                <Spinner size="xl" color="gray.300"/>
             </Center>
         );
     }
@@ -41,7 +41,7 @@ export const DashboardCategoriesPage = () => {
     return (
         <Box>
             <Flex justify="space-between" align="center" mb={6} flexWrap="wrap" gap={4}>
-                <Heading size="lg" color="teal.300">
+                <Heading size="lg" color="gray.300">
                     Управление категориями
                 </Heading>
                 <AddCategoryButton/>

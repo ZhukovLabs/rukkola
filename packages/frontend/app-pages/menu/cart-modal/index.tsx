@@ -21,7 +21,7 @@ import {CartItem as CartItemComponent} from "@/app-pages/menu/cart-modal/cart-it
 
 const emptyCartContent = (
     <Flex direction="column" align="center" justify="center" py={8} color="gray.400" gap={3}>
-        <Icon as={FiShoppingCart} boxSize={{base: 8, md: 10}} color="teal.500"/>
+        <Icon as={FiShoppingCart} boxSize={{base: 8, md: 10}} color="gray.500"/>
         <Text fontSize={{base: "sm", md: "md"}}>Корзина пуста</Text>
     </Flex>
 );
@@ -107,10 +107,10 @@ export const CartModal = () => {
                     <Dialog.Content
                         as={motion.div}
                         bg="linear-gradient(145deg, #0a0a0a, #111)"
-                        border="1px solid rgba(56,178,172,0.25)"
+                        border="1px solid rgba(128,128,128,0.25)"
                         borderTopRadius={{base: "xl", md: "2xl"}}
                         borderBottomRadius={{base: "xl", md: "none"}}
-                        boxShadow="0 0 25px rgba(56,178,172,0.15)"
+                        boxShadow="0 0 25px rgba(128,128,128,0.15)"
                         maxH={dialogHeight}
                         display="flex"
                         flexDirection="column"
@@ -129,13 +129,13 @@ export const CartModal = () => {
                         }}
                     >
                         <Dialog.Header
-                            color="teal.300"
+                            color="gray.300"
                             fontWeight="bold"
                             fontSize={{base: "md", md: "lg"}}
                             letterSpacing="wide"
                             py={{base: 3, md: 4}}
                             px={{base: 4, md: 6}}
-                            borderBottom="1px solid rgba(56,178,172,0.15)"
+                            borderBottom="1px solid rgba(128,128,128,0.15)"
                             display="flex"
                             alignItems="center"
                             justifyContent="space-between"
@@ -168,7 +168,7 @@ export const CartModal = () => {
                             <Box
                                 px={{base: 4, md: 6}}
                                 py={{base: 3, md: 4}}
-                                borderTop="1px solid rgba(56,178,172,0.2)"
+                                borderTop="1px solid rgba(128,128,128,0.2)"
                                 bg="rgba(0,0,0,0.5)"
                                 backdropFilter="blur(4px)"
                             >
@@ -188,7 +188,7 @@ export const CartModal = () => {
                                         justify="space-between"
                                     >
                                         <Text
-                                            color="teal.300"
+                                            color="gray.300"
                                             fontWeight="bold"
                                             fontSize={{base: "lg", md: "xl"}}
                                         >

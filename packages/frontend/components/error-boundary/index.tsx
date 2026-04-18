@@ -101,10 +101,10 @@ export class ErrorBoundary extends Component<Props, State> {
                         <Box display="flex" gap={3} flexWrap="wrap" justifyContent="center">
                             <Button
                                 onClick={this.handleReset}
-                                bgGradient="linear(to-r, teal.500, teal.600)"
+                                bgGradient="linear(to-r, gray.500, gray.600)"
                                 color="white"
                                 _hover={{
-                                    bgGradient: 'linear(to-r, teal.600, teal.700)',
+                                    bgGradient: 'linear(to-r, gray.600, gray.700)',
                                     transform: 'translateY(-2px)',
                                 }}
                             >

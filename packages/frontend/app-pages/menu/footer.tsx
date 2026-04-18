@@ -15,9 +15,9 @@ type FooterItemProps = {
 
 const FooterItem = ({ icon, title, children }: FooterItemProps) => (
     <Stack direction="row" align="flex-start">
-        <Icon as={icon} color="teal.300" mt={1} boxSize={5} />
+        <Icon as={icon} color="gray.300" mt={1} boxSize={5} />
         <Box>
-            <Text color="teal.200">{title}</Text>
+            <Text color="gray.200">{title}</Text>
             {children}
         </Box>
     </Stack>
@@ -58,7 +58,7 @@ export const Footer = () => {
                         display="inline-flex"
                         alignItems="center"
                         gap={1}
-                        _hover={{ color: "teal.300" }}
+                        _hover={{ color: "gray.300" }}
                         {...motionProps}
                     >
                         ул. Советская, 60 <Icon as={ArrowUpRight} boxSize={3} opacity={0.7} />
@@ -75,7 +75,7 @@ export const Footer = () => {
                         display="inline-flex"
                         alignItems="center"
                         gap={1}
-                        _hover={{ color: "teal.300" }}
+                        _hover={{ color: "gray.300" }}
                         {...motionProps}
                     >
                         +375 (44) 770-30-03 <Icon as={ArrowUpRight} boxSize={3} opacity={0.7} />

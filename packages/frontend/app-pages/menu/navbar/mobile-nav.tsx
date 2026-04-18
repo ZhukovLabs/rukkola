@@ -39,7 +39,7 @@ export const MobileNav = memo(function MobileNav({
 
                         return (
                             <HStack key={item.id} data-nav-id={item.id} gap={1.5} flexShrink={0} align="start" alignItems="center">
-                                <Box as="button" flexShrink={0} display="inline-flex" alignItems="center" gap={1.5} px={4} py={2} borderRadius="full" borderWidth="1.5px" borderColor={isGroupActive || isOpen ? "teal.400" : "whiteAlpha.300"} bg={isGroupActive || isOpen ? "linear-gradient(135deg, teal.500 0%, teal.600 100%)" : "whiteAlpha.100"} color={isGroupActive || isOpen ? "white" : "whiteAlpha.800"} fontWeight="semibold" fontSize="sm" cursor="pointer" _hover={{borderColor: "teal.400", bg: isGroupActive || isOpen ? "linear-gradient(135deg, teal.400 0%, teal.500 100%)" : "whiteAlpha.200", transform: "translateY(-1px)"}} _active={{transform: "translateY(0)"}}                                 onClick={() => {
+                                <Box as="button" flexShrink={0} display="inline-flex" alignItems="center" gap={1.5} px={4} py={2} borderRadius="full" borderWidth="1.5px" borderColor={isGroupActive || isOpen ? "gray.400" : "whiteAlpha.300"} bg={isGroupActive || isOpen ? "linear-gradient(135deg, gray.500 0%, gray.600 100%)" : "whiteAlpha.100"} color={isGroupActive || isOpen ? "white" : "whiteAlpha.800"} fontWeight="semibold" fontSize="sm" cursor="pointer" _hover={{borderColor: "gray.400", bg: isGroupActive || isOpen ? "linear-gradient(135deg, gray.400 0%, gray.500 100%)" : "whiteAlpha.200", transform: "translateY(-1px)"}} _active={{transform: "translateY(0)"}}                                 onClick={() => {
                                     if (hasChildren) {
                                         setOpenIds((prev) => {
                                             const isOpening = !prev.includes(item.id);
@@ -63,7 +63,7 @@ export const MobileNav = memo(function MobileNav({
                                 </Box>
 
                                 {hasChildren && isOpen && item.children!.map((child) => (
-                                    <Box key={child.id} as="button" flexShrink={0} display="inline-flex" alignItems="center" px={3} py={1.5} borderRadius="full" borderWidth="1px" borderColor={activeId === child.id ? "teal.300" : "whiteAlpha.200"} bg={activeId === child.id ? "teal.500/90" : "whiteAlpha.50"} color={activeId === child.id ? "white" : "whiteAlpha.700"} fontSize="xs" fontWeight="medium" cursor="pointer" transition="all 0.15s ease" _hover={{borderColor: "teal.300", bg: "teal.500/80", color: "white"}} onClick={() => { onItemClick(child.id); setOpenIds([]); }}>
+                                    <Box key={child.id} as="button" flexShrink={0} display="inline-flex" alignItems="center" px={3} py={1.5} borderRadius="full" borderWidth="1px" borderColor={activeId === child.id ? "gray.300" : "whiteAlpha.200"} bg={activeId === child.id ? "gray.500/90" : "whiteAlpha.50"} color={activeId === child.id ? "white" : "whiteAlpha.700"} fontSize="xs" fontWeight="medium" cursor="pointer" transition="all 0.15s ease" _hover={{borderColor: "gray.300", bg: "gray.500/80", color: "white"}} onClick={() => { onItemClick(child.id); setOpenIds([]); }}>
                                         {child.name}
                                     </Box>
                                 ))}

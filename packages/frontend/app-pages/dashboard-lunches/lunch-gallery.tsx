@@ -213,7 +213,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                 overflow="hidden"
             >
                 <Card.Header
-                    bgGradient="linear(to-r, teal.600, cyan.600)"
+                    bgGradient="linear(to-r, gray.600, cyan.600)"
                     borderTopRadius="2xl"
                     py={4}
                     textAlign="center"
@@ -238,9 +238,9 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                             size="md"
                             onClick={handleDeactivateAll}
                             variant="outline"
-                            borderColor="teal.600"
-                            color="teal.200"
-                            _hover={{bg: 'teal.900', transform: 'translateY(-2px)'}}
+                            borderColor="gray.600"
+                            color="gray.200"
+                            _hover={{bg: 'gray.900', transform: 'translateY(-2px)'}}
                             borderRadius="xl"
                             px={6}
                         >
@@ -251,14 +251,14 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                     <VStack gap={6} align="stretch">
                         <Box
                             border="2px dashed"
-                            borderColor={file ? 'teal.400' : isDragOver ? 'teal.500' : 'gray.600'}
+                            borderColor={file ? 'gray.400' : isDragOver ? 'gray.500' : 'gray.600'}
                             borderRadius="2xl"
                             p={8}
                             textAlign="center"
-                            bg={isDragOver ? 'teal.900/30' : 'gray.800/50'}
+                            bg={isDragOver ? 'gray.900/30' : 'gray.800/50'}
                             cursor="pointer"
                             transition="all 0.3s ease"
-                            _hover={{borderColor: 'teal.400', bg: 'teal.900/20'}}
+                            _hover={{borderColor: 'gray.400', bg: 'gray.900/20'}}
                             onClick={() => document.getElementById('lunch-image-input')?.click()}
                             onDragOver={e => {
                                 e.preventDefault();
@@ -310,7 +310,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                             <Button
                                 onClick={handleUpload}
                                 size="md"
-                                colorScheme="teal"
+                                colorScheme="gray"
                                 variant="solid"
                                 borderRadius="full"
                                 px={8}
@@ -319,16 +319,16 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                 fontSize="md"
                                 height="auto"
                                 minWidth="48px"
-                                bgGradient="linear(to-r, teal.500, cyan.500)"
+                                bgGradient="linear(to-r, gray.500, cyan.500)"
                                 _hover={{
-                                    bgGradient: "linear(to-r, teal.600, cyan.600)",
+                                    bgGradient: "linear(to-r, gray.600, cyan.600)",
                                     transform: "translateY(-3px)",
-                                    boxShadow: "0 12px 25px rgba(45, 212, 191, 0.3)",
+                                    boxShadow: "0 12px 25px rgba(128, 128, 128, 0.3)",
                                 }}
                                 _active={{
                                     transform: "translateY(0)",
                                 }}
-                                boxShadow="0 8px 20px rgba(45, 212, 191, 0.2)"
+                                boxShadow="0 8px 20px rgba(128, 128, 128, 0.2)"
                                 transition="all 0.3s ease"
                                 display="flex"
                                 alignItems="center"
@@ -338,7 +338,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                             >
                                 <FiUpload size={20}/>
                                 <Text
-                                    bgGradient="linear(to-r, whiteAlpha.900, teal.50)"
+                                    bgGradient="linear(to-r, whiteAlpha.900, gray.50)"
                                     fontWeight="extrabold"
                                 >
                                     Загрузить новый обед
@@ -351,8 +351,8 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                         {isPending && (
                             <Center position="absolute" inset={0} bg="blackAlpha.600" borderRadius="xl" zIndex={10}>
                                 <VStack bg="gray.800/80" px={8} py={5} borderRadius="xl" backdropFilter="blur(8px)">
-                                    <Spinner size="xl" color="teal.300"/>
-                                    <Text color="teal.100" fontWeight="medium">
+                                    <Spinner size="xl" color="gray.300"/>
+                                    <Text color="gray.100" fontWeight="medium">
                                         Сохранение...
                                     </Text>
                                 </VStack>
@@ -367,7 +367,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                     borderRadius="2xl"
                                     overflow="hidden"
                                     border={lunch.active ? '3px solid' : '1px solid'}
-                                    borderColor={lunch.active ? 'teal.400' : 'gray.700'}
+                                    borderColor={lunch.active ? 'gray.400' : 'gray.700'}
                                     boxShadow="xl"
                                     transition="all 0.3s ease"
                                     cursor="pointer"
@@ -392,7 +392,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                             position="absolute"
                                             top={3}
                                             right={3}
-                                            bg="teal.500"
+                                            bg="gray.500"
                                             p={2}
                                             borderRadius="full"
                                             boxShadow="md"

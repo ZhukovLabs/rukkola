@@ -124,7 +124,7 @@ export const AddCategoryDialog = ({categories}: Props) => {
                 >
                     <Dialog.Header borderBottom="1px solid" borderColor="gray.700">
                         <Box display="flex" alignItems="center" justifyContent="space-between" p={4}>
-                            <Heading size="md" color="teal.200" fontWeight="semibold" letterSpacing="0.3px">
+                            <Heading size="md" color="gray.200" fontWeight="semibold" letterSpacing="0.3px">
                                 Добавить категорию
                             </Heading>
                             <Dialog.CloseTrigger asChild>
@@ -134,7 +134,7 @@ export const AddCategoryDialog = ({categories}: Props) => {
                                     colorScheme="gray"
                                     size="xs"
                                     color="gray.400"
-                                    _hover={{bg: 'gray.700', color: 'teal.200'}}
+                                    _hover={{bg: 'gray.700', color: 'gray.200'}}
                                 >
                                     X
                                 </Button>
@@ -150,7 +150,7 @@ export const AddCategoryDialog = ({categories}: Props) => {
 
                             {/* Название */}
                             <Box mb={4}>
-                                <Heading mb={1} size="sm" color="teal.200">
+                                <Heading mb={1} size="sm" color="gray.200">
                                     Название
                                 </Heading>
                                 <Input
@@ -162,10 +162,10 @@ export const AddCategoryDialog = ({categories}: Props) => {
                                     border="1px solid"
                                     borderColor="gray.700"
                                     borderRadius="md"
-                                    _focus={{borderColor: 'teal.500', boxShadow: '0 0 6px teal'}}
+                                    _focus={{borderColor: 'gray.500', boxShadow: '0 0 6px gray'}}
                                     h="36px"
                                     fontSize="sm"
-                                    _hover={{borderColor: 'teal.500'}}
+                                    _hover={{borderColor: 'gray.500'}}
                                     transition="border-color 0.15s ease"
                                     autoFocus
                                 />
@@ -173,7 +173,7 @@ export const AddCategoryDialog = ({categories}: Props) => {
 
                             {/* Родитель */}
                             <Box mb={4}>
-                                <Heading mb={1} size="sm" color="teal.200">
+                                <Heading mb={1} size="sm" color="gray.200">
                                     Родитель
                                 </Heading>
 
@@ -188,7 +188,7 @@ export const AddCategoryDialog = ({categories}: Props) => {
                                     <Select.HiddenSelect/>
                                     <Select.Label>Выберите родителя</Select.Label>
 
-                                    <Select.Control bg="gray.800" borderColor="teal.500" border="1px solid"
+                                    <Select.Control bg="gray.800" borderColor="gray.500" border="1px solid"
                                                     borderRadius="md">
                                         <Select.Trigger>
                                             <Select.ValueText placeholder="Нет родителя">
@@ -206,9 +206,9 @@ export const AddCategoryDialog = ({categories}: Props) => {
                                     <Select.Positioner>
                                         <Select.Content
                                             bg="gray.800"
-                                            color="teal.200"
+                                            color="gray.200"
                                             borderWidth="1px"
-                                            borderColor="teal.600"
+                                            borderColor="gray.600"
                                             rounded="md"
                                             boxShadow="lg"
                                             maxH="220px"
@@ -238,13 +238,13 @@ export const AddCategoryDialog = ({categories}: Props) => {
                                     <Checkbox.Control
                                         className="
                                             size-4 rounded-md border border-gray-600 bg-gray-800
-                                            data-[checked]:bg-teal-500 data-[checked]:border-teal-400
+                                            data-[checked]:bg-gray-500 data-[checked]:border-gray-400
                                             transition-all duration-150
                                         "
                                     />
 
                                     <Checkbox.Label>
-                                        <Text color={isMenuItem ? 'teal.200' : 'gray.300'} fontSize="sm">
+                                        <Text color={isMenuItem ? 'gray.200' : 'gray.300'} fontSize="sm">
                                             В меню
                                         </Text>
                                     </Checkbox.Label>
@@ -261,13 +261,13 @@ export const AddCategoryDialog = ({categories}: Props) => {
                                     <Checkbox.Control
                                         className="
                                             size-4 rounded-md border border-gray-600 bg-gray-800
-                                            data-[checked]:bg-teal-500 data-[checked]:border-teal-400
+                                            data-[checked]:bg-gray-500 data-[checked]:border-gray-400
                                             transition-all duration-150
                                         "
                                     />
 
                                     <Checkbox.Label>
-                                        <Text color={showGroupTitle ? 'teal.200' : 'gray.300'} fontSize="sm">
+                                        <Text color={showGroupTitle ? 'gray.200' : 'gray.300'} fontSize="sm">
                                             Показывать заголовок
                                         </Text>
                                     </Checkbox.Label>
@@ -287,8 +287,8 @@ export const AddCategoryDialog = ({categories}: Props) => {
                             borderColor="gray.700"
                             _hover={{
                                 bg: 'gray.800',
-                                borderColor: 'teal.400',
-                                color: 'teal.200',
+                                borderColor: 'gray.400',
+                                color: 'gray.200',
                             }}
                             _active={{bg: 'gray.700'}}
                             onClick={close}
@@ -297,16 +297,16 @@ export const AddCategoryDialog = ({categories}: Props) => {
                         </Button>
                         <Button
                             p={2}
-                            colorScheme="teal"
+                            colorScheme="gray"
                             size="sm"
-                            bg="teal.500"
+                            bg="gray.500"
                             color="white"
                             borderRadius="md"
                             _hover={{
-                                bg: 'teal.400',
-                                boxShadow: '0 0 12px rgba(56,178,172,0.45)',
+                                bg: 'gray.400',
+                                boxShadow: '0 0 12px rgba(128,128,128,0.45)',
                             }}
-                            _active={{bg: 'teal.600'}}
+                            _active={{bg: 'gray.600'}}
                             onClick={onSubmit}
                             loading={isPending}
                         >

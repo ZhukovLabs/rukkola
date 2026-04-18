@@ -70,19 +70,19 @@ export const PasswordChangeForm = () => {
 
     const renderInput = (label: string, field: keyof PasswordFormData, show: boolean, setShow: (b: boolean) => void) => (
         <Box>
-            <Text mb={2} color="teal.200" fontWeight="medium">{label}</Text>
+            <Text mb={2} color="gray.200" fontWeight="medium">{label}</Text>
             <Box position="relative">
                 <Input
                     p={2}
                     type={show ? 'text' : 'password'}
                     bg="gray.900"
-                    color="teal.200"
-                    borderColor={fieldErrorText(field) ? 'red.700' : 'teal.700'}
+                    color="gray.200"
+                    borderColor={fieldErrorText(field) ? 'red.700' : 'gray.700'}
                     _focus={{
-                        borderColor: fieldErrorText(field) ? 'red.600' : 'teal.400',
-                        boxShadow: fieldErrorText(field) ? '0 0 8px rgba(255,90,90,0.14)' : '0 0 10px rgba(56,178,172,0.4)'
+                        borderColor: fieldErrorText(field) ? 'red.600' : 'gray.400',
+                        boxShadow: fieldErrorText(field) ? '0 0 8px rgba(255,90,90,0.14)' : '0 0 10px rgba(128,128,128,0.4)'
                     }}
-                    _hover={{ borderColor: 'teal.600' }}
+                    _hover={{ borderColor: 'gray.600' }}
                     rounded="lg"
                     size="md"
                     {...register(field)}
@@ -96,7 +96,7 @@ export const PasswordChangeForm = () => {
                     top="50%"
                     transform="translateY(-50%)"
                     onClick={() => setShow(!show)}
-                    color="teal.200"
+                    color="gray.200"
                     _hover={{ bg: 'blackAlpha.400' }}>
                     {show ? <FiEyeOff /> : <FiEye />}
                 </IconButton>
@@ -110,10 +110,10 @@ export const PasswordChangeForm = () => {
     return (
         <Box>
             <Flex align="center" gap={3} mb={6}>
-                <Box bg="teal.700" p={3} rounded="full" boxShadow="0 0 15px rgba(56,178,172,0.6)">
+                <Box bg="gray.700" p={3} rounded="full" boxShadow="0 0 15px rgba(128,128,128,0.6)">
                     <FiLock size={20} color="white" />
                 </Box>
-                <Text fontSize="2xl" fontWeight="bold" bgGradient="linear(to-r, teal.300, teal.100)">
+                <Text fontSize="2xl" fontWeight="bold" bgGradient="linear(to-r, gray.300, gray.100)">
                     Настройки безопасности
                 </Text>
             </Flex>
@@ -154,9 +154,9 @@ export const PasswordChangeForm = () => {
                         type="submit"
                         loading={isPending}
                         loadingText="Сохранение..."
-                        bg="teal.500"
+                        bg="gray.500"
                         color="whitesmoke"
-                        _hover={{ bg: 'teal.400', boxShadow: '0 0 20px rgba(56,178,172,0.4)' }}
+                        _hover={{ bg: 'gray.400', boxShadow: '0 0 20px rgba(128,128,128,0.4)' }}
                         _active={{ transform: 'scale(0.98)' }}
                         rounded="xl"
                         transition="all 0.2s ease"

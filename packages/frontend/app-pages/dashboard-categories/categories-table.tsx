@@ -227,7 +227,7 @@ function SortableRow({
                         {...listeners}
                         cursor="grab"
                         color="gray.500"
-                        _hover={{ color: 'teal.400' }}
+                        _hover={{ color: 'gray.400' }}
                         transition="color 0.2s"
                         display="flex"
                         alignItems="center"
@@ -238,7 +238,7 @@ function SortableRow({
                     {depth > 0 && (
                         <Box
                             borderLeft="2px dashed"
-                            borderColor="teal.600"
+                            borderColor="gray.600"
                             height="20px"
                             opacity={0.5}
                         />
@@ -255,13 +255,13 @@ function SortableRow({
                             }}
                             autoFocus
                             bg="gray.700"
-                            color="teal.300"
-                            borderColor="teal.500"
-                            _focus={{ borderColor: 'teal.400', boxShadow: '0 0 0 1px teal.400' }}
+                            color="gray.300"
+                            borderColor="gray.500"
+                            _focus={{ borderColor: 'gray.400', boxShadow: '0 0 0 1px gray.400' }}
                             width="250px"
                         />
                     ) : (
-                        <Text fontWeight="semibold" color="teal.400" flex={1}>
+                        <Text fontWeight="semibold" color="gray.400" flex={1}>
                             {category.name}
                         </Text>
                     )}
@@ -282,13 +282,13 @@ function SortableRow({
                             <Checkbox.HiddenInput/>
                             <Checkbox.Control
                                 bg="gray.700"
-                                borderColor="teal.500"
+                                borderColor="gray.500"
                                 _checked={{
-                                    bg: 'teal.500',
-                                    borderColor: 'teal.400',
-                                    boxShadow: '0 0 6px 1px rgba(56,178,172,0.5)',
+                                    bg: 'gray.500',
+                                    borderColor: 'gray.400',
+                                    boxShadow: '0 0 6px 1px rgba(128,128,128,0.5)',
                                 }}
-                                _hover={{ borderColor: 'teal.400' }}
+                                _hover={{ borderColor: 'gray.400' }}
                                 transition="all 0.2s"
                             >
                                 <Checkbox.Indicator color="black"/>
@@ -312,13 +312,13 @@ function SortableRow({
                             <Checkbox.HiddenInput/>
                             <Checkbox.Control
                                 bg="gray.700"
-                                borderColor="teal.500"
+                                borderColor="gray.500"
                                 _checked={{
-                                    bg: 'teal.500',
-                                    borderColor: 'teal.400',
-                                    boxShadow: '0 0 6px 1px rgba(56,178,172,0.5)',
+                                    bg: 'gray.500',
+                                    borderColor: 'gray.400',
+                                    boxShadow: '0 0 6px 1px rgba(128,128,128,0.5)',
                                 }}
-                                _hover={{ borderColor: 'teal.400' }}
+                                _hover={{ borderColor: 'gray.400' }}
                                 transition="all 0.2s"
                             >
                                 <Checkbox.Indicator color="black"/>
@@ -690,7 +690,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
                 overflow="hidden"
             >
                 <Card.Header
-                    bgGradient="linear(to-r, teal.600, cyan.600)"
+                    bgGradient="linear(to-r, gray.600, cyan.600)"
                     borderTopRadius="2xl"
                     py={4}
                     textAlign="center"
@@ -725,7 +725,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
                                 zIndex={10}
                                 borderRadius="xl"
                             >
-                                <Spinner size="xl" color="teal.400"/>
+                                <Spinner size="xl" color="gray.400"/>
                             </Flex>
                         )}
 

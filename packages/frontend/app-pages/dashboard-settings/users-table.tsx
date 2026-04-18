@@ -46,7 +46,7 @@ export const UsersTable = () => {
                 overflow="hidden"
             >
                 <Card.Header
-                    bgGradient="linear(to-r, teal.600, cyan.600)"
+                    bgGradient="linear(to-r, gray.600, cyan.600)"
                     borderTopRadius="xl"
                     py={4}
                     textAlign="center"
@@ -75,7 +75,7 @@ export const UsersTable = () => {
                 <Card.Body px={0} py={0} minH="200px">
                     {loading ? (
                         <Flex justify="center" align="center" h="200px">
-                            <Spinner size="xl" color="teal.300"/>
+                            <Spinner size="xl" color="gray.300"/>
                         </Flex>
                     ) : (
                         <Box overflowX="auto">

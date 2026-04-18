@@ -78,7 +78,7 @@ export const ProductRow = ({
                 />
             </Table.Cell>
 
-            <Table.Cell fontWeight="semibold" color="teal.400" p={4}>
+            <Table.Cell fontWeight="semibold" color="gray.400" p={4}>
                 {p.name}
             </Table.Cell>
 
@@ -94,7 +94,7 @@ export const ProductRow = ({
                                   borderColor="gray.700"
                                   pb="1">
                                 <Text color="gray.400">{size}</Text>
-                                <Text color="teal.400" fontWeight="semibold">
+                                <Text color="gray.400" fontWeight="semibold">
                                     {price} руб.
                                 </Text>
                             </Flex>
@@ -173,7 +173,7 @@ export const ProductRow = ({
                             bgGradient={
                                 p.hidden
                                     ? 'linear(to-r, orange.400, orange.500)'
-                                    : 'linear(to-r, teal.400, teal.500)'
+                                    : 'linear(to-r, gray.400, gray.500)'
                             }
                             color="white"
                             px={3}
@@ -184,7 +184,7 @@ export const ProductRow = ({
                                 transform: 'scale(1.05)',
                                 bgGradient: p.hidden
                                     ? 'linear(to-r, orange.500, orange.600)'
-                                    : 'linear(to-r, teal.500, teal.600)',
+                                    : 'linear(to-r, gray.500, gray.600)',
                             }}
                             _active={{transform: 'scale(0.97)'}}
                             loading={loadingId === p.id}

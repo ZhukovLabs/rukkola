@@ -84,7 +84,7 @@ export const LoginPage = () => {
     if (status === "loading") {
         return (
             <Flex minH="100vh" align="center" justify="center" bg="gray.950">
-                <Box color="teal.400">{loading}</Box>
+                <Box color="gray.400">{loading}</Box>
             </Flex>
         );
     }
@@ -109,18 +109,18 @@ export const LoginPage = () => {
                     left={0}
                     right={0}
                     h="4px"
-                    bgGradient="linear(to-r, teal.400, cyan.400)"
+                    bgGradient="linear(to-r, gray.400, cyan.400)"
                 />
 
                 <VStack gap={6} mb={8}>
                     <Box
                         p={4}
-                        bg="teal.900"
+                        bg="gray.900"
                         borderRadius="2xl"
                         border="1px solid"
-                        borderColor="teal.700"
+                        borderColor="gray.700"
                     >
-                        <Icon as={MdDashboard} color="teal.300" boxSize={10}/>
+                        <Icon as={MdDashboard} color="gray.300" boxSize={10}/>
                     </Box>
                     <VStack gap={1}>
                         <Heading mb={2} textAlign="center" fontSize={{base: "2xl", md: "3xl"}} color="white">
@@ -169,15 +169,15 @@ export const LoginPage = () => {
                             w="full"
                             size="lg"
                             mt={2}
-                            bgGradient="linear(to-r, teal.500, teal.600)"
+                            bgGradient="linear(to-r, gray.500, gray.600)"
                             color="white"
                             _hover={{
-                                bgGradient: "linear(to-r, teal.600, teal.700)",
+                                bgGradient: "linear(to-r, gray.600, gray.700)",
                                 transform: "translateY(-2px)",
-                                boxShadow: "0 10px 25px rgba(56,178,172,0.3)",
+                                boxShadow: "0 10px 25px rgba(128,128,128,0.3)",
                             }}
                             _active={{
-                                bgGradient: "linear(to-r, teal.700, teal.800)",
+                                bgGradient: "linear(to-r, gray.700, gray.800)",
                                 transform: "translateY(0)",
                             }}
                             _disabled={{bg: "gray.600", cursor: "not-allowed"}}
@@ -185,7 +185,7 @@ export const LoginPage = () => {
                             disabled={!isValid && isSubmitting}
                             loadingText={loginButtonLoading}
                             aria-label={loginButton}
-                            boxShadow="0 4px 15px rgba(56,178,172,0.2)"
+                            boxShadow="0 4px 15px rgba(128,128,128,0.2)"
                         >
                             <Flex align="center" gap={2}>
                                 <Icon as={FiLock} boxSize={4}/>

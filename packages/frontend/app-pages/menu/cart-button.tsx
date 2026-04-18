@@ -47,7 +47,7 @@ export const CartButton = () => {
                         position="absolute"
                         inset="-12px"
                         borderRadius="full"
-                        bg="teal.400"
+                        bg="gray.400"
                         filter="blur(20px)"
                         opacity={0.25}
                         pointerEvents="none"
@@ -61,13 +61,13 @@ export const CartButton = () => {
                         size="xl"
                         onClick={toggleCart}
                         bg="linear-gradient(145deg, #1c1f1e, #232826)"
-                        color="teal.200"
+                        color="gray.200"
                         boxShadow="0 6px 12px rgba(0,0,0,0.45), inset 0 -2px 4px rgba(255,255,255,0.05), inset 0 2px 6px rgba(255,255,255,0.05)"
                         _hover={{
                             transform: "translateY(-3px) scale(1.05)",
-                            color: "teal.100",
+                            color: "gray.100",
                             boxShadow:
-                                "0 10px 18px rgba(0,0,0,0.6), inset 0 -3px 6px rgba(255,255,255,0.08), inset 0 3px 8px rgba(255,255,255,0.08), 0 0 12px rgba(56,178,172,0.4)",
+                                "0 10px 18px rgba(0,0,0,0.6), inset 0 -3px 6px rgba(255,255,255,0.08), inset 0 3px 8px rgba(255,255,255,0.08), 0 0 12px rgba(128,128,128,0.4)",
                         }}
                         _active={{
                             transform: "scale(0.96)",
@@ -86,12 +86,12 @@ export const CartButton = () => {
                         onClick={toggleCart}
                         cursor="pointer"
                         borderRadius="full"
-                        bgGradient="linear(to-br, teal.400, green.300)"
+                        bgGradient="linear(to-br, gray.400, green.300)"
                         color="black"
                         fontSize="xs"
                         px="3"
                         py="2px"
-                        boxShadow="0 0 10px rgba(56,178,172,0.6)"
+                        boxShadow="0 0 10px rgba(128,128,128,0.6)"
                     >
                         {count}
                     </Badge>

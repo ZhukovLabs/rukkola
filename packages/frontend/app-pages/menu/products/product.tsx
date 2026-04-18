@@ -72,11 +72,11 @@ const PriceButton = memo(function PriceButton({
             px={{ base: 2, md: 4 }}
             py={{ base: 1, md: 2 }}
             fontSize={{ base: "xs", md: "sm" }}
-            bg={selected ? "teal.500" : "gray.800"}
-            color={selected ? "white" : "teal.300"}
+            bg={selected ? "gray.500" : "gray.800"}
+            color={selected ? "white" : "gray.300"}
             borderWidth="1px"
-            borderColor="teal.500"
-            _hover={{ bg: selected ? "teal.600" : "gray.700", color: "white" }}
+            borderColor="gray.500"
+            _hover={{ bg: selected ? "gray.600" : "gray.700", color: "white" }}
             onClick={onClick}
         >
             {price.size} — {price.price.toFixed(2).replace(".", ",")} руб.
@@ -177,8 +177,8 @@ export const Product = memo(function Product({
                 bg="gray.800"
                 overflow="hidden"
                 _hover={{
-                    borderColor: "teal.500",
-                    boxShadow: "0 6px 18px rgba(56,178,172,0.15)"
+                    borderColor: "gray.500",
+                    boxShadow: "0 6px 18px rgba(128,128,128,0.15)"
                 }}
             >
                 {img && (
@@ -235,7 +235,7 @@ export const Product = memo(function Product({
                                 <Text fontSize={{ base: "xs", md: "sm" }} color="gray.400">
                                     {p.size}
                                 </Text>
-                                <Text fontSize={{ base: "sm", md: "md" }} color="teal.300">
+                                <Text fontSize={{ base: "sm", md: "md" }} color="gray.300">
                                     {p.price.toFixed(2).replace(".", ",")} руб.
                                 </Text>
                             </Flex>
@@ -272,7 +272,7 @@ export const Product = memo(function Product({
                                         <Button
                                             size="sm"
                                             fontSize="xs"
-                                            bg="teal.500"
+                                            bg="gray.500"
                                             onClick={handleConfirm}
                                             px={2}
                                         >
@@ -289,9 +289,9 @@ export const Product = memo(function Product({
                                 fontSize="xs"
                                 borderRadius="full"
                                 borderWidth="1px"
-                                borderColor="teal.500"
-                                bg={added ? "teal.500" : "gray.800"}
-                                color={added ? "white" : "teal.300"}
+                                borderColor="gray.500"
+                                bg={added ? "gray.500" : "gray.800"}
+                                color={added ? "white" : "gray.300"}
                                 onClick={handleAddClick}
                             >
                                 {added ? (

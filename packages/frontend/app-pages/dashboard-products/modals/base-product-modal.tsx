@@ -199,7 +199,7 @@ export const BaseProductModal = ({
                     >
                         <Dialog.Header borderBottom="1px solid" borderColor="gray.700">
                             <Flex justify="space-between" align="center" p={4}>
-                                <Heading size="md" color="teal.200" fontWeight="semibold" letterSpacing="0.3px">
+                                <Heading size="md" color="gray.200" fontWeight="semibold" letterSpacing="0.3px">
                                     {title}
                                 </Heading>
                                 <Dialog.CloseTrigger asChild>
@@ -209,7 +209,7 @@ export const BaseProductModal = ({
                                     colorScheme="gray"
                                     size="xs"
                                     color="gray.400"
-                                    _hover={{bg: 'gray.700', color: 'teal.200'}}
+                                    _hover={{bg: 'gray.700', color: 'gray.200'}}
                                 >
                                     X
                                 </Button>
@@ -239,7 +239,7 @@ export const BaseProductModal = ({
 
                                     {/* Название */}
                                     <Box>
-                                        <Heading mb={1} size="sm" color="teal.200">Название</Heading>
+                                        <Heading mb={1} size="sm" color="gray.200">Название</Heading>
                                         <Input
                                             {...register('name')}
                                             p={2}
@@ -248,10 +248,10 @@ export const BaseProductModal = ({
                                             border="1px solid"
                                             borderColor="gray.700"
                                             borderRadius="md"
-                                            _focus={{borderColor: 'teal.500', boxShadow: '0 0 6px teal'}}
+                                            _focus={{borderColor: 'gray.500', boxShadow: '0 0 6px gray'}}
                                             h="36px"
                                             fontSize="sm"
-                                            _hover={{borderColor: 'teal.500'}}
+                                            _hover={{borderColor: 'gray.500'}}
                                             transition="border-color 0.15s ease"
                                         />
                                         {errors.name &&
@@ -260,7 +260,7 @@ export const BaseProductModal = ({
 
                                     {/* Описание */}
                                     <Box>
-                                        <Heading mb={1} size="sm" color="teal.200">Описание</Heading>
+                                        <Heading mb={1} size="sm" color="gray.200">Описание</Heading>
                                         <Textarea
                                             {...register('description')}
                                             placeholder="Краткое описание товара"
@@ -269,10 +269,10 @@ export const BaseProductModal = ({
                                             borderColor="gray.700"
                                             borderRadius="md"
                                             minH="80px"
-                                            _focus={{borderColor: 'teal.500', boxShadow: '0 0 6px teal'}}
+                                            _focus={{borderColor: 'gray.500', boxShadow: '0 0 6px gray'}}
                                             fontSize="sm"
                                             p={2}
-                                            _hover={{borderColor: 'teal.500'}}
+                                            _hover={{borderColor: 'gray.500'}}
                                             transition="border-color 0.15s ease"
                                         />
                                         {errors.description && <Text color="red.400" mt={1}
@@ -283,14 +283,14 @@ export const BaseProductModal = ({
 
                                         {/* Изображение */}
                                     <Box>
-                                        <Heading size="sm" mb={2} color="teal.200">Изображение</Heading>
+                                        <Heading size="sm" mb={2} color="gray.200">Изображение</Heading>
                                         <Box
                                             border="2px dashed"
-                                            borderColor={imageFile ? 'teal.400' : 'gray.700'}
+                                            borderColor={imageFile ? 'gray.400' : 'gray.700'}
                                             borderRadius="lg"
                                             p={4}
                                             textAlign="center"
-                                            bg={isDragOver ? 'rgba(56,178,172,0.12)' : 'rgba(35,37,40,0.6)'}
+                                            bg={isDragOver ? 'rgba(128,128,128,0.12)' : 'rgba(35,37,40,0.6)'}
                                             cursor="pointer"
                                             transition="all 0.25s ease"
                                             onClick={() => document.getElementById('product-image-input')?.click()}
@@ -337,7 +337,7 @@ export const BaseProductModal = ({
                                                         )}
                                                     </Box>
                                                     {isUploadingImage ? (
-                                                        <Flex align="center" gap={2} color="teal.300">
+                                                        <Flex align="center" gap={2} color="gray.300">
                                                             <Spinner size="xs"/>
                                                             <Text fontSize="xs">Загрузка изображения...</Text>
                                                         </Flex>
@@ -381,7 +381,7 @@ export const BaseProductModal = ({
 
                                     {/* Цены */}
                                     <Box>
-                                        <Heading size="sm" mb={2} color="teal.200">Цены</Heading>
+                                        <Heading size="sm" mb={2} color="gray.200">Цены</Heading>
                                         <Stack gap={3}>
                                             {fields.map((field, idx) => (
                                                 <Box key={field.id} w="full">
@@ -463,9 +463,9 @@ export const BaseProductModal = ({
                                             <Button
                                                 size="xs"
                                                 variant="solid"
-                                                bg="teal.600"
+                                                bg="gray.600"
                                                 color="white"
-                                                _hover={{bg: 'teal.500', boxShadow: '0 0 6px rgba(56,178,172,0.6)'}}
+                                                _hover={{bg: 'gray.500', boxShadow: '0 0 6px rgba(128,128,128,0.6)'}}
                                                 onClick={() => append({size: '', price: 0})}
                                             >
                                                 Добавить цену
@@ -475,7 +475,7 @@ export const BaseProductModal = ({
 
                                     {/* Категории */}
                                     <Box>
-                                        <Heading size="sm" mb={2} color="teal.200">Категории</Heading>
+                                        <Heading size="sm" mb={2} color="gray.200">Категории</Heading>
                                         <Flex wrap="wrap" gap={2}>
                                             {allCategories.map(({id, name}) => (
                                                 <Controller
@@ -490,16 +490,16 @@ export const BaseProductModal = ({
                                                                 py={1.5}
                                                                 borderRadius="md"
                                                                 border="1px solid"
-                                                                borderColor={isChecked ? 'teal.400' : 'gray.700'}
-                                                                bg={isChecked ? 'teal.700' : 'gray.800'}
-                                                                color={isChecked ? 'teal.100' : 'gray.300'}
+                                                                borderColor={isChecked ? 'gray.400' : 'gray.700'}
+                                                                bg={isChecked ? 'gray.700' : 'gray.800'}
+                                                                color={isChecked ? 'gray.100' : 'gray.300'}
                                                                 fontWeight="medium"
                                                                 fontSize="xs"
                                                                 cursor="pointer"
                                                                 transition="all 0.2s ease"
                                                                 _hover={{
-                                                                    borderColor: 'teal.300',
-                                                                    bg: isChecked ? 'teal.600' : 'gray.750',
+                                                                    borderColor: 'gray.300',
+                                                                    bg: isChecked ? 'gray.600' : 'gray.750',
                                                                 }}
                                                                 onClick={() => {
                                                                     if (isChecked) {
@@ -529,7 +529,7 @@ export const BaseProductModal = ({
                                                     const isChecked = !!field.value
                                                     return (
                                                         <Flex align="center" gap={2} cursor="pointer" userSelect="none">
-                                                            <Text color={isChecked ? 'teal.100' : 'gray.300'}
+                                                            <Text color={isChecked ? 'gray.100' : 'gray.300'}
                                                                   fontWeight="500"
                                                                   fontSize="sm">
                                                                 Скрыт
@@ -544,21 +544,21 @@ export const BaseProductModal = ({
                                                                 px="2px"
                                                                 display="flex"
                                                                 alignItems="center"
-                                                                bg={isChecked ? 'rgba(45,212,191,0.08)' : 'transparent'}
+                                                                bg={isChecked ? 'rgba(128,128,128,0.08)' : 'transparent'}
                                                                 border="1px solid"
-                                                                borderColor={isChecked ? 'teal.300' : 'gray.600'}
+                                                                borderColor={isChecked ? 'gray.300' : 'gray.600'}
                                                                 transition="all 180ms ease"
-                                                                _hover={{borderColor: 'teal.300'}}
+                                                                _hover={{borderColor: 'gray.300'}}
                                                                 onClick={() => field.onChange(!isChecked)}
                                                             >
                                                                 <Box
                                                                     w="14px"
                                                                     h="14px"
                                                                     borderRadius="full"
-                                                                    bg={isChecked ? 'teal.300' : 'gray.400'}
+                                                                    bg={isChecked ? 'gray.300' : 'gray.400'}
                                                                     transform={isChecked ? 'translateX(16px)' : 'translateX(0px)'}
                                                                     transition="all 180ms ease"
-                                                                    boxShadow={isChecked ? '0 3px 8px rgba(56,178,172,0.18)' : 'none'}
+                                                                    boxShadow={isChecked ? '0 3px 8px rgba(128,128,128,0.18)' : 'none'}
                                                                 />
                                                             </Box>
                                                         </Flex>
@@ -623,19 +623,19 @@ export const BaseProductModal = ({
                                         size="sm"
                                         color="gray.300"
                                         borderColor="gray.700"
-                                        _hover={{bg: 'gray.800', borderColor: 'teal.400', color: 'teal.200'}}
+                                        _hover={{bg: 'gray.800', borderColor: 'gray.400', color: 'gray.200'}}
                                         onClick={onClose}
                                     >
                                         Отмена
                                     </Button>
                                     <Button
                                         p={2}
-                                        colorScheme="teal"
+                                        colorScheme="gray"
                                         size="sm"
-                                        bg="teal.500"
+                                        bg="gray.500"
                                         color="white"
                                         borderRadius="md"
-                                        _hover={{bg: 'teal.400', boxShadow: '0 0 12px rgba(56,178,172,0.45)'}}
+                                        _hover={{bg: 'gray.400', boxShadow: '0 0 12px rgba(128,128,128,0.45)'}}
                                         type="submit"
                                         loading={isSubmitting}
                                         loadingText={submitLoadingText}

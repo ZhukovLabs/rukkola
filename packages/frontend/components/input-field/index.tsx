@@ -39,7 +39,7 @@ export const InputField = ({icon, placeholder, type = "text", register, error, r
                     borderColor={error ? "red.400" : "gray.700"}
                     color="white"
                     _placeholder={{color: "gray.400"}}
-                    _focus={{borderColor: "teal.400", boxShadow: "0 0 0 1px teal.400"}}
+                    _focus={{borderColor: "gray.400", boxShadow: "0 0 0 1px gray.400"}}
                     aria-invalid={!!error}
                 />
                 {rightElement && (

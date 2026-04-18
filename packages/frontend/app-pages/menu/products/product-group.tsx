@@ -21,9 +21,9 @@ export const ProductGroup = memo(function ProductGroup({ id, title, products }: 
                     as="h2"
                     fontSize={{ base: "2xl", md: "3xl" }}
                     mb={6}
-                    color="teal.300"
+                    color="gray.300"
                     borderBottom="2px solid"
-                    borderColor="teal.500"
+                    borderColor="gray.500"
                     pb={2}
                 >
                     {title}

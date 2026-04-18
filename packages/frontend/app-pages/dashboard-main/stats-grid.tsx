@@ -79,7 +79,7 @@ const StatBox = ({
     >
         <Flex align="center" gap={{ base: 3, md: 4 }} mb={4}>
             <Box
-                bg="rgba(56,178,172,0.1)"
+                bg="rgba(128,128,128,0.1)"
                 p={{ base: 3, md: 4 }}
                 borderRadius="md"
                 display="inline-flex"
@@ -87,7 +87,7 @@ const StatBox = ({
                 justifyContent="center"
                 flexShrink={0}
             >
-                <Icon as={icon} boxSize={{ base: 6, md: 7 }} color="teal.300" />
+                <Icon as={icon} boxSize={{ base: 6, md: 7 }} color="gray.300" />
             </Box>
 
             <Text

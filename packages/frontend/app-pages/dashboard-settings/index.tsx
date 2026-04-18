@@ -24,7 +24,7 @@ export const DashboardSettingsPage = () => {
 
     return (
         <Box>
-            <Heading size="lg" color="teal.300" mb={6}>
+            <Heading size="lg" color="gray.300" mb={6}>
                 Настройки
             </Heading>
 
@@ -48,7 +48,7 @@ export const DashboardSettingsPage = () => {
                         py={2.5}
                         borderRadius="lg"
                         _selected={{
-                            bgGradient: 'linear(to-r, teal.400, teal.500)',
+                            bgGradient: 'linear(to-r, gray.400, gray.500)',
                             color: 'white',
                             boxShadow: 'lg',
                         }}
@@ -68,7 +68,7 @@ export const DashboardSettingsPage = () => {
                             py={2.5}
                             borderRadius="lg"
                             _selected={{
-                                bgGradient: 'linear(to-r, teal.400, teal.500)',
+                                bgGradient: 'linear(to-r, gray.400, gray.500)',
                                 color: 'white',
                                 boxShadow: 'lg',
                             }}

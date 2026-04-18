@@ -120,14 +120,14 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                                 value={tempUser.username ?? ''}
                                 onChange={(e) => setTempUser({...tempUser, username: e.target.value})}
                                 bg="gray.800"
-                                color="teal.300"
-                                borderColor="teal.500"
+                                color="gray.300"
+                                borderColor="gray.500"
                                 height="36px"
-                                _focus={{borderColor: 'teal.400', boxShadow: '0 0 0 1px teal.400'}}
+                                _focus={{borderColor: 'gray.400', boxShadow: '0 0 0 1px gray.400'}}
                                 borderRadius="md"
                             />
                         ) : (
-                            <Text color="teal.200" fontWeight="medium" lineHeight="20px">
+                            <Text color="gray.200" fontWeight="medium" lineHeight="20px">
                                 {user.username}
                             </Text>
                         )}
@@ -143,10 +143,10 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                                 value={getFieldValue(tempUser, field)}
                                 onChange={(e) => handleFieldChange(field, e.target.value)}
                                 bg="gray.800"
-                                color="teal.300"
-                                borderColor="teal.500"
+                                color="gray.300"
+                                borderColor="gray.500"
                                 height="36px"
-                                _focus={{borderColor: 'teal.400', boxShadow: '0 0 0 1px teal.400'}}
+                                _focus={{borderColor: 'gray.400', boxShadow: '0 0 0 1px gray.400'}}
                                 borderRadius="md"
                             />
                         ) : (
@@ -168,14 +168,14 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                         >
                             <Select.HiddenSelect/>
                             <Select.Control>
-                                <Select.Trigger px={2} bg="gray.800" color="teal.200" borderColor="teal.500"
+                                <Select.Trigger px={2} bg="gray.800" color="gray.200" borderColor="gray.500"
                                                 height="36px">
                                     <Select.ValueText placeholder="Роль"/>
                                 </Select.Trigger>
                             </Select.Control>
                             <Portal>
                                 <Select.Positioner>
-                                    <Select.Content bg="gray.800" borderColor="teal.600">
+                                    <Select.Content bg="gray.800" borderColor="gray.600">
                                         {roles.items.map((item) => (
                                             <Select.Item key={item.value} item={item} p={2} color="white">
                                                 {item.label}
@@ -193,7 +193,7 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                                 py={1}
                                 borderRadius="full"
                                 bg={user.role === 'admin' ? 'linear-gradient(90deg,#0ea5a4, #06b6d4)' : 'gray.800'}
-                                color={user.role === 'admin' ? 'white' : 'teal.300'}
+                                color={user.role === 'admin' ? 'white' : 'gray.300'}
                                 fontSize="xs"
                                 boxShadow="sm"
                             >

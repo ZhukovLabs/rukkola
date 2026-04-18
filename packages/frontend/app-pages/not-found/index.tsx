@@ -51,7 +51,7 @@ export const NotFound = () => {
                 left="-30%"
                 w={{base: "350px", md: "700px"}}
                 h={{base: "350px", md: "700px"}}
-                bgGradient="radial(circle, teal.500 0%, transparent 60%)"
+                bgGradient="radial(circle, gray.500 0%, transparent 60%)"
                 opacity={0.12}
                 borderRadius="full"
                 filter="blur(50px)"
@@ -125,7 +125,7 @@ export const NotFound = () => {
                         as="span"
                         display="inline-block"
                         mx={2}
-                        color="teal.400"
+                        color="gray.400"
                         animate={reducedMotion ? {} : {
                             y: [0, -15, 0],
                             rotate: [0, -10, 10, 0],
@@ -172,7 +172,7 @@ export const NotFound = () => {
                     leftIcon={<FiHome/>}
                     mt={4}
                     size="lg"
-                    bgGradient="linear(to-r, teal.400, teal.600)"
+                    bgGradient="linear(to-r, gray.400, gray.600)"
                     color="white"
                     fontWeight="bold"
                     borderRadius="full"
@@ -180,7 +180,7 @@ export const NotFound = () => {
                     py={7}
                     boxShadow="0 10px 30px rgba(56, 178, 172, 0.3)"
                     _hover={{
-                        bgGradient: "linear(to-r, teal.500, teal.700)",
+                        bgGradient: "linear(to-r, gray.500, gray.700)",
                         transform: "translateY(-4px)",
                         boxShadow: "0 15px 35px rgba(56, 178, 172, 0.4)",
                     }}

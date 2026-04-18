@@ -74,7 +74,7 @@ export function PositionDialog({
                         <Dialog.Body>
                             <Flex direction="column" gap={4}>
                                 <Text color="gray.300" fontSize="sm">
-                                    Текущая позиция: <Text as="span" color="teal.400" fontWeight="semibold">{currentPosition + 1}</Text>
+                                    Текущая позиция: <Text as="span" color="gray.400" fontWeight="semibold">{currentPosition + 1}</Text>
                                     <Text as="span" color="gray.500"> из {totalItems}</Text>
                                 </Text>
                                 
@@ -104,11 +104,11 @@ export function PositionDialog({
                                 Отмена
                             </Button>
                             <Button
-                                bg="teal.500"
+                                bg="gray.500"
                                 color="white"
                                 onClick={handleMove}
                                 disabled={!isValid()}
-                                _hover={{bg: 'teal.600'}}
+                                _hover={{bg: 'gray.600'}}
                             >
                                 Переместить
                             </Button>

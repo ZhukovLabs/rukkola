@@ -28,7 +28,7 @@ export const ActiveLunch = ({image}: ActiveLunchProps) => {
                         } : undefined}
                         cursor="pointer"
                         border="2px solid"
-                        borderColor="teal.400"
+                        borderColor="gray.400"
                     >
                         <Image
                             src={image}

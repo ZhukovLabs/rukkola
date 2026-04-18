@@ -45,7 +45,7 @@ export const ProductsPage = () => {
                 overflow="hidden"
             >
                 <Card.Header
-                    bgGradient="linear(to-r, teal.600, cyan.600)"
+                    bgGradient="linear(to-r, gray.600, cyan.600)"
                     borderTopRadius="2xl"
                     py={4}
                     textAlign="center"

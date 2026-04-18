@@ -12,7 +12,7 @@ export function ErrorFallback() {
                 </Text>
                 <Button
                     onClick={() => window.location.reload()}
-                    colorPalette="teal"
+                    colorPalette="gray"
                     variant="outline"
                 >
                     <FiRefreshCw />

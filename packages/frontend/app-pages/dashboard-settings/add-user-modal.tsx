@@ -160,7 +160,7 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                                         _hover={{bg: 'gray.700'}}
                                         _focus={{
                                             bg: 'gray.700',
-                                            borderColor: 'teal.400',
+                                            borderColor: 'gray.400',
                                             boxShadow: '0 0 0 2px rgba(56, 178, 172, 0.3)',
                                         }}
                                         transition="all 0.2s"
@@ -186,7 +186,7 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                                             _hover={{bg: 'gray.700'}}
                                             _focus={{
                                                 bg: 'gray.700',
-                                                borderColor: 'teal.400',
+                                                borderColor: 'gray.400',
                                                 boxShadow: '0 0 0 2px rgba(56, 178, 172, 0.3)',
                                             }}
                                             transition="all 0.2s"
@@ -229,7 +229,7 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                                         _hover={{bg: 'gray.700'}}
                                         _focus={{
                                             bg: 'gray.700',
-                                            borderColor: 'teal.400',
+                                            borderColor: 'gray.400',
                                             boxShadow: '0 0 0 2px rgba(56, 178, 172, 0.3)',
                                         }}
                                         transition="all 0.2s"
@@ -253,7 +253,7 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                                             _hover={{bg: 'gray.700'}}
                                             _focus={{
                                                 bg: 'gray.700',
-                                                borderColor: 'teal.400',
+                                                borderColor: 'gray.400',
                                                 boxShadow: '0 0 0 2px rgba(56, 178, 172, 0.3)',
                                             }}
                                             transition="all 0.2s"
@@ -274,7 +274,7 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                                             _hover={{bg: 'gray.700'}}
                                             _focus={{
                                                 bg: 'gray.700',
-                                                borderColor: 'teal.400',
+                                                borderColor: 'gray.400',
                                                 boxShadow: '0 0 0 2px rgba(56, 178, 172, 0.3)',
                                             }}
                                             transition="all 0.2s"
@@ -335,7 +335,7 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                                     variant="outline"
                                     borderColor="gray.500"
                                     color="gray.400"
-                                    _hover={{bg: 'gray.700', color: 'white', borderColor: 'teal.400'}}
+                                    _hover={{bg: 'gray.700', color: 'white', borderColor: 'gray.400'}}
                                     onClick={onClose}
                                     disabled={loading}
                                     px={6}
@@ -349,11 +349,11 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                                     px={6}
                                     py={3}
                                     type="submit"
-                                    colorScheme="teal"
+                                    colorScheme="gray"
                                     loading={loading}
                                     borderRadius="lg"
                                     border="1px solid"
-                                    borderColor="teal.500"
+                                    borderColor="gray.500"
                                     boxShadow="md"
                                     _hover={{boxShadow: 'lg'}}
                                 >

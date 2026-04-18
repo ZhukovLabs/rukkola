@@ -77,9 +77,9 @@ export const CartItem = memo(function CartItem({
                             onClick={onDecrease}
                             disabled={quantity <= 1}
                             variant="outline"
-                            borderColor="teal.400"
-                            color="teal.400"
-                            _hover={{ bg: "teal.50" }}>
+                            borderColor="gray.400"
+                            color="gray.400"
+                            _hover={{ bg: "gray.50" }}>
                             <AiOutlineMinus />
                         </IconButton>
                         <Text
@@ -97,9 +97,9 @@ export const CartItem = memo(function CartItem({
                             aria-label="Увеличить количество"
                             onClick={onIncrease}
                             variant="outline"
-                            borderColor="teal.400"
-                            color="teal.400"
-                            _hover={{ bg: "teal.50" }}>
+                            borderColor="gray.400"
+                            color="gray.400"
+                            _hover={{ bg: "gray.50" }}>
                             <AiOutlinePlus />
                         </IconButton>
                     </Flex>
@@ -107,7 +107,7 @@ export const CartItem = memo(function CartItem({
             </Flex>
 
             <Flex align="center" gap={2}>
-                <Text color="teal.300" fontWeight="semibold" fontSize="sm">
+                <Text color="gray.300" fontWeight="semibold" fontSize="sm">
                     {formattedPrice}
                 </Text>
                 <IconButton

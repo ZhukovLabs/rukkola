@@ -40,7 +40,7 @@ export const LunchDashboardPage = () => {
     if (loading) {
         return (
             <Center minH="200px">
-                <Spinner size="xl" color="teal.300"/>
+                <Spinner size="xl" color="gray.300"/>
             </Center>
         );
     }

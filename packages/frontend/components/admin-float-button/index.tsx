@@ -35,8 +35,8 @@ export function AdminFloatButton() {
                 borderColor="gray.700"
                 _hover={{
                     bg: 'gray.700',
-                    color: 'teal.300',
-                    borderColor: 'teal.600',
+                    color: 'gray.300',
+                    borderColor: 'gray.600',
                 }}
                 _active={{
                     transform: 'scale(0.95)',

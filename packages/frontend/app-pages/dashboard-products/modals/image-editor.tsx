@@ -126,7 +126,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                     p={4}
                 >
                     <Flex justify="space-between" align="center" mb={4}>
-                        <Text fontWeight="semibold" color="teal.200" fontSize="lg">
+                        <Text fontWeight="semibold" color="gray.200" fontSize="lg">
                             Редактирование изображения
                         </Text>
                         <Dialog.CloseTrigger asChild>
@@ -135,7 +135,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                 variant="ghost"
                                 size="sm"
                                 color="gray.400"
-                                _hover={{ color: 'teal.200' }}
+                                _hover={{ color: 'gray.200' }}
                             >
                                 <FiX />
                             </IconButton>
@@ -173,7 +173,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                 style={{
                                     containerStyle: { background: '#1a1c1e' },
                                     cropAreaStyle: { 
-                                        border: '2px solid #38b2ac',
+                                        border: '2px solid #888888',
                                         boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
                                     },
                                 }}
@@ -189,7 +189,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                             <Button
                                 size="xs"
                                 variant="ghost"
-                                color="teal.300"
+                                color="gray.300"
                                 _hover={{ bg: 'gray.700' }}
                                 onClick={handleFit}
                             >
@@ -203,12 +203,12 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                     key={ratio.label}
                                     size="xs"
                                     variant={aspect === ratio.value ? 'solid' : 'outline'}
-                                    bg={aspect === ratio.value ? 'teal.600' : 'transparent'}
+                                    bg={aspect === ratio.value ? 'gray.600' : 'transparent'}
                                     color={aspect === ratio.value ? 'white' : 'gray.300'}
                                     borderColor="gray.600"
-                                    _hover={{
-                                        bg: aspect === ratio.value ? 'teal.500' : 'gray.700',
-                                    }}
+_hover={{
+                                bg: aspect === ratio.value ? 'gray.500' : 'gray.700',
+                            }}
                                     onClick={() => setAspect(ratio.value)}
                                 >
                                     {ratio.label}
@@ -230,7 +230,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                         variant="outline"
                                         borderColor="gray.600"
                                         color="gray.300"
-                                        _hover={{ borderColor: 'teal.400', color: 'teal.200' }}
+                                        _hover={{ borderColor: 'gray.400', color: 'gray.200' }}
                                         onClick={handleRotateLeft}
                                         title="Повернуть влево"
                                     >
@@ -245,7 +245,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                         variant="outline"
                                         borderColor="gray.600"
                                         color="gray.300"
-                                        _hover={{ borderColor: 'teal.400', color: 'teal.200' }}
+                                        _hover={{ borderColor: 'gray.400', color: 'gray.200' }}
                                         onClick={handleRotateRight}
                                         title="Повернуть вправо"
                                     >
@@ -256,7 +256,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                         variant="outline"
                                         borderColor="gray.600"
                                         color="gray.300"
-                                        _hover={{ borderColor: 'teal.400', color: 'teal.200' }}
+                                        _hover={{ borderColor: 'gray.400', color: 'gray.200' }}
                                         onClick={() => setRotation(0)}
                                         ml={2}
                                     >
@@ -274,10 +274,10 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                         aria-label="Отразить горизонтально"
                                         size="sm"
                                         variant={flip.horizontal ? 'solid' : 'outline'}
-                                        bg={flip.horizontal ? 'teal.600' : 'transparent'}
+                                        bg={flip.horizontal ? 'gray.600' : 'transparent'}
                                         borderColor="gray.600"
                                         color="gray.300"
-                                        _hover={{ borderColor: 'teal.400', color: 'teal.200' }}
+                                        _hover={{ borderColor: 'gray.400', color: 'gray.200' }}
                                         onClick={handleFlipHorizontal}
                                         title="Отразить горизонтально"
                                     >
@@ -287,10 +287,10 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                         aria-label="Отразить вертикально"
                                         size="sm"
                                         variant={flip.vertical ? 'solid' : 'outline'}
-                                        bg={flip.vertical ? 'teal.600' : 'transparent'}
+                                        bg={flip.vertical ? 'gray.600' : 'transparent'}
                                         borderColor="gray.600"
                                         color="gray.300"
-                                        _hover={{ borderColor: 'teal.400', color: 'teal.200' }}
+                                        _hover={{ borderColor: 'gray.400', color: 'gray.200' }}
                                         onClick={handleFlipVertical}
                                         title="Отразить вертикально"
                                     >
@@ -302,7 +302,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                             variant="outline"
                                             borderColor="gray.600"
                                             color="gray.300"
-                                            _hover={{ borderColor: 'teal.400', color: 'teal.200' }}
+                                            _hover={{ borderColor: 'gray.400', color: 'gray.200' }}
                                             onClick={handleFlipReset}
                                         >
                                             Сброс
@@ -322,7 +322,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                         variant="outline"
                                         borderColor="gray.600"
                                         color="gray.300"
-                                        _hover={{ borderColor: 'teal.400', color: 'teal.200' }}
+                                        _hover={{ borderColor: 'gray.400', color: 'gray.200' }}
                                         onClick={handleZoomOut}
                                         disabled={zoom <= 1}
                                     >
@@ -342,9 +342,9 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                                 position: 'absolute',
                                                 top: '50%',
                                                 transform: 'translateY(-50%)',
-                                                accentColor: '#38b2ac',
+                                                accentColor: '#888888',
                                                 cursor: 'pointer',
-                                                background: `linear-gradient(to right, #38b2ac ${((zoom - 1) / 2) * 100}%, #4a5568 ${((zoom - 1) / 2) * 100}%)`,
+                                                background: `linear-gradient(to right, #888888 ${((zoom - 1) / 2) * 100}%, #4a5568 ${((zoom - 1) / 2) * 100}%)`,
                                             }}
                                         />
                                     </Box>
@@ -354,7 +354,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                         variant="outline"
                                         borderColor="gray.600"
                                         color="gray.300"
-                                        _hover={{ borderColor: 'teal.400', color: 'teal.200' }}
+                                        _hover={{ borderColor: 'gray.400', color: 'gray.200' }}
                                         onClick={handleZoomIn}
                                         disabled={zoom >= 3}
                                     >
@@ -376,7 +376,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                         variant="outline"
                                         borderColor="gray.600"
                                         color="gray.300"
-                                        _hover={{ borderColor: 'teal.400', color: 'teal.200' }}
+                                        _hover={{ borderColor: 'gray.400', color: 'gray.200' }}
                                         onClick={handleFit}
                                         flex={1}
                                     >
@@ -393,7 +393,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                             size="sm"
                             color="gray.300"
                             borderColor="gray.600"
-                            _hover={{ borderColor: 'teal.400', color: 'teal.200' }}
+                            _hover={{ borderColor: 'gray.400', color: 'gray.200' }}
                             onClick={handleReset}
                         >
                             Сбросить всё
@@ -409,9 +409,9 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                         </Button>
                         <Button
                             size="sm"
-                            bg="teal.500"
+                            bg="gray.500"
                             color="white"
-                            _hover={{ bg: 'teal.400' }}
+                            _hover={{ bg: 'gray.400' }}
                             onClick={handleSave}
                         >
                             <FiCheck />

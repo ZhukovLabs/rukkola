@@ -13,7 +13,7 @@ interface ToastProps {
 const MotionBox = motion(Box)
 
 export function Toast({ message, type, onClose }: ToastProps) {
-    const bgColor = type === 'success' ? 'teal.500' : 'red.500'
+    const bgColor = type === 'success' ? 'gray.500' : 'red.500'
     const Icon = type === 'success' ? FiCheckCircle : FiAlertCircle
 
     return (

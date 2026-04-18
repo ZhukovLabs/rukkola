@@ -82,10 +82,10 @@ export const NavItem = ({
                 variant="ghost"
                 borderRadius="full"
                 fontWeight="medium"
-                color={isActive ? "teal.300" : "gray.200"}
+                color={isActive ? "gray.300" : "gray.200"}
                 bg="transparent"
-                _hover={{color: "teal.200"}}
-                _active={{color: "teal.100"}}
+                _hover={{color: "gray.200"}}
+                _active={{color: "gray.100"}}
                 onClick={() => onClick(id)}
                 style={{WebkitTapHighlightColor: "transparent"}}
             >
@@ -104,10 +104,10 @@ export const NavItem = ({
                 variant="ghost"
                 borderRadius="full"
                 fontWeight="medium"
-                color={isGroupActive ? "teal.300" : "gray.200"}
+                color={isGroupActive ? "gray.300" : "gray.200"}
                 bg="transparent"
-                _hover={{color: "teal.200"}}
-                _active={{color: "teal.100"}}
+                _hover={{color: "gray.200"}}
+                _active={{color: "gray.100"}}
                 onClick={handleTriggerClick}
                 style={{WebkitTapHighlightColor: "transparent"}}
             >

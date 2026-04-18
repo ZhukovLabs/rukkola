@@ -64,7 +64,7 @@ export const MenuLoader = () => {
                     exit={{opacity: 0, transition: {duration: 0.8}}}
                     zIndex={9999}
                 >
-                    <Spinner color="teal.300" size="lg"/>
+                    <Spinner color="gray.300" size="lg"/>
                     <MotionBox
                         color="gray.300"
                         fontWeight="medium"

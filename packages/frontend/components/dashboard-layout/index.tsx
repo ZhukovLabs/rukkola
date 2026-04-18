@@ -34,9 +34,9 @@ export const DashboardLayout = ({children}: { children: React.ReactNode }) => {
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const sidebarBg = "linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%)";
-    const activeColor = "teal.400";
+    const activeColor = "gray.400";
     const textColor = "gray.400";
-    const hoverBg = "rgba(56,178,172,0.1)";
+    const hoverBg = "rgba(128,128,128,0.1)";
 
     const handleLogout = async () => {
         await logout();
@@ -56,8 +56,8 @@ export const DashboardLayout = ({children}: { children: React.ReactNode }) => {
                 borderColor="gray.700"
             >
                 <Flex align="center" gap={2}>
-                    <Icon as={MdDashboard} color="teal.300" boxSize={5} />
-                    <Text fontWeight="bold" fontSize="lg" color="teal.300">
+                    <Icon as={MdDashboard} color="gray.300" boxSize={5} />
+                    <Text fontWeight="bold" fontSize="lg" color="gray.300">
                         Админ панель
                     </Text>
                 </Flex>
@@ -95,18 +95,18 @@ export const DashboardLayout = ({children}: { children: React.ReactNode }) => {
                         display={{base: "none", md: "block"}}
                         mb={8}
                         p={4}
-                        bg="teal.900"
+                        bg="gray.900"
                         borderRadius="xl"
                         border="1px solid"
-                        borderColor="teal.700"
+                        borderColor="gray.700"
                     >
                         <Flex justify="center" align="center" gap={3}>
-                            <Icon as={MdDashboard} color="teal.300" boxSize={7} />
+                            <Icon as={MdDashboard} color="gray.300" boxSize={7} />
                             <VStack align="start" gap={0}>
                                 <Text fontWeight="bold" fontSize="lg" color="white">
                                     Админ
                                 </Text>
-                                <Text fontSize="xs" color="teal.300">
+                                <Text fontSize="xs" color="gray.300">
                                     Панель управления
                                 </Text>
                             </VStack>
@@ -136,11 +136,11 @@ export const DashboardLayout = ({children}: { children: React.ReactNode }) => {
                                     px={4}
                                     py={3}
                                     borderRadius="lg"
-                                    bg={isActive ? "teal.600" : "transparent"}
+                                    bg={isActive ? "gray.600" : "transparent"}
                                     color={isActive ? "white" : textColor}
                                     cursor="pointer"
                                     _hover={{
-                                        bg: isActive ? "teal.600" : hoverBg,
+                                        bg: isActive ? "gray.600" : hoverBg,
                                         color: isActive ? "white" : activeColor,
                                         transform: "translateX(4px)",
                                     }}
@@ -149,7 +149,7 @@ export const DashboardLayout = ({children}: { children: React.ReactNode }) => {
                                         router.push(item.path);
                                         setMobileOpen(false);
                                     }}
-                                    boxShadow={isActive ? "0 4px 12px rgba(56,178,172,0.3)" : "none"}
+                                    boxShadow={isActive ? "0 4px 12px rgba(128,128,128,0.3)" : "none"}
                                 >
                                     <Icon as={item.icon} boxSize={5}/>
                                     <Text fontWeight="medium">{item.label}</Text>
@@ -170,7 +170,7 @@ export const DashboardLayout = ({children}: { children: React.ReactNode }) => {
                         py={3}
                         borderRadius="lg"
                         color="gray.400"
-                        _hover={{bg: "rgba(56,178,172,0.1)", color: "teal.300"}}
+                        _hover={{bg: "rgba(128,128,128,0.1)", color: "gray.300"}}
                         transition="all 0.2s ease"
                         target="_blank"
                         rel="noopener noreferrer"

@@ -177,7 +177,7 @@ export const ProductsTable = memo(() => {
                     zIndex={10}
                     rounded="md"
                 >
-                    <Spinner size="xl" color="teal.300"/>
+                    <Spinner size="xl" color="gray.300"/>
                 </Flex>
             )}
 

@@ -1,10 +1,10 @@
 import { Box, Flex, Text } from "@chakra-ui/react";
 
 const navButtonStyles = {
-    bg: "teal.500",
+    bg: "gray.500",
     color: "white",
-    _hover: { bg: "teal.600" },
-    _active: { bg: "teal.700", transform: "scale(0.95)" },
+    _hover: { bg: "gray.600" },
+    _active: { bg: "gray.700", transform: "scale(0.95)" },
     borderRadius: "full",
     minW: "36px",
     minH: "36px",
@@ -60,11 +60,11 @@ export const Pagination = ({ page, totalPages, onPageChange }: PaginationProps) 
                         key={`page-${num}-${idx}`}
                         as="button"
                         onClick={() => onPageChange(Number(num))}
-                        bg={num === page ? "teal.500" : "gray.800"}
+                        bg={num === page ? "gray.500" : "gray.800"}
                         color={num === page ? "white" : "gray.300"}
-                        _hover={{ bg: "teal.600", color: "white", transform: "scale(1.05)" }}
+                        _hover={{ bg: "gray.600", color: "white", transform: "scale(1.05)" }}
                         border="1px solid"
-                        borderColor={num === page ? "teal.500" : "gray.700"}
+                        borderColor={num === page ? "gray.500" : "gray.700"}
                         borderRadius="full"
                         minW="36px"
                         minH="36px"

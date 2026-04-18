@@ -40,7 +40,7 @@ export const Dashboard = () => {
     if (status === 'loading' || loading) {
         return (
             <Center minH="200px">
-                <Spinner size="xl" color="teal.300"/>
+                <Spinner size="xl" color="gray.300"/>
             </Center>
         );
     }
@@ -56,7 +56,7 @@ export const Dashboard = () => {
     return (
         <Box>
             {fullName && (
-                <Heading mb={6} fontSize={{base: "2xl", md: "3xl"}} color="teal.300" lineClamp={2} wordBreak="break-word">
+                <Heading mb={6} fontSize={{base: "2xl", md: "3xl"}} color="gray.300" lineClamp={2} wordBreak="break-word">
                     {welcome.greeting}, {fullName}!
                 </Heading>
             )}
@@ -70,7 +70,7 @@ export const Dashboard = () => {
                 borderRadius="2xl"
                 boxShadow="0 8px 24px rgba(0,0,0,0.3)"
             >
-                <Heading mb={4} fontSize={{base: "xl", md: "2xl"}} color="teal.300" lineClamp={2} wordBreak="break-word">
+                <Heading mb={4} fontSize={{base: "xl", md: "2xl"}} color="gray.300" lineClamp={2} wordBreak="break-word">
                     {about.title}
                 </Heading>
 
@@ -94,7 +94,7 @@ export const Dashboard = () => {
                         borderRadius="xl"
                         boxShadow="0 6px 18px rgba(0,0,0,0.25)"
                     >
-                        <Heading fontSize="lg" color="teal.300" mb={2} lineClamp={2} wordBreak="break-word">
+                        <Heading fontSize="lg" color="gray.300" mb={2} lineClamp={2} wordBreak="break-word">
                             {title}
                         </Heading>
                         <Text color="gray.300">{description}</Text>
