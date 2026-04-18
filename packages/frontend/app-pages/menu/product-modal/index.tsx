@@ -35,6 +35,7 @@ export const ProductModal = () => {
 
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState(false);
+    const [imageLoading, setImageLoading] = useState(false);
     const [error, setError] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
 
@@ -55,6 +56,7 @@ export const ProductModal = () => {
 
         setLoading(true);
         setError(false);
+        setImageLoading(true);
 
         try {
             const data = await getProductById(productId);
@@ -76,6 +78,7 @@ export const ProductModal = () => {
         
         if (productId) {
             setIsModalVisible(true);
+            setImageLoading(true);
         }
         
         fetchProduct();
@@ -183,14 +186,23 @@ export const ProductModal = () => {
                         <Flex direction="column" h="100vh" w="100vw" overflow="hidden">
                             <Box flex="1" position="relative" minH="0" onClick={(e) => e.stopPropagation()}>
                                 {product.image ? (
-                                    <Image
-                                        src={product.image.includes('?') ? `${product.image}&w=1920` : `${product.image}?w=1920`}
-                                        alt={product.name}
-                                        fill
-                                        priority
-                                        style={{ objectFit: "contain", objectPosition: "center" }}
-                                        sizes="100vw"
-                                    />
+                                    <Box position="relative" w="100%" h="100%">
+                                        {imageLoading && (
+                                            <Center position="absolute" inset={0}>
+                                                <Spinner size="xl" color="gray.300" />
+                                            </Center>
+                                        )}
+                                        <Image
+                                            src={product.image.includes('?') ? `${product.image}&w=1920` : `${product.image}?w=1920`}
+                                            alt={product.name}
+                                            fill
+                                            priority
+                                            style={{ objectFit: "contain", objectPosition: "center" }}
+                                            sizes="100vw"
+                                            onLoad={() => setImageLoading(false)}
+                                            onError={() => setImageLoading(false)}
+                                        />
+                                    </Box>
                                 ) : (
                                     <Center h="100%" bg="gray.900">
                                         <Text color="gray.500" fontSize="lg">
