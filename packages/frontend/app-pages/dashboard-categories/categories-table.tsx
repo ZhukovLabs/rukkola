@@ -455,6 +455,8 @@ export default function CategoriesTable({ categories: initialCategories }: Props
         flattenCategoryTree(buildCategoryTree(initialCategories))
     )
 
+    const [togglingId, setTogglingId] = useState<string | null>(null)
+
     React.useEffect(() => {
         setLocalItems(flattenCategoryTree(buildCategoryTree(initialCategories)))
     }, [initialCategories])
@@ -515,16 +517,36 @@ export default function CategoriesTable({ categories: initialCategories }: Props
     const toggleMutation = useMutation({
         mutationFn: ({ id, field }: { id: string; field: 'isMenuItem' | 'showGroupTitle' }) =>
             toggleCategoryField(id, field),
+        onMutate: async ({ id, field }) => {
+            setTogglingId(id)
+            setLocalItems(prev => prev.map(item => {
+                if (item.category._id.toString() === id) {
+                    return {
+                        ...item,
+                        category: {
+                            ...item.category,
+                            [field]: !item.category[field]
+                        }
+                    }
+                }
+                return item
+            }))
+        },
         onSuccess: (result) => {
             queryClient.invalidateQueries({ queryKey: ['categories'] })
             revalidateMenu()
+            setTogglingId(null)
             if (result.success) {
                 toast.showSuccess('Настройки категории обновлены')
             } else {
                 toast.showError(result.message || 'Не удалось обновить настройки категории')
             }
         },
-        onError: () => toast.showError('Не удалось обновить настройки категории'),
+        onError: () => {
+            queryClient.invalidateQueries({ queryKey: ['categories'] })
+            setTogglingId(null)
+            toast.showError('Не удалось обновить настройки категории')
+        },
     })
 
     const reorderMutation = useMutation({
@@ -758,9 +780,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
                                         {localItems.length > 0 ? (
                                             localItems.map(({ category, depth }) => {
                                                 const isEditing = editingId === category._id.toString()
-                                                const isToggling =
-                                                    toggleMutation.isPending &&
-                                                    toggleMutation.variables?.id === category._id.toString()
+                                                const isToggling = togglingId === category._id.toString()
                                                 const isDeleting =
                                                     deleteMutation.isPending &&
                                                     deleteMutation.variables === category._id.toString()
