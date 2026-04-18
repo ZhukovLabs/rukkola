@@ -171,15 +171,9 @@ export function Navbar({items}: NavbarProps) {
                 backdropFilter="blur(10px)"
                 borderBottom={isFixed ? "1px solid rgba(255,255,255,0.06)" : "none"}
                 py={{base: 2, md: 4}}
-                initial={{opacity: 0, y: -10}}
+                initial={false}
                 animate={{opacity: 1, y: 0}}
-                transition={{duration: 0.25, ease: "easeOut"}}
-                css={isFixed ? {
-                    WebkitOverflowScrolling: 'auto',
-                    overscrollBehavior: 'none',
-                    touchAction: 'pan-x',
-                    overflow: 'visible',
-                } : {}}
+                transition={{duration: 0.2}}
             >
                 <MobileNav
                     items={items}
