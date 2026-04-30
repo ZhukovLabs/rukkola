@@ -266,6 +266,7 @@ export const Product = memo(function Product({
                                             bg="red.500"
                                             onClick={handleCancel}
                                             px={2}
+                                            borderRadius="full"
                                         >
                                             Отменить
                                         </Button>
@@ -275,6 +276,7 @@ export const Product = memo(function Product({
                                             bg="gray.500"
                                             onClick={handleConfirm}
                                             px={2}
+                                            borderRadius="full"
                                         >
                                             Подтвердить
                                         </Button>
