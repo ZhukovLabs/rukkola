@@ -250,37 +250,43 @@ export const CartModal = () => {
                                             </Text>
                                         </Flex>
 
-                                        <Flex gap={3} align="stretch">
+                                        <Flex gap={3} align="stretch" direction={{ base: "column", sm: "row" }}>
                                             <Flex
                                                 flex="1"
-                                                bg="rgba(212, 163, 115, 0.1)"
-                                                border="1px solid rgba(212, 163, 115, 0.2)"
+                                                bg="rgba(212, 163, 115, 0.08)"
+                                                border="1px solid rgba(212, 163, 115, 0.15)"
                                                 borderRadius="2xl"
-                                                p={4}
+                                                p={{ base: 4, md: 4 }}
                                                 align="center"
-                                                gap={3}
+                                                justify={{ base: "center", md: "flex-start" }}
+                                                direction={{ base: "column", md: "row" }}
+                                                gap={{ base: 2, md: 3 }}
+                                                textAlign={{ base: "center", md: "left" }}
                                             >
-                                                <Icon as={FiInfo} color="orange.300" boxSize={5} flexShrink={0}/>
-                                                <Text fontSize="xs" color="whiteAlpha.900" lineHeight="1.4">
-                                                    Этот список поможет вам определиться с выбором. Оформить заказ через
-                                                    сайт нельзя, но наш официант с радостью примет его у вас лично! ✨
-                                                </Text> </Flex>
+                                                <Icon as={FiInfo} color="orange.200" boxSize={{ base: 6, md: 5 }} flexShrink={0} />
+                                                <Text fontSize={{ base: "xs", md: "xs" }} color="whiteAlpha.900" lineHeight="1.5">
+                                                    Почти готово! <Text as="span" display={{ base: "none", md: "inline" }}>✨</Text> Выберите понравившееся и скажите <Text as="span" color="orange.200" fontWeight="bold">официанту</Text>. Мы приготовим ваш заказ.
+                                                </Text>
+                                            </Flex>
                                             <Button
                                                 size="lg"
                                                 variant="ghost"
                                                 color="red.400"
                                                 borderRadius="2xl"
                                                 p={3}
-                                                minW="auto"
-                                                h="auto"
-                                                _hover={{bg: "rgba(255,0,0,0.1)"}}
+                                                minW={{ base: "100%", md: "auto" }}
+                                                h={{ base: "44px", md: "auto" }}
+                                                _hover={{ bg: "rgba(255,0,0,0.1)" }}
                                                 onClick={handleClear}
                                                 title="Очистить корзину"
                                             >
-                                                <Icon as={FiTrash2} boxSize={5}/>
+                                                <Flex align="center" gap={2} display={{ base: "flex", md: "none" }}>
+                                                    <Icon as={FiTrash2} boxSize={4} />
+                                                    <Text fontSize="xs" fontWeight="bold">Очистить корзину</Text>
+                                                </Flex>
+                                                <Icon as={FiTrash2} boxSize={5} display={{ base: "none", md: "block" }} />
                                             </Button>
-                                        </Flex>
-                                    </Flex>
+                                        </Flex>                                    </Flex>
                                 </Box>
                             )}
                         </motion.div>
