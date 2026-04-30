@@ -9,8 +9,8 @@ import {
     Button,
     Portal,
 } from '@chakra-ui/react'
-import { Cookie } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import {Cookie} from 'lucide-react'
+import {useEffect, useState} from 'react'
 
 const STORAGE_KEY = 'cookie_notice_accepted'
 const EXIT_ANIM_MS = 500
@@ -30,7 +30,8 @@ export function CookieNotice() {
         return () => clearTimeout(timeout)
     }, [visible])
 
-    const handleAccept = () => {
+    const handleAccept = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
         if (isClosing) return
         setIsClosing(true)
         localStorage.setItem(STORAGE_KEY, 'true')
@@ -60,7 +61,7 @@ export function CookieNotice() {
                     border="1px solid"
                     borderColor="whiteAlpha.100"
                     borderRadius="24px"
-                    p={{ base: 5, md: 6 }}
+                    p={{base: 5, md: 6}}
                     boxShadow="0 32px 64px -16px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.1)"
                     maxW="600px"
                 >
@@ -72,7 +73,7 @@ export function CookieNotice() {
                                 bg="whiteAlpha.100"
                                 color="teal.300"
                             >
-                                <Cookie size={20} />
+                                <Cookie size={20}/>
                             </Box>
                             <Text color="white" fontSize="md" fontWeight="600" letterSpacing="-0.01em">
                                 Cookie & Приватность
@@ -80,15 +81,16 @@ export function CookieNotice() {
                         </HStack>
 
                         <Text fontSize="14px" color="whiteAlpha.700" lineHeight="1.6">
-                            Мы используем файлы cookie для улучшения вашего опыта. Продолжая просмотр, вы соглашаетесь с{' '}
+                            Мы используем файлы cookie для улучшения вашего опыта. Продолжая просмотр, вы соглашаетесь
+                            с{' '}
                             <Box as="span" whiteSpace="nowrap">
                                 нашей{' '}
                                 <Link
-                                    href="/privacy" 
-                                    color="white" 
-                                    textDecoration="underline" 
+                                    href="/privacy"
+                                    color="white"
+                                    textDecoration="underline"
                                     textUnderlineOffset="4px"
-                                    _hover={{ color: 'teal.300' }}
+                                    _hover={{color: 'teal.300'}}
                                 >
                                     политикой конфиденциальности
                                 </Link>
@@ -104,8 +106,8 @@ export function CookieNotice() {
                             fontSize="14px"
                             fontWeight="700"
                             borderRadius="16px"
-                            _hover={{ bg: 'whiteAlpha.900', transform: 'translateY(-1px)' }}
-                            _active={{ bg: 'whiteAlpha.800', transform: 'translateY(0)' }}
+                            _hover={{bg: 'whiteAlpha.900', transform: 'translateY(-1px)'}}
+                            _active={{bg: 'whiteAlpha.800', transform: 'translateY(0)'}}
                             transition="all 0.2s cubic-bezier(0.16, 1, 0.3, 1)"
                         >
                             Принять и закрыть
