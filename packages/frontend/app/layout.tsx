@@ -207,7 +207,7 @@ export const metadata: Metadata = {
 
     verification: {
         google: "lYp3G8aIWuG_wRLs3my1z1LJ6SLBb85VeqkpGAZy0bA",
-        yandex: "91fc20500288b2fe",
+        yandex: "ce52b4f1f6bd4b9e",
     },
 
     category: "Restaurant",
