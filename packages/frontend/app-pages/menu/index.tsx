@@ -5,7 +5,7 @@ import {Suspense} from "react";
 import {MenuLoader} from "@/app-pages/menu/menu-loader";
 import {ProductsServer} from "./products-server";
 import dynamic from "next/dynamic";
-import {UnofficialNotice} from "@/components/unofficial-notice";
+import {CookieNotice} from "@/components/cookie-notice";
 
 const Footer = dynamic(() => import("./footer").then(m => m.Footer));
 
@@ -103,7 +103,7 @@ export const MenuPage = async ({searchParams}: MenuPageProps) => {
                 WebkitOverflowScrolling: 'touch',
             }}
         >
-            <UnofficialNotice/>
+            <CookieNotice/>
 
             <Box mx="auto" w={{base: "80%", sm: "60%", md: "400px"}} maxW="90vw" mb={{base: 4, md: 6}}>
                 <Image
