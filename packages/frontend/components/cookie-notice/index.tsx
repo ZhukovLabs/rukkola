@@ -44,7 +44,7 @@ export function CookieNotice() {
         <Portal>
             <Box
                 position="fixed"
-                bottom={{ base: 8, md: 12 }}
+                bottom={2}
                 left="50%"
                 zIndex={9999}
                 transform={mounted && !isClosing ? 'translateX(-50%) translateY(0) scale(1)' : 'translateX(-50%) translateY(20px) scale(0.98)'}
