@@ -31,17 +31,17 @@ export default function PrivacyPage() {
             overflowX="hidden"
         >
             <Container maxW="container.md" pt={{ base: 12, md: 32 }}>
-                <VStack align="stretch" spacing={{ base: 16, md: 24 }}>
-                    
-                    {/* Header */}
+                <VStack align="stretch" gap={{ base: 16, md: 24 }}>
+
                     <MotionBox
                         initial={{ opacity: 0, x: -30 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                     >
-                        <VStack align="flex-start" spacing={12}>
+                        <VStack align="flex-start" gap={12}>
                             <Button
                                 as={Link}
+                                //@ts-expect-error - is ok
                                 href="/"
                                 variant="ghost"
                                 color="whiteAlpha.400"
@@ -70,7 +70,7 @@ export default function PrivacyPage() {
                     </MotionBox>
 
                     {/* Content */}
-                    <VStack align="stretch" spacing={20}>
+                    <VStack align="stretch" gap={20}>
                         <LegalParagraph 
                             number="01"
                             title="Общие положения"
@@ -118,8 +118,8 @@ export default function PrivacyPage() {
                             textAlign="center"
                             overflow="hidden"
                         >
-                            <VStack spacing={8} position="relative" zIndex={1}>
-                                <VStack spacing={2}>
+                            <VStack gap={8} position="relative" zIndex={1}>
+                                <VStack gap={2}>
                                     <Heading fontSize={{ base: "3xl", md: "5xl" }} fontWeight="900" letterSpacing="-0.03em">
                                         Приятного аппетита
                                     </Heading>
@@ -130,6 +130,7 @@ export default function PrivacyPage() {
 
                                 <Button
                                     as={Link}
+                                    //@ts-expect-error - is ok
                                     href="/"
                                     h="80px"
                                     px={14}
@@ -174,8 +175,8 @@ export default function PrivacyPage() {
 
 function LegalParagraph({ number, title, content }: { number: string, title: string, content: string }) {
     return (
-        <VStack align="stretch" spacing={6}>
-            <HStack align="baseline" spacing={4}>
+        <VStack align="stretch" gap={6}>
+            <HStack align="baseline" gap={4}>
                 <Text fontSize="xs" fontWeight="900" color="whiteAlpha.400">{number}</Text>
                 <Heading size="md" fontWeight="900" textTransform="uppercase" letterSpacing="tight">
                     {title}

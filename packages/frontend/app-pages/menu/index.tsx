@@ -12,7 +12,7 @@ const Footer = dynamic(() => import("./footer").then(m => m.Footer));
 const INTERNAL_API = process.env.INTERNAL_API_URL || 'http://localhost:4000/api';
 
 type MenuPageProps = {
-    searchParams: Promise<{ showAlcohol?: unknown }>
+    searchParams: Promise<{ token?: unknown }>
 }
 
 type MenuCategory = {
@@ -38,9 +38,9 @@ type MenuDataResponse = {
 };
 
 export const MenuPage = async ({searchParams}: MenuPageProps) => {
-    const {showAlcohol} = await searchParams;
+    const {token} = await searchParams;
 
-    const alcoholIsVisible = showAlcohol === 'true';
+    const alcoholIsVisible = token === 'x7fa5ca6';
 
     let activeLunch: { id: string; image: string | null; active: boolean } | null = null;
     let categories: { id: string; name: string; parent: string | null; order: number; showGroupTitle: boolean }[] = [];
