@@ -206,7 +206,7 @@ export const metadata: Metadata = {
     },
 
     verification: {
-        google: "XHWnek4KF6QdZm1UFnJeFW8xUtW1ZXbZkIHO84ZD5xs",
+        google: "lYp3G8aIWuG_wRLs3my1z1LJ6SLBb85VeqkpGAZy0bA",
         yandex: "91fc20500288b2fe",
     },
 
