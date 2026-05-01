@@ -258,14 +258,14 @@ export const CartModal = () => {
                                                 borderRadius="2xl"
                                                 p={{ base: 4, md: 4 }}
                                                 align="center"
-                                                justify={{ base: "center", md: "flex-start" }}
-                                                direction={{ base: "column", md: "row" }}
+                                                justify={{ base: "center", sm: "flex-start" }}
+                                                direction={{ base: "column", sm: "row" }}
                                                 gap={{ base: 2, md: 3 }}
-                                                textAlign={{ base: "center", md: "left" }}
+                                                textAlign={{ base: "center", sm: "left" }}
                                             >
-                                                <Icon as={FiInfo} color="orange.200" boxSize={{ base: 6, md: 5 }} flexShrink={0} />
+                                                <Icon as={FiInfo} color="orange.200" boxSize={{ base: 6, sm: 5 }} flexShrink={0} />
                                                 <Text fontSize={{ base: "xs", md: "xs" }} color="whiteAlpha.900" lineHeight="1.5">
-                                                    Почти готово! <Text as="span" display={{ base: "none", md: "inline" }}>✨</Text> Выберите понравившееся и скажите <Text as="span" color="orange.200" fontWeight="bold">официанту</Text>. Мы приготовим ваш заказ.
+                                                    Почти готово! <Text as="span" display={{ base: "none", sm: "inline" }}>✨</Text> Выберите понравившееся и скажите <Text as="span" color="orange.200" fontWeight="bold">официанту</Text>. Мы приготовим ваш заказ.
                                                 </Text>
                                             </Flex>
                                             <Button
@@ -274,17 +274,17 @@ export const CartModal = () => {
                                                 color="red.400"
                                                 borderRadius="2xl"
                                                 p={3}
-                                                minW={{ base: "100%", md: "auto" }}
-                                                h={{ base: "44px", md: "auto" }}
+                                                minW={{ base: "100%", sm: "auto" }}
+                                                h={{ base: "44px", sm: "auto" }}
                                                 _hover={{ bg: "rgba(255,0,0,0.1)" }}
                                                 onClick={handleClear}
                                                 title="Очистить корзину"
                                             >
-                                                <Flex align="center" gap={2} display={{ base: "flex", md: "none" }}>
+                                                <Flex align="center" gap={2} display={{ base: "flex", sm: "none" }}>
                                                     <Icon as={FiTrash2} boxSize={4} />
                                                     <Text fontSize="xs" fontWeight="bold">Очистить корзину</Text>
                                                 </Flex>
-                                                <Icon as={FiTrash2} boxSize={5} display={{ base: "none", md: "block" }} />
+                                                <Icon as={FiTrash2} boxSize={5} display={{ base: "none", sm: "block" }} />
                                             </Button>
                                         </Flex>                                    </Flex>
                                 </Box>
