@@ -1,6 +1,6 @@
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
-    siteUrl: process.env.SITE_URL || 'https://rukkola-production.up.railway.app',
+    siteUrl: process.env.SITE_URL || 'https://rukkola-gomel.by',
     generateRobotsTxt: true,
     
     changefreq: 'daily',
@@ -33,7 +33,7 @@ module.exports = {
             priority: 1.0,
             images: [
                 {
-                    loc: 'https://rukkola-production.up.railway.app/og-image.webp',
+                    loc: 'https://rukkola-gomel.by/og-image.webp',
                     title: 'Кафе Руккола — пицца и суши в Гомеле',
                     caption: 'Уютное кафе в центре Гомеля с авторской пиццей и свежими суши',
                 },
@@ -74,7 +74,7 @@ module.exports = {
             },
         ],
         additionalSitemaps: [
-            'https://rukkola-production.up.railway.app/sitemap.xml',
+            'https://rukkola-gomel.by/sitemap.xml',
         ],
     },
     

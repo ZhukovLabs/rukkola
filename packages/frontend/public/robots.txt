@@ -18,7 +18,7 @@ User-agent: Bingbot
 Allow: /
 
 # Host
-Host: https://rukkola-production.up.railway.app
+Host: https://rukkola-gomel.by
 
 # Sitemaps
-Sitemap: https://rukkola-production.up.railway.app/sitemap.xml
+Sitemap: https://rukkola-gomel.by/sitemap.xml
