@@ -19,6 +19,7 @@ import { getProductById } from "./actions";
 type Product = {
     id: string;
     image: string | null;
+    blurDataURL: string | null;
     name: string;
     description: string | null;
 };
@@ -197,6 +198,8 @@ export const ProductModal = () => {
                                             alt={product.name}
                                             fill
                                             priority
+                                            placeholder="blur"
+                                            blurDataURL={product.blurDataURL || undefined}
                                             style={{ objectFit: "contain", objectPosition: "center" }}
                                             sizes="100vw"
                                             onLoad={() => setImageLoading(false)}

@@ -27,17 +27,20 @@ export type ProductInnerProps = {
     title: string;
     description: string | null;
     prices: Price[] | null;
+    blurDataURL?: string | null;
 };
 
-const BLUR_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/OhSPQAIZwPB9++2WgAAAABJRU5ErkJggg==";
+const DEFAULT_BLUR_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/OhSPQAIZwPB9++2WgAAAABJRU5ErkJggg==";
 
 const ProductImage = memo(function ProductImage({
                                                     img,
                                                     alt,
+                                                    blurDataURL,
                                                     onError
                                                 }: {
     img: string;
     alt: string;
+    blurDataURL?: string | null;
     onError: () => void;
 }) {
     return (
@@ -48,7 +51,7 @@ const ProductImage = memo(function ProductImage({
             loading="lazy"
             sizes="(max-width: 480px) 100vw, (max-width: 768px) 60vw, 45vw"
             placeholder="blur"
-            blurDataURL={BLUR_DATA_URL}
+            blurDataURL={blurDataURL || DEFAULT_BLUR_DATA_URL}
             style={{ objectFit: "cover", objectPosition: "center" }}
             onError={onError}
             unoptimized
@@ -90,7 +93,8 @@ export const Product = memo(function Product({
                                                  alt,
                                                  title,
                                                  description,
-                                                 prices
+                                                 prices,
+                                                 blurDataURL
                                              }: ProductInnerProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -113,13 +117,14 @@ export const Product = memo(function Product({
                 id,
                 name: title,
                 image: img ?? "",
+                blurDataURL: blurDataURL ?? undefined,
                 price: firstPrice.price,
                 size: firstPrice.size
             });
             setAdded(true);
             setTimeout(() => setAdded(false), 1200);
         }
-    }, [prices, firstPrice, id, title, img]);
+    }, [prices, firstPrice, id, title, img, blurDataURL]);
 
     const handleConfirm = useCallback(() => {
         if (!selectedPrice) return;
@@ -128,6 +133,7 @@ export const Product = memo(function Product({
             id,
             name: title,
             image: img ?? "",
+            blurDataURL: blurDataURL ?? undefined,
             price: selectedPrice.price,
             size: selectedPrice.size
         });
@@ -136,7 +142,7 @@ export const Product = memo(function Product({
         setSelecting(false);
         setSelectedPrice(null);
         setTimeout(() => setAdded(false), 1200);
-    }, [selectedPrice, id, title, img]);
+    }, [selectedPrice, id, title, img, blurDataURL]);
 
     const handleCancel = useCallback(() => {
         setSelecting(false);
@@ -200,6 +206,7 @@ export const Product = memo(function Product({
                             <ProductImage
                                 img={img}
                                 alt={alt || title}
+                                blurDataURL={blurDataURL}
                                 onError={() => setImgError(true)}
                             />
                         )}

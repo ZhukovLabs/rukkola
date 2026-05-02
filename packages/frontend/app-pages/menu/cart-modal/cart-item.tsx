@@ -12,6 +12,7 @@ const MotionText = motion.create(Text);
 type CartItemProps = {
     name: string;
     image?: string;
+    blurDataURL?: string;
     size: string;
     price: number;
     quantity?: number;
@@ -24,6 +25,7 @@ type CartItemProps = {
 export const CartItem = memo(function CartItem({
     name,
     image,
+    blurDataURL,
     size,
     price,
     quantity = 1,
@@ -72,6 +74,8 @@ export const CartItem = memo(function CartItem({
                             fill
                             style={{ objectFit: "cover" }}
                             loading="lazy"
+                            placeholder="blur"
+                            blurDataURL={blurDataURL}
                             unoptimized
                         />
                     </Box>

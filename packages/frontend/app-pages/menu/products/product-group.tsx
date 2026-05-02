@@ -44,6 +44,7 @@ export const ProductGroup = memo(function ProductGroup({ id, title, products }: 
                             key={product.id}
                             id={product.id}
                             img={product.image}
+                            blurDataURL={product.blurDataURL}
                             alt={product.name}
                             title={product.name}
                             description={product.description}

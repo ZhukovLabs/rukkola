@@ -87,7 +87,14 @@ export const CartModal = () => {
     }, []);
 
     const increaseQuantity = useCallback((item: CartItem) => () => {
-        addToCart({id: item.id, name: item.name, price: item.price, size: item.size, image: item.image});
+        addToCart({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            size: item.size,
+            image: item.image,
+            blurDataURL: item.blurDataURL
+        });
     }, []);
 
     const decreaseQuantity = useCallback((id: string, size: string) => () => {
@@ -101,6 +108,7 @@ export const CartModal = () => {
                     key={`${item.id}-${item.size}`}
                     name={item.name}
                     image={item.image}
+                    blurDataURL={item.blurDataURL}
                     size={item.size}
                     price={item.price}
                     quantity={item.quantity}

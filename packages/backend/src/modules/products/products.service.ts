@@ -124,6 +124,7 @@ export class ProductsService {
           isAlcohol: 1,
           prices: 1,
           image: 1,
+          blurDataURL: 1,
           hidden: 1,
           order: { $ifNull: ['$order', 0] },
           createdAt: 1,
@@ -223,6 +224,7 @@ export class ProductsService {
           description: 1,
           prices: 1,
           image: 1,
+          blurDataURL: 1,
           categories: 1,
           hidden: 1,
           isAlcohol: 1,
@@ -281,6 +283,7 @@ export class ProductsService {
     const updatedData = {
       ...data,
       image: product.image,
+      blurDataURL: product.blurDataURL,
     };
 
     await this.productModel.findByIdAndUpdate(id, updatedData);
@@ -498,9 +501,18 @@ export class ProductsService {
     await this.minioService.uploadFile(objectName, optimizedBuffer, 'image/webp');
 
     product.image = `/api/products/image/${encodeURIComponent(fileName)}`;
+    product.blurDataURL = await this.generateBlurDataURL(optimizedBuffer);
     await product.save();
 
-    return { image: product.image };
+    return { image: product.image, blurDataURL: product.blurDataURL };
+  }
+
+  private async generateBlurDataURL(buffer: Buffer): Promise<string> {
+    const blurBuffer = await sharp(buffer)
+      .resize(10, 10, { fit: 'inside' })
+      .webp({ quality: 20 })
+      .toBuffer();
+    return `data:image/webp;base64,${blurBuffer.toString('base64')}`;
   }
 
   async serveImage(filename: string, width?: number) {

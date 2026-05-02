@@ -8,6 +8,7 @@ export type ProductClientType = {
     name: string;
     description: string | null;
     image: string | null;
+    blurDataURL?: string | null;
     prices: PortionPrice[];
     hidden?: boolean;
     isAlcohol?: boolean;

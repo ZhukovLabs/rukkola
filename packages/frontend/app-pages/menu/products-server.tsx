@@ -14,6 +14,7 @@ type RawProduct = {
     name: string;
     description?: string | null;
     image?: string | null;
+    blurDataURL?: string | null;
     prices?: Array<{ size: string; price: number }>;
     hidden?: boolean;
     isAlcohol?: boolean;
@@ -48,6 +49,7 @@ const transformProduct = (p: RawProduct): ProductClientType => ({
     name: p.name,
     description: p.description ?? null,
     image: p.image ?? null,
+    blurDataURL: p.blurDataURL ?? null,
     prices: p.prices ?? [],
     hidden: p.hidden ?? false,
     isAlcohol: p.isAlcohol ?? false,

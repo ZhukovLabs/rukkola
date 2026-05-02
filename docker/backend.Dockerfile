@@ -38,4 +38,4 @@ EXPOSE 4000
 
 ENV PORT=4000
 
-CMD ["node", "dist/main.js"]
+CMD ["sh", "-c", "yarn generate-blur-urls:prod && node dist/main.js"]

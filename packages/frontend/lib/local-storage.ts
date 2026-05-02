@@ -7,6 +7,7 @@ export interface CartItem {
     price: number;
     size: string;
     image?: string;
+    blurDataURL?: string;
     quantity: number;
     timestamp: number;
 }

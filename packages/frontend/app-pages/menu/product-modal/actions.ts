@@ -5,6 +5,7 @@ type ProductResponse = {
     data: {
         id: string;
         image?: string;
+        blurDataURL?: string;
         name: string;
         description?: string;
     };
@@ -13,6 +14,7 @@ type ProductResponse = {
 export type Product = {
     id: string;
     image: string | null;
+    blurDataURL: string | null;
     name: string;
     description: string | null;
 };
@@ -39,6 +41,7 @@ export async function getProductById(id: string): Promise<Product | null> {
             const data: Product = {
                 id: res.data.id,
                 image: res.data.image ?? null,
+                blurDataURL: res.data.blurDataURL ?? null,
                 name: res.data.name,
                 description: res.data.description ?? null,
             };

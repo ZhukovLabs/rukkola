@@ -23,6 +23,9 @@ export class Product extends Document {
   @Prop({ required: false })
   image?: string;
 
+  @Prop({ required: false })
+  blurDataURL?: string;
+
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Category' }], index: true })
   categories!: Types.ObjectId[];
 

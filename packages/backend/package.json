@@ -8,6 +8,8 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
+    "generate-blur-urls": "ts-node src/scripts/generate-blur-urls.ts",
+    "generate-blur-urls:prod": "node dist/scripts/generate-blur-urls.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
   },
   "dependencies": {

@@ -19,6 +19,7 @@ type ProductDoc = {
   name: string;
   description?: string | null;
   image?: string | null;
+  blurDataURL?: string | null;
   prices?: Array<{ size: string; price: number }>;
   isAlcohol?: boolean;
   order: number;
@@ -72,6 +73,7 @@ export class MenuService {
     return {
       id: product._id.toString(),
       image: product.image,
+      blurDataURL: product.blurDataURL,
       name: product.name,
       description: product.description,
     };
@@ -197,6 +199,7 @@ export class MenuService {
         name: product.name,
         description: product.description,
         image: product.image,
+        blurDataURL: (product as any).blurDataURL,
         prices: product.prices,
         isAlcohol: product.isAlcohol,
         order: product.order ?? 0,
