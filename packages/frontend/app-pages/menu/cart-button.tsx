@@ -1,30 +1,17 @@
 'use client';
 
-import React, { useCallback, useMemo } from "react";
+import React, { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Box, Badge, IconButton } from "@chakra-ui/react";
 import { FiShoppingCart, FiX } from "react-icons/fi";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { CART_QUERY_KEY } from "./constants";
 import { useCartCount } from "@/hooks/use-cart";
+import { useCartModal } from "./cart-modal/use-cart-modal";
 
 const MotionBox = motion.create(Box);
 
 export const CartButton = () => {
-    const router = useRouter();
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
-    const isOpen = searchParams?.has(CART_QUERY_KEY) ?? false;
-
+    const { isOpen, toggle } = useCartModal();
     const count = useCartCount();
-    const paramsString = searchParams?.toString() ?? '';
-
-    const toggleCart = useCallback(() => {
-        const params = new URLSearchParams(paramsString);
-        if (isOpen) params.delete(CART_QUERY_KEY);
-        else params.set(CART_QUERY_KEY, "open");
-        router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    }, [isOpen, pathname, router, paramsString]);
 
     const Icon = useMemo(() => (isOpen ? FiX : FiShoppingCart), [isOpen]);
 
@@ -59,7 +46,7 @@ export const CartButton = () => {
                         aria-label={isOpen ? "Закрыть корзину" : "Открыть корзину"}
                         borderRadius="full"
                         size="xl"
-                        onClick={toggleCart}
+                        onClick={toggle}
                         bg="linear-gradient(145deg, #1c1f1e, #232826)"
                         color="gray.200"
                         boxShadow="0 6px 12px rgba(0,0,0,0.45), inset 0 -2px 4px rgba(255,255,255,0.05), inset 0 2px 6px rgba(255,255,255,0.05)"
@@ -83,7 +70,7 @@ export const CartButton = () => {
                         position="absolute"
                         top="-8px"
                         right="-8px"
-                        onClick={toggleCart}
+                        onClick={toggle}
                         cursor="pointer"
                         borderRadius="full"
                         bgGradient="linear(to-br, gray.400, green.300)"

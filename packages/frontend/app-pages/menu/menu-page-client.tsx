@@ -6,6 +6,7 @@ import { CartButton } from "./cart-button";
 import { Box } from "@chakra-ui/react";
 import { ComponentProps } from "react";
 import { AdminFloatButton } from "@/components/admin-float-button";
+import { CartModalProvider } from "./cart-modal/use-cart-modal";
 
 const Navbar = dynamic(() => import("./navbar").then(m => m.Navbar), { ssr: false });
 const ScrollToFooterButton = dynamic(() => import("./scroll-footer-button").then(m => m.ScrollToFooterButton));
@@ -21,10 +22,10 @@ type MenuPageClientProps = {
 
 function CartComponents() {
     return (
-        <>
+        <CartModalProvider>
             <CartButton />
             <CartModal />
-        </>
+        </CartModalProvider>
     );
 }
 

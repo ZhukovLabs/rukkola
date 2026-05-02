@@ -12,12 +12,11 @@ import {
     useBreakpointValue,
 } from "@chakra-ui/react";
 import {motion} from "framer-motion";
-import {useSearchParams, usePathname, useRouter} from "next/navigation";
 import {FiShoppingCart, FiX, FiInfo, FiTrash2} from "react-icons/fi";
 import {addToCart, clearCart, type CartItem} from "@/lib/local-storage";
 import {useCart, useCartActions, useCartTotal} from "@/hooks/use-cart";
-import {CART_QUERY_KEY} from "../constants";
 import {CartItem as CartItemComponent} from "@/app-pages/menu/cart-modal/cart-item";
+import {useCartModal} from "./use-cart-modal";
 
 const MotionBox = motion.create(Box);
 
@@ -44,19 +43,14 @@ const emptyCartContent = (
 );
 
 export const CartModal = () => {
-    const searchParams = useSearchParams();
-    const pathname = usePathname();
-    const router = useRouter();
-
     const isMobile = useBreakpointValue({base: true, md: false});
     const dialogMaxWidth = useBreakpointValue({base: "100%", md: "550px"});
 
     const items = useCart();
     const total = useCartTotal();
     const {remove} = useCartActions();
-    const isOpen = searchParams.has(CART_QUERY_KEY);
+    const {isOpen, close} = useCartModal();
 
-    // Prevent body scroll when modal is open
     useEffect(() => {
         if (isOpen) {
             const originalHtmlOverflow = document.documentElement.style.overflow;
@@ -71,12 +65,6 @@ export const CartModal = () => {
             };
         }
     }, [isOpen]);
-
-    const closeCart = useCallback(() => {
-        const params = new URLSearchParams(searchParams.toString());
-        params.delete(CART_QUERY_KEY);
-        router.replace(`${pathname}?${params.toString()}`, {scroll: false});
-    }, [pathname, router, searchParams]);
 
     const handleRemove = useCallback((id: string, size: string) => () => {
         remove(id, size);
@@ -122,7 +110,7 @@ export const CartModal = () => {
     ), [items, handleRemove, increaseQuantity, decreaseQuantity]);
 
     return (
-        <Dialog.Root open={isOpen} onOpenChange={closeCart}>
+        <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && close()}>
             <Portal>
                 <Dialog.Backdrop asChild>
                     <motion.div
@@ -210,7 +198,7 @@ export const CartModal = () => {
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    onClick={closeCart}
+                                    onClick={close}
                                     color="whiteAlpha.600"
                                     borderRadius="full"
                                     minW="auto"
