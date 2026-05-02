@@ -11,7 +11,21 @@ const BACKEND_BASE = BACKEND_URL.replace(/\/api\/?$/, '');
 
 const nextConfig: NextConfig = {
     output: 'standalone',
-    allowedDevOrigins: ['192.168.0.120'],
+    async redirects() {
+        return [
+            {
+                source: '/:path*',
+                has: [
+                    {
+                        type: 'host',
+                        value: 'www.rukkola-gomel.by',
+                    },
+                ],
+                destination: 'https://rukkola-gomel.by/:path*',
+                permanent: true,
+            },
+        ];
+    },
     async rewrites() {
         return [
             {
