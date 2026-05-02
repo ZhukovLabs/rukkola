@@ -42,7 +42,7 @@ const ProductImage = memo(function ProductImage({
 }) {
     return (
         <Image
-            src={img.includes('?') ? `${img}&w=300` : `${img}?w=300`}
+            src={img.includes('?') ? `${img}&w=450` : `${img}?w=450`}
             alt={alt}
             fill
             loading="lazy"
