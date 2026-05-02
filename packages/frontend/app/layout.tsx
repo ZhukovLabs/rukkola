@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
     preload: true,
 });
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://rukkola-production.up.railway.app";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://rukkola-gomel.by";
 
 const restaurantSchema = {
     "@context": "https://schema.org",
