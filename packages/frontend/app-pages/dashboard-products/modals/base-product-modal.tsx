@@ -320,9 +320,9 @@ export const BaseProductModal = ({
                                                     <Box position="relative" onClick={(e) => e.stopPropagation()}>
                                                         <Image src={currentImageUrl} alt="preview" borderRadius="md"
                                                                maxH="160px" objectFit="cover"/>
-                                                        <Flex position="absolute" top={2} right={2} gap={1}>
                                                             <IconButton
                                                                 aria-label="Удалить изображение"
+                                                                position="absolute" top={2} left={2}
                                                                 size="sm"
                                                                 bg="blackAlpha.700"
                                                                 color="red.400"
@@ -340,6 +340,7 @@ export const BaseProductModal = ({
                                                                 <FaTrash size={12} />
                                                             </IconButton>
                                                             <IconButton
+                                                                position="absolute" top={2} right={2}
                                                                 aria-label="Редактировать изображение"
                                                                 size="sm"
                                                                 bg="blackAlpha.700"
@@ -353,7 +354,6 @@ export const BaseProductModal = ({
                                                             >
                                                                 <FiEdit2 />
                                                             </IconButton>
-                                                        </Flex>
                                                     </Box>
                                                     {isUploadingImage ? (
                                                         <Flex align="center" gap={2} color="gray.300">
