@@ -13,7 +13,8 @@ async function bootstrap() {
   const defaultOrigins = [
     'http://localhost:3000',
     'http://localhost:3001',
-    'https://rukkola-production.up.railway.app',
+    'https://rukkola-gomel.by',
+    'https://www.rukkola-gomel.by',
   ];
   const corsOrigins = process.env.CORS_ORIGIN
     ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())

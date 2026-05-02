@@ -66,6 +66,17 @@ const restaurantSchema = {
     },
     paymentAccepted: ["Cash", "Credit Card"],
     currenciesAccepted: "BYN",
+    contactPoint: {
+        "@type": "ContactPoint",
+        telephone: "+375447703003",
+        contactType: "customer service",
+        areaServed: "BY",
+        availableLanguage: ["Russian", "Belarusian"]
+    },
+    areaServed: {
+        "@type": "City",
+        name: "Гомель"
+    },
     sameAs: [
         "https://www.instagram.com/rukkola.gomel",
         "https://vk.com/rukkola_gomel"
@@ -136,25 +147,25 @@ export const metadata: Metadata = {
         default: "Руккола Гомель — Меню и цены | Кафе на Советской 60",
         template: "%s | Руккола Гомель",
     },
-    description: "Кафе Руккола в Гомеле на Советской 60: актуальное меню с ценами на пиццу и суши. Завтраки, ланчи, паназиатская кухня. Уютная атмосфера и фото блюд. Звоните: +375(44)770-30-03.",
+    description: "Кафе Руккола в Гомеле: авторская пицца, свежие суши и роллы. Посмотрите наше актуальное меню с ценами и фото. Завтраки и ланчи в центре Гомеля на Советской 60. Заказывайте навынос: +375(44)770-30-03.",
     
     keywords: [
         "руккола гомель",
         "рукола гомель",
         "руккола гомель меню",
-        "руккола гомель меню цены",
-        "руккола гомель телефон",
-        "кафе руккола гомель",
-        "пицца гомель",
-        "суши гомель",
-        "роллы гомель",
+        "руккола гомель цены",
+        "кафе гомель советская",
+        "пицца гомель заказать",
+        "суши гомель доставка",
+        "роллы гомель цены",
+        "где поесть в гомеле",
+        "завтраки гомель",
         "обеденное меню гомель",
         "ланчи гомель",
-        "завтраки гомель",
-        "советская 60 гомель кафе",
-        "суши бар руккола",
-        "rukkola гомель",
-        "кафе на советской гомель",
+        "пиццерия гомель",
+        "суши бар гомель",
+        "rukkola gomel",
+        "советская 60 гомель",
     ],
 
     authors: [{ name: "Руккола" }],
@@ -167,6 +178,18 @@ export const metadata: Metadata = {
             "ru-BY": "/",
         },
     },
+
+    icons: {
+        icon: [
+            { url: "/favicon.ico" },
+            { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+            { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+        ],
+        apple: [
+            { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+        ],
+    },
+    manifest: "/site.webmanifest",
 
     openGraph: {
         type: "website",
@@ -209,6 +232,25 @@ export const metadata: Metadata = {
         yandex: "ce52b4f1f6bd4b9e",
     },
 
+    formatDetection: {
+        telephone: true,
+        address: true,
+        email: false,
+    },
+
+    appleWebApp: {
+        capable: true,
+        statusBarStyle: "black-translucent",
+        title: "Руккола",
+    },
+
+    other: {
+        "geo.region": "BY-GO",
+        "geo.placename": "Гомель",
+        "geo.position": "52.4393223;31.0029487",
+        "ICBM": "52.4393223, 31.0029487",
+    },
+
     category: "Restaurant",
     applicationName: "Руккола",
 };
@@ -233,25 +275,6 @@ export default function RootLayout({
     return (
         <html lang="ru" suppressHydrationWarning>
         <head>
-            {/* Geo Tags */}
-            <meta name="geo.region" content="BY-GO" />
-            <meta name="geo.placename" content="Гомель" />
-            <meta name="geo.position" content="52.4393223;31.0029487" />
-            <meta name="ICBM" content="52.4393223, 31.0029487" />
-            
-            <meta name="format-detection" content="telephone=yes" />
-
-            {/* Apple Specific */}
-            <meta name="apple-mobile-web-app-capable" content="yes" />
-            <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-            
-            {/* Favicons and Manifest */}
-            <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-            <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-            <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-            <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-            <link rel="manifest" href="/site.webmanifest" />
-            
             <link rel="preconnect" href="https://mc.yandex.ru" crossOrigin="anonymous" />
             <link rel="dns-prefetch" href="https://mc.yandex.ru" />
             
