@@ -1,71 +1,79 @@
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
-    siteUrl: process.env.SITE_URL || 'https://rukkola-gomel.by',
-    generateRobotsTxt: true,
+  siteUrl: process.env.SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://rukkola-gomel.by',
+  generateRobotsTxt: true,
+  generateIndexSitemap: false,
+  sitemapSize: 1000,
+  changefreq: 'daily',
+  priority: 0.7,
 
-    changefreq: 'daily',
-    priority: 0.7,
-    sitemapBaseFileName: 'sitemap',
+  // Exclude administrative and technical pages from sitemap
+  exclude: [
+    '/dashboard',
+    '/dashboard/**',
+    '/api/**',
+    '/login',
+    '/404',
+    '/_next/**',
+  ],
 
-    exclude: [
-        '/dashboard/**',
-        '/dashboard/*',
-        '/api/**',
-        '/login',
-        '/404',
-        '/_next/**',
-    ],
+  transform: async (config, path) => {
+    // Custom exclusions
+    if (
+      path.startsWith('/dashboard') || 
+      path.startsWith('/api') || 
+      path === '/login' || 
+      path === '/404'
+    ) {
+      return null
+    }
 
-    transform: async (config, path) => {
-        // Исключаем dashboard
-        if (path.startsWith('/dashboard')) {
-            return null;
-        }
+    // We handle home page in additionalPaths to ensure it's always included with images
+    if (path === '/') {
+      return null
+    }
 
-        // Для всех остальных страниц (кроме главной)
-        return {
-            loc: path,
-            changefreq: config.changefreq,
-            priority: config.priority,
-            lastmod: new Date().toISOString(),
-        };
-    },
+    return {
+      loc: path,
+      changefreq: config.changefreq,
+      priority: config.priority,
+      lastmod: new Date().toISOString(),
+    }
+  },
 
-    // ← Явно добавляем главную страницу с изображением
-    additionalPaths: async (config) => [
+  additionalPaths: async (config) => [
+    {
+      loc: '/',
+      priority: 1.0,
+      changefreq: 'daily',
+      lastmod: new Date().toISOString(),
+      // next-sitemap v4.x requires image.loc to have a .href property
+      images: [
         {
-            loc: '/',
-            changefreq: 'daily',
-            priority: 1.0,
-            lastmod: new Date().toISOString(),
-            images: [
-                {
-                    loc: 'https://rukkola-gomel.by/og-image.webp',
-                    title: 'Кафе Руккола — пицца и суши в Гомеле',
-                    caption: 'Уютное кафе в центре Гомеля с авторской пиццей и свежими суши',
-                },
-            ],
+          loc: new URL(`${config.siteUrl}/og-image.webp`),
+          title: 'Кафе Руккола — пицца и суши в Гомеле',
+          caption: 'Уютное кафе в центре Гомеля с авторской пиццей и свежими суши',
         },
-    ],
-
-    robotsTxtOptions: {
-        policies: [
-            {
-                userAgent: '*',
-                allow: ['/', '/privacy'],
-                disallow: ['/dashboard/', '/dashboard/**', '/api/', '/login', '/404'],
-            },
-            {userAgent: 'Googlebot', allow: '/'},
-            {userAgent: 'Yandex', allow: '/'},
-            {userAgent: 'Bingbot', allow: '/'},
-        ],
-        additionalSitemaps: [
-            'https://rukkola-gomel.by/sitemap.xml',
-        ],
+      ],
     },
+  ],
 
-    twitter: false,
-    jsonSitemap: false,
-    xml: true,
-    outDir: 'public',
-};
+  robotsTxtOptions: {
+    policies: [
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: [
+          '/dashboard',
+          '/api',
+          '/login',
+          '/404',
+          '/_next/',
+        ],
+      },
+    ],
+    additionalSitemaps: [
+      `${process.env.SITE_URL || 'https://rukkola-gomel.by'}/sitemap.xml`,
+    ],
+  },
+}
