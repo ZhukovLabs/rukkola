@@ -34,7 +34,7 @@ export const EditProductModal = () => {
         router.push(`?${params.toString()}`, {scroll: false})
     }
 
-    const handleSubmit = async (values: Omit<ProductFormValues, 'imageFile'>, file?: File) => {
+    const handleSubmit = async (values: Omit<ProductFormValues, 'imageFile'> & { removeImage?: boolean }, file?: File) => {
         try {
             const result = await updateProductData(productId, {
                 name: values.name,
@@ -43,6 +43,7 @@ export const EditProductModal = () => {
                 categories: values.categories ?? [],
                 hidden: values.hidden,
                 isAlcohol: values.isAlcohol,
+                removeImage: values.removeImage,
             })
 
             if (!result.success) {

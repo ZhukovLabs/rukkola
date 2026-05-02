@@ -68,6 +68,7 @@ export type UpdateProductInput = {
   categories?: string[];
   hidden: boolean;
   isAlcohol: boolean;
+  removeImage?: boolean;
 };
 
 export type CategoryOption = {

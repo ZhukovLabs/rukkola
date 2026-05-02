@@ -280,11 +280,29 @@ export class ProductsService {
     const product = await this.productModel.findById(id);
     if (!product) throw new NotFoundException('Товар не найден');
 
-    const updatedData = {
+    const updatedData: any = {
       ...data,
       image: product.image,
       blurDataURL: product.blurDataURL,
     };
+
+    if (data.removeImage && product.image) {
+      const oldFileName = product.image.split('/').pop();
+      if (oldFileName) {
+        try {
+          await this.minioService.deleteFile(
+            `products/${decodeURIComponent(oldFileName)}`,
+          );
+          this.invalidateImageCache(decodeURIComponent(oldFileName));
+        } catch (error) {
+          console.error('Error deleting image during product update:', error);
+        }
+      }
+      updatedData.image = null;
+      updatedData.blurDataURL = null;
+    }
+
+    delete updatedData.removeImage;
 
     await this.productModel.findByIdAndUpdate(id, updatedData);
 

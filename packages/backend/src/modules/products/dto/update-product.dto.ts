@@ -52,4 +52,8 @@ export class UpdateProductDto {
 
   @IsBoolean()
   isAlcohol!: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  removeImage?: boolean;
 }

@@ -30,15 +30,15 @@ export const CreateProductModal = () => {
         router.push(`?${params.toString()}`, {scroll: false});
     }
 
-    const handleSubmit = async (values: Omit<ProductFormValues, 'imageFile'>, file?: File) => {
+    const handleSubmit = async (values: Omit<ProductFormValues, 'imageFile'> & { removeImage?: boolean }, file?: File) => {
         try {
             const result = await createProduct({
                 name: values.name,
-                description: values.description!,
+                description: values.description ?? '',
                 prices: values.prices,
                 categories: values.categories ?? [],
                 hidden: values.hidden,
-                isAlcohol: values.isAlcohol
+                isAlcohol: values.isAlcohol,
             })
 
             if (!result.success) {

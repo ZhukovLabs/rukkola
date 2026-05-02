@@ -40,7 +40,7 @@ type ProductModalProps = {
     title: string
     submitText: string
     submitLoadingText?: string
-    onSubmit: (values: Omit<ProductFormValues, 'imageFile'>, file?: File) => Promise<void>
+    onSubmit: (values: Omit<ProductFormValues, 'imageFile'> & { removeImage?: boolean }, file?: File) => Promise<void>
     initialValues?: Partial<ProductFormValues> & { image?: string }
     isLoadingInitial?: boolean
     productIdForImageUpload?: string
@@ -61,6 +61,7 @@ export const BaseProductModal = ({
     const [showImageEditor, setShowImageEditor] = useState(false)
     const [imageEditorSrc, setImageEditorSrc] = useState('')
     const [imageEditorFlip, setImageEditorFlip] = useState({ horizontal: false, vertical: false })
+    const [shouldRemoveExistingImage, setShouldRemoveExistingImage] = useState(false)
     const imageSrcRef = useRef<string>('')
 
     const {data: {data: allCategories = []} = {}} = useQuery({
@@ -112,6 +113,7 @@ export const BaseProductModal = ({
                 isAlcohol: initialValues?.isAlcohol ?? false, // Добавлено
                 imageFile: null,
             })
+            setShouldRemoveExistingImage(false)
             clearErrors()
         }
     }, [isOpen, initialValues, reset, clearErrors])
@@ -119,7 +121,7 @@ export const BaseProductModal = ({
     const handleFormSubmit: SubmitHandler<ProductFormValues> = async (data) => {
         clearErrors()
 
-        const formatted: ProductFormValues = {
+        const formatted: ProductFormValues & { removeImage?: boolean } = {
             name: data.name,
             description: data.description,
             prices: data.prices.map((p) => ({
@@ -129,10 +131,11 @@ export const BaseProductModal = ({
             categories: data.categories,
             hidden: data.hidden,
             isAlcohol: data.isAlcohol,
+            removeImage: shouldRemoveExistingImage && !data.imageFile,
         }
 
         try {
-            await onSubmit(formatted, data.imageFile!);
+            await onSubmit(formatted, data.imageFile || undefined);
             onClose()
         } catch (err) {
             setError('root', {
@@ -141,7 +144,7 @@ export const BaseProductModal = ({
         }
     }
 
-    const currentImageUrl = imageFile ? URL.createObjectURL(imageFile) : initialValues?.image
+    const currentImageUrl = imageFile ? URL.createObjectURL(imageFile) : (shouldRemoveExistingImage ? null : initialValues?.image)
     const isUploadingImage = isSubmitting && !!imageFile && !!productIdForImageUpload
     const imagePreviewText = imageFile
         ? imageFile.name
@@ -314,27 +317,43 @@ export const BaseProductModal = ({
                                         >
                                             {currentImageUrl ? (
                                                 <Flex direction="column" align="center" gap={2}>
-                                                    <Box position="relative">
+                                                    <Box position="relative" onClick={(e) => e.stopPropagation()}>
                                                         <Image src={currentImageUrl} alt="preview" borderRadius="md"
                                                                maxH="160px" objectFit="cover"/>
-                                                        {(imageFile || initialValues?.image) && (
+                                                        <Flex position="absolute" top={2} right={2} gap={1}>
+                                                            <IconButton
+                                                                aria-label="Удалить изображение"
+                                                                size="sm"
+                                                                bg="blackAlpha.700"
+                                                                color="red.400"
+                                                                _hover={{ bg: 'blackAlpha.800', color: 'red.300' }}
+                                                                onClick={(e) => {
+                                                                    e.preventDefault()
+                                                                    e.stopPropagation()
+                                                                    if (imageFile) {
+                                                                        setImageFile(null)
+                                                                    } else {
+                                                                        setShouldRemoveExistingImage(true)
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <FaTrash size={12} />
+                                                            </IconButton>
                                                             <IconButton
                                                                 aria-label="Редактировать изображение"
-                                                                position="absolute"
-                                                                top={2}
-                                                                right={2}
                                                                 size="sm"
                                                                 bg="blackAlpha.700"
                                                                 color="white"
                                                                 _hover={{ bg: 'blackAlpha.800' }}
                                                                 onClick={(e) => {
+                                                                    e.preventDefault()
                                                                     e.stopPropagation()
                                                                     handleOpenImageEditor()
                                                                 }}
                                                             >
                                                                 <FiEdit2 />
                                                             </IconButton>
-                                                        )}
+                                                        </Flex>
                                                     </Box>
                                                     {isUploadingImage ? (
                                                         <Flex align="center" gap={2} color="gray.300">
