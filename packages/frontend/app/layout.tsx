@@ -58,11 +58,11 @@ const restaurantSchema = {
             closes: "23:00"
         }
     ],
-    acceptsReservations: "True",
+    acceptsReservations: true,
     aggregateRating: {
         "@type": "AggregateRating",
-        ratingValue: "4.8",
-        reviewCount: "347"
+        ratingValue: 4.8,
+        reviewCount: 347
     },
     paymentAccepted: ["Cash", "Credit Card"],
     currenciesAccepted: "BYN",
@@ -97,7 +97,7 @@ const breadcrumbSchema = {
             "@type": "ListItem",
             position: 2,
             name: "Меню и цены",
-            item: `${BASE_URL}/#menu`
+            item: BASE_URL
         }
     ]
 };

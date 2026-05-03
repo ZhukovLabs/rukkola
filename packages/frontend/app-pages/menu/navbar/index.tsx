@@ -42,9 +42,29 @@ export function Navbar({items}: NavbarProps) {
 
     useEffect(() => {
         if (!navRef.current) return;
-        const rect = navRef.current.getBoundingClientRect();
-        initialTopRef.current = rect.top + window.scrollY;
+        
+        const updateInitialTop = () => {
+            if (!navRef.current || isFixedRef.current) return;
+            const rect = navRef.current.getBoundingClientRect();
+            initialTopRef.current = rect.top + window.scrollY;
+        };
+        
+        updateInitialTop();
+        
+        window.addEventListener('resize', updateInitialTop, { passive: true });
+        
+        return () => {
+            window.removeEventListener('resize', updateInitialTop);
+        };
     }, []);
+    
+    // Update initialTop when navbar becomes unfixed
+    useEffect(() => {
+        if (!isFixed && navRef.current && !isFixedRef.current) {
+            const rect = navRef.current.getBoundingClientRect();
+            initialTopRef.current = rect.top + window.scrollY;
+        }
+    }, [isFixed]);
 
     useEffect(() => {
         if (!navRef.current) return;
@@ -73,24 +93,35 @@ export function Navbar({items}: NavbarProps) {
         if (!items.length) return;
         
         const allIds = items.flatMap(item => [item.id, ...(item.children?.map(c => c.id) || [])]);
-        
         let rafId = 0;
         
+        const updateInitialTop = () => {
+            if (!navRef.current || isFixedRef.current) return;
+            const rect = navRef.current.getBoundingClientRect();
+            initialTopRef.current = rect.top + window.scrollY;
+        };
+        
+        updateInitialTop();
+        
         const handleScroll = () => {
+            const currentScrollY = window.scrollY;
+            
+            if (isFixedRef.current) {
+                if (currentScrollY <= initialTopRef.current!) {
+                    isFixedRef.current = false;
+                    setIsFixed(false);
+                    updateInitialTop();
+                }
+            } else {
+                if (currentScrollY > initialTopRef.current!) {
+                    isFixedRef.current = true;
+                    setIsFixed(true);
+                }
+            }
+            
             if (rafId) cancelAnimationFrame(rafId);
             
             rafId = requestAnimationFrame(() => {
-                if (initialTopRef.current === null) return;
-                
-                const currentScrollY = window.scrollY;
-                const threshold = initialTopRef.current;
-                const shouldBeFixed = currentScrollY > threshold;
-                
-                if (isFixedRef.current !== shouldBeFixed) {
-                    isFixedRef.current = shouldBeFixed;
-                    setIsFixed(shouldBeFixed);
-                }
-                
                 let foundId: string | null = null;
                 
                 for (let i = allIds.length - 1; i >= 0; i--) {
@@ -113,13 +144,15 @@ export function Navbar({items}: NavbarProps) {
                 }
             });
         };
-
+        
         handleScroll();
         
         window.addEventListener("scroll", handleScroll, {passive: true});
+        window.addEventListener("resize", updateInitialTop, {passive: true});
         
         return () => {
             window.removeEventListener("scroll", handleScroll);
+            window.removeEventListener("resize", updateInitialTop);
             if (rafId) cancelAnimationFrame(rafId);
         };
     }, [items]);
