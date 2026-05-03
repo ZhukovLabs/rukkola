@@ -7,8 +7,8 @@ import { Box } from "@chakra-ui/react";
 import { ComponentProps } from "react";
 import { AdminFloatButton } from "@/components/admin-float-button";
 import { CartModalProvider } from "./cart-modal/use-cart-modal";
+import {Navbar} from "@/app-pages/menu/navbar";
 
-const Navbar = dynamic(() => import("./navbar").then(m => m.Navbar), { ssr: false });
 const ScrollToFooterButton = dynamic(() => import("./scroll-footer-button").then(m => m.ScrollToFooterButton));
 const ScrollToTopButton = dynamic(() => import("./scroll-top-button").then(m => m.ScrollToTopButton));
 const ProductModal = dynamic(() => import("./product-modal").then(m => m.ProductModal), { ssr: false });
@@ -29,19 +29,13 @@ function CartComponents() {
     );
 }
 
-function NavbarWrapper({ items }: { items: ComponentProps<typeof Navbar>["items"] }) {
-    return <Navbar items={items} />;
-}
-
 export const MenuPageClient = ({ activeLunch, navbar }: MenuPageClientProps) => {
     return (
         <Box display="flex" flexDirection="column">
             {activeLunch?.image && <ActiveLunch image={activeLunch.image} />}
             <ScrollToFooterButton />
-            
-            <Suspense fallback={<Box h="60px" />}>
-                <NavbarWrapper items={navbar.items} />
-            </Suspense>
+
+            <Navbar items={navbar.items} />
 
             <AdminFloatButton />
             <ScrollToTopButton />
