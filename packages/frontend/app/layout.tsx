@@ -39,14 +39,14 @@ const restaurantSchema = {
     },
     description: "Уютное кафе Руккола в центре Гомеля. Авторская пицца на тонком тесте, свежие суши и роллы, блюда паназиатской кухни. Ежедневные ланчи и завтраки на Советской 60.",
     telephone: "+375447703003",
-    priceRange: "BYN",
+    priceRange: "10-45 BYN",
     servesCuisine: [
-        "Italian", 
-        "Japanese", 
-        "Pan-Asian", 
-        "Pizza", 
-        "Sushi",
-        "European"
+        "Итальянская", 
+        "Японская", 
+        "Паназиатская", 
+        "Пицца", 
+        "Суши",
+        "Европейская"
     ],
     address: {
         "@type": "PostalAddress",
@@ -61,6 +61,7 @@ const restaurantSchema = {
         latitude: 52.4393223,
         longitude: 31.0029487
     },
+    hasMap: "https://www.google.com/maps?cid=10915677044161894942",
     openingHoursSpecification: [
         {
             "@type": "OpeningHoursSpecification",
@@ -77,7 +78,7 @@ const restaurantSchema = {
         bestRating: "5",
         worstRating: "1"
     },
-    paymentAccepted: ["Cash", "Credit Card"],
+    paymentAccepted: ["Наличные", "Банковская карта"],
     currenciesAccepted: "BYN",
     potentialAction: {
         "@type": "OrderAction",
@@ -91,12 +92,6 @@ const restaurantSchema = {
             ]
         },
         "deliveryMethod": ["http://purl.org/goodrelations/v1#Pickup"],
-        "priceSpecification": {
-            "@type": "DeliveryChargeSpecification",
-            "appliesToDeliveryMethod": "http://purl.org/goodrelations/v1#Pickup",
-            "priceCurrency": "BYN",
-            "price": "0"
-        }
     },
     areaServed: {
         "@type": "City",
@@ -106,16 +101,16 @@ const restaurantSchema = {
         "https://www.instagram.com/rukkola.gomel",
         "https://vk.com/rukkola_gomel"
     ],
-    hasMenu: `${BASE_URL}/#menu`
+    hasMenu: `${BASE_URL}/`
 };
 
 export const metadata: Metadata = {
     metadataBase: new URL(BASE_URL),
     title: {
-        default: "Руккола Гомель — Кафе на Советской | Пицца, Суши, Ланчи",
+        default: "Руккола Гомель — Кафе на Советской | Меню 2026, Пицца и Суши",
         template: "%s | Руккола Гомель",
     },
-    description: "Кафе Руккола в Гомеле (Советская 60). Посмотрите меню с ценами: авторская пицца, свежие роллы, суши и WOK. Завтраки и обеды ежедневно 12:00-23:00. Бронь столов: +375 (44) 770-30-03.",
+    description: "Ищете где поесть в Гомеле? Кафе Руккола (Советская 60): авторская пицца, свежие суши, роллы и WOK. Ежедневные ланчи и завтраки. Бронируйте столик: +375 (44) 770-30-03.",
     
     keywords: ["кафе гомель", "пицца гомель", "суши гомель", "руккола гомель", "где поесть гомель", "ланч гомель", "завтрак гомель", "советская 60 гомель"],
     

@@ -115,11 +115,13 @@ export async function ProductsServer({alcoholIsVisible, hasError}: ProductsServe
                     "name": p.name,
                     "description": p.description || p.name,
                     "image": p.image ? (p.image.startsWith('http') ? p.image : `${BASE_URL}${p.image}`) : undefined,
+                    "suitableForDiet": p.description?.toLowerCase().includes("веган") ? "https://schema.org/VegetarianDiet" : undefined,
                     "offers": p.prices.map(price => ({
                         "@type": "Offer",
                         "price": price.price,
                         "priceCurrency": "BYN",
-                        "description": price.size
+                        "description": price.size,
+                        "availability": "https://schema.org/InStock"
                     }))
                 })),
                 ...group.subgroups.flatMap(sub => sub.products.map(p => ({
@@ -127,11 +129,13 @@ export async function ProductsServer({alcoholIsVisible, hasError}: ProductsServe
                     "name": p.name,
                     "description": p.description || p.name,
                     "image": p.image ? (p.image.startsWith('http') ? p.image : `${BASE_URL}${p.image}`) : undefined,
+                    "suitableForDiet": p.description?.toLowerCase().includes("веган") ? "https://schema.org/VegetarianDiet" : undefined,
                     "offers": p.prices.map(price => ({
                         "@type": "Offer",
                         "price": price.price,
                         "priceCurrency": "BYN",
-                        "description": price.size
+                        "description": price.size,
+                        "availability": "https://schema.org/InStock"
                     }))
                 })))
             ]
