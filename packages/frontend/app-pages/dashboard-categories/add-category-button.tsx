@@ -9,37 +9,38 @@ export const AddCategoryButton = ({searchParams}: { searchParams?: Record<string
     params.set("addCategory", "true");
 
     return (
-        <Box display="flex" justifyContent="flex-end" mb={4}>
-            <Link
-                href={`?${params.toString()}`}
-                scroll={false}
-                style={{ textDecoration: 'none' }}
+        <Link
+            href={`?${params.toString()}`}
+            scroll={false}
+            style={{textDecoration: 'none'}}
+        >
+            <Box
+                as="button"
+                px={4}
+                py={2}
+                bg="gray.800"
+                borderRadius="lg"
+                fontWeight="600"
+                fontSize="sm"
+                transition="all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
+                _hover={{
+                    bg: 'gray.700',
+                    boxShadow: '0 0 12px rgba(168, 85, 247, 0.15)',
+                }}
+                _active={{
+                    transform: 'translateY(0)',
+                }}
+                color="gray.300"
+                border="1px solid"
+                borderColor="gray.700"
+                display="flex"
+                alignItems="center"
+                gap={2}
+                cursor="pointer"
             >
-                <Box
-                    as="button"
-                    px={3}
-                    py={2}
-                    bg="gray.500"
-                    borderRadius="md"
-                    fontWeight="500"
-                    transition="all 0.15s ease-out"
-                    _hover={{
-                        bg: 'gray.400',
-                        boxShadow: '0 2px 8px rgba(128,128,128,0.25)',
-                    }}
-                    _active={{
-                        bg: 'gray.600',
-                    }}
-                    color="white"
-                    display="flex"
-                    alignItems="center"
-                    gap={2}
-                    cursor="pointer"
-                >
-                    <PlusIcon size={16}/>
-                    Добавить категорию
-                </Box>
-            </Link>
-        </Box>
+                <PlusIcon size={16}/>
+                Добавить
+            </Box>
+        </Link>
     )
 }

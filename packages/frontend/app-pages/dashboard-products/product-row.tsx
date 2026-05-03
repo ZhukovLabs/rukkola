@@ -71,138 +71,132 @@ export const ProductRow = ({
                     src={`${p.image}?w=300` || '/placeholder.png'}
                     alt={p.name}
                     boxSize="60px"
-                    borderRadius="md"
+                    borderRadius="lg"
                     objectFit="cover"
-                    border="1px solid"
-                    borderColor="gray.700"
+                    border="2px solid"
+                    borderColor="gray.800"
+                    _hover={{borderColor: 'gray.600', transform: 'scale(1.05)'}}
+                    transition="all 0.2s"
                 />
             </Table.Cell>
 
-            <Table.Cell fontWeight="semibold" color="gray.400" p={4}>
+            <Table.Cell fontWeight="semibold" color="gray.200" p={4}>
                 {p.name}
             </Table.Cell>
 
-            <Table.Cell maxW="450px" whiteSpace="normal" color="gray.300" p={4}>
-                {p.description || '—'}
+            <Table.Cell maxW="450px" whiteSpace="normal" color="gray.500" p={4} fontSize="sm">
+                {p.description || <Text color="gray.600">—</Text>}
             </Table.Cell>
 
             <Table.Cell p={4}>
                 {p.prices?.length ? (
                     <Stack gap={1} fontSize="sm">
                         {p.prices.map(({size, price}) => (
-                            <Flex key={size} justify="space-between" borderBottom="1px dashed"
-                                  borderColor="gray.700"
-                                  pb="1">
-                                <Text color="gray.400">{size}</Text>
-                                <Text color="gray.400" fontWeight="semibold">
-                                    {price} руб.
+                            <Flex key={size} justify="space-between" align="center" gap={3}>
+                                <Text color="gray.600" fontSize="xs">{size}</Text>
+                                <Text color="gray.300" fontWeight="600" fontSize="sm">
+                                    {price} ₽
                                 </Text>
                             </Flex>
                         ))}
                     </Stack>
                 ) : (
-                    <Text color="gray.500">нет данных</Text>
+                    <Text color="gray.600" fontSize="sm">нет данных</Text>
                 )}
             </Table.Cell>
 
             <Table.Cell p={4}>
                 {p.categories?.length ? (
                     <Flex wrap="wrap" gap={1}>
-                        {
-                            p.categories.map((c: CategoryRef) => {
-                                return (
-                                    <Box
-                                        key={c.id}
-                                        bg="gray.700"
-                                        color="gray.200"
-                                        px={2}
-                                        py={0.5}
-                                        borderRadius="md"
-                                        fontSize="sm"
-                                    >
-                                        {c.name}
-                                    </Box>
-                                );
-                            })
-                        }
+                        {p.categories.map((c: CategoryRef) => (
+                            <Box
+                                key={c.id}
+                                bg="gray.800"
+                                color="gray.400"
+                                px={2.5}
+                                py={0.5}
+                                borderRadius="full"
+                                fontSize="xs"
+                                fontWeight="medium"
+                                border="1px solid"
+                                borderColor="gray.750"
+                            >
+                                {c.name}
+                            </Box>
+                        ))}
                     </Flex>
                 ) : (
-                    <Text color="gray.500">—</Text>
+                    <Text color="gray.600" fontSize="sm">—</Text>
                 )}
             </Table.Cell>
 
             <Table.Cell p={4}>
                 <Stack direction="row" gap={2} align="center">
                     <Tooltip
-                        content={p.isAlcohol ? 'Алкогольный продукт' : 'Безалкогольный продукт'}
+                        content={p.isAlcohol ? 'Алкогольный — нажмите для переключения' : 'Безалкогольный — нажмите для переключения'}
                         openDelay={400}
                     >
                         <Button
-                            size="sm"
-                            borderRadius="xl"
-                            bgGradient={
-                                p.isAlcohol
-                                    ? 'linear(to-r, purple.500, purple.600)'
-                                    : 'linear(to-r, green.500, green.600)'
-                            }
-                            color="white"
-                            px={3}
-                            py={2}
-                            fontSize="sm"
+                            size="xs"
+                            borderRadius="lg"
+                            bg="gray.850"
+                            color="gray.200"
+                            px={2.5}
+                            py={1}
+                            fontSize="xs"
                             fontWeight="semibold"
+                            border="1px solid"
+                            borderColor="gray.700"
                             _hover={{
-                                transform: 'scale(1.05)',
-                                bgGradient: p.isAlcohol
-                                    ? 'linear(to-r, purple.600, purple.700)'
-                                    : 'linear(to-r, green.600, green.700)',
+                                bg: 'gray.800',
+                                borderColor: 'gray.600',
                             }}
-                            _active={{transform: 'scale(0.97)'}}
+                            _active={{transform: 'scale(0.96)'}}
                             loading={togglingAlcoholId === p.id}
                             onClick={() => onToggleAlcohol(p.id)}
                             flexShrink={0}
                         >
-                            {p.isAlcohol ? <FaWineBottle/> : <FaWineGlassAlt/>}{p.isAlcohol ? 'Алк.' : 'Без алк.'}
+                            {p.isAlcohol ? <FaWineBottle/> : <FaWineGlassAlt/>}
+                            {p.isAlcohol ? 'Алк.' : 'Без алк.'}
                         </Button>
                     </Tooltip>
 
-                    <Tooltip content={p.hidden ? 'Сейчас товар скрыт' : 'Сейчас товар отображается'}
-                             openDelay={400}>
-                        <Button
-                            size="sm"
-                            borderRadius="xl"
-                            bgGradient={
-                                p.hidden
-                                    ? 'linear(to-r, orange.400, orange.500)'
-                                    : 'linear(to-r, gray.400, gray.500)'
-                            }
-                            color="white"
-                            px={3}
-                            py={2}
-                            fontSize="sm"
-                            fontWeight="semibold"
+                    <Tooltip content={p.hidden ? 'Показать товар' : 'Скрыть товар'} openDelay={400}>
+                        <IconButton
+                            aria-label={p.hidden ? 'Показать' : 'Скрыть'}
+                            size="xs"
+                            borderRadius="lg"
+                            bg="gray.850"
+                            color="gray.200"
+                            border="1px solid"
+                            borderColor="gray.700"
                             _hover={{
-                                transform: 'scale(1.05)',
-                                bgGradient: p.hidden
-                                    ? 'linear(to-r, orange.500, orange.600)'
-                                    : 'linear(to-r, gray.500, gray.600)',
+                                bg: 'gray.800',
+                                borderColor: 'gray.600',
                             }}
-                            _active={{transform: 'scale(0.97)'}}
+                            _active={{transform: 'scale(0.96)'}}
                             loading={loadingId === p.id}
                             onClick={() => onToggle(p.id)}
                             flexShrink={0}
                         >
-                            {p.hidden ? <FaEye/> : <FaEyeSlash/>}{p.hidden ? 'Показать' : 'Скрыть'}
-                        </Button>
+                            {p.hidden ? <FaEye/> : <FaEyeSlash/>}
+                        </IconButton>
                     </Tooltip>
 
                     <Tooltip content="Редактировать" openDelay={400}>
                         <IconButton
                             aria-label="Редактировать"
-                            size="sm"
-                            borderRadius="xl"
-                            bgGradient="linear(to-r, blue.400, blue.500)"
-                            color="white"
-                            _hover={{transform: 'scale(1.1)', bgGradient: 'linear(to-r, blue.500, blue.600)'}}
+                            size="xs"
+                            borderRadius="lg"
+                            bg="gray.850"
+                            color="gray.200"
+                            border="1px solid"
+                            borderColor="gray.700"
+                            _hover={{
+                                bg: 'gray.800',
+                                borderColor: 'gray.600',
+                            }}
+                            _active={{transform: 'scale(0.96)'}}
                             onClick={() => {
                                 const params = new URLSearchParams(window.location.search)
                                 params.set('edit', p.id)
@@ -217,11 +211,18 @@ export const ProductRow = ({
                     <Tooltip content="Удалить" openDelay={400}>
                         <IconButton
                             aria-label="Удалить"
-                            size="sm"
-                            borderRadius="xl"
-                            bgGradient="linear(to-r, red.500, red.600)"
-                            color="white"
-                            _hover={{transform: 'scale(1.1)', bgGradient: 'linear(to-r, red.600, red.700)'}}
+                            size="xs"
+                            borderRadius="lg"
+                            bg="gray.850"
+                            color="gray.400"
+                            border="1px solid"
+                            borderColor="gray.700"
+                            _hover={{
+                                bg: 'gray.800',
+                                color: 'red.400',
+                                borderColor: 'gray.600',
+                            }}
+                            _active={{transform: 'scale(0.96)'}}
                             onClick={() => onDelete(p.id)}
                             loading={deletePending === p.id}
                             flexShrink={0}

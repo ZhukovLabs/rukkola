@@ -146,9 +146,8 @@ async function proxyRequest(request: NextRequest, paths: string[]): Promise<Next
         };
 
         if (method !== 'GET' && method !== 'HEAD') {
-            init.body = request.body;
-            // @ts-expect-error node fetch duplex
-            init.duplex = 'half';
+            const bodyBuffer = await request.arrayBuffer();
+            init.body = bodyBuffer.byteLength > 0 ? bodyBuffer : undefined;
         }
 
         const upstream = await fetch(targetUrl.toString(), init);

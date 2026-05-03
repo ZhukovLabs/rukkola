@@ -134,7 +134,7 @@ export class MenuService {
     }
 
     const categories = (await this.categoryModel
-      .find({ isMenuItem: true, hidden: { $ne: true } })
+      .find({ hidden: { $ne: true } })
       .sort({ order: 1 })
       .lean()) as CategoryDoc[];
 

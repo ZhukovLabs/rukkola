@@ -1,9 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, {useState} from 'react'
 import {
     Box,
-    Card,
     Flex,
     IconButton,
     Input,
@@ -12,16 +11,15 @@ import {
     Spinner,
     Checkbox,
 } from '@chakra-ui/react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import {useMutation, useQueryClient} from '@tanstack/react-query'
 import {
     FiEdit,
     FiTrash2,
     FiCheck,
     FiX,
-    FiFolder,
     FiMove,
 } from 'react-icons/fi'
-import { FaWineBottle, FaWineGlassAlt } from 'react-icons/fa'
+import {FaWineBottle, FaWineGlassAlt} from 'react-icons/fa'
 import {
     DndContext,
     closestCenter,
@@ -38,9 +36,10 @@ import {
     verticalListSortingStrategy,
     useSortable,
 } from '@dnd-kit/sortable'
+
 type CategoryType = {
     id: string;
-    _id: { toString(): string };
+    _id?: { toString(): string };
     name: string;
     order: number;
     isMenuItem: boolean;
@@ -57,11 +56,11 @@ import {
     markCategoryProductsNonAlcohol,
     moveCategoryToPosition,
 } from './actions'
-import { Tooltip } from '@/components/tooltip'
-import { useConfirmationDialog } from "@/hooks/use-confirmation-dialog"
-import { useToast } from "@/components/toast-container"
-import { CategoryPositionDialog } from './category-position-dialog'
-import { revalidateMenu } from '@/lib/api/revalidate'
+import {Tooltip} from '@/components/tooltip'
+import {useConfirmationDialog} from "@/hooks/use-confirmation-dialog"
+import {useToast} from "@/components/toast-container"
+import {CategoryPositionDialog} from './category-position-dialog'
+import {revalidateMenu} from '@/lib/api/revalidate'
 
 type CategoryData = {
     id: string;
@@ -77,12 +76,13 @@ type CategoryWithChildren = CategoryData & {
     children?: CategoryWithChildren[]
 }
 
-type Props = { categories: CategoryType[] }
+type Props = { categories: CategoryType[]; onRefresh?: () => Promise<void> }
 
 function toCategoryData(cat: CategoryType): CategoryData {
+    const id = cat.id || (cat._id ? cat._id.toString() : '')
     return {
-        id: cat.id || cat._id.toString(),
-        _id: cat._id.toString(),
+        id,
+        _id: id,
         name: cat.name,
         order: cat.order,
         isMenuItem: cat.isMenuItem,
@@ -97,12 +97,12 @@ function buildCategoryTree(categories: CategoryType[]): CategoryWithChildren[] {
 
     for (const cat of categories) {
         const data = toCategoryData(cat)
-        map.set(data._id, { ...data, children: []})
+        map.set(data.id, {...data, children: []})
     }
 
     for (const cat of categories) {
         const data = toCategoryData(cat)
-        const node = map.get(data._id)!
+        const node = map.get(data.id)!
         if (data.parent) {
             const parent = map.get(data.parent)
             if (parent) {
@@ -131,7 +131,7 @@ function flattenCategoryTree(
 ): { category: CategoryWithChildren; depth: number }[] {
     const result: { category: CategoryWithChildren; depth: number }[] = []
     for (const node of nodes) {
-        result.push({ category: node, depth })
+        result.push({category: node, depth})
         if (node.children?.length) {
             result.push(...flattenCategoryTree(node.children, depth + 1))
         }
@@ -166,28 +166,28 @@ interface SortableRowProps {
 }
 
 function SortableRow({
-    category,
-    depth,
-    position,
-    totalSiblings,
-    isEditing,
-    tempName,
-    setTempName,
-    onEditStart,
-    onNameSave,
-    onNameCancel,
-    onDelete,
-    onMarkAlcohol,
-    onMarkNonAlcohol,
-    onToggleField,
-    onMoveToPosition,
-    isToggling,
-    isDeleting,
-    isUpdatingName,
-    isMarkingAlcohol,
-    isMarkingNonAlcohol,
-    isMoving,
-}: SortableRowProps) {
+                         category,
+                         depth,
+                         position,
+                         totalSiblings,
+                         isEditing,
+                         tempName,
+                         setTempName,
+                         onEditStart,
+                         onNameSave,
+                         onNameCancel,
+                         onDelete,
+                         onMarkAlcohol,
+                         onMarkNonAlcohol,
+                         onToggleField,
+                         onMoveToPosition,
+                         isToggling,
+                         isDeleting,
+                         isUpdatingName,
+                         isMarkingAlcohol,
+                         isMarkingNonAlcohol,
+                         isMoving,
+                     }: SortableRowProps) {
     const {
         attributes,
         listeners,
@@ -195,7 +195,7 @@ function SortableRow({
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: category._id.toString() })
+    } = useSortable({id: category._id.toString()})
 
     const style = {
         transform: transform ? `translateY(${transform.y}px)` : undefined,
@@ -207,10 +207,10 @@ function SortableRow({
         <Table.Row
             ref={setNodeRef}
             style={style}
-            bg={depth % 2 === 0 ? 'gray.900' : 'gray.850'}
+            bg={depth > 0 ? 'gray.900' : 'gray.950'}
             borderBottom="1px solid"
-            borderColor="gray.700"
-            _hover={{ bg: 'gray.800', transition: '0.2s ease' }}
+            borderColor="gray.800"
+            _hover={{bg: 'gray.800', transition: '0.2s ease'}}
         >
             <Table.Cell p={4}>
                 <Flex align="center" gap={3} pl={depth * 6}>
@@ -226,8 +226,8 @@ function SortableRow({
                         {...attributes}
                         {...listeners}
                         cursor="grab"
-                        color="gray.500"
-                        _hover={{ color: 'gray.400' }}
+                        color="gray.700"
+                        _hover={{color: 'gray.500'}}
                         transition="color 0.2s"
                         display="flex"
                         alignItems="center"
@@ -237,10 +237,11 @@ function SortableRow({
 
                     {depth > 0 && (
                         <Box
-                            borderLeft="2px dashed"
-                            borderColor="gray.600"
+                            borderLeft="2px solid"
+                            borderColor="gray.700"
                             height="20px"
-                            opacity={0.5}
+                            opacity={0.4}
+                            borderRadius="1px"
                         />
                     )}
 
@@ -254,14 +255,15 @@ function SortableRow({
                                 if (e.key === 'Escape') onNameCancel()
                             }}
                             autoFocus
-                            bg="gray.700"
-                            color="gray.300"
-                            borderColor="gray.500"
-                            _focus={{ borderColor: 'gray.400', boxShadow: '0 0 0 1px gray.400' }}
+                            bg="gray.800"
+                            color="gray.200"
+                            borderColor="gray.700"
+                            _focus={{borderColor: 'gray.600', boxShadow: '0 0 0 1px gray.600'}}
                             width="250px"
+                            borderRadius="lg"
                         />
                     ) : (
-                        <Text fontWeight="semibold" color="gray.400" flex={1}>
+                        <Text fontWeight="semibold" color={depth > 0 ? "gray.400" : "gray.200"} flex={1}>
                             {category.name}
                         </Text>
                     )}
@@ -281,17 +283,17 @@ function SortableRow({
                         >
                             <Checkbox.HiddenInput/>
                             <Checkbox.Control
-                                bg="gray.700"
-                                borderColor="gray.500"
+                                bg="gray.800"
+                                borderColor="gray.700"
                                 _checked={{
-                                    bg: 'gray.500',
-                                    borderColor: 'gray.400',
-                                    boxShadow: '0 0 6px 1px rgba(128,128,128,0.5)',
+                                    bg: 'gray.700',
+                                    borderColor: 'gray.600',
+                                    boxShadow: '0 0 6px 1px rgba(168, 85, 247, 0.15)',
                                 }}
-                                _hover={{ borderColor: 'gray.400' }}
+                                _hover={{borderColor: 'gray.500'}}
                                 transition="all 0.2s"
                             >
-                                <Checkbox.Indicator color="black"/>
+                                <Checkbox.Indicator color="gray.300"/>
                             </Checkbox.Control>
                         </Checkbox.Root>
                     </Box>
@@ -311,17 +313,17 @@ function SortableRow({
                         >
                             <Checkbox.HiddenInput/>
                             <Checkbox.Control
-                                bg="gray.700"
-                                borderColor="gray.500"
+                                bg="gray.800"
+                                borderColor="gray.700"
                                 _checked={{
-                                    bg: 'gray.500',
-                                    borderColor: 'gray.400',
-                                    boxShadow: '0 0 6px 1px rgba(128,128,128,0.5)',
+                                    bg: 'gray.700',
+                                    borderColor: 'gray.600',
+                                    boxShadow: '0 0 6px 1px rgba(168, 85, 247, 0.15)',
                                 }}
-                                _hover={{ borderColor: 'gray.400' }}
+                                _hover={{borderColor: 'gray.500'}}
                                 transition="all 0.2s"
                             >
-                                <Checkbox.Indicator color="black"/>
+                                <Checkbox.Indicator color="gray.300"/>
                             </Checkbox.Control>
                         </Checkbox.Root>
                     </Box>
@@ -335,14 +337,14 @@ function SortableRow({
                             <Tooltip content="Сохранить" openDelay={400}>
                                 <IconButton
                                     aria-label="Сохранить"
-                                    size="sm"
-                                    borderRadius="xl"
-                                    bgGradient="linear(to-r, green.400, green.500)"
+                                    size="xs"
+                                    borderRadius="lg"
+                                    bg="green.600"
                                     color="white"
-                                    _hover={{
-                                        transform: 'scale(1.1)',
-                                        bgGradient: 'linear(to-r, green.500, green.600)',
-                                    }}
+                                    border="1px solid"
+                                    borderColor="green.500"
+                                    _hover={{bg: 'green.700', borderColor: 'green.600'}}
+                                    _active={{transform: 'scale(0.96)'}}
                                     onClick={() => onNameSave(category._id.toString())}
                                     loading={isUpdatingName}
                                 >
@@ -353,14 +355,14 @@ function SortableRow({
                             <Tooltip content="Отмена" openDelay={400}>
                                 <IconButton
                                     aria-label="Отмена"
-                                    size="sm"
-                                    borderRadius="xl"
-                                    bgGradient="linear(to-r, gray.500, gray.600)"
-                                    color="white"
-                                    _hover={{
-                                        transform: 'scale(1.1)',
-                                        bgGradient: 'linear(to-r, gray.600, gray.700)',
-                                    }}
+                                    size="xs"
+                                    borderRadius="lg"
+                                    bg="gray.850"
+                                    color="gray.400"
+                                    border="1px solid"
+                                    borderColor="gray.750"
+                                    _hover={{bg: 'gray.800', color: 'gray.200', borderColor: 'gray.700'}}
+                                    _active={{transform: 'scale(0.96)'}}
                                     onClick={onNameCancel}
                                 >
                                     <FiX/>
@@ -371,14 +373,18 @@ function SortableRow({
                         <Tooltip content="Редактировать" openDelay={400}>
                             <IconButton
                                 aria-label="Редактировать"
-                                size="sm"
-                                borderRadius="xl"
-                                bgGradient="linear(to-r, blue.400, blue.500)"
-                                color="white"
+                                size="xs"
+                                borderRadius="lg"
+                                bg="gray.850"
+                                color="gray.400"
+                                border="1px solid"
+                                borderColor="gray.750"
                                 _hover={{
-                                    transform: 'scale(1.1)',
-                                    bgGradient: 'linear(to-r, blue.500, blue.600)',
+                                    bg: 'gray.800',
+                                    color: 'gray.200',
+                                    borderColor: 'gray.700',
                                 }}
+                                _active={{transform: 'scale(0.96)'}}
                                 onClick={() => onEditStart(category)}
                             >
                                 <FiEdit/>
@@ -389,14 +395,18 @@ function SortableRow({
                     <Tooltip content="Удалить" openDelay={400}>
                         <IconButton
                             aria-label="Удалить"
-                            size="sm"
-                            borderRadius="xl"
-                            bgGradient="linear(to-r, red.500, red.600)"
-                            color="white"
+                            size="xs"
+                            borderRadius="lg"
+                            bg="gray.850"
+                            color="gray.400"
+                            border="1px solid"
+                            borderColor="gray.750"
                             _hover={{
-                                transform: 'scale(1.1)',
-                                bgGradient: 'linear(to-r, red.600, red.700)',
+                                bg: 'gray.800',
+                                color: 'red.400',
+                                borderColor: 'gray.700',
                             }}
+                            _active={{transform: 'scale(0.96)'}}
                             onClick={() => onDelete(category._id.toString())}
                             loading={isDeleting}
                         >
@@ -407,14 +417,18 @@ function SortableRow({
                     <Tooltip content="Пометить все продукты как алкогольные" openDelay={400}>
                         <IconButton
                             aria-label="Пометить как алкогольные"
-                            size="sm"
-                            borderRadius="xl"
-                            bgGradient="linear(to-r, purple.500, purple.600)"
-                            color="white"
+                            size="xs"
+                            borderRadius="lg"
+                            bg="gray.850"
+                            color="gray.400"
+                            border="1px solid"
+                            borderColor="gray.750"
                             _hover={{
-                                transform: 'scale(1.1)',
-                                bgGradient: 'linear(to-r, purple.600, purple.700)',
+                                bg: 'gray.800',
+                                color: 'gray.200',
+                                borderColor: 'gray.700',
                             }}
+                            _active={{transform: 'scale(0.96)'}}
                             onClick={() => onMarkAlcohol(category._id.toString())}
                             loading={isMarkingAlcohol}
                         >
@@ -425,14 +439,18 @@ function SortableRow({
                     <Tooltip content="Пометить все продукты как безалкогольные" openDelay={400}>
                         <IconButton
                             aria-label="Пометить как безалкогольные"
-                            size="sm"
-                            borderRadius="xl"
-                            bgGradient="linear(to-r, green.500, green.600)"
-                            color="white"
+                            size="xs"
+                            borderRadius="lg"
+                            bg="gray.850"
+                            color="gray.400"
+                            border="1px solid"
+                            borderColor="gray.750"
                             _hover={{
-                                transform: 'scale(1.1)',
-                                bgGradient: 'linear(to-r, green.600, green.700)',
+                                bg: 'gray.800',
+                                color: 'gray.200',
+                                borderColor: 'gray.700',
                             }}
+                            _active={{transform: 'scale(0.96)'}}
                             onClick={() => onMarkNonAlcohol(category._id.toString())}
                             loading={isMarkingNonAlcohol}
                         >
@@ -445,7 +463,7 @@ function SortableRow({
     )
 }
 
-export default function CategoriesTable({ categories: initialCategories }: Props) {
+export default function CategoriesTable({categories: initialCategories, onRefresh}: Props) {
     const queryClient = useQueryClient()
     const [editingId, setEditingId] = useState<string | null>(null)
     const [tempName, setTempName] = useState('')
@@ -515,9 +533,9 @@ export default function CategoriesTable({ categories: initialCategories }: Props
     })
 
     const toggleMutation = useMutation({
-        mutationFn: ({ id, field }: { id: string; field: 'isMenuItem' | 'showGroupTitle' }) =>
+        mutationFn: ({id, field}: { id: string; field: 'isMenuItem' | 'showGroupTitle' }) =>
             toggleCategoryField(id, field),
-        onMutate: async ({ id, field }) => {
+        onMutate: async ({id, field}) => {
             setTogglingId(id)
             setLocalItems(prev => prev.map(item => {
                 if (item.category._id.toString() === id) {
@@ -533,7 +551,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
             }))
         },
         onSuccess: (result) => {
-            queryClient.invalidateQueries({ queryKey: ['categories'] })
+            if (onRefresh) { onRefresh() }
             revalidateMenu()
             setTogglingId(null)
             if (result.success) {
@@ -543,7 +561,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
             }
         },
         onError: () => {
-            queryClient.invalidateQueries({ queryKey: ['categories'] })
+            if (onRefresh) { onRefresh() }
             setTogglingId(null)
             toast.showError('Не удалось обновить настройки категории')
         },
@@ -552,7 +570,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
     const reorderMutation = useMutation({
         mutationFn: (updates: { id: string; order: number }[]) => reorderCategories(updates),
         onSuccess: (result) => {
-            queryClient.invalidateQueries({ queryKey: ['categories'] })
+            if (onRefresh) { onRefresh() }
             revalidateMenu()
             if (result.success) {
                 toast.showSuccess('Порядок категорий обновлен')
@@ -564,10 +582,10 @@ export default function CategoriesTable({ categories: initialCategories }: Props
     })
 
     const updateNameMutation = useMutation({
-        mutationFn: ({ id, name }: { id: string; name: string }) => updateCategoryName(id, name),
+        mutationFn: ({id, name}: { id: string; name: string }) => updateCategoryName(id, name),
         onSuccess: (result) => {
             setEditingId(null)
-            queryClient.invalidateQueries({ queryKey: ['categories'] })
+            if (onRefresh) { onRefresh() }
             revalidateMenu()
             if (result.success) {
                 toast.showSuccess('Название категории обновлено')
@@ -584,7 +602,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
     const deleteMutation = useMutation({
         mutationFn: deleteCategory,
         onSuccess: (result) => {
-            queryClient.invalidateQueries({ queryKey: ['categories'] })
+            if (onRefresh) { onRefresh() }
             revalidateMenu()
             if (result.success) {
                 toast.showSuccess('Категория удалена')
@@ -598,7 +616,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
     const markAlcoholMutation = useMutation({
         mutationFn: (categoryId: string) => markCategoryProductsAlcohol(categoryId),
         onSuccess: (result) => {
-            queryClient.invalidateQueries({ queryKey: ['products'] })
+            queryClient.invalidateQueries({queryKey: ['products']})
             revalidateMenu()
             if (result.success) {
                 toast.showSuccess(result.message || 'Продукты помечены как алкогольные')
@@ -612,7 +630,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
     const markNonAlcoholMutation = useMutation({
         mutationFn: (categoryId: string) => markCategoryProductsNonAlcohol(categoryId),
         onSuccess: (result) => {
-            queryClient.invalidateQueries({ queryKey: ['products'] })
+            queryClient.invalidateQueries({queryKey: ['products']})
             revalidateMenu()
             if (result.success) {
                 toast.showSuccess(result.message || 'Продукты помечены как безалкогольные')
@@ -624,10 +642,12 @@ export default function CategoriesTable({ categories: initialCategories }: Props
     })
 
     const moveMutation = useMutation({
-        mutationFn: ({ categoryId, newPosition }: { categoryId: string; newPosition: number }) =>
+        mutationFn: ({categoryId, newPosition}: { categoryId: string; newPosition: number }) =>
             moveCategoryToPosition(categoryId, newPosition),
-        onSuccess: (result) => {
-            queryClient.invalidateQueries({ queryKey: ['categories'] })
+        onSuccess: async (result) => {
+            if (onRefresh) {
+                await onRefresh()
+            }
             revalidateMenu()
             if (result.success) {
                 toast.showSuccess('Позиция категории обновлена')
@@ -639,7 +659,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
     })
 
     const handleMoveToPosition = (categoryId: string, newPosition: number) => {
-        moveMutation.mutate({ categoryId, newPosition })
+        moveMutation.mutate({categoryId, newPosition})
     }
 
     const handleEditStart = (category: CategoryData) => {
@@ -649,7 +669,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
 
     const handleNameSave = (id: string) => {
         if (!tempName.trim()) return
-        updateNameMutation.mutate({ id, name: tempName.trim() })
+        updateNameMutation.mutate({id, name: tempName.trim()})
     }
 
     const handleNameCancel = () => {
@@ -658,7 +678,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
     }
 
     const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event
+        const {active, over} = event
 
         if (!over || active.id === over.id) return
 
@@ -701,158 +721,134 @@ export default function CategoriesTable({ categories: initialCategories }: Props
     }
 
     return (
-        <Box>
-            <Card.Root
-                w="100%"
-                borderRadius="2xl"
-                shadow="xl"
-                border="1px solid"
-                borderColor="gray.700"
-                bg="gray.900"
-                overflow="hidden"
-            >
-                <Card.Header
-                    bgGradient="linear(to-r, gray.600, cyan.600)"
-                    borderTopRadius="2xl"
-                    py={4}
-                    textAlign="center"
-                    color="white"
-                    backdropFilter="blur(10px)"
+        <Box position="relative" overflowX="auto">
+            {(toggleMutation.isPending ||
+                updateNameMutation.isPending ||
+                deleteMutation.isPending ||
+                markAlcoholMutation.isPending ||
+                markNonAlcoholMutation.isPending ||
+                moveMutation.isPending) && (
+                <Flex
+                    position="absolute"
+                    inset={0}
+                    justify="center"
+                    align="center"
+                    bg="rgba(0,0,0,0.7)"
+                    backdropFilter="blur(8px)"
+                    zIndex={10}
+                    borderRadius="md"
                 >
-                    <Flex justify="center" align="center" gap={2}>
-                        <Box as={FiFolder} boxSize={5}/>
-                        <Text fontSize="lg" fontWeight="bold" letterSpacing="tight">
-                            Управление категориями
-                        </Text>
-                    </Flex>
-                </Card.Header>
+                    <Spinner size="xl" color="gray.300"/>
+                </Flex>
+            )}
 
-                <Card.Body px={0} py={0}>
-                    <Box overflowX="auto" position="relative">
-                        {(toggleMutation.isPending ||
-                            updateNameMutation.isPending ||
-                            deleteMutation.isPending ||
-                            markAlcoholMutation.isPending ||
-                            markNonAlcoholMutation.isPending ||
-                            moveMutation.isPending) && (
-                            <Flex
-                                position="absolute"
-                                top={0}
-                                left={0}
-                                right={0}
-                                bottom={0}
-                                justify="center"
-                                align="center"
-                                bg="rgba(0,0,0,0.3)"
-                                zIndex={10}
-                                borderRadius="xl"
-                            >
-                                <Spinner size="xl" color="gray.400"/>
-                            </Flex>
-                        )}
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+            >
+                <Table.Root size="md" variant="outline" w="100%">
+                    <Table.Header>
+                        <Table.Row>
+                            {['Название', 'В меню', 'Отображать заголовок', 'Действия'].map((col) => (
+                                <Table.ColumnHeader
+                                    key={col}
+                                    textAlign={col === "Название" ? "left" : "center"}
+                                    color="gray.500"
+                                    p={4}
+                                    fontWeight="600"
+                                    fontSize="xs"
+                                    textTransform="uppercase"
+                                    letterSpacing="wider"
+                                    bg="gray.950"
+                                    borderBottom="1px solid"
+                                    borderColor="gray.800"
+                                    minW={col === "Название" ? undefined : col === "Действия" ? "180px" : "80px"}
+                                >
+                                    {col}
+                                </Table.ColumnHeader>
+                            ))}
+                        </Table.Row>
+                    </Table.Header>
 
-                        <DndContext
-                            sensors={sensors}
-                            collisionDetection={closestCenter}
-                            onDragEnd={handleDragEnd}
+                    <Table.Body>
+                        <SortableContext
+                            items={localItems.map((item) => item.category._id.toString())}
+                            strategy={verticalListSortingStrategy}
                         >
-                            <Table.Root size="md" variant="outline" w="100%">
-                                <Table.Header bg="gray.800">
-                                    <Table.Row>
-                                        {['Название', 'В меню', 'Заголовок', 'Действия'].map((col) => (
-                                            <Table.ColumnHeader
-                                                key={col}
-                                                textAlign={col === "Название" ? "left" : "center"}
-                                                color="gray.200"
-                                                p={4}
-                                                fontWeight="semibold">
-                                                {col}
-                                            </Table.ColumnHeader>
-                                        ))}
-                                    </Table.Row>
-                                </Table.Header>
+                            {localItems.length > 0 ? (
+                                localItems.map(({category, depth}) => {
+                                    const isEditing = editingId === category._id.toString()
+                                    const isToggling = togglingId === category._id.toString()
+                                    const isDeleting =
+                                        deleteMutation.isPending &&
+                                        deleteMutation.variables === category._id.toString()
+                                    const isUpdatingName =
+                                        updateNameMutation.isPending &&
+                                        updateNameMutation.variables?.id === category._id.toString()
+                                    const isMarkingAlcohol =
+                                        markAlcoholMutation.isPending &&
+                                        markAlcoholMutation.variables === category._id.toString()
+                                    const isMarkingNonAlcohol =
+                                        markNonAlcoholMutation.isPending &&
+                                        markNonAlcoholMutation.variables === category._id.toString()
+                                    const isMoving =
+                                        moveMutation.isPending &&
+                                        moveMutation.variables?.categoryId === category._id.toString()
 
-                                <Table.Body>
-                                    <SortableContext
-                                        items={localItems.map((item) => item.category._id.toString())}
-                                        strategy={verticalListSortingStrategy}
-                                    >
-                                        {localItems.length > 0 ? (
-                                            localItems.map(({ category, depth }) => {
-                                                const isEditing = editingId === category._id.toString()
-                                                const isToggling = togglingId === category._id.toString()
-                                                const isDeleting =
-                                                    deleteMutation.isPending &&
-                                                    deleteMutation.variables === category._id.toString()
-                                                const isUpdatingName =
-                                                    updateNameMutation.isPending &&
-                                                    updateNameMutation.variables?.id === category._id.toString()
-                                                const isMarkingAlcohol =
-                                                    markAlcoholMutation.isPending &&
-                                                    markAlcoholMutation.variables === category._id.toString()
-                                                const isMarkingNonAlcohol =
-                                                    markNonAlcoholMutation.isPending &&
-                                                    markNonAlcoholMutation.variables === category._id.toString()
-                                                const isMoving =
-                                                    moveMutation.isPending &&
-                                                    moveMutation.variables?.categoryId === category._id.toString()
+                                    const parentKey = category.parent
+                                        ? category.parent.toString()
+                                        : 'root'
+                                    const siblings = localItems.filter(
+                                        (item) =>
+                                            (item.category.parent?.toString() || 'root') === parentKey
+                                    )
+                                    const indexInSiblings = siblings.findIndex(
+                                        (s) => s.category._id.toString() === category._id.toString()
+                                    )
 
-                                                const parentKey = category.parent
-                                                    ? category.parent.toString()
-                                                    : 'root'
-                                                const siblings = localItems.filter(
-                                                    (item) =>
-                                                        (item.category.parent?.toString() || 'root') === parentKey
-                                                )
-                                                const indexInSiblings = siblings.findIndex(
-                                                    (s) => s.category._id.toString() === category._id.toString()
-                                                )
-
-                                                return (
-                                                    <SortableRow
-                                                        key={category._id.toString()}
-                                                        category={category}
-                                                        depth={depth}
-                                                        position={indexInSiblings}
-                                                        totalSiblings={siblings.length}
-                                                        isEditing={isEditing}
-                                                        tempName={tempName}
-                                                        setTempName={setTempName}
-                                                        onEditStart={handleEditStart}
-                                                        onNameSave={handleNameSave}
-                                                        onNameCancel={handleNameCancel}
-                                                        onDelete={(id) => openDeleteDialog(id)}
-                                                        onMarkAlcohol={(id) => openMarkAlcoholDialog(id)}
-                                                        onMarkNonAlcohol={(id) => openMarkNonAlcoholDialog(id)}
-                                                        onToggleField={(id, field) =>
-                                                            toggleMutation.mutate({ id, field })
-                                                        }
-                                                        onMoveToPosition={handleMoveToPosition}
-                                                        isToggling={isToggling}
-                                                        isDeleting={isDeleting}
-                                                        isUpdatingName={isUpdatingName}
-                                                        isMarkingAlcohol={isMarkingAlcohol}
-                                                        isMarkingNonAlcohol={isMarkingNonAlcohol}
-                                                        isMoving={isMoving}
-                                                        siblingsCount={siblings.length}
-                                                        indexInSiblings={indexInSiblings}
-                                                    />
-                                                )
-                                            })
-                                        ) : (
-                                            <Table.Row>
-                                                <Table.Cell colSpan={4} textAlign="center" color="gray.500" py={8}>
-                                                    Нет категорий
-                                                </Table.Cell>
-                                            </Table.Row>
-                                        )}
-                                    </SortableContext>
-                                </Table.Body>
-                            </Table.Root>
-                        </DndContext>
-                    </Box>
-                </Card.Body>
-            </Card.Root>
+                                    return (
+                                        <SortableRow
+                                            key={category._id.toString()}
+                                            category={category}
+                                            depth={depth}
+                                            position={indexInSiblings}
+                                            totalSiblings={siblings.length}
+                                            isEditing={isEditing}
+                                            tempName={tempName}
+                                            setTempName={setTempName}
+                                            onEditStart={handleEditStart}
+                                            onNameSave={handleNameSave}
+                                            onNameCancel={handleNameCancel}
+                                            onDelete={(id) => openDeleteDialog(id)}
+                                            onMarkAlcohol={(id) => openMarkAlcoholDialog(id)}
+                                            onMarkNonAlcohol={(id) => openMarkNonAlcoholDialog(id)}
+                                            onToggleField={(id, field) =>
+                                                toggleMutation.mutate({id, field})
+                                            }
+                                            onMoveToPosition={handleMoveToPosition}
+                                            isToggling={isToggling}
+                                            isDeleting={isDeleting}
+                                            isUpdatingName={isUpdatingName}
+                                            isMarkingAlcohol={isMarkingAlcohol}
+                                            isMarkingNonAlcohol={isMarkingNonAlcohol}
+                                            isMoving={isMoving}
+                                            siblingsCount={siblings.length}
+                                            indexInSiblings={indexInSiblings}
+                                        />
+                                    )
+                                })
+                            ) : (
+                                <Table.Row>
+                                    <Table.Cell colSpan={4} textAlign="center" color="gray.600" py={8}>
+                                        Нет категорий
+                                    </Table.Cell>
+                                </Table.Row>
+                            )}
+                        </SortableContext>
+                    </Table.Body>
+                </Table.Root>
+            </DndContext>
 
             {deleteConfirmationDialog}
             {markAlcoholConfirmationDialog}

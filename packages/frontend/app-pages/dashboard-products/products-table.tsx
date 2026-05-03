@@ -96,7 +96,6 @@ export const ProductsTable = memo(() => {
 
             if (oldIndex === -1 || newIndex === -1) return;
 
-            // Build new order: remove from old position, insert at new position
             const reordered = [...productIds];
             reordered.splice(oldIndex, 1);
             reordered.splice(newIndex, 0, active.id as string);
@@ -162,9 +161,6 @@ export const ProductsTable = memo(() => {
         <Box
             overflowX="auto"
             position="relative"
-            borderRadius="md"
-            shadow="md"
-            bg="gray.800"
         >
             {isFetching && (
                 <Flex
@@ -187,20 +183,23 @@ export const ProductsTable = memo(() => {
                 onDragEnd={handleDragEnd}
             >
                 <Table.Root size={{base: 'sm', md: 'md', lg: 'lg'}} variant="outline" w="full">
-                    <Table.Header bg="gray.900" borderBottomWidth="2px" borderColor="gray.700">
+                    <Table.Header>
                         <Table.Row>
-                            <Table.ColumnHeader minW="40px" w="40px"/>
+                            <Table.ColumnHeader minW="40px" w="40px" bg="gray.950" borderBottom="1px solid" borderColor="gray.800"/>
                             {COLUMNS.map(({key, label, minW}) => (
                                 <Table.ColumnHeader
                                     key={key}
                                     minW={minW}
-                                    color="gray.200"
+                                    color="gray.500"
                                     p={{base: 3, md: 4}}
-                                    fontWeight="semibold"
-                                    fontSize="sm"
+                                    fontWeight="600"
+                                    fontSize="xs"
                                     textTransform="uppercase"
                                     letterSpacing="wider"
                                     whiteSpace="nowrap"
+                                    bg="gray.950"
+                                    borderBottom="1px solid"
+                                    borderColor="gray.800"
                                 >
                                     {label}
                                 </Table.ColumnHeader>

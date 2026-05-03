@@ -201,7 +201,7 @@ export class CategoriesService {
     const parentId = category.parent?.toString() || null;
 
     const filter = parentId
-      ? { parent: parentId }
+      ? { parent: new Types.ObjectId(parentId) }
       : { $or: [{ parent: null }, { parent: { $exists: false } }] };
 
     const siblings = await this.categoryModel

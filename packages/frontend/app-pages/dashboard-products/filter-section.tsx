@@ -106,8 +106,7 @@ export const FilterSection = () => {
             py={5}
             borderBottom="1px solid"
             borderColor="gray.800"
-            bg="rgba(20, 20, 25, 0.6)"
-            backdropFilter="blur(12px)"
+            bg="gray.950"
         >
             <Flex gap={4} align="center" flexWrap="wrap">
                 <Box position="relative" flex="1" minW="200px">
@@ -115,31 +114,32 @@ export const FilterSection = () => {
                         value={localSearch}
                         onChange={setParam('search')}
                         placeholder="Поиск по названию..."
-                        bg="rgba(30, 30, 35, 0.95)"
-                        backdropFilter="blur(16px)"
+                        bg="gray.900"
                         border="1px solid"
-                        borderColor="gray.600"
-                        color="white"
+                        borderColor="gray.800"
+                        color="gray.200"
                         fontSize="sm"
                         fontWeight="medium"
-                        h="48px"
-                        pl="48px"
-                        pr={localSearch ? '48px' : '16px'}
-                        borderRadius="xl"
-                        boxShadow="0 4px 12px rgba(0, 0, 0, 0.3)"
-                        transition="all 0.25s cubic-bezier(0.4, 0, 0.2, 1)"
+                        h="44px"
+                        pl="44px"
+                        pr={localSearch ? '40px' : '16px'}
+                        borderRadius="lg"
+                        transition="all 0.2s"
                         _hover={{
-                            borderColor: 'gray.500',
-                            boxShadow: '0 6px 16px rgba(0, 0, 0, 0.35)',
+                            borderColor: 'gray.700',
                         }}
-                        _placeholder={{color: 'gray.500'}}
+                        _focus={{
+                            borderColor: 'gray.600',
+                            boxShadow: '0 0 0 1px gray.700',
+                        }}
+                        _placeholder={{color: 'gray.600'}}
                     />
                     <Box
                         position="absolute"
                         left="16px"
                         top="50%"
                         transform="translateY(-50%)"
-                        color={localSearch ? 'gray.300' : 'gray.500'}
+                        color={localSearch ? 'gray.400' : 'gray.600'}
                         transition="color 0.2s ease"
                         pointerEvents="none"
                         zIndex={1}
@@ -151,8 +151,8 @@ export const FilterSection = () => {
                             aria-label="Очистить поиск"
                             size="xs"
                             variant="ghost"
-                            color="gray.400"
-                            _hover={{color: 'white', bg: 'rgba(255,255,255,0.15)'}}
+                            color="gray.500"
+                            _hover={{color: 'gray.300', bg: 'gray.800'}}
                             position="absolute"
                             right="10px"
                             top="50%"
@@ -177,31 +177,28 @@ export const FilterSection = () => {
                         <Select.HiddenSelect/>
                         <Select.Control>
                             <Select.Trigger
-                                h="48px"
-                                bg="rgba(30, 30, 35, 0.95)"
-                                backdropFilter="blur(16px)"
+                                h="44px"
+                                bg="gray.900"
                                 border="1px solid"
-                                borderColor="gray.600"
-                                borderRadius="xl"
-                                boxShadow="0 4px 12px rgba(0, 0, 0, 0.3)"
-                                transition="all 0.25s cubic-bezier(0.4, 0, 0.2, 1)"
+                                borderColor="gray.800"
+                                borderRadius="lg"
+                                transition="all 0.2s"
                                 _hover={{
-                                    borderColor: 'gray.500',
-                                    boxShadow: '0 6px 16px rgba(0, 0, 0, 0.35)',
+                                    borderColor: 'gray.700',
                                 }}
                                 _open={{
-                                    borderColor: 'gray.400',
-                                    boxShadow: '0 0 0 2px rgba(128, 128, 128, 0.3)',
+                                    borderColor: 'gray.600',
+                                    boxShadow: '0 0 0 1px gray.700',
                                 }}
                             >
                                 <Flex align="center" gap={2} pl={3}>
-                                    <Box color={category ? 'gray.300' : 'gray.500'}>
-                                        <FiFilter size="18px"/>
+                                    <Box color={category ? 'gray.400' : 'gray.600'}>
+                                        <FiFilter size="16px"/>
                                     </Box>
                                     <Select.ValueText
                                         placeholder="Все категории"
-                                        color="white"
-                                        _placeholder={{color: 'gray.400'}}
+                                        color="gray.200"
+                                        _placeholder={{color: 'gray.600'}}
                                         fontSize="sm"
                                         fontWeight="medium"
                                     />
@@ -209,10 +206,10 @@ export const FilterSection = () => {
                                 <Select.IndicatorGroup>
                                     <Select.Indicator
                                         asChild
-                                        color="gray.400"
-                                        _open={{color: 'gray.300', transform: 'rotate(180deg)'}}
+                                        color="gray.500"
+                                        _open={{color: 'gray.400', transform: 'rotate(180deg)'}}
                                     >
-                                        <FiChevronDown size="18px"/>
+                                        <FiChevronDown size="16px"/>
                                     </Select.Indicator>
                                 </Select.IndicatorGroup>
                             </Select.Trigger>
@@ -222,8 +219,8 @@ export const FilterSection = () => {
                                 aria-label="Очистить категорию"
                                 size="xs"
                                 variant="ghost"
-                                color="gray.400"
-                                _hover={{color: 'white', bg: 'rgba(255,255,255,0.15)'}}
+                                color="gray.500"
+                                _hover={{color: 'gray.300', bg: 'gray.800'}}
                                 position="absolute"
                                 right="20px"
                                 top="50%"
@@ -234,21 +231,20 @@ export const FilterSection = () => {
                                 h="36px"
                                 zIndex={2}
                             >
-                                <FiX size="18px"/>
+                                <FiX size="16px"/>
                             </IconButton>
                         )}
                         <Portal>
                             <Select.Positioner>
                                 <Select.Content
-                                    bg="rgba(30, 30, 35, 0.98)"
-                                    backdropFilter="blur(20px)"
+                                    bg="gray.900"
                                     border="1px solid"
-                                    borderColor="gray.700"
-                                    borderRadius="xl"
-                                    boxShadow="0 12px 32px rgba(0, 0, 0, 0.4)"
+                                    borderColor="gray.800"
+                                    borderRadius="lg"
+                                    boxShadow="0 8px 24px rgba(0, 0, 0, 0.5)"
                                     maxH="320px"
                                     overflowY="auto"
-                                    py={2}
+                                    py={1}
                                     mt={2}
                                 >
                                     {categoryCollection.items.map((item) => (
@@ -256,21 +252,21 @@ export const FilterSection = () => {
                                             key={item.value}
                                             item={item}
                                             px={4}
-                                            py={3}
+                                            py={2.5}
                                             fontSize="sm"
                                             fontWeight="medium"
-                                            color="white"
+                                            color="gray.300"
                                             _highlighted={{
-                                                bg: 'gray.700',
-                                                color: 'white',
+                                                bg: 'gray.800',
+                                                color: 'gray.100',
                                                 borderRadius: 'md',
-                                                mx: 2,
+                                                mx: 1,
                                             }}
                                             _selected={{
-                                                bg: 'gray.600',
-                                                color: 'white',
+                                                bg: 'gray.800',
+                                                color: 'gray.100',
                                                 borderRadius: 'md',
-                                                mx: 2,
+                                                mx: 1,
                                             }}
                                         >
                                             <Flex align="center" justify="space-between" w="full">
@@ -295,31 +291,28 @@ export const FilterSection = () => {
                         <Select.HiddenSelect/>
                         <Select.Control>
                             <Select.Trigger
-                                h="48px"
-                                bg="rgba(30, 30, 35, 0.95)"
-                                backdropFilter="blur(16px)"
+                                h="44px"
+                                bg="gray.900"
                                 border="1px solid"
-                                borderColor={hidden ? 'orange.500' : 'gray.600'}
-                                borderRadius="xl"
-                                boxShadow="0 4px 12px rgba(0, 0, 0, 0.3)"
-                                transition="all 0.25s cubic-bezier(0.4, 0, 0.2, 1)"
+                                borderColor={hidden ? 'orange.800' : 'gray.800'}
+                                borderRadius="lg"
+                                transition="all 0.2s"
                                 _hover={{
-                                    borderColor: 'gray.500',
-                                    boxShadow: '0 6px 16px rgba(0, 0, 0, 0.35)',
+                                    borderColor: 'gray.700',
                                 }}
                                 _open={{
-                                    borderColor: 'gray.400',
-                                    boxShadow: '0 0 0 2px rgba(128, 128, 128, 0.3)',
+                                    borderColor: 'gray.600',
+                                    boxShadow: '0 0 0 1px gray.700',
                                 }}
                             >
                                 <Flex align="center" gap={2} pl={3}>
-                                    <Box color={hidden ? 'orange.300' : 'gray.500'}>
-                                        <FiEyeOff size="18px"/>
+                                    <Box color={hidden ? 'orange.400' : 'gray.600'}>
+                                        <FiEyeOff size="16px"/>
                                     </Box>
                                     <Select.ValueText
                                         placeholder="Видимость"
-                                        color="white"
-                                        _placeholder={{color: 'gray.400'}}
+                                        color="gray.200"
+                                        _placeholder={{color: 'gray.600'}}
                                         fontSize="sm"
                                         fontWeight="medium"
                                     />
@@ -327,10 +320,10 @@ export const FilterSection = () => {
                                 <Select.IndicatorGroup>
                                     <Select.Indicator
                                         asChild
-                                        color="gray.400"
-                                        _open={{color: 'gray.300', transform: 'rotate(180deg)'}}
+                                        color="gray.500"
+                                        _open={{color: 'gray.400', transform: 'rotate(180deg)'}}
                                     >
-                                        <FiChevronDown size="18px"/>
+                                        <FiChevronDown size="16px"/>
                                     </Select.Indicator>
                                 </Select.IndicatorGroup>
                             </Select.Trigger>
@@ -340,8 +333,8 @@ export const FilterSection = () => {
                                 aria-label="Сбросить фильтр видимости"
                                 size="xs"
                                 variant="ghost"
-                                color="gray.400"
-                                _hover={{color: 'white', bg: 'rgba(255,255,255,0.15)'}}
+                                color="gray.500"
+                                _hover={{color: 'gray.300', bg: 'gray.800'}}
                                 position="absolute"
                                 right="20px"
                                 top="50%"
@@ -358,13 +351,12 @@ export const FilterSection = () => {
                         <Portal>
                             <Select.Positioner>
                                 <Select.Content
-                                    bg="rgba(30, 30, 35, 0.98)"
-                                    backdropFilter="blur(20px)"
+                                    bg="gray.900"
                                     border="1px solid"
-                                    borderColor="gray.700"
-                                    borderRadius="xl"
-                                    boxShadow="0 12px 32px rgba(0, 0, 0, 0.4)"
-                                    py={2}
+                                    borderColor="gray.800"
+                                    borderRadius="lg"
+                                    boxShadow="0 8px 24px rgba(0, 0, 0, 0.5)"
+                                    py={1}
                                     mt={2}
                                 >
                                     {hiddenCollection.items.map((item) => (
@@ -372,21 +364,21 @@ export const FilterSection = () => {
                                             key={item.value}
                                             item={item}
                                             px={4}
-                                            py={3}
+                                            py={2.5}
                                             fontSize="sm"
                                             fontWeight="medium"
-                                            color="white"
+                                            color="gray.300"
                                             _highlighted={{
-                                                bg: 'gray.700',
-                                                color: 'white',
+                                                bg: 'gray.800',
+                                                color: 'gray.100',
                                                 borderRadius: 'md',
-                                                mx: 2,
+                                                mx: 1,
                                             }}
                                             _selected={{
-                                                bg: 'gray.600',
-                                                color: 'white',
+                                                bg: 'gray.800',
+                                                color: 'gray.100',
                                                 borderRadius: 'md',
-                                                mx: 2,
+                                                mx: 1,
                                             }}
                                         >
                                             <Flex align="center" justify="space-between" w="full">
@@ -408,10 +400,10 @@ export const FilterSection = () => {
                         variant="ghost"
                         onClick={resetAllFilters}
                         borderRadius="xl"
-                        color="gray.400"
-                        _hover={{color: 'white', bg: 'gray.700'}}
-                        h="48px"
-                        minW="48px"
+                        color="gray.600"
+                        _hover={{color: 'gray.300', bg: 'gray.800'}}
+                        h="44px"
+                        minW="44px"
                     >
                         <FiRefreshCw size="18px"/>
                     </IconButton>
