@@ -17,6 +17,7 @@ import {Tooltip} from '@/components/tooltip'
 import {Select, createListCollection} from '@chakra-ui/react'
 import {useConfirmationDialog} from '@/hooks/use-confirmation-dialog'
 import {useToast} from '@/components/toast-container'
+import {editUserSchema} from './validation'
 import type {SerializedUser, UserRowProps} from './types'
 
 type EditableUserFields = Pick<SerializedUser, 'username' | 'name' | 'surname' | 'patronymic' | 'role'>;
@@ -40,7 +41,7 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
     const [error, setError] = useState<string | null>(null)
     const toast = useToast()
 
-    const {openDialog, ConfirmationDialog} = useConfirmationDialog<string>({
+    const {openDialog, confirmationDialog} = useConfirmationDialog<string>({
         onConfirm: async (id) => {
             setError(null)
             try {
@@ -66,6 +67,12 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
 
     const handleSave = async () => {
         setError(null)
+        const result = editUserSchema.safeParse(tempUser)
+        if (!result.success) {
+            const firstError = result.error.issues[0]
+            setError(firstError?.message || 'Проверьте введённые данные')
+            return
+        }
         try {
             const res = await updateUser(user._id.toString(), tempUser)
             if (res.success) {
@@ -292,7 +299,7 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                 </Table.Cell>
             </Table.Row>
 
-            <ConfirmationDialog/>
+            {confirmationDialog}
         </>
     )
 }

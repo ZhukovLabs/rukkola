@@ -14,10 +14,12 @@ import {
 } from '@chakra-ui/react'
 import {Select, createListCollection} from '@chakra-ui/react'
 import {useForm, Controller} from 'react-hook-form'
+import {zodResolver} from '@hookform/resolvers/zod'
 import {createUser} from './actions'
 import {FiX, FiEye, FiEyeOff} from 'react-icons/fi'
 import {useToast} from '@/components/toast-container'
 import type {SerializedUser} from './types'
+import {userSchema, type UserFormData} from './validation'
 
 const roles = createListCollection({
     items: [
@@ -26,14 +28,7 @@ const roles = createListCollection({
     ],
 })
 
-type FormValues = {
-    username: string
-    password: string
-    name: string
-    surname?: string
-    patronymic?: string
-    role: string
-}
+type FormValues = UserFormData
 
 type AddUserModalProps = {
     isOpen: boolean
@@ -54,6 +49,7 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
         reset,
         formState: {errors},
     } = useForm<FormValues>({
+        resolver: zodResolver(userSchema),
         defaultValues: {
             username: '',
             password: '',
@@ -164,7 +160,7 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                                             boxShadow: '0 0 0 2px rgba(56, 178, 172, 0.3)',
                                         }}
                                         transition="all 0.2s"
-                                        {...register('username', {required: 'Логин обязателен'})}
+                                        {...register('username')}
                                     />
                                     <Field.ErrorText fontSize="xs">{errors.username?.message}</Field.ErrorText>
                                 </Field.Root>
@@ -191,10 +187,7 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                                             }}
                                             transition="all 0.2s"
                                             flex={1}
-                                            {...register('password', {
-                                                required: 'Пароль обязателен',
-                                                minLength: {value: 6, message: 'Минимум 6 символов'},
-                                            })}
+                                            {...register('password')}
                                         />
                                         <IconButton
                                             aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
@@ -233,7 +226,7 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                                             boxShadow: '0 0 0 2px rgba(56, 178, 172, 0.3)',
                                         }}
                                         transition="all 0.2s"
-                                        {...register('name', {required: 'Имя обязательно'})}
+                                        {...register('name')}
                                     />
                                     <Field.ErrorText fontSize="xs">{errors.name?.message}</Field.ErrorText>
                                 </Field.Root>

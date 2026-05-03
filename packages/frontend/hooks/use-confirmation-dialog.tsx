@@ -4,11 +4,9 @@ import {
     Button,
     Text,
     Flex,
-    Icon,
     Box,
-    useDisclosure,
 } from '@chakra-ui/react';
-import {FiAlertTriangle, FiX} from 'react-icons/fi';
+import {FiAlertTriangle, FiTrash2} from 'react-icons/fi';
 
 type ConfirmCallback<T> = (payload: T) => void;
 
@@ -22,177 +20,138 @@ type UseConfirmationDialogOptions<T> = {
 }
 
 export const useConfirmationDialog = <T, >({
-                                               onConfirm,
-                                               title = 'Подтвердите действие',
-                                               description = 'Это действие необратимо.',
-                                               confirmText = 'Подтвердить',
-                                               cancelText = 'Отмена',
-                                               colorScheme = 'red',
-                                           }: UseConfirmationDialogOptions<T>) => {
-    const {open, onOpen, onClose} = useDisclosure();
-    const cancelRef = useRef<HTMLButtonElement>(null);
-    const pendingPayloadRef = useRef<T | null>(null);
+                                                onConfirm,
+                                                title = 'Подтвердите действие',
+                                                description = 'Это действие необратимо.',
+                                                confirmText = 'Подтвердить',
+                                                cancelText = 'Отмена',
+                                                colorScheme = 'red',
+                                            }: UseConfirmationDialogOptions<T>) => {
+    const [open, setOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const payloadRef = useRef<T | null>(null);
 
     const openDialog = useCallback((payload: T) => {
-        pendingPayloadRef.current = payload;
-        onOpen();
-    }, [onOpen]);
+        payloadRef.current = payload;
+        setOpen(true);
+    }, []);
+
+    const handleClose = useCallback(() => {
+        setOpen(false);
+        setIsLoading(false);
+    }, []);
 
     const handleConfirm = useCallback(() => {
-        if (!pendingPayloadRef.current) return;
+        if (!payloadRef.current) return;
         setIsLoading(true);
         setTimeout(() => {
-            onConfirm(pendingPayloadRef.current!);
+            onConfirm(payloadRef.current!);
             setIsLoading(false);
-            onClose();
+            setOpen(false);
         }, 600);
-    }, [onConfirm, onClose]);
+    }, [onConfirm]);
 
-    const DialogIcon = () => (
-        <Flex justify="center" mb={6}>
-            <Box position="relative">
-                <Icon
-                    as={FiAlertTriangle}
-                    boxSize={20}
-                    color={`${colorScheme}.400`}
-                    filter="drop-shadow(0 0 20px rgba(229, 62, 62, 0.3))"
-                />
-                <Box
-                    position="absolute"
-                    top="50%"
-                    left="50%"
-                    transform="translate(-50%, -50%)"
-                    w="24px"
-                    h="24px"
-                    bg={`${colorScheme}.500`}
-                    borderRadius="full"
-                    filter="blur(12px)"
-                    opacity={0.6}
-                />
-            </Box>
-        </Flex>
-    );
-
-    const DialogHeader = () => (
-        <Dialog.Header textAlign="center" mb={4}>
-            <Text
-                fontSize="2xl"
-                fontWeight="bold"
-                bgGradient={`linear(to-r, ${colorScheme}.400, orange.400)`}
-                bgClip="text"
-            >
-                {title}
-            </Text>
-        </Dialog.Header>
-    );
-
-    const DialogFooter = () => (
-        <Dialog.Footer
-            gap={4}
-            mt={2}
-            flexDirection={{base: 'column', sm: 'row'}}
-        >
-            <Button
-                ref={cancelRef}
-                variant="outline"
-                size="lg"
-                flex={1}
-                onClick={onClose}
-                color="gray.300"
-                borderColor="gray.600"
-                _hover={{
-                    bg: 'gray.700',
-                    borderColor: 'gray.500',
-                    transform: 'translateY(-2px)',
-                    shadow: 'lg',
-                }}
-                transition="all 0.2s"
-            >
-                <FiX/> {cancelText}
-            </Button>
-
-            <Button
-                colorScheme={colorScheme}
-                size="lg"
-                flex={1}
-                onClick={handleConfirm}
-                loading={isLoading}
-                loadingText="Выполняется..."
-                bgGradient={`linear(to-r, ${colorScheme}.500, ${colorScheme}.600)`}
-                _hover={{
-                    bgGradient: `linear(to-r, ${colorScheme}.600, ${colorScheme}.700)`,
-                    transform: 'translateY(-2px)',
-                    shadow: '0 10px 25px rgba(229, 62, 62, 0.3)',
-                }}
-                _active={{
-                    transform: 'translateY(0)',
-                }}
-                transition="all 0.2s"
-                shadow="xl"
-                fontWeight="bold"
-            >
-                {confirmText}
-            </Button>
-        </Dialog.Footer>
-    );
-
-    const ConfirmationDialog = () => (
+    const confirmationDialog = (
         <Dialog.Root
             open={open}
-            onOpenChange={(e) => !e.open && onClose()}
-            role="alertdialog"
-            initialFocusEl={() => cancelRef.current ?? null}
+            onOpenChange={(e) => { if (!e.open) handleClose(); }}
         >
             <Dialog.Backdrop
                 bg="blackAlpha.800"
-                backdropFilter="blur(4px)"
-                transition="all 0.2s ease-in-out"
+                backdropFilter="blur(8px)"
             />
 
             <Dialog.Positioner>
                 <Dialog.Content
-                    bg="linear-gradient(145deg, #1a202c 0%, #2d3748 100%)"
-                    border="2px solid"
-                    borderColor={`${colorScheme}.400`}
-                    borderTop="4px solid"
-                    borderTopColor={`${colorScheme}.500`}
-                    maxW="md"
+                    bg="rgba(24,26,28,0.95)"
                     borderRadius="2xl"
-                    shadow="dark-lg"
-                    p={8}
+                    border="1px solid"
+                    borderColor="gray.700"
+                    maxW="sm"
+                    p={0}
+                    overflow="hidden"
                 >
-                    <Button
-                        variant="ghost"
-                        position="absolute"
-                        top={4}
-                        right={4}
-                        size="sm"
-                        onClick={onClose}
-                        color="gray.400"
-                        _hover={{color: 'white', bg: 'whiteAlpha.100'}}
+                    <Flex
+                        direction="column"
+                        align="center"
+                        pt={7}
+                        pb={3}
+                        px={6}
                     >
-                        <Icon as={FiX} boxSize={5}/>
-                    </Button>
+                        <Box
+                            p={3}
+                            borderRadius="full"
+                            bg={`${colorScheme}.900/30`}
+                            border="1px solid"
+                            borderColor={`${colorScheme}.700/40`}
+                            mb={4}
+                        >
+                            <FiAlertTriangle size={22} color={colorScheme === 'red' ? '#f56565' : '#ed8936'}/>
+                        </Box>
 
-                    <DialogIcon/>
-                    <DialogHeader/>
+                        <Text
+                            fontSize="lg"
+                            fontWeight="semibold"
+                            color="gray.100"
+                            mb={2}
+                            textAlign="center"
+                        >
+                            {title}
+                        </Text>
 
-                    <Dialog.Body textAlign="center">
-                        <Text color="gray.300" fontSize="lg" mb={2}>
+                        <Text
+                            fontSize="sm"
+                            color="gray.400"
+                            textAlign="center"
+                            lineHeight="short"
+                        >
                             {description}
                         </Text>
-                    </Dialog.Body>
+                    </Flex>
 
-                    <DialogFooter/>
+                    <Flex
+                        gap={3}
+                        px={6}
+                        pb={6}
+                        pt={2}
+                    >
+                        <Button
+                            variant="outline"
+                            size="md"
+                            flex={1}
+                            onClick={handleClose}
+                            borderColor="gray.600"
+                            color="gray.300"
+                            borderRadius="lg"
+                            _hover={{bg: 'gray.800', borderColor: 'gray.500'}}
+                        >
+                            {cancelText}
+                        </Button>
 
-                    <Text color="gray.500" fontSize="xs" textAlign="center" mt={6}>
-                        Нажмите ESC или кликните вне окна для отмены
-                    </Text>
+                        <Button
+                            size="md"
+                            flex={1}
+                            onClick={handleConfirm}
+                            loading={isLoading}
+                            loadingText="Удаление..."
+                            bg={colorScheme === 'red' ? 'red.500' : 'orange.500'}
+                            color="white"
+                            borderRadius="lg"
+                            _hover={{
+                                bg: colorScheme === 'red' ? 'red.600' : 'orange.600',
+                            }}
+                            _active={{
+                                bg: colorScheme === 'red' ? 'red.700' : 'orange.700',
+                            }}
+                        >
+                            <FiTrash2 size={14}/>
+                            {confirmText}
+                        </Button>
+                    </Flex>
                 </Dialog.Content>
             </Dialog.Positioner>
         </Dialog.Root>
     );
 
-    return {openDialog, ConfirmationDialog};
+    return {openDialog, confirmationDialog};
 };

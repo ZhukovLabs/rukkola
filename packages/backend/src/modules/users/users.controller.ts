@@ -13,6 +13,9 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -35,18 +38,10 @@ export class UsersController {
   @UseGuards(RolesGuard)
   @Roles('admin')
   async createUser(
-    @Body()
-    body: {
-      username: string;
-      password: string;
-      name: string;
-      surname?: string;
-      patronymic?: string;
-      role?: string;
-    },
+    @Body() dto: CreateUserDto,
     @CurrentUser() currentUser: { id: string },
   ) {
-    const user = await this.usersService.createUser(body, currentUser.id);
+    const user = await this.usersService.createUser(dto, currentUser.id);
     return {
       success: true,
       message: 'Пользователь создан',
@@ -57,14 +52,14 @@ export class UsersController {
   @Patch(':id/password')
   async updatePassword(
     @Param('id') id: string,
-    @Body() body: { oldPassword: string; newPassword: string },
+    @Body() dto: ChangePasswordDto,
     @CurrentUser() currentUser: { id: string },
   ) {
     await this.usersService.updatePassword(
       id,
       currentUser.id,
-      body.oldPassword,
-      body.newPassword,
+      dto.oldPassword,
+      dto.newPassword,
     );
 
     await this.usersService['auditLogService']?.createLog(
@@ -84,17 +79,10 @@ export class UsersController {
   @Roles('admin')
   async updateUser(
     @Param('id') id: string,
-    @Body()
-    body: Partial<{
-      username: string;
-      name: string;
-      surname?: string;
-      patronymic?: string;
-      role: string;
-    }>,
+    @Body() dto: UpdateUserDto,
     @CurrentUser() currentUser: { id: string },
   ) {
-    const user = await this.usersService.updateUser(id, body, currentUser.id);
+    const user = await this.usersService.updateUser(id, dto, currentUser.id);
     return {
       success: true,
       message: 'Пользователь обновлён',

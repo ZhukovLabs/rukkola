@@ -68,7 +68,7 @@ export const ProductsTable = memo(() => {
 
     const productIds = useMemo(() => products.map((p) => p.id), [products]);
 
-    const {openDialog, ConfirmationDialog} = useConfirmationDialog({
+    const {openDialog, confirmationDialog} = useConfirmationDialog({
         onConfirm: (id: string) => {
             deleteMutation.mutate(id)
         }
@@ -219,7 +219,7 @@ export const ProductsTable = memo(() => {
                 </Table.Root>
             </DndContext>
 
-            <ConfirmationDialog/>
+            {confirmationDialog}
         </Box>
     );
 });

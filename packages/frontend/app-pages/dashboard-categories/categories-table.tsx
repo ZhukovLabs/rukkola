@@ -474,7 +474,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
 
     const {
         openDialog: openDeleteDialog,
-        ConfirmationDialog: DeleteConfirmationDialog,
+        confirmationDialog: deleteConfirmationDialog,
     } = useConfirmationDialog<string>({
         title: 'Удаление категории',
         description: 'Категория будет удалена без возможности восстановления.',
@@ -488,7 +488,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
 
     const {
         openDialog: openMarkAlcoholDialog,
-        ConfirmationDialog: MarkAlcoholConfirmationDialog,
+        confirmationDialog: markAlcoholConfirmationDialog,
     } = useConfirmationDialog<string>({
         title: 'Пометка продуктов как алкогольных',
         description: 'Все продукты в этой категории (включая подкатегории) будут помечены как алкогольные. Продолжить?',
@@ -502,7 +502,7 @@ export default function CategoriesTable({ categories: initialCategories }: Props
 
     const {
         openDialog: openMarkNonAlcoholDialog,
-        ConfirmationDialog: MarkNonAlcoholConfirmationDialog,
+        confirmationDialog: markNonAlcoholConfirmationDialog,
     } = useConfirmationDialog<string>({
         title: 'Пометка продуктов как безалкогольных',
         description: 'Все продукты в этой категории (включая подкатегории) будут помечены как безалкогольные. Продолжить?',
@@ -854,9 +854,9 @@ export default function CategoriesTable({ categories: initialCategories }: Props
                 </Card.Body>
             </Card.Root>
 
-            <DeleteConfirmationDialog/>
-            <MarkAlcoholConfirmationDialog/>
-            <MarkNonAlcoholConfirmationDialog/>
+            {deleteConfirmationDialog}
+            {markAlcoholConfirmationDialog}
+            {markNonAlcoholConfirmationDialog}
         </Box>
     )
 }
