@@ -98,8 +98,7 @@ const restaurantSchema = {
         name: "Гомель"
     },
     sameAs: [
-        "https://www.instagram.com/rukkola.gomel",
-        "https://vk.com/rukkola_gomel"
+        "https://www.instagram.com/rukkola.gomel"
     ],
     hasMenu: `${BASE_URL}/`
 };
