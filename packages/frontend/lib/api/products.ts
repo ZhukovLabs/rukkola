@@ -84,12 +84,14 @@ export async function getProducts(
   limit = 10,
   search?: string,
   category?: string,
+  hidden?: string,
 ): Promise<ActionResponse<ProductsResponse>> {
   const params = new URLSearchParams();
   params.set('page', String(page));
   params.set('limit', String(limit));
   if (search) params.set('search', search);
   if (category) params.set('category', category);
+  if (hidden) params.set('hidden', hidden);
 
   return apiClient.get<ActionResponse<ProductsResponse>>(
     `/products?${params.toString()}`,

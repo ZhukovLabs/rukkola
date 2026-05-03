@@ -14,11 +14,21 @@ export class AuditLogController {
   async getLogs(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
+    @Query('userId') userId?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
   ) {
-    const result = await this.auditLogService.getLogs(
-      page ? parseInt(page, 10) : 1,
-      limit ? parseInt(limit, 10) : 20,
-    );
+    const result = await this.auditLogService.getLogs({
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 20,
+      sortBy: sortBy || 'createdAt',
+      sortOrder: sortOrder === 'asc' ? 'asc' : 'desc',
+      userId: userId || undefined,
+      dateFrom: dateFrom ? new Date(dateFrom) : undefined,
+      dateTo: dateTo ? new Date(dateTo) : undefined,
+    });
     return {
       success: true,
       message: 'История изменений получена',

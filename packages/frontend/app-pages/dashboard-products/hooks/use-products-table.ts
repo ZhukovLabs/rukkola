@@ -17,10 +17,11 @@ export const useProductsTable = () => {
     const page = Math.max(Number(searchParams.get('page')) || 1, 1)
     const urlSearch = searchParams.get('search') || '';
     const urlCategory = searchParams.get('category') || '';
+    const urlHidden = searchParams.get('hidden') || '';
 
     const query = useQuery({
-        queryKey: ['products', page, urlSearch, urlCategory],
-        queryFn: () => getProducts(page, 10, urlSearch, urlCategory),
+        queryKey: ['products', page, urlSearch, urlCategory, urlHidden],
+        queryFn: () => getProducts(page, 10, urlSearch || undefined, urlCategory || undefined, urlHidden || undefined),
         placeholderData: (prev) => prev,
     })
 
@@ -118,6 +119,7 @@ export const useProductsTable = () => {
         page,
         search: urlSearch,
         category: urlCategory,
+        hidden: urlHidden,
         data: query.data?.data ?? {products: [], totalPages: 1, total: 0},
         isFetching: query.isFetching,
         isPending: query.isPending,

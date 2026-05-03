@@ -33,6 +33,7 @@ export class ProductsService {
     limit = 10,
     search?: string,
     category?: string,
+    hidden?: string,
   ) {
     const skip = (page - 1) * limit;
     const filter: Record<string, unknown> = {};
@@ -42,6 +43,12 @@ export class ProductsService {
         { name: { $regex: search, $options: 'i' } },
         { description: { $regex: search, $options: 'i' } },
       ];
+    }
+
+    if (hidden === 'true') {
+      filter.hidden = true;
+    } else if (hidden === 'false') {
+      filter.hidden = false;
     }
 
     if (category) {

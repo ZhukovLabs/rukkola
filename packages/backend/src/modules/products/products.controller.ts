@@ -32,12 +32,14 @@ export class ProductsController {
     @Query('limit') limit?: string,
     @Query('search') search?: string,
     @Query('category') category?: string,
+    @Query('hidden') hidden?: string,
   ) {
     const result = await this.productsService.getProducts(
       page ? parseInt(page, 10) : 1,
       limit ? parseInt(limit, 10) : 10,
       search,
       category,
+      hidden,
     );
     return {
       success: true,
