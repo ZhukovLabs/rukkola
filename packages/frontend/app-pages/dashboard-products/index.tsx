@@ -63,7 +63,7 @@ export const ProductsPage = () => {
                                 border="1px solid"
                                 borderColor="gray.700"
                             >
-                                <FiPackage size={20} color="gray.400"/>
+                                <FiPackage size={20} color="white"/>
                             </Box>
                             <Heading size="lg" fontWeight="bold" letterSpacing="tight" color="gray.100">
                                 Товары

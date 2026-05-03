@@ -113,7 +113,7 @@ export const PasswordChangeForm = () => {
                 <Box bg="gray.700" p={3} rounded="full" boxShadow="0 0 15px rgba(128,128,128,0.6)">
                     <FiLock size={20} color="white" />
                 </Box>
-                <Text fontSize="2xl" fontWeight="bold" bgGradient="linear(to-r, gray.300, gray.100)">
+                <Text fontSize="2xl" color="gray.200"  fontWeight="bold" bgGradient="linear(to-r, gray.300, gray.100)">
                     Настройки безопасности
                 </Text>
             </Flex>

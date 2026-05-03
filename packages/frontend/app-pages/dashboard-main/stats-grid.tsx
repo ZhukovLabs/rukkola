@@ -6,12 +6,9 @@ import {
     Text,
     SimpleGrid,
     Icon,
-    Stat,
-    FormatNumber,
-    Stack,
 } from "@chakra-ui/react";
-import { motion } from "framer-motion";
-import { FiBox, FiLayers, FiUsers } from "react-icons/fi";
+import {motion} from "framer-motion";
+import {FiBox, FiLayers, FiUsers} from "react-icons/fi";
 
 const MotionBox = motion(Box);
 
@@ -24,23 +21,23 @@ interface StatsGridProps {
     };
 }
 
-export const StatsGrid = ({ stats }: StatsGridProps) => {
+export const StatsGrid = ({stats}: StatsGridProps) => {
     return (
-        <SimpleGrid columns={{ base: 1, md: 3 }} gap={{ base: 4, md: 6 }}>
-            <StatBox
+        <SimpleGrid columns={{base: 1, md: 3}} gap={{base: 4, md: 5}}>
+            <StatCard
                 label="Товары"
                 value={stats.products}
-                hiddenValue={stats.hiddenProducts}
                 icon={FiBox}
                 helpText="Всего товаров в системе"
+                hiddenValue={stats.hiddenProducts}
             />
-            <StatBox
+            <StatCard
                 label="Категории"
                 value={stats.categories}
                 icon={FiLayers}
                 helpText="Всего категорий"
             />
-            <StatBox
+            <StatCard
                 label="Пользователи"
                 value={stats.users}
                 icon={FiUsers}
@@ -50,7 +47,7 @@ export const StatsGrid = ({ stats }: StatsGridProps) => {
     );
 };
 
-interface StatBoxProps {
+interface StatCardProps {
     label: string;
     value: number;
     icon: React.ElementType;
@@ -58,75 +55,60 @@ interface StatBoxProps {
     hiddenValue?: number;
 }
 
-const StatBox = ({
-                      label,
-                      value,
-                      icon,
-                      helpText,
-                      hiddenValue,
-                  }: StatBoxProps) => (
+const StatCard = ({label, value, icon, helpText, hiddenValue}: StatCardProps) => (
     <MotionBox
-        p={{ base: 5, md: 6 }}
+        p={{base: 5, md: 6}}
         bg="gray.800"
         borderRadius="2xl"
-        boxShadow="0 8px 24px rgba(0,0,0,0.3)"
+        border="1px solid"
+        borderColor="gray.700"
         _hover={{
-            transform: "translateY(-4px)",
-            boxShadow: "0 12px 30px rgba(0,0,0,0.45)",
+            borderColor: "gray.600",
+            transform: "translateY(-2px)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
         }}
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{opacity: 0, y: 16}}
+        animate={{opacity: 1, y: 0}}
+        transition={{duration: 0.3}}
     >
-        <Flex align="center" gap={{ base: 3, md: 4 }} mb={4}>
+        <Flex align="center" gap={3} mb={4}>
             <Box
-                bg="rgba(128,128,128,0.1)"
-                p={{ base: 3, md: 4 }}
-                borderRadius="md"
-                display="inline-flex"
+                bg="gray.700"
+                p={2.5}
+                borderRadius="xl"
+                display="flex"
                 alignItems="center"
                 justifyContent="center"
-                flexShrink={0}
+                border="1px solid"
+                borderColor="gray.600"
             >
-                <Icon as={icon} boxSize={{ base: 6, md: 7 }} color="gray.300" />
+                <Icon as={icon} boxSize={5} color="gray.300"/>
             </Box>
-
-            <Text
-                fontSize={{ base: "md", md: "lg" }}
-                fontWeight="medium"
-                color="gray.300"
-                lineClamp={2}
-                wordBreak="break-word"
-            >
+            <Text fontSize="sm" fontWeight="medium" color="gray.400">
                 {label}
             </Text>
         </Flex>
 
-        <Stat.Root>
-            <Stack gap={1} align="flex-start">
-                <Stat.ValueText
-                    fontSize={{ base: "2xl", md: "3xl" }}
-                    fontWeight="bold"
-                    color="white"
-                    lineHeight="1"
-                >
-                    <FormatNumber value={value} />
-                </Stat.ValueText>
+        <Text
+            fontSize={{base: "3xl", md: "4xl"}}
+            fontWeight="bold"
+            color="white"
+            lineHeight="1"
+            mb={1}
+        >
+            {value}
+        </Text>
 
-                {hiddenValue !== undefined && hiddenValue > 0 && (
-                    <Text fontSize="sm" color="gray.400">
-                        Скрыто:{" "}
-                        <Text as="span" color="orange.300" fontWeight="semibold">
-                            {hiddenValue}
-                        </Text>
-                    </Text>
-                )}
-            </Stack>
+        {hiddenValue !== undefined && hiddenValue > 0 && (
+            <Text fontSize="sm" color="gray.500">
+                Скрыто: <Text as="span" color="gray.400" fontWeight="semibold">{hiddenValue}</Text>
+            </Text>
+        )}
 
-            {helpText && (
-                <Stat.Label mt={hiddenValue ? 2 : 3} color="gray.500" fontSize="sm" lineClamp={2} wordBreak="break-word">
-                    {helpText}
-                </Stat.Label>
-            )}
-        </Stat.Root>
+        {helpText && (
+            <Text mt={3} color="gray.600" fontSize="sm">
+                {helpText}
+            </Text>
+        )}
     </MotionBox>
 );

@@ -1,3 +1,10 @@
-import {Dashboard} from "../../app-pages/dashboard-main";
+import {Suspense} from "react";
+import {Dashboard} from "@/app-pages/dashboard-main";
 
-export default Dashboard;
+export default function DashboardPage() {
+    return (
+        <Suspense>
+            <Dashboard/>
+        </Suspense>
+    );
+}

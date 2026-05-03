@@ -13,6 +13,7 @@ import {
     Card,
     Icon,
     HStack,
+    Heading,
 } from '@chakra-ui/react';
 import {FiUploadCloud, FiTrash2, FiPower, FiImage, FiCheck, FiX, FiStar} from 'react-icons/fi';
 import {uploadLunch, activeLunch, deleteLunch, deactivateLunch} from './actions';
@@ -197,25 +198,38 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
             <Card.Root
                 w="100%"
                 borderRadius="2xl"
+                shadow="xl"
                 border="1px solid"
-                borderColor="gray.700"
-                bg="gray.900"
+                borderColor="gray.800"
+                bg="gray.950"
                 overflow="hidden"
             >
                 <Card.Header
-                    bg="rgba(24,26,28,0.95)"
-                    borderBottom="1px solid"
-                    borderColor="gray.700"
+                    bg="gray.900"
+                    borderTopRadius="2xl"
                     py={4}
-                    px={{base: 4, md: 6}}
+                    px={6}
+                    borderBottom="1px solid"
+                    borderColor="gray.800"
                 >
                     <Flex justify="space-between" align="center">
-                        <HStack gap={2}>
-                            <Icon as={FiImage} boxSize={5} color="gray.400"/>
-                            <Text fontSize="lg" fontWeight="semibold" color="gray.200">
+                        <Flex align="center" gap={3}>
+                            <Box
+                                bg="gray.800"
+                                borderRadius="lg"
+                                p={2}
+                                display="flex"
+                                alignItems="center"
+                                justifyContent="center"
+                                border="1px solid"
+                                borderColor="gray.700"
+                            >
+                                <FiImage size={20} color="white"/>
+                            </Box>
+                            <Heading size="lg" fontWeight="bold" letterSpacing="tight" color="gray.100">
                                 Галерея обедов
-                            </Text>
-                        </HStack>
+                            </Heading>
+                        </Flex>
 
                         {lunches.some(l => l.active) && (
                             <Button
