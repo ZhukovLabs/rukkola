@@ -30,43 +30,24 @@ export function Navbar({items}: NavbarProps) {
     const [openIds, setOpenIds] = useState<string[]>([]);
     const [navHeight, setNavHeight] = useState(NAV_HEIGHT);
     const initialTopRef = useRef<number | null>(null);
-    const prevIsFixedRef = useRef(false);
     const isFixedRef = useRef(false);
-
-    useEffect(() => {
-        if (prevIsFixedRef.current && !isFixed && navRef.current) {
-            const rect = navRef.current.getBoundingClientRect();
-            initialTopRef.current = rect.top + window.scrollY;
-        } else if (!prevIsFixedRef.current && !isFixed && navRef.current && window.scrollY <= 10) {
-            initialTopRef.current = window.scrollY;
-        }
-        prevIsFixedRef.current = isFixed;
-    }, [isFixed]);
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
         checkMobile();
         
-        const handleResize = () => {
-            checkMobile();
-            initialTopRef.current = null;
-            if (navRef.current) {
-                const rect = navRef.current.getBoundingClientRect();
-                initialTopRef.current = rect.top + window.scrollY;
-            }
-        };
-        
-        window.addEventListener('resize', handleResize, { passive: true });
-        return () => window.removeEventListener('resize', handleResize);
+        window.addEventListener('resize', checkMobile, { passive: true });
+        return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
     useEffect(() => {
         if (!navRef.current) return;
-        
         const rect = navRef.current.getBoundingClientRect();
-        if (initialTopRef.current === null || rect.top > 0) {
-            initialTopRef.current = rect.top + window.scrollY;
-        }
+        initialTopRef.current = rect.top + window.scrollY;
+    }, []);
+
+    useEffect(() => {
+        if (!navRef.current) return;
         
         const updateHeight = () => {
             if (navRef.current) {
@@ -89,64 +70,58 @@ export function Navbar({items}: NavbarProps) {
     }, [navHeight]);
 
     useEffect(() => {
-        if (!items.length || initialTopRef.current === null) {
-            return;
-        }
+        if (!items.length) return;
         
         const allIds = items.flatMap(item => [item.id, ...(item.children?.map(c => c.id) || [])]);
         
+        let rafId = 0;
+        
         const handleScroll = () => {
-            const currentScrollY = window.scrollY;
+            if (rafId) cancelAnimationFrame(rafId);
             
-            if (initialTopRef.current === null && navRef.current) {
-                const navRect = navRef.current.getBoundingClientRect();
-                initialTopRef.current = navRect.top + currentScrollY;
-            }
-            
-            if (initialTopRef.current === null) return;
-            
-            const threshold = initialTopRef.current;
-            const shouldBeFixed = currentScrollY > threshold;
-            
-            if (currentScrollY === 0 && isFixedRef.current) {
-                initialTopRef.current = null;
-                isFixedRef.current = false;
-                setIsFixed(false);
-                return;
-            }
-            
-            isFixedRef.current = shouldBeFixed;
-            setIsFixed(shouldBeFixed);
-            
-            let foundId: string | null = null;
-            
-            console.log('[Navbar] allIds:', allIds);
-            
-            for (let i = allIds.length - 1; i >= 0; i--) {
-                const id = allIds[i];
-                const sectionId = `section-${id}`;
-                const section = document.getElementById(sectionId) || document.getElementById(id);
-                if (section) {
-                    const rect = section.getBoundingClientRect();
-                    if (rect.top <= window.innerHeight / 2) {
-                        foundId = id;
-                        break;
+            rafId = requestAnimationFrame(() => {
+                if (initialTopRef.current === null) return;
+                
+                const currentScrollY = window.scrollY;
+                const threshold = initialTopRef.current;
+                const shouldBeFixed = currentScrollY > threshold;
+                
+                if (isFixedRef.current !== shouldBeFixed) {
+                    isFixedRef.current = shouldBeFixed;
+                    setIsFixed(shouldBeFixed);
+                }
+                
+                let foundId: string | null = null;
+                
+                for (let i = allIds.length - 1; i >= 0; i--) {
+                    const id = allIds[i];
+                    const sectionId = `section-${id}`;
+                    const section = document.getElementById(sectionId) || document.getElementById(id);
+                    if (section) {
+                        const rect = section.getBoundingClientRect();
+                        if (rect.top <= window.innerHeight / 2) {
+                            foundId = id;
+                            break;
+                        }
                     }
                 }
-            }
-            
-            if (foundId) {
-                setActiveId(foundId);
-            } else if (window.scrollY === 0 && allIds.length > 0) {
-                setActiveId(allIds[0]);
-            }
+                
+                if (foundId) {
+                    setActiveId(foundId);
+                } else if (currentScrollY === 0 && allIds.length > 0) {
+                    setActiveId(allIds[0]);
+                }
+            });
         };
 
         handleScroll();
         
         window.addEventListener("scroll", handleScroll, {passive: true});
         
-        return () => window.removeEventListener("scroll", handleScroll);
+        return () => {
+            window.removeEventListener("scroll", handleScroll);
+            if (rafId) cancelAnimationFrame(rafId);
+        };
     }, [items]);
 
     if (searchParams.has(CART_QUERY_KEY) || searchParams.has(PRODUCT_QUERY_KEY)) return null;
