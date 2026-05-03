@@ -46,7 +46,7 @@ export class CategoriesService {
       await this.auditLogService.createLog(
         userId,
         'Создание категории',
-        `Категория: ${cat.name}`,
+        `Категория: «${cat.name}»`,
       );
     }
 
@@ -65,7 +65,7 @@ export class CategoriesService {
       await this.auditLogService.createLog(
         userId,
         'Обновление категории',
-        `Категория: ${oldName} → ${name}`,
+        `Категория: «${oldName}» → «${name}»`,
       );
     }
 
@@ -90,7 +90,7 @@ export class CategoriesService {
       await this.auditLogService.createLog(
         userId,
         'Удаление категории',
-        `Категория: ${categoryName}`,
+        `Категория: «${categoryName}»`,
       );
     }
 
@@ -110,7 +110,7 @@ export class CategoriesService {
       await this.auditLogService.createLog(
         userId,
         'Изменение свойства категории',
-        `Категория: ${category.name}, ${fieldNames[field]}: ${oldValue ? 'Да' : 'Нет'} → ${!oldValue ? 'Да' : 'Нет'}`,
+        `Категория: «${category.name}», ${fieldNames[field]}: ${oldValue ? 'Да' : 'Нет'} → ${!oldValue ? 'Да' : 'Нет'}`,
       );
     }
 
@@ -161,7 +161,7 @@ export class CategoriesService {
       await this.auditLogService.createLog(
         userId,
         'Перемещение категории',
-        `Категория: ${current.name}, Направление: ${direction === 'up' ? 'Вверх' : 'Вниз'}`,
+        `Категория: «${current.name}», Направление: ${direction === 'up' ? 'Вверх' : 'Вниз'}`,
       );
     }
 
@@ -244,7 +244,7 @@ export class CategoriesService {
       await this.auditLogService.createLog(
         userId,
         'Изменение позиции категории',
-        `Категория: ${category.name}, Новая позиция: ${newPosition + 1}`,
+        `Категория: «${category.name}», Новая позиция: ${newPosition + 1}`,
       );
     }
 
@@ -262,10 +262,17 @@ export class CategoriesService {
     await this.categoryModel.bulkWrite(bulkOps);
 
     if (userId) {
+      const categoryNames = await this.categoryModel
+        .find({ _id: { $in: updates.slice(0, 5).map(u => new Types.ObjectId(u.id)) } })
+        .select('name')
+        .lean();
+      const nameList = categoryNames.map(c => c.name).join(', ');
+      const suffix = updates.length > 5 ? ` и ещё ${updates.length - 5}` : '';
+
       await this.auditLogService.createLog(
         userId,
         'Массовое изменение порядка категорий',
-        `Обновлен порядок для ${updates.length} категорий`,
+        `Изменён порядок: ${nameList}${suffix}`,
       );
     }
 
@@ -311,7 +318,7 @@ export class CategoriesService {
       await this.auditLogService.createLog(
         userId,
         'Отметка алкоголя в категории',
-        `Категория: ${category.name}, Товаров отмечено: ${result.modifiedCount}`,
+        `Категория: «${category.name}», Товаров отмечено: ${result.modifiedCount}`,
       );
     }
 
@@ -357,7 +364,7 @@ export class CategoriesService {
       await this.auditLogService.createLog(
         userId,
         'Снятие отметки алкоголя в категории',
-        `Категория: ${category.name}, Товаров обновлено: ${result.modifiedCount}`,
+        `Категория: «${category.name}», Товаров обновлено: ${result.modifiedCount}`,
       );
     }
 

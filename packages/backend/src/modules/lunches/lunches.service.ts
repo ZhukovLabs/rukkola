@@ -52,7 +52,7 @@ export class LunchesService {
     await lunch.save();
 
     if (userId) {
-      await this.auditLogService.createLog(userId, 'Загрузка обеда', `Загружено изображение обеда`);
+      await this.auditLogService.createLog(userId, 'Загрузка обеда', 'Загружен новый обед');
     }
 
     return { image: imageUrl, id: lunch._id.toString() };
@@ -78,7 +78,7 @@ export class LunchesService {
     await this.lunchModel.deleteOne({ _id: id });
 
     if (userId) {
-      await this.auditLogService.createLog(userId, 'Удаление обеда', `Удалено изображение обеда`);
+      await this.auditLogService.createLog(userId, 'Удаление обеда', 'Удалён обед');
     }
 
     return { success: true };
@@ -93,7 +93,7 @@ export class LunchesService {
     await lunch.save();
 
     if (userId) {
-      await this.auditLogService.createLog(userId, 'Активация обеда', `Обед активирован и отображается на сайте`);
+      await this.auditLogService.createLog(userId, 'Активация обеда', 'Обед активирован и отображается на сайте');
     }
 
     return {
@@ -107,7 +107,7 @@ export class LunchesService {
     const result = await this.lunchModel.updateMany({}, { $set: { active: false } });
 
     if (userId) {
-      await this.auditLogService.createLog(userId, 'Отображение обеда выключено', 'Все обеды скрыты с сайта');
+      await this.auditLogService.createLog(userId, 'Отображение обеда выключено', 'Обед скрыт с сайта');
     }
 
     return { success: true, modifiedCount: result.modifiedCount };

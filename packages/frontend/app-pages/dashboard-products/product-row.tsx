@@ -68,7 +68,7 @@ export const ProductRow = ({
             </Table.Cell>
             <Table.Cell p={4}>
                 <Image
-                    src={p.image || '/placeholder.png'}
+                    src={`${p.image}?w=300` || '/placeholder.png'}
                     alt={p.name}
                     boxSize="60px"
                     borderRadius="md"
@@ -161,7 +161,7 @@ export const ProductRow = ({
                             onClick={() => onToggleAlcohol(p.id)}
                             flexShrink={0}
                         >
-                            {p.isAlcohol ? <FaWineBottle /> : <FaWineGlassAlt />}{p.isAlcohol ? 'Алк.' : 'Без алк.'}
+                            {p.isAlcohol ? <FaWineBottle/> : <FaWineGlassAlt/>}{p.isAlcohol ? 'Алк.' : 'Без алк.'}
                         </Button>
                     </Tooltip>
 
@@ -191,7 +191,7 @@ export const ProductRow = ({
                             onClick={() => onToggle(p.id)}
                             flexShrink={0}
                         >
-                            {p.hidden ? <FaEye /> : <FaEyeSlash />}{p.hidden ? 'Показать' : 'Скрыть'}
+                            {p.hidden ? <FaEye/> : <FaEyeSlash/>}{p.hidden ? 'Показать' : 'Скрыть'}
                         </Button>
                     </Tooltip>
 

@@ -253,7 +253,7 @@ export class ProductsService {
     await this.auditLogService.createLog(
       userId,
       product.hidden ? 'Скрытие товара' : 'Отображение товара',
-      `Товар: ${product.name}`,
+      `Товар: «${product.name}»`,
     );
 
     return {
@@ -291,7 +291,7 @@ export class ProductsService {
     await this.auditLogService.createLog(
       userId,
       'Удаление товара',
-      `Товар: ${productName}`,
+      `Товар: «${productName}»`,
     );
 
     return { id: productId };
@@ -306,6 +306,13 @@ export class ProductsService {
       image: product.image,
       blurDataURL: product.blurDataURL,
     };
+
+    const changes: string[] = [];
+    if (data.name && data.name !== product.name) changes.push(`Название: «${product.name}» → «${data.name}»`);
+    if (data.description !== undefined && data.description !== product.description) changes.push(`Описание изменено`);
+    if (data.hidden !== undefined && data.hidden !== product.hidden) changes.push(`Скрыт: ${product.hidden ? 'Да' : 'Нет'} → ${data.hidden ? 'Да' : 'Нет'}`);
+    if (data.isAlcohol !== undefined && data.isAlcohol !== product.isAlcohol) changes.push(`Алкогольный: ${product.isAlcohol ? 'Да' : 'Нет'} → ${data.isAlcohol ? 'Да' : 'Нет'}`);
+    if (data.removeImage && product.image) changes.push(`Изображение удалено`);
 
     if (data.removeImage && product.image) {
       const oldFileName = product.image.split('/').pop();
@@ -327,10 +334,14 @@ export class ProductsService {
 
     await this.productModel.findByIdAndUpdate(id, updatedData);
 
+    const details = changes.length > 0
+      ? `Товар: «${product.name}», Изменения: ${changes.join(', ')}`
+      : `Товар: «${product.name}»`;
+
     await this.auditLogService.createLog(
       userId,
       'Обновление товара',
-      `Товар: ${data.name || product.name}`,
+      details,
     );
 
     return { id };
@@ -351,7 +362,7 @@ export class ProductsService {
     await this.auditLogService.createLog(
       userId,
       'Создание товара',
-      `Товар: ${product.name}`,
+      `Товар: «${product.name}»`,
     );
 
     return { id: product._id.toString() };
@@ -468,7 +479,7 @@ export class ProductsService {
       await this.auditLogService.createLog(
         userId,
         'Изменение позиции товара',
-        `Товар: ${product?.name}, Новая позиция: ${newPosition + 1}`,
+        `Товар: «${product?.name}», Новая позиция: ${newPosition + 1}`,
       );
     }
 
@@ -489,10 +500,17 @@ export class ProductsService {
 
     await this.productModel.bulkWrite(bulkOps);
 
+    const productNames = await this.productModel
+      .find({ _id: { $in: orderedIds.slice(0, 5).map(id => new Types.ObjectId(id)) } })
+      .select('name')
+      .lean();
+    const nameList = productNames.map(p => p.name).join(', ');
+    const suffix = orderedIds.length > 5 ? ` и ещё ${orderedIds.length - 5}` : '';
+
     await this.auditLogService.createLog(
       userId,
       'Перестановка товаров',
-      `Изменен порядок для ${orderedIds.length} товаров`,
+      `Изменён порядок: ${nameList}${suffix}`,
     );
 
     return { success: true };
@@ -510,10 +528,17 @@ export class ProductsService {
       await this.productModel.bulkWrite(bulkOps);
     }
 
+    const productNames = await this.productModel
+      .find({ _id: { $in: updates.slice(0, 5).map(u => new Types.ObjectId(u.id)) } })
+      .select('name')
+      .lean();
+    const nameList = productNames.map(p => p.name).join(', ');
+    const suffix = updates.length > 5 ? ` и ещё ${updates.length - 5}` : '';
+
     await this.auditLogService.createLog(
       userId,
       'Массовое изменение порядка товаров',
-      `Обновлен порядок для ${updates.length} товаров`,
+      `Изменён порядок: ${nameList}${suffix}`,
     );
 
     return { success: true };
@@ -581,7 +606,7 @@ export class ProductsService {
     await this.auditLogService.createLog(
       userId,
       'Загрузка изображения',
-      `Товар: ${product.name}`,
+      `Товар: «${product.name}»`,
     );
 
     return { image: product.image, blurDataURL: product.blurDataURL };

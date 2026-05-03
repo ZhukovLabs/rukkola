@@ -10,6 +10,7 @@ import { RateLimitService } from './rate-limit.service';
 import { CaptchaService } from './captcha.service';
 import { User, UserSchema } from '../../schemas/user.schema';
 import { Session, SessionSchema } from '../../schemas/session.schema';
+import { AuditLogModule } from '../audit-log/audit-log.module';
 
 @Module({
   imports: [
@@ -19,13 +20,14 @@ import { Session, SessionSchema } from '../../schemas/session.schema';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '5m' }, // Access token: 5 minutes
+        signOptions: { expiresIn: '5m' },
       }),
     }),
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Session.name, schema: SessionSchema },
     ]),
+    AuditLogModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, RateLimitService, CaptchaService],

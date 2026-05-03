@@ -8,6 +8,7 @@ import { User } from '../../schemas/user.schema';
 import { Session } from '../../schemas/session.schema';
 import { RateLimitService } from './rate-limit.service';
 import { CaptchaService } from './captcha.service';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { LoginDto } from './dto/login.dto';
 
 const REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -20,6 +21,7 @@ export class AuthService {
     private jwtService: JwtService,
     private rateLimitService: RateLimitService,
     private captchaService: CaptchaService,
+    private auditLogService: AuditLogService,
   ) {}
 
   private generateTokens(user: any, sessionToken: string, refreshToken: string) {
@@ -99,6 +101,12 @@ export class AuthService {
     user.failedLoginAttempts = 0;
     user.lockUntil = null;
     await user.save();
+
+    await this.auditLogService.createLog(
+      user._id.toString(),
+      'Вход в систему',
+      `${user.name} (@${user.username}) вошёл в систему, IP: ${ip}`,
+    );
 
     // Create session with both tokens
     const sessionToken = uuidv4();
@@ -182,12 +190,24 @@ export class AuthService {
     return this.generateTokens(user, newSessionToken, newRefreshToken);
   }
 
-  async logout(refreshTokenSigned: string): Promise<void> {
+  async logout(refreshTokenSigned: string): Promise<{ userId: string } | null> {
     try {
       const decoded = this.jwtService.verify(refreshTokenSigned);
+      const session = await this.sessionModel.findOne({ token: decoded.sessionToken });
+      if (session) {
+        const user = await this.userModel.findById(session.userId);
+        if (user) {
+          await this.auditLogService.createLog(
+            user._id.toString(),
+            'Выход из системы',
+            `${user.name} (@${user.username}) вышел из системы`,
+          );
+        }
+      }
       await this.sessionModel.deleteOne({ token: decoded.sessionToken });
+      return session ? { userId: session.userId.toString() } : null;
     } catch {
-      // Token invalid, nothing to logout
+      return null;
     }
   }
 

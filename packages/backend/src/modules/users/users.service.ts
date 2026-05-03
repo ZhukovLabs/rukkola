@@ -61,6 +61,22 @@ export class UsersService {
     return users.map((u) => serializeUser(u));
   }
 
+  async getUserById(id: string): Promise<SerializedUser | null> {
+    const user = await this.userModel
+      .findById(id)
+      .lean<{
+        _id: { toString: () => string };
+        username: string;
+        name: string;
+        surname?: string;
+        patronymic?: string;
+        role: string;
+      }>()
+      .exec();
+    if (!user) return null;
+    return serializeUser(user);
+  }
+
   async createUser(data: {
     username: string;
     password: string;

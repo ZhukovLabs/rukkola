@@ -36,10 +36,6 @@ export default function HistoryPage() {
     }
   }, [user, router]);
 
-  if (!user || user.role !== 'admin') {
-    return null;
-  }
-
   const fetchLogs = async (pageNum: number = page) => {
     setLoading(true);
     try {
@@ -58,8 +54,13 @@ export default function HistoryPage() {
   };
 
   useEffect(() => {
+    if (!user || user.role !== 'admin') return;
     fetchLogs(1);
-  }, []);
+  }, [user]);
+
+  if (!user || user.role !== 'admin') {
+    return null;
+  }
 
   const handlePageChange = (newPage: number) => {
     fetchLogs(newPage);
