@@ -11,6 +11,7 @@ import {
     FiGrid,
     FiCoffee,
     FiShoppingBag,
+    FiClock,
 } from "react-icons/fi";
 import { MdDashboard } from "react-icons/md";
 import {useRouter, usePathname} from "next/navigation";
@@ -24,6 +25,7 @@ const menuItems = [
     {label: "Товары", icon: FiBox, path: "/dashboard/products"},
     {label: "Категории", icon: FiGrid, path: "/dashboard/categories"},
     {label: "Обеды", icon: FiCoffee, path: "/dashboard/lunches"},
+    {label: "История", icon: FiClock, path: "/dashboard/history"},
     {label: "Настройки", icon: FiSettings, path: "/dashboard/settings"},
 ];
 

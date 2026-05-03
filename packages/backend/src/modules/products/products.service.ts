@@ -6,6 +6,7 @@ import sharp from 'sharp';
 import { Product } from '../../schemas/product.schema';
 import { Category } from '../../schemas/category.schema';
 import { MinioService } from '../minio/minio.service';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { sanitizeFileName } from '../../common/utils/sanitize';
 import { optimizeImage } from '../../common/utils/image-optimize';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -24,6 +25,7 @@ export class ProductsService {
     @InjectModel(Product.name) private productModel: Model<Product>,
     @InjectModel(Category.name) private categoryModel: Model<Category>,
     private minioService: MinioService,
+    private auditLogService: AuditLogService,
   ) {}
 
   async getProducts(
@@ -241,12 +243,18 @@ export class ProductsService {
     return product;
   }
 
-  async toggleVisibility(productId: string) {
+  async toggleVisibility(productId: string, userId: string) {
     const product = await this.productModel.findById(productId);
     if (!product) throw new NotFoundException('Товар не найден');
 
     product.hidden = !product.hidden;
     await product.save();
+
+    await this.auditLogService.createLog(
+      userId,
+      product.hidden ? 'Скрытие товара' : 'Отображение товара',
+      `Товар: ${product.name}`,
+    );
 
     return {
       id: productId,
@@ -254,12 +262,18 @@ export class ProductsService {
     };
   }
 
-  async toggleAlcohol(productId: string) {
+  async toggleAlcohol(productId: string, userId: string) {
     const product = await this.productModel.findById(productId);
     if (!product) throw new NotFoundException('Товар не найден');
 
     product.isAlcohol = !product.isAlcohol;
     await product.save();
+
+    await this.auditLogService.createLog(
+      userId,
+      'Изменение статуса алкоголя',
+      `Товар: ${product.name}, Алкогольный: ${product.isAlcohol ? 'Да' : 'Нет'}`,
+    );
 
     return {
       id: productId,
@@ -267,16 +281,23 @@ export class ProductsService {
     };
   }
 
-  async deleteProduct(productId: string) {
+  async deleteProduct(productId: string, userId: string) {
     const product = await this.productModel.findById(productId);
     if (!product) throw new NotFoundException('Товар не найден');
 
+    const productName = product.name;
     await product.deleteOne();
+
+    await this.auditLogService.createLog(
+      userId,
+      'Удаление товара',
+      `Товар: ${productName}`,
+    );
 
     return { id: productId };
   }
 
-  async updateProduct(id: string, data: UpdateProductDto) {
+  async updateProduct(id: string, data: UpdateProductDto, userId: string) {
     const product = await this.productModel.findById(id);
     if (!product) throw new NotFoundException('Товар не найден');
 
@@ -306,10 +327,16 @@ export class ProductsService {
 
     await this.productModel.findByIdAndUpdate(id, updatedData);
 
+    await this.auditLogService.createLog(
+      userId,
+      'Обновление товара',
+      `Товар: ${data.name || product.name}`,
+    );
+
     return { id };
   }
 
-  async createProduct(data: CreateProductDto) {
+  async createProduct(data: CreateProductDto, userId: string) {
     const product = new this.productModel({
       name: data.name,
       description: data.description ?? '',
@@ -321,6 +348,12 @@ export class ProductsService {
 
     await product.save();
 
+    await this.auditLogService.createLog(
+      userId,
+      'Создание товара',
+      `Товар: ${product.name}`,
+    );
+
     return { id: product._id.toString() };
   }
 
@@ -329,6 +362,7 @@ export class ProductsService {
     newPosition: number,
     search?: string,
     category?: string,
+    userId?: string,
   ) {
     const filter: Record<string, unknown> = {};
 
@@ -393,7 +427,7 @@ export class ProductsService {
         },
       },
       { $sort: { minCategoryOrder: 1, sortOrder: 1 } },
-      { $project: { _id: 1 } },
+      { $project: { _id: 1, name: 1 } },
     ]);
 
     const productIds = allProducts.map((p: { _id: Types.ObjectId }) =>
@@ -404,6 +438,8 @@ export class ProductsService {
     if (currentIndex === -1) {
       throw new NotFoundException('Товар не найден в списке');
     }
+
+    const product = allProducts.find((p) => p._id.toString() === productId);
 
     if (newPosition < 0 || newPosition >= productIds.length) {
       throw new BadRequestException('Некорректная позиция');
@@ -428,10 +464,18 @@ export class ProductsService {
       await this.productModel.bulkWrite(bulkOps);
     }
 
+    if (userId) {
+      await this.auditLogService.createLog(
+        userId,
+        'Изменение позиции товара',
+        `Товар: ${product?.name}, Новая позиция: ${newPosition + 1}`,
+      );
+    }
+
     return { success: true };
   }
 
-  async swapProducts(orderedIds: string[], pageOffset: number) {
+  async swapProducts(orderedIds: string[], pageOffset: number, userId: string) {
     if (!orderedIds || orderedIds.length === 0) {
       throw new BadRequestException('Список ID пуст');
     }
@@ -445,10 +489,16 @@ export class ProductsService {
 
     await this.productModel.bulkWrite(bulkOps);
 
+    await this.auditLogService.createLog(
+      userId,
+      'Перестановка товаров',
+      `Изменен порядок для ${orderedIds.length} товаров`,
+    );
+
     return { success: true };
   }
 
-  async reorderProducts(updates: Array<{ id: string; order: number }>) {
+  async reorderProducts(updates: Array<{ id: string; order: number }>, userId: string) {
     const bulkOps = updates.map(({ id, order }) => ({
       updateOne: {
         filter: { _id: new Types.ObjectId(id) },
@@ -459,6 +509,12 @@ export class ProductsService {
     if (bulkOps.length > 0) {
       await this.productModel.bulkWrite(bulkOps);
     }
+
+    await this.auditLogService.createLog(
+      userId,
+      'Массовое изменение порядка товаров',
+      `Обновлен порядок для ${updates.length} товаров`,
+    );
 
     return { success: true };
   }
@@ -478,7 +534,7 @@ export class ProductsService {
     return categories;
   }
 
-  async uploadImage(productId: string, file: Express.Multer.File) {
+  async uploadImage(productId: string, file: Express.Multer.File, userId: string) {
     if (!file) {
       throw new BadRequestException('Файл не предоставлен');
     }
@@ -521,6 +577,12 @@ export class ProductsService {
     product.image = `/api/products/image/${encodeURIComponent(fileName)}`;
     product.blurDataURL = await this.generateBlurDataURL(optimizedBuffer);
     await product.save();
+
+    await this.auditLogService.createLog(
+      userId,
+      'Загрузка изображения',
+      `Товар: ${product.name}`,
+    );
 
     return { image: product.image, blurDataURL: product.blurDataURL };
   }

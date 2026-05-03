@@ -3,12 +3,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Category } from '../../schemas/category.schema';
 import { Product } from '../../schemas/product.schema';
+import { AuditLogService } from '../audit-log/audit-log.service';
 
 @Injectable()
 export class CategoriesService {
   constructor(
     @InjectModel(Category.name) private categoryModel: Model<Category>,
     @InjectModel(Product.name) private productModel: Model<Product>,
+    private auditLogService: AuditLogService,
   ) {}
 
   async getAllCategories() {
@@ -20,7 +22,7 @@ export class CategoriesService {
     parentId?: string | null;
     isMenuItem?: boolean;
     showGroupTitle?: boolean;
-  }) {
+  }, userId?: string) {
     const parent = data.parentId ? data.parentId : null;
 
     const top = await this.categoryModel
@@ -40,20 +42,40 @@ export class CategoriesService {
 
     await cat.save();
 
+    if (userId) {
+      await this.auditLogService.createLog(
+        userId,
+        'Создание категории',
+        `Категория: ${cat.name}`,
+      );
+    }
+
     return { id: cat._id.toString() };
   }
 
-  async updateCategoryName(id: string, name: string) {
+  async updateCategoryName(id: string, name: string, userId?: string) {
     const category = await this.categoryModel.findById(id);
     if (!category) throw new NotFoundException('Категория не найдена');
 
+    const oldName = category.name;
     category.name = name;
     await category.save();
+
+    if (userId) {
+      await this.auditLogService.createLog(
+        userId,
+        'Обновление категории',
+        `Категория: ${oldName} → ${name}`,
+      );
+    }
 
     return { success: true };
   }
 
-  async deleteCategory(id: string) {
+  async deleteCategory(id: string, userId?: string) {
+    const category = await this.categoryModel.findById(id);
+    const categoryName = category?.name || 'Неизвестная категория';
+
     const deleteRecursive = async (categoryId: string) => {
       const children = await this.categoryModel.find({ parent: categoryId });
       for (const child of children) {
@@ -64,20 +86,38 @@ export class CategoriesService {
 
     await deleteRecursive(id);
 
+    if (userId) {
+      await this.auditLogService.createLog(
+        userId,
+        'Удаление категории',
+        `Категория: ${categoryName}`,
+      );
+    }
+
     return { success: true };
   }
 
-  async toggleCategoryField(id: string, field: 'isMenuItem' | 'showGroupTitle') {
+  async toggleCategoryField(id: string, field: 'isMenuItem' | 'showGroupTitle', userId?: string) {
     const category = await this.categoryModel.findById(id);
     if (!category) throw new NotFoundException('Категория не найдена');
 
-    (category as any)[field] = !(category as any)[field];
+    const oldValue = (category as any)[field];
+    (category as any)[field] = !oldValue;
     await category.save();
+
+    if (userId) {
+      const fieldNames = { isMenuItem: 'пункт меню', showGroupTitle: 'заголовок группы' };
+      await this.auditLogService.createLog(
+        userId,
+        'Изменение свойства категории',
+        `Категория: ${category.name}, ${fieldNames[field]}: ${oldValue ? 'Да' : 'Нет'} → ${!oldValue ? 'Да' : 'Нет'}`,
+      );
+    }
 
     return { success: true };
   }
 
-  async moveCategory(id: string, direction: 'up' | 'down') {
+  async moveCategory(id: string, direction: 'up' | 'down', userId?: string) {
     const current = await this.categoryModel.findById(id);
     if (!current) throw new NotFoundException('Категория не найдена');
 
@@ -117,6 +157,14 @@ export class CategoriesService {
       direction,
     );
 
+    if (userId) {
+      await this.auditLogService.createLog(
+        userId,
+        'Перемещение категории',
+        `Категория: ${current.name}, Направление: ${direction === 'up' ? 'Вверх' : 'Вниз'}`,
+      );
+    }
+
     return { success: true };
   }
 
@@ -146,8 +194,8 @@ export class CategoriesService {
     }
   }
 
-  async moveCategoryToPosition(categoryId: string, newPosition: number) {
-    const category = await this.categoryModel.findById(categoryId).lean();
+  async moveCategoryToPosition(categoryId: string, newPosition: number, userId?: string) {
+    const category = await this.categoryModel.findById(categoryId);
     if (!category) throw new NotFoundException('Категория не найдена');
 
     const parentId = category.parent?.toString() || null;
@@ -192,10 +240,18 @@ export class CategoriesService {
       await this.categoryModel.bulkWrite(bulkOps);
     }
 
+    if (userId) {
+      await this.auditLogService.createLog(
+        userId,
+        'Изменение позиции категории',
+        `Категория: ${category.name}, Новая позиция: ${newPosition + 1}`,
+      );
+    }
+
     return { success: true };
   }
 
-  async reorderCategories(updates: { id: string; order: number }[]) {
+  async reorderCategories(updates: { id: string; order: number }[], userId?: string) {
     const bulkOps = updates.map(({ id, order }) => ({
       updateOne: {
         filter: { _id: new Types.ObjectId(id) },
@@ -205,10 +261,21 @@ export class CategoriesService {
 
     await this.categoryModel.bulkWrite(bulkOps);
 
+    if (userId) {
+      await this.auditLogService.createLog(
+        userId,
+        'Массовое изменение порядка категорий',
+        `Обновлен порядок для ${updates.length} категорий`,
+      );
+    }
+
     return { success: true };
   }
 
-  async markCategoryProductsAlcohol(categoryId: string) {
+  async markCategoryProductsAlcohol(categoryId: string, userId?: string) {
+    const category = await this.categoryModel.findById(categoryId);
+    if (!category) throw new NotFoundException('Категория не найдена');
+
     const categories = await this.categoryModel.aggregate([
       { $match: { _id: new Types.ObjectId(categoryId) } },
       {
@@ -240,10 +307,21 @@ export class CategoriesService {
       { $set: { isAlcohol: true } },
     );
 
+    if (userId) {
+      await this.auditLogService.createLog(
+        userId,
+        'Отметка алкоголя в категории',
+        `Категория: ${category.name}, Товаров отмечено: ${result.modifiedCount}`,
+      );
+    }
+
     return { updatedCount: result.modifiedCount };
   }
 
-  async markCategoryProductsNonAlcohol(categoryId: string) {
+  async markCategoryProductsNonAlcohol(categoryId: string, userId?: string) {
+    const category = await this.categoryModel.findById(categoryId);
+    if (!category) throw new NotFoundException('Категория не найдена');
+
     const categories = await this.categoryModel.aggregate([
       { $match: { _id: new Types.ObjectId(categoryId) } },
       {
@@ -274,6 +352,14 @@ export class CategoriesService {
       { categories: { $in: categoryIds } },
       { $set: { isAlcohol: false } },
     );
+
+    if (userId) {
+      await this.auditLogService.createLog(
+        userId,
+        'Снятие отметки алкоголя в категории',
+        `Категория: ${category.name}, Товаров обновлено: ${result.modifiedCount}`,
+      );
+    }
 
     return { updatedCount: result.modifiedCount };
   }

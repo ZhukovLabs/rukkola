@@ -8,6 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
 import { User } from '../../schemas/user.schema';
+import { AuditLogService } from '../audit-log/audit-log.service';
 
 export interface SerializedUser {
   _id: string;
@@ -38,7 +39,10 @@ function serializeUser(user: {
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    private auditLogService: AuditLogService,
+  ) {}
 
   async getUsers(): Promise<SerializedUser[]> {
     const users = await this.userModel
@@ -64,7 +68,7 @@ export class UsersService {
     surname?: string;
     patronymic?: string;
     role?: string;
-  }): Promise<SerializedUser> {
+  }, userId?: string): Promise<SerializedUser> {
     const existing = await this.userModel.findOne({ username: data.username });
     if (existing) {
       throw new BadRequestException('Пользователь с таким логином уже существует');
@@ -81,6 +85,14 @@ export class UsersService {
 
     await newUser.save();
 
+    if (userId) {
+      await this.auditLogService.createLog(
+        userId,
+        'Создание пользователя',
+        `Пользователь: ${newUser.name} (@${newUser.username}), Роль: ${newUser.role}`,
+      );
+    }
+
     return serializeUser(newUser);
   }
 
@@ -93,7 +105,18 @@ export class UsersService {
       patronymic?: string;
       role: string;
     }>,
+    userId?: string,
   ): Promise<SerializedUser> {
+    const user = await this.userModel.findById(id);
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    const changes: string[] = [];
+    if (data.name && data.name !== user.name) changes.push(`Имя: ${user.name} → ${data.name}`);
+    if (data.username && data.username !== user.username) changes.push(`Логин: ${user.username} → ${data.username}`);
+    if (data.role && data.role !== user.role) changes.push(`Роль: ${user.role} → ${data.role}`);
+
     const updated = await this.userModel
       .findByIdAndUpdate(id, data, { new: true })
       .lean<{
@@ -110,12 +133,25 @@ export class UsersService {
       throw new NotFoundException('Пользователь не найден');
     }
 
+    if (userId && changes.length > 0) {
+      await this.auditLogService.createLog(
+        userId,
+        'Обновление пользователя',
+        `Пользователь: ${updated.name} (@${updated.username}), Изменения: ${changes.join(', ')}`,
+      );
+    }
+
     return serializeUser(updated);
   }
 
   async deleteUser(id: string, currentUserId: string): Promise<SerializedUser> {
     if (id === currentUserId) {
       throw new ForbiddenException('Нельзя удалить самого себя');
+    }
+
+    const userToDelete = await this.userModel.findById(id);
+    if (!userToDelete) {
+      throw new NotFoundException('Пользователь не найден');
     }
 
     const deleted = await this.userModel
@@ -133,6 +169,12 @@ export class UsersService {
     if (!deleted) {
       throw new NotFoundException('Пользователь не найден');
     }
+
+    await this.auditLogService.createLog(
+      currentUserId,
+      'Удаление пользователя',
+      `Пользователь: ${userToDelete.name} (@${userToDelete.username})`,
+    );
 
     return serializeUser(deleted);
   }

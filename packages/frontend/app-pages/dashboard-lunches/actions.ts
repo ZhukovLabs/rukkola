@@ -1,4 +1,5 @@
 export {
+  uploadLunch,
   getAllLunches,
   activateLunch as activeLunch,
   deactivateAllLunches as deactivateLunch,

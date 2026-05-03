@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @Controller('categories')
 @UseGuards(JwtAuthGuard)
@@ -35,8 +36,9 @@ export class CategoriesController {
       isMenuItem?: boolean;
       showGroupTitle?: boolean;
     },
+    @CurrentUser() user: { id: string },
   ) {
-    const result = await this.categoriesService.createCategory(body);
+    const result = await this.categoriesService.createCategory(body, user.id);
     return {
       success: true,
       message: 'Категория создана',
@@ -45,8 +47,11 @@ export class CategoriesController {
   }
 
   @Patch('reorder')
-  async reorder(@Body() body: { updates: { id: string; order: number }[] }) {
-    const result = await this.categoriesService.reorderCategories(body.updates);
+  async reorder(
+    @Body() body: { updates: { id: string; order: number }[] },
+    @CurrentUser() user: { id: string },
+  ) {
+    const result = await this.categoriesService.reorderCategories(body.updates, user.id);
     return {
       success: true,
       message: 'Порядок категорий обновлен',
@@ -58,8 +63,9 @@ export class CategoriesController {
   async updateName(
     @Param('id') id: string,
     @Body() body: { name: string },
+    @CurrentUser() user: { id: string },
   ) {
-    const result = await this.categoriesService.updateCategoryName(id, body.name);
+    const result = await this.categoriesService.updateCategoryName(id, body.name, user.id);
     return {
       success: true,
       message: 'Название обновлено',
@@ -71,8 +77,9 @@ export class CategoriesController {
   async toggleField(
     @Param('id') id: string,
     @Body() body: { field: 'isMenuItem' | 'showGroupTitle' },
+    @CurrentUser() user: { id: string },
   ) {
-    const result = await this.categoriesService.toggleCategoryField(id, body.field);
+    const result = await this.categoriesService.toggleCategoryField(id, body.field, user.id);
     return {
       success: true,
       message: 'Категория обновлена',
@@ -84,8 +91,9 @@ export class CategoriesController {
   async move(
     @Param('id') id: string,
     @Body() body: { direction: 'up' | 'down' },
+    @CurrentUser() user: { id: string },
   ) {
-    const result = await this.categoriesService.moveCategory(id, body.direction);
+    const result = await this.categoriesService.moveCategory(id, body.direction, user.id);
     return {
       success: true,
       message: 'Категория перемещена',
@@ -97,10 +105,12 @@ export class CategoriesController {
   async moveToPosition(
     @Param('id') id: string,
     @Body() body: { newPosition: number },
+    @CurrentUser() user: { id: string },
   ) {
     const result = await this.categoriesService.moveCategoryToPosition(
       id,
       body.newPosition,
+      user.id,
     );
     return {
       success: true,
@@ -110,8 +120,11 @@ export class CategoriesController {
   }
 
   @Patch(':id/mark-alcohol')
-  async markAlcohol(@Param('id') id: string) {
-    const result = await this.categoriesService.markCategoryProductsAlcohol(id);
+  async markAlcohol(
+    @Param('id') id: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    const result = await this.categoriesService.markCategoryProductsAlcohol(id, user.id);
     return {
       success: true,
       message: `Продукты обновлены: ${result.updatedCount} продуктов помечено как алкогольные`,
@@ -120,8 +133,11 @@ export class CategoriesController {
   }
 
   @Patch(':id/mark-non-alcohol')
-  async markNonAlcohol(@Param('id') id: string) {
-    const result = await this.categoriesService.markCategoryProductsNonAlcohol(id);
+  async markNonAlcohol(
+    @Param('id') id: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    const result = await this.categoriesService.markCategoryProductsNonAlcohol(id, user.id);
     return {
       success: true,
       message: `Продукты обновлены: ${result.updatedCount} продуктов помечено как безалкогольные`,
@@ -130,8 +146,11 @@ export class CategoriesController {
   }
 
   @Delete(':id')
-  async delete(@Param('id') id: string) {
-    const result = await this.categoriesService.deleteCategory(id);
+  async delete(
+    @Param('id') id: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    const result = await this.categoriesService.deleteCategory(id, user.id);
     return {
       success: true,
       message: 'Категория удалена',

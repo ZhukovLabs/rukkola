@@ -44,8 +44,9 @@ export class UsersController {
       patronymic?: string;
       role?: string;
     },
+    @CurrentUser() currentUser: { id: string },
   ) {
-    const user = await this.usersService.createUser(body);
+    const user = await this.usersService.createUser(body, currentUser.id);
     return {
       success: true,
       message: 'Пользователь создан',
@@ -65,6 +66,13 @@ export class UsersController {
       body.oldPassword,
       body.newPassword,
     );
+
+    await this.usersService['auditLogService']?.createLog(
+      currentUser.id,
+      'Изменение пароля',
+      `Пользователь ID: ${id}`,
+    );
+
     return {
       success: true,
       message: 'Пароль успешно обновлён',
@@ -84,8 +92,9 @@ export class UsersController {
       patronymic?: string;
       role: string;
     }>,
+    @CurrentUser() currentUser: { id: string },
   ) {
-    const user = await this.usersService.updateUser(id, body);
+    const user = await this.usersService.updateUser(id, body, currentUser.id);
     return {
       success: true,
       message: 'Пользователь обновлён',

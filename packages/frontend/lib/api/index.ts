@@ -94,3 +94,5 @@ export type {
   DashboardStats,
   DashboardData,
 } from './dashboard';
+
+export { auditLogsApi } from './audit-logs';

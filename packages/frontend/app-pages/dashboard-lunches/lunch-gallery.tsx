@@ -16,7 +16,7 @@ import {
     Icon,
 } from '@chakra-ui/react';
 import {FiUpload, FiStar, FiTrash2, FiPower, FiImage} from 'react-icons/fi';
-import {activeLunch, deleteLunch, deactivateLunch} from './actions';
+import {uploadLunch, activeLunch, deleteLunch, deactivateLunch} from './actions';
 import {useConfirmationDialog} from '@/hooks/use-confirmation-dialog';
 import {useToast} from '@/components/toast-container';
 import {revalidateMenu} from '@/lib/api/revalidate';
@@ -134,19 +134,14 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
     const handleUpload = async () => {
         if (!file) return;
 
-        const formData = new FormData();
-        formData.append('file', file);
-
         try {
-            const res = await fetch('/api/lunches/upload', {method: 'POST', body: formData});
-            if (res.ok) {
-                const data = await res.json();
-                dispatch({type: 'ADD_LUNCH', payload: {id: data.id, image: data.image}});
+            const res = await uploadLunch(file);
+            if (res?.success && res?.data) {
+                dispatch({type: 'ADD_LUNCH', payload: {id: res.data.id, image: res.data.image}});
                 revalidateMenu();
                 toast.showSuccess('Изображение успешно загружено');
             } else {
-                const errorData = await res.json();
-                toast.showError(errorData?.error || 'Не удалось загрузить изображение');
+                toast.showError(res?.message || 'Не удалось загрузить изображение');
             }
         } catch (err) {
             console.error('Upload error', err);

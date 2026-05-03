@@ -16,6 +16,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { LunchesService } from './lunches.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @Controller('lunches')
 export class LunchesController {
@@ -63,8 +64,8 @@ export class LunchesController {
   @UseGuards(JwtAuthGuard)
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
-  async upload(@UploadedFile() file: Express.Multer.File) {
-    const result = await this.lunchesService.uploadLunch(file);
+  async upload(@UploadedFile() file: Express.Multer.File, @CurrentUser() user: { id: string }) {
+    const result = await this.lunchesService.uploadLunch(file, user.id);
     return {
       success: true,
       message: 'Обед загружен',
@@ -74,8 +75,8 @@ export class LunchesController {
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id/activate')
-  async activate(@Param('id') id: string) {
-    const result = await this.lunchesService.activateLunch(id);
+  async activate(@Param('id') id: string, @CurrentUser() user: { id: string }) {
+    const result = await this.lunchesService.activateLunch(id, user.id);
     return {
       success: true,
       message: 'Обед активирован',
@@ -85,8 +86,8 @@ export class LunchesController {
 
   @UseGuards(JwtAuthGuard)
   @Patch('deactivate')
-  async deactivate() {
-    const result = await this.lunchesService.deactivateAll();
+  async deactivate(@CurrentUser() user: { id: string }) {
+    const result = await this.lunchesService.deactivateAll(user.id);
     return {
       success: true,
       message: 'Все обеды деактивированы',
@@ -96,8 +97,8 @@ export class LunchesController {
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  async delete(@Param('id') id: string) {
-    const result = await this.lunchesService.deleteLunch(id);
+  async delete(@Param('id') id: string, @CurrentUser() user: { id: string }) {
+    const result = await this.lunchesService.deleteLunch(id, user.id);
     return {
       success: true,
       message: 'Обед удалён',

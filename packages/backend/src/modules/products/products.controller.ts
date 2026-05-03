@@ -17,6 +17,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { ProductsService } from './products.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
@@ -97,8 +98,8 @@ export class ProductsController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  async createProduct(@Body() data: CreateProductDto) {
-    const result = await this.productsService.createProduct(data);
+  async createProduct(@Body() data: CreateProductDto, @CurrentUser('id') userId: string) {
+    const result = await this.productsService.createProduct(data, userId);
     return {
       success: true,
       message: 'Товар создан',
@@ -110,8 +111,9 @@ export class ProductsController {
   @Patch('reorder')
   async reorderProducts(
     @Body() body: { updates: Array<{ id: string; order: number }> },
+    @CurrentUser('id') userId: string,
   ) {
-    const result = await this.productsService.reorderProducts(body.updates);
+    const result = await this.productsService.reorderProducts(body.updates, userId);
     return {
       success: true,
       message: 'Порядок товаров обновлён',
@@ -123,10 +125,12 @@ export class ProductsController {
   @Patch('swap')
   async swapProducts(
     @Body() body: { orderedIds: string[]; pageOffset: number },
+    @CurrentUser('id') userId: string,
   ) {
     const result = await this.productsService.swapProducts(
       body.orderedIds,
       body.pageOffset,
+      userId,
     );
     return {
       success: true,
@@ -137,8 +141,8 @@ export class ProductsController {
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id/visibility')
-  async toggleVisibility(@Param('id') id: string) {
-    const result = await this.productsService.toggleVisibility(id);
+  async toggleVisibility(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    const result = await this.productsService.toggleVisibility(id, userId);
     return {
       success: true,
       message: result.hidden ? 'Товар скрыт' : 'Товар отображается',
@@ -148,8 +152,8 @@ export class ProductsController {
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id/alcohol')
-  async toggleAlcohol(@Param('id') id: string) {
-    const result = await this.productsService.toggleAlcohol(id);
+  async toggleAlcohol(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    const result = await this.productsService.toggleAlcohol(id, userId);
     return {
       success: true,
       message: result.isAlcohol
@@ -164,12 +168,14 @@ export class ProductsController {
   async moveToPosition(
     @Param('id') id: string,
     @Body() body: { newPosition: number; search?: string; category?: string },
+    @CurrentUser('id') userId: string,
   ) {
     const result = await this.productsService.moveToPosition(
       id,
       body.newPosition,
       body.search,
       body.category,
+      userId,
     );
     return {
       success: true,
@@ -183,8 +189,9 @@ export class ProductsController {
   async updateProduct(
     @Param('id') id: string,
     @Body() data: UpdateProductDto,
+    @CurrentUser('id') userId: string,
   ) {
-    const result = await this.productsService.updateProduct(id, data);
+    const result = await this.productsService.updateProduct(id, data, userId);
     return {
       success: true,
       message: 'Товар обновлён',
@@ -194,8 +201,8 @@ export class ProductsController {
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  async deleteProduct(@Param('id') id: string) {
-    const result = await this.productsService.deleteProduct(id);
+  async deleteProduct(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    const result = await this.productsService.deleteProduct(id, userId);
     return {
       success: true,
       message: 'Товар удалён',
@@ -209,8 +216,9 @@ export class ProductsController {
   async uploadImage(
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
+    @CurrentUser('id') userId: string,
   ) {
-    const result = await this.productsService.uploadImage(id, file);
+    const result = await this.productsService.uploadImage(id, file, userId);
     return {
       success: true,
       message: 'Изображение загружено',

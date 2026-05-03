@@ -9,6 +9,7 @@ import { UsersModule } from './modules/users/users.module';
 import { MenuModule } from './modules/menu/menu.module';
 import { HealthModule } from './modules/health/health.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { AuditLogModule } from './modules/audit-log/audit-log.module';
 import { MinioModule } from './modules/minio/minio.module';
 import * as path from 'path';
 
@@ -46,6 +47,7 @@ const ROOT_DIR = path.resolve(__dirname, '..', '..', '..');
     MenuModule,
     HealthModule,
     DashboardModule,
+    AuditLogModule,
     MinioModule,
   ],
 })

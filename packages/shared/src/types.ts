@@ -224,3 +224,24 @@ export interface ReorderItem {
   id: string;
   order: number;
 }
+
+// =====================
+// Audit Log Types
+// =====================
+export interface AuditLogDto {
+  id: string;
+  user: {
+    id: string;
+    username: string;
+    name: string;
+  };
+  action: string;
+  details: string;
+  createdAt: string;
+}
+
+export interface AuditLogListResponse {
+  logs: AuditLogDto[];
+  total: number;
+  totalPages: number;
+}

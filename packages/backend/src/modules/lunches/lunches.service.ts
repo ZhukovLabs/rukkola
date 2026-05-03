@@ -5,6 +5,7 @@ import { LRUCache } from 'lru-cache';
 import sharp from 'sharp';
 import { Lunch } from '../../schemas/lunch.schema';
 import { MinioService } from '../minio/minio.service';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { optimizeImage } from '../../common/utils/image-optimize';
 
 const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
@@ -19,13 +20,14 @@ export class LunchesService {
   constructor(
     @InjectModel(Lunch.name) private lunchModel: Model<Lunch>,
     private minioService: MinioService,
+    private auditLogService: AuditLogService,
   ) {}
 
   async getAllLunches() {
     return this.lunchModel.find().sort({ createdAt: -1 }).lean();
   }
 
-  async uploadLunch(file: Express.Multer.File) {
+  async uploadLunch(file: Express.Multer.File, userId?: string) {
     if (!file) {
       throw new BadRequestException('Файл не предоставлен');
     }
@@ -49,10 +51,14 @@ export class LunchesService {
     const lunch = new this.lunchModel({ image: imageUrl });
     await lunch.save();
 
+    if (userId) {
+      await this.auditLogService.createLog(userId, 'Загрузка обеда', `Загружено изображение обеда`);
+    }
+
     return { image: imageUrl, id: lunch._id.toString() };
   }
 
-  async deleteLunch(id: string) {
+  async deleteLunch(id: string, userId?: string) {
     const lunch = await this.lunchModel.findById(id);
     if (!lunch) throw new NotFoundException('Обед не найден');
 
@@ -71,16 +77,24 @@ export class LunchesService {
 
     await this.lunchModel.deleteOne({ _id: id });
 
+    if (userId) {
+      await this.auditLogService.createLog(userId, 'Удаление обеда', `Удалено изображение обеда`);
+    }
+
     return { success: true };
   }
 
-  async activateLunch(id: string) {
+  async activateLunch(id: string, userId?: string) {
     const lunch = await this.lunchModel.findById(id);
     if (!lunch) throw new NotFoundException('Обед не найден');
 
     await this.lunchModel.updateMany({}, { $set: { active: false } });
     lunch.active = true;
     await lunch.save();
+
+    if (userId) {
+      await this.auditLogService.createLog(userId, 'Активация обеда', `Обед активирован и отображается на сайте`);
+    }
 
     return {
       _id: lunch._id.toString(),
@@ -89,9 +103,14 @@ export class LunchesService {
     };
   }
 
-  async deactivateAll() {
-    await this.lunchModel.updateMany({}, { $set: { active: false } });
-    return { success: true };
+  async deactivateAll(userId?: string) {
+    const result = await this.lunchModel.updateMany({}, { $set: { active: false } });
+
+    if (userId) {
+      await this.auditLogService.createLog(userId, 'Отображение обеда выключено', 'Все обеды скрыты с сайта');
+    }
+
+    return { success: true, modifiedCount: result.modifiedCount };
   }
 
   async serveImage(filename: string, width?: number) {
