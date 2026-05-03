@@ -20,19 +20,26 @@ import {useState} from "react";
 
 const MotionBox = motion.create(Box);
 
-const menuItems = [
+type MenuItem = {
+    label: string;
+    icon: typeof FiHome;
+    path: string;
+    roles?: ('admin' | 'moderator')[];
+};
+
+const menuItems: MenuItem[] = [
     {label: "Главная", icon: FiHome, path: "/dashboard"},
     {label: "Товары", icon: FiBox, path: "/dashboard/products"},
     {label: "Категории", icon: FiGrid, path: "/dashboard/categories"},
     {label: "Обеды", icon: FiCoffee, path: "/dashboard/lunches"},
-    {label: "История", icon: FiClock, path: "/dashboard/history"},
+    {label: "История", icon: FiClock, path: "/dashboard/history", roles: ['admin']},
     {label: "Настройки", icon: FiSettings, path: "/dashboard/settings"},
 ];
 
 export const DashboardLayout = ({children}: { children: React.ReactNode }) => {
     const router = useRouter();
     const pathname = usePathname();
-    const {logout} = useAuth();
+    const {logout, user} = useAuth();
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const sidebarBg = "linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%)";
@@ -128,7 +135,9 @@ export const DashboardLayout = ({children}: { children: React.ReactNode }) => {
                     </Text>
 
                     <VStack align="stretch" gap={1}>
-                        {menuItems.map((item) => {
+                        {menuItems
+                            .filter((item) => !item.roles || user && item.roles.includes(user.role))
+                            .map((item) => {
                             const isActive = pathname === item.path;
                             return (
                                 <Flex

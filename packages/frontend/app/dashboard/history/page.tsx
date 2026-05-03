@@ -12,7 +12,9 @@ import {
   IconButton,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { auditLogsApi } from "@/lib/api";
+import { useAuth } from "@/lib/auth/auth-context";
 import { AuditLogDto } from "@rukkola/shared";
 import { FiRefreshCw } from "react-icons/fi";
 import { Pagination } from "@/components/pagination";
@@ -20,11 +22,23 @@ import { Pagination } from "@/components/pagination";
 const PAGE_SIZE = 20;
 
 export default function HistoryPage() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [logs, setLogs] = useState<AuditLogDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    if (user && user.role !== 'admin') {
+      router.replace('/dashboard');
+    }
+  }, [user, router]);
+
+  if (!user || user.role !== 'admin') {
+    return null;
+  }
 
   const fetchLogs = async (pageNum: number = page) => {
     setLoading(true);
