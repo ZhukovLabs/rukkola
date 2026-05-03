@@ -11,6 +11,7 @@ const BACKEND_BASE = BACKEND_URL.replace(/\/api\/?$/, '');
 
 const nextConfig: NextConfig = {
     output: 'standalone',
+    allowedDevOrigins: ['192.168.0.144'],
     async redirects() {
         return [
             {

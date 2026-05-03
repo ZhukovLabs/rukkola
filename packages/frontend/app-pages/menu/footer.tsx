@@ -4,6 +4,7 @@ import { Box, Flex, Text, Icon, Stack, Link } from "@chakra-ui/react";
 import { Phone, Clock, MapPin, ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
 import {ElementType, useMemo} from "react";
+import NextLink from "next/link";
 
 const MotionLink = motion(Link);
 
@@ -89,6 +90,10 @@ export const Footer = () => {
             </Flex>
 
             <Box textAlign="center" mt={10} fontSize="sm" color="gray.500" borderTop="1px solid rgba(255,255,255,0.08)" pt={6}>
+                <Flex justify="center" gap={6} mb={4}>
+                    <Link as={NextLink} href="/faq" _hover={{ color: "gray.300" }}>FAQ</Link>
+                    <Link as={NextLink} href="/privacy" _hover={{ color: "gray.300" }}>Приватность</Link>
+                </Flex>
                 © {year} Все права защищены
             </Box>
         </Box>

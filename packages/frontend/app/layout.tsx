@@ -21,22 +21,33 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://rukkola-gomel.by";
 
 const restaurantSchema = {
     "@context": "https://schema.org",
-    "@type": ["Restaurant", "FoodEstablishment"],
+    "@type": "Restaurant",
     "@id": `${BASE_URL}/#restaurant`,
     name: "Руккола",
     url: BASE_URL,
-    logo: `${BASE_URL}/logo.svg`,
-    image: `${BASE_URL}/og-image.webp`,
-    description: "Кафе Руккола в центре Гомеля на Советской 60. Авторская пицца, свежие суши, роллы и блюда паназиатской кухни. Актуальное меню с ценами, фотографии блюд, завтраки и ланчи.",
-    telephone: "+375447703003",
-    priceRange: "$$",
-    servesCuisine: ["Итальянская кухня", "Японская кухня", "Паназиатская кухня", "Пицца", "Суши", "Роллы", "Завтраки", "Обеды"],
-    hasMenu: {
-        "@type": "Menu",
-        name: "Меню кафе Руккола",
-        description: "Полное меню кафе Руккола с актуальными ценами: пицца, суши, роллы, паназиатские блюда.",
-        url: `${BASE_URL}/`
+    logo: {
+        "@type": "ImageObject",
+        "url": `${BASE_URL}/logo.svg`,
+        "width": "400",
+        "height": "200"
     },
+    image: {
+        "@type": "ImageObject",
+        "url": `${BASE_URL}/og-image.webp`,
+        "width": "1200",
+        "height": "630"
+    },
+    description: "Уютное кафе Руккола в центре Гомеля. Авторская пицца на тонком тесте, свежие суши и роллы, блюда паназиатской кухни. Ежедневные ланчи и завтраки на Советской 60.",
+    telephone: "+375447703003",
+    priceRange: "BYN",
+    servesCuisine: [
+        "Italian", 
+        "Japanese", 
+        "Pan-Asian", 
+        "Pizza", 
+        "Sushi",
+        "European"
+    ],
     address: {
         "@type": "PostalAddress",
         streetAddress: "ул. Советская, 60",
@@ -58,20 +69,34 @@ const restaurantSchema = {
             closes: "23:00"
         }
     ],
-    acceptsReservations: true,
+    acceptsReservations: "true",
     aggregateRating: {
         "@type": "AggregateRating",
-        ratingValue: 4.8,
-        reviewCount: 347
+        ratingValue: "4.8",
+        reviewCount: "347",
+        bestRating: "5",
+        worstRating: "1"
     },
     paymentAccepted: ["Cash", "Credit Card"],
     currenciesAccepted: "BYN",
-    contactPoint: {
-        "@type": "ContactPoint",
-        telephone: "+375447703003",
-        contactType: "customer service",
-        areaServed: "BY",
-        availableLanguage: ["Russian", "Belarusian"]
+    potentialAction: {
+        "@type": "OrderAction",
+        "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": `${BASE_URL}/`,
+            "inLanguage": "ru",
+            "actionPlatform": [
+                "http://schema.org/DesktopWebPlatform",
+                "http://schema.org/MobileWebPlatform"
+            ]
+        },
+        "deliveryMethod": ["http://purl.org/goodrelations/v1#Pickup"],
+        "priceSpecification": {
+            "@type": "DeliveryChargeSpecification",
+            "appliesToDeliveryMethod": "http://purl.org/goodrelations/v1#Pickup",
+            "priceCurrency": "BYN",
+            "price": "0"
+        }
     },
     areaServed: {
         "@type": "City",
@@ -80,94 +105,20 @@ const restaurantSchema = {
     sameAs: [
         "https://www.instagram.com/rukkola.gomel",
         "https://vk.com/rukkola_gomel"
-    ]
-};
-
-const breadcrumbSchema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-        {
-            "@type": "ListItem",
-            position: 1,
-            name: "Главная",
-            item: BASE_URL
-        },
-        {
-            "@type": "ListItem",
-            position: 2,
-            name: "Меню и цены",
-            item: BASE_URL
-        }
-    ]
-};
-
-const faqSchema = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: [
-        {
-            "@type": "Question",
-            name: "Где находится кафе Руккола в Гомеле?",
-            acceptedAnswer: {
-                "@type": "Answer",
-                text: "Кафе Руккола расположено в самом центре Гомеля по адресу: ул. Советская, 60 (возле ГГУ им. Ф. Скорины). Вы всегда можете найти нас по яркой вывеске на главной улице города."
-            }
-        },
-        {
-            "@type": "Question",
-            name: "Какое меню и цены в Рукколе на Советской?",
-            acceptedAnswer: {
-                "@type": "Answer",
-                text: "В нашем меню представлена авторская пицца от 15 BYN, свежие суши и роллы, а также блюда паназиатской кухни. Полное актуальное меню с ценами и фото доступно на нашем сайте."
-            }
-        },
-        {
-            "@type": "Question",
-            name: "Есть ли доставка еды из кафе Руккола?",
-            acceptedAnswer: {
-                "@type": "Answer",
-                text: "На данный момент мы работаем в формате кафе и навынос (самовывоз). Вы можете оформить заказ по телефону +375 (44) 770-30-03 и забрать его самостоятельно в удобное время."
-            }
-        },
-        {
-            "@type": "Question",
-            name: "Есть ли в Рукколе завтраки и обеденное меню?",
-            acceptedAnswer: {
-                "@type": "Answer",
-                text: "Да! Мы предлагаем сытные завтраки и разнообразное обеденное меню (ланчи) по будням. Приходите к нам на вкусный и быстрый обед в центре Гомеля."
-            }
-        }
-    ]
+    ],
+    hasMenu: `${BASE_URL}/#menu`
 };
 
 export const metadata: Metadata = {
     metadataBase: new URL(BASE_URL),
     title: {
-        default: "Руккола Гомель — Меню и цены | Кафе на Советской 60",
+        default: "Руккола Гомель — Кафе на Советской | Пицца, Суши, Ланчи",
         template: "%s | Руккола Гомель",
     },
-    description: "Кафе Руккола в Гомеле: авторская пицца, свежие суши и роллы. Посмотрите наше актуальное меню с ценами и фото. Завтраки и ланчи в центре Гомеля на Советской 60. Заказывайте навынос: +375(44)770-30-03.",
+    description: "Кафе Руккола в Гомеле (Советская 60). Посмотрите меню с ценами: авторская пицца, свежие роллы, суши и WOK. Завтраки и обеды ежедневно 12:00-23:00. Бронь столов: +375 (44) 770-30-03.",
     
-    keywords: [
-        "руккола гомель",
-        "рукола гомель",
-        "руккола гомель меню",
-        "руккола гомель цены",
-        "кафе гомель советская",
-        "пицца гомель заказать",
-        "суши гомель доставка",
-        "роллы гомель цены",
-        "где поесть в гомеле",
-        "завтраки гомель",
-        "обеденное меню гомель",
-        "ланчи гомель",
-        "пиццерия гомель",
-        "суши бар гомель",
-        "rukkola gomel",
-        "советская 60 гомель",
-    ],
-
+    keywords: ["кафе гомель", "пицца гомель", "суши гомель", "руккола гомель", "где поесть гомель", "ланч гомель", "завтрак гомель", "советская 60 гомель"],
+    
     authors: [{ name: "Руккола" }],
     creator: "Руккола",
     publisher: "Руккола",
@@ -197,7 +148,7 @@ export const metadata: Metadata = {
         url: BASE_URL,
         siteName: "Кафе Руккола в Гомеле",
         title: "Руккола Гомель — Авторская пицца и свежие суши",
-        description: "Посмотрите наше актуальное меню с ценами и фото. Ждем вас на Советской 60 в Гомеле. Пицца, суши, роллы, ланчи и завтраки.",
+        description: "Актуальное меню с ценами и фото. Ждем вас на Советской 60 в центре Гомеля. Пицца, суши, роллы, ланчи и завтраки.",
         images: [
             {
                 url: "/og-image.webp",
@@ -270,21 +221,16 @@ export default function RootLayout({
                                     }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const schemas = [restaurantSchema, breadcrumbSchema, faqSchema];
-    
     return (
         <html lang="ru" suppressHydrationWarning>
         <head>
             <link rel="preconnect" href="https://mc.yandex.ru" crossOrigin="anonymous" />
             <link rel="dns-prefetch" href="https://mc.yandex.ru" />
             
-            {schemas.map((schema, index) => (
-                <script
-                    key={index}
-                    type="application/ld+json"
-                    dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-                />
-            ))}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(restaurantSchema) }}
+            />
         </head>
 
         <body className={`${geistSans.variable} ${geistMono.variable}`}>

@@ -1,46 +1,36 @@
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
-  siteUrl: process.env.SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://rukkola-gomel.by',
+  siteUrl: process.env.NEXT_PUBLIC_BASE_URL || 'https://rukkola-gomel.by',
   generateRobotsTxt: true,
   generateIndexSitemap: false,
-  sitemapSize: 1000,
+  autoLastmod: true,
   changefreq: 'daily',
-  priority: 0.7,
-
-  // Exclude administrative and technical pages from sitemap
   exclude: [
-    '/dashboard',
-    '/dashboard/**',
-    '/api/**',
-    '/login',
+    '/dashboard*',
+    '/login*',
+    '/api*',
     '/404',
-    '/_next/**',
+    '/not-found'
   ],
-
   transform: async (config, path) => {
-    // Custom exclusions
-    if (
-      path.startsWith('/dashboard') || 
-      path.startsWith('/api') || 
-      path === '/login' || 
-      path === '/404'
-    ) {
-      return null
+    if (path === '/') {
+      return null;
     }
 
-    // We handle home page in additionalPaths to ensure it's always included with images
-    if (path === '/') {
-      return null
+    let priority = 0.7;
+    if (path === '/faq') {
+      priority = 0.8;
+    } else if (path === '/privacy') {
+      priority = 0.3;
     }
 
     return {
       loc: path,
       changefreq: config.changefreq,
-      priority: config.priority,
-      lastmod: new Date().toISOString(),
+      priority: priority,
+      lastmod: config.autoLastmod ? new Date().toISOString() : undefined,
     }
   },
-
   additionalPaths: async (config) => [
     {
       loc: '/',
@@ -57,23 +47,26 @@ module.exports = {
       ],
     },
   ],
-
   robotsTxtOptions: {
     policies: [
       {
         userAgent: '*',
         allow: '/',
         disallow: [
-          '/dashboard',
-          '/api',
-          '/login',
-          '/404',
-          '/_next/',
+          '/dashboard*',
+          '/login*',
+          '/api*',
+          '/*.json$',
+          '/_next/'
         ],
       },
+      {
+        userAgent: 'Yandex',
+        cleanParam: 'utm_source&utm_medium&utm_campaign'
+      }
     ],
     additionalSitemaps: [
-      `${process.env.SITE_URL || 'https://rukkola-gomel.by'}/sitemap.xml`,
+      `${process.env.NEXT_PUBLIC_BASE_URL || 'https://rukkola-gomel.by'}/sitemap.xml`,
     ],
   },
 }

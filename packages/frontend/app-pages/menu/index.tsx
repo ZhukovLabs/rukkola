@@ -9,6 +9,7 @@ import {CookieNotice} from "@/components/cookie-notice";
 
 const Footer = dynamic(() => import("./footer").then(m => m.Footer));
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://rukkola-gomel.by";
 const INTERNAL_API = process.env.INTERNAL_API_URL || 'http://localhost:4000/api';
 
 type MenuPageProps = {

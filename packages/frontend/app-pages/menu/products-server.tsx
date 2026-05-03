@@ -56,6 +56,8 @@ const transformProduct = (p: RawProduct): ProductClientType => ({
     order: p.order ?? 0,
 });
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://rukkola-gomel.by";
+
 export async function ProductsServer({alcoholIsVisible, hasError}: ProductsServerProps) {
     let grouped: ProductGroupClientType[] = [];
     let uncategorized: ProductClientType[] = [];
@@ -98,5 +100,51 @@ export async function ProductsServer({alcoholIsVisible, hasError}: ProductsServe
         return <ErrorFallback />;
     }
 
-    return <Products grouped={grouped} uncategorized={uncategorized}/>;
+    const menuSchema = {
+        "@context": "https://schema.org",
+        "@type": "Menu",
+        "name": "Меню кафе Руккола",
+        "mainEntityOfPage": BASE_URL,
+        "inLanguage": "ru",
+        "hasMenuSection": grouped.map(group => ({
+            "@type": "MenuSection",
+            "name": group.categoryName,
+            "hasMenuItem": [
+                ...group.directProducts.map(p => ({
+                    "@type": "MenuItem",
+                    "name": p.name,
+                    "description": p.description || p.name,
+                    "image": p.image ? (p.image.startsWith('http') ? p.image : `${BASE_URL}${p.image}`) : undefined,
+                    "offers": p.prices.map(price => ({
+                        "@type": "Offer",
+                        "price": price.price,
+                        "priceCurrency": "BYN",
+                        "description": price.size
+                    }))
+                })),
+                ...group.subgroups.flatMap(sub => sub.products.map(p => ({
+                    "@type": "MenuItem",
+                    "name": p.name,
+                    "description": p.description || p.name,
+                    "image": p.image ? (p.image.startsWith('http') ? p.image : `${BASE_URL}${p.image}`) : undefined,
+                    "offers": p.prices.map(price => ({
+                        "@type": "Offer",
+                        "price": price.price,
+                        "priceCurrency": "BYN",
+                        "description": price.size
+                    }))
+                })))
+            ]
+        }))
+    };
+
+    return (
+        <>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(menuSchema) }}
+            />
+            <Products grouped={grouped} uncategorized={uncategorized}/>
+        </>
+    );
 }
