@@ -6,7 +6,6 @@ import {motion} from "framer-motion";
 import {useIsLowPerformanceDevice} from "@/hooks/use-is-low-performance-device";
 
 const MotionIcon = motion(Icon);
-const MotionButton = motion(Button);
 
 export const ScrollToFooterButton = () => {
     const disableMotion = useIsLowPerformanceDevice();
@@ -17,7 +16,7 @@ export const ScrollToFooterButton = () => {
 
     return (
         <Flex direction="column" align="center" gap={{base: 3, md: 4}}>
-            <MotionButton
+            <Button
                 onClick={handleClick}
                 px={{base: 6, md: 8}}
                 py={5}
@@ -26,9 +25,6 @@ export const ScrollToFooterButton = () => {
                 display="flex"
                 alignItems="center"
                 gap={2}
-                initial={!disableMotion ? {opacity: 0, y: -15} : undefined}
-                animate={!disableMotion ? {opacity: 1, y: 0} : undefined}
-                transition={!disableMotion ? {duration: 0.4} : undefined}
             >
                 {disableMotion ? <>
                     <Icon as={FiChevronDown} boxSize={5}/>
@@ -60,7 +56,7 @@ export const ScrollToFooterButton = () => {
                         />
                     </>
                 )}
-            </MotionButton>
+            </Button>
         </Flex>
     );
 };
