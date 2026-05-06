@@ -2,60 +2,55 @@
 
 import {Flex, Button, Icon} from "@chakra-ui/react";
 import {FiChevronDown} from "react-icons/fi";
-import {motion} from "framer-motion";
-import {useIsLowPerformanceDevice} from "@/hooks/use-is-low-performance-device";
-
-const MotionIcon = motion(Icon);
 
 export const ScrollToFooterButton = () => {
-    const disableMotion = useIsLowPerformanceDevice();
-
     const handleClick = () => {
-        window.scrollTo({top: document.body.scrollHeight, behavior: "smooth"});
+        const footer = document.querySelector('footer');
+        if (footer) {
+            footer.scrollIntoView({ behavior: 'smooth' });
+        } else {
+            window.scrollTo({top: document.body.scrollHeight, behavior: "smooth"});
+        }
     };
 
     return (
-        <Flex direction="column" align="center" gap={{base: 3, md: 4}}>
+        <Flex
+            direction="column"
+            align="center"
+            pt={4}
+            pb={10}
+        >
             <Button
                 onClick={handleClick}
-                px={{base: 6, md: 8}}
-                py={5}
-                fontSize={{base: "sm", md: "md"}}
+                variant="outline"
+                h="auto"
+                px={5}
+                py={2.5}
+                fontSize="10px"
+                fontWeight="medium"
+                letterSpacing="0.02em"
+                textTransform="uppercase"
                 borderRadius="full"
                 display="flex"
                 alignItems="center"
                 gap={2}
+                color="whiteAlpha.700"
+                borderColor="whiteAlpha.200"
+                bg="whiteAlpha.50"
+                backdropFilter="blur(8px)"
+                transition="all 0.3s ease"
+                _hover={{
+                    borderColor: "whiteAlpha.400",
+                    color: "whiteAlpha.900",
+                    bg: "whiteAlpha.100",
+                }}
+                _active={{
+                    bg: "whiteAlpha.200",
+                    transform: "translateY(1px)"
+                }}
             >
-                {disableMotion ? <>
-                    <Icon as={FiChevronDown} boxSize={5}/>
-                    Адрес, телефон, часы работы
-                    <Icon as={FiChevronDown} boxSize={5}/>
-                </> : (
-                    <>
-                        <MotionIcon
-                            as={FiChevronDown}
-                            boxSize={5}
-                            animate={{y: [0, 3, 0]}}
-                            transition={{
-                                repeat: Infinity,
-                                duration: 1.3,
-                                ease: "easeInOut",
-                            }}
-                        />
-                        Адрес, телефон, часы работы
-                        <MotionIcon
-                            as={FiChevronDown}
-                            boxSize={5}
-                            animate={{y: [0, 3, 0]}}
-                            transition={{
-                                repeat: Infinity,
-                                duration: 1.3,
-                                ease: "easeInOut",
-                                delay: 0.15,
-                            }}
-                        />
-                    </>
-                )}
+                <span>Адрес, телефон, часы работы</span>
+                <Icon as={FiChevronDown} boxSize={3} opacity={0.6} />
             </Button>
         </Flex>
     );
