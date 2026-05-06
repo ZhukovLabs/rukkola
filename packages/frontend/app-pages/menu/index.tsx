@@ -106,18 +106,20 @@ export const MenuPage = async ({searchParams}: MenuPageProps) => {
         >
             <CookieNotice/>
 
-            <Box mx="auto" w={{base: "80%", sm: "60%", md: "400px"}} maxW="90vw" mb={{base: 4, md: 6}}>
-                <Image
-                    src="/logo.svg"
-                    alt="logo"
-                    width={400}
-                    height={200}
-                    style={{width: "100%", height: "auto", objectFit: "contain"}}
-                    priority
-                    fetchPriority="high"
-                    suppressHydrationWarning
-                />
-            </Box>
+            <h1 id="page-title" style={{margin: 0}}>
+                <Box mx="auto" w={{base: "80%", sm: "60%", md: "400px"}} maxW="90vw" mb={{base: 4, md: 6}}>
+                    <Image
+                        src="/logo.svg"
+                        alt="Руккола - кафе"
+                        width={400}
+                        height={200}
+                        style={{width: "100%", height: "auto", objectFit: "contain"}}
+                        priority
+                        fetchPriority="high"
+                        suppressHydrationWarning
+                    />
+                </Box>
+            </h1>
 
             <MenuPageClient
                 activeLunch={{image: activeLunch?.image ?? undefined}}
