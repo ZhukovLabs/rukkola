@@ -19,6 +19,8 @@ export class AuditLogController {
     @Query('userId') userId?: string,
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
+    @Query('entityType') entityType?: string,
+    @Query('entityId') entityId?: string,
   ) {
     const result = await this.auditLogService.getLogs({
       page: page ? parseInt(page, 10) : 1,
@@ -28,6 +30,8 @@ export class AuditLogController {
       userId: userId || undefined,
       dateFrom: dateFrom ? new Date(dateFrom) : undefined,
       dateTo: dateTo ? new Date(dateTo) : undefined,
+      entityType: entityType || undefined,
+      entityId: entityId || undefined,
     });
     return {
       success: true,

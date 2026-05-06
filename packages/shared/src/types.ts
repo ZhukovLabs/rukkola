@@ -237,6 +237,11 @@ export interface AuditLogDto {
   };
   action: string;
   details: string;
+  entityType?: string;
+  entityId?: string;
+  ip?: string;
+  userAgent?: string;
+  metadata?: Record<string, any>;
   createdAt: string;
 }
 

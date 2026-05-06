@@ -52,7 +52,10 @@ export class LunchesService {
     await lunch.save();
 
     if (userId) {
-      await this.auditLogService.createLog(userId, 'Загрузка обеда', 'Загружен новый обед');
+      await this.auditLogService.createLog(userId, 'Загрузка обеда', 'Загружен новый обед', {
+        entityType: 'lunch',
+        entityId: lunch._id.toString(),
+      });
     }
 
     return { image: imageUrl, id: lunch._id.toString() };
@@ -78,7 +81,10 @@ export class LunchesService {
     await this.lunchModel.deleteOne({ _id: id });
 
     if (userId) {
-      await this.auditLogService.createLog(userId, 'Удаление обеда', 'Удалён обед');
+      await this.auditLogService.createLog(userId, 'Удаление обеда', 'Удалён обед', {
+        entityType: 'lunch',
+        entityId: id,
+      });
     }
 
     return { success: true };
@@ -93,7 +99,10 @@ export class LunchesService {
     await lunch.save();
 
     if (userId) {
-      await this.auditLogService.createLog(userId, 'Активация обеда', 'Обед активирован и отображается на сайте');
+      await this.auditLogService.createLog(userId, 'Активация обеда', 'Обед активирован и отображается на сайте', {
+        entityType: 'lunch',
+        entityId: id,
+      });
     }
 
     return {
@@ -107,7 +116,9 @@ export class LunchesService {
     const result = await this.lunchModel.updateMany({}, { $set: { active: false } });
 
     if (userId) {
-      await this.auditLogService.createLog(userId, 'Отображение обеда выключено', 'Обед скрыт с сайта');
+      await this.auditLogService.createLog(userId, 'Отображение обеда выключено', 'Обед скрыт с сайта', {
+        entityType: 'lunch',
+      });
     }
 
     return { success: true, modifiedCount: result.modifiedCount };

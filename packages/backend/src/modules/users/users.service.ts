@@ -106,6 +106,7 @@ export class UsersService {
         userId,
         'Создание пользователя',
         `Пользователь: ${newUser.name} (@${newUser.username}), Роль: ${newUser.role}`,
+        { entityType: 'user', entityId: newUser._id.toString() },
       );
     }
 
@@ -154,6 +155,10 @@ export class UsersService {
         userId,
         'Обновление пользователя',
         `Пользователь: ${updated.name} (@${updated.username}), Изменения: ${changes.join(', ')}`,
+        {
+          entityType: 'user',
+          entityId: id,
+        },
       );
     }
 
@@ -190,6 +195,7 @@ export class UsersService {
       currentUserId,
       'Удаление пользователя',
       `Пользователь: ${userToDelete.name} (@${userToDelete.username})`,
+      { entityType: 'user', entityId: id },
     );
 
     return serializeUser(deleted);
@@ -213,5 +219,12 @@ export class UsersService {
 
     user.password = newPassword; // Will be hashed by pre-save hook
     await user.save();
+
+    await this.auditLogService.createLog(
+      userId,
+      'Изменение пароля',
+      `Пользователь ${user.name} (@${user.username}) изменил пароль`,
+      { entityType: 'user', entityId: userId },
+    );
   }
 }

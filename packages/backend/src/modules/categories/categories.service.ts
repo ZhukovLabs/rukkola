@@ -47,6 +47,7 @@ export class CategoriesService {
         userId,
         'Создание категории',
         `Категория: «${cat.name}»`,
+        { entityType: 'category', entityId: cat._id.toString() },
       );
     }
 
@@ -66,6 +67,7 @@ export class CategoriesService {
         userId,
         'Обновление категории',
         `Категория: «${oldName}» → «${name}»`,
+        { entityType: 'category', entityId: id },
       );
     }
 
@@ -91,6 +93,7 @@ export class CategoriesService {
         userId,
         'Удаление категории',
         `Категория: «${categoryName}»`,
+        { entityType: 'category', entityId: id },
       );
     }
 
@@ -111,6 +114,7 @@ export class CategoriesService {
         userId,
         'Изменение свойства категории',
         `Категория: «${category.name}», ${fieldNames[field]}: ${oldValue ? 'Да' : 'Нет'} → ${!oldValue ? 'Да' : 'Нет'}`,
+        { entityType: 'category', entityId: id },
       );
     }
 
@@ -162,6 +166,7 @@ export class CategoriesService {
         userId,
         'Перемещение категории',
         `Категория: «${current.name}», Направление: ${direction === 'up' ? 'Вверх' : 'Вниз'}`,
+        { entityType: 'category', entityId: id },
       );
     }
 
@@ -245,6 +250,7 @@ export class CategoriesService {
         userId,
         'Изменение позиции категории',
         `Категория: «${category.name}», Новая позиция: ${newPosition + 1}`,
+        { entityType: 'category', entityId: categoryId },
       );
     }
 
@@ -273,6 +279,7 @@ export class CategoriesService {
         userId,
         'Массовое изменение порядка категорий',
         `Изменён порядок: ${nameList}${suffix}`,
+        { entityType: 'category' },
       );
     }
 
@@ -319,6 +326,7 @@ export class CategoriesService {
         userId,
         'Отметка алкоголя в категории',
         `Категория: «${category.name}», Товаров отмечено: ${result.modifiedCount}`,
+        { entityType: 'category', entityId: categoryId },
       );
     }
 
@@ -365,6 +373,7 @@ export class CategoriesService {
         userId,
         'Снятие отметки алкоголя в категории',
         `Категория: «${category.name}», Товаров обновлено: ${result.modifiedCount}`,
+        { entityType: 'category', entityId: categoryId },
       );
     }
 

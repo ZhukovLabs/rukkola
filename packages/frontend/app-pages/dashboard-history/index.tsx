@@ -28,11 +28,22 @@ import {useDebounce} from '@/hooks/use-debounce';
 
 const PAGE_SIZE = 20;
 
+const ENTITY_TYPES = [
+    {label: 'Все действия', value: ''},
+    {label: 'Авторизация', value: 'auth'},
+    {label: 'Пользователи', value: 'user'},
+    {label: 'Товары', value: 'product'},
+    {label: 'Категории', value: 'category'},
+    {label: 'Обеды', value: 'lunch'},
+];
+
 const ACTION_CONFIG: Record<string, {colorScheme: string; icon: React.ElementType}> = {
     'Удаление': {colorScheme: 'red', icon: FiActivity},
     'Создание': {colorScheme: 'green', icon: FiActivity},
     'Вход': {colorScheme: 'teal', icon: FiUser},
     'Выход': {colorScheme: 'gray', icon: FiUser},
+    'Блокировка': {colorScheme: 'red', icon: FiActivity},
+    'Неудачная': {colorScheme: 'orange', icon: FiActivity},
 };
 
 const SORT_OPTIONS = [
@@ -83,6 +94,7 @@ export const DashboardHistoryPage = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [sortBy, setSortBy] = useState('createdAt_desc');
     const [filterUserId, setFilterUserId] = useState('');
+    const [filterEntityType, setFilterEntityType] = useState('');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
     const debouncedDateFrom = useDebounce(dateFrom, 400);
@@ -101,12 +113,14 @@ export const DashboardHistoryPage = () => {
         pageNum?: number;
         sort?: string;
         userId?: string;
+        entityType?: string;
         dateFrom?: string;
         dateTo?: string
     }) => {
         const pageNum = params?.pageNum ?? page;
         const sort = params?.sort ?? sortBy;
         const userId = params?.userId ?? filterUserId;
+        const entType = params?.entityType ?? filterEntityType;
         const dFrom = params?.dateFrom ?? debouncedDateFrom;
         const dTo = params?.dateTo ?? debouncedDateTo;
 
@@ -119,6 +133,7 @@ export const DashboardHistoryPage = () => {
                 sortBy: sortField,
                 sortOrder: sortOrder as 'asc' | 'desc',
                 userId: userId || undefined,
+                entityType: entType || undefined,
                 dateFrom: dFrom || undefined,
                 dateTo: dTo ? `${dTo}T23:59:59` : undefined,
             });
@@ -133,7 +148,7 @@ export const DashboardHistoryPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [page, sortBy, filterUserId, debouncedDateFrom, debouncedDateTo]);
+    }, [page, sortBy, filterUserId, filterEntityType, debouncedDateFrom, debouncedDateTo]);
 
     useEffect(() => {
         if (!user || user.role !== 'admin') return;
@@ -161,6 +176,12 @@ export const DashboardHistoryPage = () => {
         fetchLogs({pageNum: 1, userId});
     };
 
+    const handleEntityTypeChange = (details: {value: string[]}) => {
+        const entityType = details.value[0];
+        setFilterEntityType(entityType);
+        fetchLogs({pageNum: 1, entityType});
+    };
+
     const handleDateFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setDateFrom(e.target.value);
     };
@@ -183,6 +204,8 @@ export const DashboardHistoryPage = () => {
             ...users.map((u) => ({label: `${u.name} @${u.username}`, value: u._id})),
         ],
     });
+
+    const entityTypeCollection = createListCollection({items: ENTITY_TYPES});
 
     const dateInputStyles = {
         bg: 'gray.800',
@@ -280,6 +303,38 @@ export const DashboardHistoryPage = () => {
                         direction={{base: 'column', md: 'row'}}
                         align={{base: 'stretch', md: 'center'}}
                     >
+                        <Box minW={{md: '220px'}} flex={{md: '0 1 260px'}}>
+                            <Select.Root
+                                collection={entityTypeCollection}
+                                value={[filterEntityType]}
+                                onValueChange={handleEntityTypeChange}
+                                size="sm"
+                            >
+                                <Select.HiddenSelect/>
+                                <Select.Control>
+                                    <Select.Trigger {...selectTriggerStyles}>
+                                        <HStack gap={2} w="full">
+                                            <Box flexShrink={0}><FiFilter/></Box>
+                                            <Select.ValueText placeholder="Все действия" lineClamp={1}
+                                                              wordBreak="break-word"/>
+                                        </HStack>
+                                    </Select.Trigger>
+                                </Select.Control>
+                                <Portal>
+                                    <Select.Positioner>
+                                        <Select.Content {...selectContentStyles}>
+                                            {entityTypeCollection.items.map((item) => (
+                                                <Select.Item key={item.value} item={item} color="gray.200"
+                                                            _hover={{bg: 'gray.700'}}>
+                                                    {item.label}
+                                                </Select.Item>
+                                            ))}
+                                        </Select.Content>
+                                    </Select.Positioner>
+                                </Portal>
+                            </Select.Root>
+                        </Box>
+
                         <Box minW={{md: '220px'}} flex={{md: '0 1 260px'}}>
                             <Select.Root
                                 collection={userFilterCollection}
@@ -407,6 +462,33 @@ export const DashboardHistoryPage = () => {
                                 const config = getActionConfig(log.action);
                                 const Icon = config.icon;
 
+                                const entityTypeLabels: Record<string, string> = {
+                                    auth: 'Авторизация',
+                                    user: 'Пользователь',
+                                    product: 'Товар',
+                                    category: 'Категория',
+                                    lunch: 'Обед',
+                                };
+
+                                const parseUserAgent = (ua: string) => {
+                                    if (!ua || ua === 'unknown') return null;
+                                    const parts: string[] = [];
+                                    if (ua.includes('Chrome') && !ua.includes('Edg')) parts.push('Chrome');
+                                    else if (ua.includes('Edg')) parts.push('Edge');
+                                    else if (ua.includes('Firefox')) parts.push('Firefox');
+                                    else if (ua.includes('Safari') && !ua.includes('Chrome')) parts.push('Safari');
+
+                                    if (ua.includes('Macintosh')) parts.push('macOS');
+                                    else if (ua.includes('Windows')) parts.push('Windows');
+                                    else if (ua.includes('Linux')) parts.push('Linux');
+                                    else if (ua.includes('iPhone')) parts.push('iOS');
+                                    else if (ua.includes('Android')) parts.push('Android');
+
+                                    return parts.length > 0 ? parts.join(', ') : null;
+                                };
+
+                                const deviceInfo = parseUserAgent(log.userAgent || '');
+
                                 return (
                                     <Box
                                         key={log.id}
@@ -439,7 +521,7 @@ export const DashboardHistoryPage = () => {
                                                     gap={{base: 1, md: 0}}
                                                     mb={1}
                                                 >
-                                                    <HStack gap={2} wrap="wrap">
+                                                    <HStack gap={2} wrap="wrap" align="center">
                                                         <Badge
                                                             colorScheme={config.colorScheme}
                                                             variant="subtle"
@@ -451,21 +533,41 @@ export const DashboardHistoryPage = () => {
                                                         >
                                                             {log.action}
                                                         </Badge>
+                                                        {log.entityType && entityTypeLabels[log.entityType] && (
+                                                            <HStack gap={1.5} align="center">
+                                                                <Box
+                                                                    w="6px"
+                                                                    h="6px"
+                                                                    borderRadius="full"
+                                                                    bg="teal.400"
+                                                                />
+                                                                <Text fontSize="xs" color="gray.400" whiteSpace="nowrap">
+                                                                    {entityTypeLabels[log.entityType]}
+                                                                </Text>
+                                                            </HStack>
+                                                        )}
                                                     </HStack>
                                                     <HStack gap={2} flexShrink={0}>
-                                                        <Text color="gray.500" fontSize="xs" whiteSpace="nowrap">
+                                                        <Text color="gray.400" fontSize="xs" whiteSpace="nowrap">
                                                             {formatTimeAgo(log.createdAt) && `${formatTimeAgo(log.createdAt)} · `}
                                                             {formatFullDate(log.createdAt)}
                                                         </Text>
                                                     </HStack>
                                                 </Flex>
 
-                                                <Text color="gray.300" fontSize="sm" mb={1.5} fontWeight="medium"
-                                                      lineClamp={2} wordBreak="break-word">
-                                                    {log.details}
-                                                </Text>
+                                                <HStack gap={2} wrap="wrap" mb={1} align="flex-start">
+                                                    <Text color="gray.300" fontSize="sm" fontWeight="medium"
+                                                          wordBreak="break-word" whiteSpace="pre-wrap" flex={1}>
+                                                        {log.details}
+                                                    </Text>
+                                                    {deviceInfo && (
+                                                        <Text color="gray.500" fontSize="sm" whiteSpace="nowrap" flexShrink={0}>
+                                                            · {deviceInfo}
+                                                        </Text>
+                                                    )}
+                                                </HStack>
 
-                                                <HStack gap={1.5}>
+                                                <HStack gap={1.5} wrap="wrap">
                                                     <Box
                                                         bg="gray.700"
                                                         borderRadius="md"
@@ -477,7 +579,7 @@ export const DashboardHistoryPage = () => {
                                                             {log.user.name}
                                                         </Text>
                                                     </Box>
-                                                    <Text fontSize="xs" color="gray.500">
+                                                    <Text fontSize="xs" color="gray.400">
                                                         @{log.user.username}
                                                     </Text>
                                                 </HStack>

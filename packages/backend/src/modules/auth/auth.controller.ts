@@ -100,9 +100,10 @@ export class AuthController {
   @Post('logout')
   async logout(@Req() req: Request, @Res() res: Response) {
     const refreshToken = this.getRefreshToken(req);
-    
+    const userAgent = req.headers['user-agent'] ?? 'unknown';
+
     if (refreshToken) {
-      await this.authService.logout(refreshToken);
+      await this.authService.logout(refreshToken, userAgent);
     }
 
     this.clearTokens(res);

@@ -13,6 +13,21 @@ export class AuditLog extends Document {
   @Prop({ required: true })
   details!: string;
 
+  @Prop({ required: false })
+  entityType?: string;
+
+  @Prop({ required: false })
+  entityId?: string;
+
+  @Prop({ required: false })
+  ip?: string;
+
+  @Prop({ required: false })
+  userAgent?: string;
+
+  @Prop({ type: MongooseSchema.Types.Mixed, required: false })
+  metadata?: Record<string, any>;
+
   createdAt!: Date;
   updatedAt!: Date;
 }

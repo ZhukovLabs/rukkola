@@ -89,9 +89,24 @@ export class AuthService {
     const isValid = await user.comparePassword(loginDto.password);
     if (!isValid) {
       user.failedLoginAttempts = (user.failedLoginAttempts ?? 0) + 1;
+
+      await this.auditLogService.createLog(
+        user._id.toString(),
+        'Неудачная попытка входа',
+        `Попытка входа для пользователя ${user.name} (@${user.username}), IP: ${ip}`,
+        { entityType: 'auth', ip, userAgent },
+      );
+
       if (user.failedLoginAttempts >= 5) {
         user.lockUntil = new Date(Date.now() + 5 * 60 * 1000);
         user.failedLoginAttempts = 0;
+
+        await this.auditLogService.createLog(
+          user._id.toString(),
+          'Блокировка аккаунта',
+          `Аккаунт ${user.name} (@${user.username}) заблокирован на 5 минут после 5 неудачных попыток, IP: ${ip}`,
+          { entityType: 'auth', ip, entityId: user._id.toString() },
+        );
       }
       await user.save();
       throw new UnauthorizedException('Неверный логин или пароль');
@@ -106,6 +121,7 @@ export class AuthService {
       user._id.toString(),
       'Вход в систему',
       `${user.name} (@${user.username}) вошёл в систему, IP: ${ip}`,
+      { entityType: 'auth', entityId: user._id.toString(), ip, userAgent },
     );
 
     // Create session with both tokens
@@ -190,7 +206,7 @@ export class AuthService {
     return this.generateTokens(user, newSessionToken, newRefreshToken);
   }
 
-  async logout(refreshTokenSigned: string): Promise<{ userId: string } | null> {
+  async logout(refreshTokenSigned: string, userAgent?: string): Promise<{ userId: string } | null> {
     try {
       const decoded = this.jwtService.verify(refreshTokenSigned);
       const session = await this.sessionModel.findOne({ token: decoded.sessionToken });
@@ -201,6 +217,7 @@ export class AuthService {
             user._id.toString(),
             'Выход из системы',
             `${user.name} (@${user.username}) вышел из системы`,
+            { entityType: 'auth', entityId: user._id.toString(), userAgent },
           );
         }
       }

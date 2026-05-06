@@ -260,7 +260,8 @@ export class ProductsService {
     await this.auditLogService.createLog(
       userId,
       product.hidden ? 'Скрытие товара' : 'Отображение товара',
-      `Товар: «${product.name}»`,
+      `«${product.name}» · ${product.hidden ? 'Скрыт' : 'Показан'}`,
+      { entityType: 'product', entityId: productId },
     );
 
     return {
@@ -280,6 +281,7 @@ export class ProductsService {
       userId,
       'Изменение статуса алкоголя',
       `Товар: ${product.name}, Алкогольный: ${product.isAlcohol ? 'Да' : 'Нет'}`,
+      { entityType: 'product', entityId: productId },
     );
 
     return {
@@ -299,6 +301,7 @@ export class ProductsService {
       userId,
       'Удаление товара',
       `Товар: «${productName}»`,
+      { entityType: 'product', entityId: productId },
     );
 
     return { id: productId };
@@ -315,11 +318,71 @@ export class ProductsService {
     };
 
     const changes: string[] = [];
-    if (data.name && data.name !== product.name) changes.push(`Название: «${product.name}» → «${data.name}»`);
-    if (data.description !== undefined && data.description !== product.description) changes.push(`Описание изменено`);
-    if (data.hidden !== undefined && data.hidden !== product.hidden) changes.push(`Скрыт: ${product.hidden ? 'Да' : 'Нет'} → ${data.hidden ? 'Да' : 'Нет'}`);
-    if (data.isAlcohol !== undefined && data.isAlcohol !== product.isAlcohol) changes.push(`Алкогольный: ${product.isAlcohol ? 'Да' : 'Нет'} → ${data.isAlcohol ? 'Да' : 'Нет'}`);
-    if (data.removeImage && product.image) changes.push(`Изображение удалено`);
+
+    if (data.name && data.name !== product.name) {
+      changes.push(`Название: «${product.name}» → «${data.name}»`);
+    }
+
+    if (data.description !== undefined && data.description !== product.description) {
+      const oldDesc = product.description || '(пусто)';
+      const newDesc = data.description || '(пусто)';
+      changes.push(`Описание: «${oldDesc}» → «${newDesc}»`);
+    }
+
+    if (data.prices && data.prices.length > 0) {
+      const oldPrices = product.prices || [];
+      const priceChanges = data.prices.map(newP => {
+        const oldP = oldPrices.find(op => op.size === newP.size);
+        if (oldP && oldP.price !== newP.price) {
+          return `${newP.size} · ${oldP.price} руб. → ${newP.price} руб.`;
+        }
+        if (!oldP) {
+          return `${newP.size} · ${newP.price} руб. (добавлена)`;
+        }
+        return null;
+      }).filter(Boolean);
+
+      const removedSizes = oldPrices
+        .filter(oldP => !data.prices!.some(newP => newP.size === oldP.size))
+        .map(p => p.size);
+      if (removedSizes.length > 0) {
+        priceChanges.push(`${removedSizes.join(', ')} · удалена(ы)`);
+      }
+
+      if (priceChanges.length > 0) {
+        changes.push(`Цены: ${priceChanges.join('; ')}`);
+      }
+    }
+
+    if (data.categories) {
+      const oldCategoryIds = (product.categories || []).map(c => c.toString());
+      const newCategoryIds = data.categories;
+
+      const addedIds = newCategoryIds.filter(c => !oldCategoryIds.includes(c));
+      const removedIds = oldCategoryIds.filter(c => !newCategoryIds.includes(c));
+
+      if (addedIds.length > 0 || removedIds.length > 0) {
+        const [addedCats, removedCats] = await Promise.all([
+          this.categoryModel.find({ _id: { $in: addedIds } }).select('name').lean(),
+          this.categoryModel.find({ _id: { $in: removedIds } }).select('name').lean(),
+        ]);
+
+        const catParts: string[] = [];
+        if (addedCats.length > 0) catParts.push(`добавлены: ${addedCats.map(c => c.name).join(', ')}`);
+        if (removedCats.length > 0) catParts.push(`удалены: ${removedCats.map(c => c.name).join(', ')}`);
+        changes.push(`Категории: ${catParts.join('; ')}`);
+      }
+    }
+
+    if (data.hidden !== undefined && data.hidden !== product.hidden) {
+      changes.push(`Скрыт: ${product.hidden ? 'Да' : 'Нет'} → ${data.hidden ? 'Да' : 'Нет'}`);
+    }
+    if (data.isAlcohol !== undefined && data.isAlcohol !== product.isAlcohol) {
+      changes.push(`Алкогольный: ${product.isAlcohol ? 'Да' : 'Нет'} → ${data.isAlcohol ? 'Да' : 'Нет'}`);
+    }
+    if (data.removeImage && product.image) {
+      changes.push(`Изображение удалено`);
+    }
 
     if (data.removeImage && product.image) {
       const oldFileName = product.image.split('/').pop();
@@ -342,13 +405,14 @@ export class ProductsService {
     await this.productModel.findByIdAndUpdate(id, updatedData);
 
     const details = changes.length > 0
-      ? `Товар: «${product.name}», Изменения: ${changes.join(', ')}`
-      : `Товар: «${product.name}»`;
+      ? `«${product.name}»\n${changes.join('\n')}`
+      : `«${product.name}»`;
 
     await this.auditLogService.createLog(
       userId,
       'Обновление товара',
       details,
+      { entityType: 'product', entityId: id },
     );
 
     return { id };
@@ -366,10 +430,23 @@ export class ProductsService {
 
     await product.save();
 
+    const details: string[] = [];
+    details.push(`Название: «${product.name}»`);
+    if (data.description) details.push(`Описание: «${data.description}»`);
+    const priceStr = data.prices.map(p => `${p.size} · ${p.price} руб.`).join('; ');
+    details.push(`Цены: ${priceStr}`);
+    if (data.categories && data.categories.length > 0) {
+      const cats = await this.categoryModel.find({ _id: { $in: data.categories } }).select('name').lean();
+      details.push(`Категории: ${cats.map(c => c.name).join(', ')}`);
+    }
+    if (data.hidden) details.push('Скрыт: Да');
+    if (data.isAlcohol) details.push('Алкогольный: Да');
+
     await this.auditLogService.createLog(
       userId,
       'Создание товара',
-      `Товар: «${product.name}»`,
+      details.join('\n'),
+      { entityType: 'product', entityId: product._id.toString() },
     );
 
     return { id: product._id.toString() };
@@ -487,6 +564,7 @@ export class ProductsService {
         userId,
         'Изменение позиции товара',
         `Товар: «${product?.name}», Новая позиция: ${newPosition + 1}`,
+        { entityType: 'product', entityId: productId },
       );
     }
 
@@ -508,16 +586,17 @@ export class ProductsService {
     await this.productModel.bulkWrite(bulkOps);
 
     const productNames = await this.productModel
-      .find({ _id: { $in: orderedIds.slice(0, 5).map(id => new Types.ObjectId(id)) } })
+      .find({ _id: { $in: orderedIds.slice(0, 1).map(id => new Types.ObjectId(id)) } })
       .select('name')
       .lean();
-    const nameList = productNames.map(p => p.name).join(', ');
-    const suffix = orderedIds.length > 5 ? ` и ещё ${orderedIds.length - 5}` : '';
+    const primaryName = productNames.length > 0 ? productNames[0].name : 'Неизвестный товар';
+    const suffix = orderedIds.length > 1 ? ` и ещё ${orderedIds.length - 1}` : '';
 
     await this.auditLogService.createLog(
       userId,
       'Перестановка товаров',
-      `Изменён порядок: ${nameList}${suffix}`,
+      `«${primaryName}»${suffix}`,
+      { entityType: 'product' },
     );
 
     return { success: true };
@@ -536,16 +615,17 @@ export class ProductsService {
     }
 
     const productNames = await this.productModel
-      .find({ _id: { $in: updates.slice(0, 5).map(u => new Types.ObjectId(u.id)) } })
+      .find({ _id: { $in: updates.slice(0, 1).map(u => new Types.ObjectId(u.id)) } })
       .select('name')
       .lean();
-    const nameList = productNames.map(p => p.name).join(', ');
-    const suffix = updates.length > 5 ? ` и ещё ${updates.length - 5}` : '';
+    const primaryName = productNames.length > 0 ? productNames[0].name : 'Неизвестный товар';
+    const suffix = updates.length > 1 ? ` и ещё ${updates.length - 1}` : '';
 
     await this.auditLogService.createLog(
       userId,
       'Массовое изменение порядка товаров',
-      `Изменён порядок: ${nameList}${suffix}`,
+      `«${primaryName}»${suffix}`,
+      { entityType: 'product' },
     );
 
     return { success: true };
@@ -614,6 +694,7 @@ export class ProductsService {
       userId,
       'Загрузка изображения',
       `Товар: «${product.name}»`,
+      { entityType: 'product', entityId: productId },
     );
 
     return { image: product.image, blurDataURL: product.blurDataURL };

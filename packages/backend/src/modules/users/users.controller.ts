@@ -16,14 +16,12 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { AuditLogService } from '../audit-log/audit-log.service';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(
     private usersService: UsersService,
-    private auditLogService: AuditLogService,
   ) {}
 
   @Get()
@@ -64,13 +62,6 @@ export class UsersController {
       currentUser.id,
       dto.oldPassword,
       dto.newPassword,
-    );
-
-    const user = await this.usersService.getUserById(id);
-    await this.auditLogService.createLog(
-      currentUser.id,
-      'Изменение пароля',
-      `Пользователь ${user?.name || 'Неизвестный'} (@${user?.username || id}) изменил пароль`,
     );
 
     return {
