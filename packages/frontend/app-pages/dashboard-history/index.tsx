@@ -555,17 +555,15 @@ export const DashboardHistoryPage = () => {
                                                     </HStack>
                                                 </Flex>
 
-                                                <HStack gap={2} wrap="wrap" mb={1} align="flex-start">
-                                                    <Text color="gray.300" fontSize="sm" fontWeight="medium"
-                                                          wordBreak="break-word" whiteSpace="pre-wrap" flex={1}>
-                                                        {log.details}
-                                                    </Text>
+                                                <Text color="gray.300" fontSize="sm" fontWeight="medium"
+                                                      wordBreak="break-word" whiteSpace="pre-wrap" mb={1}>
+                                                    {log.details}
                                                     {deviceInfo && (
-                                                        <Text color="gray.500" fontSize="sm" whiteSpace="nowrap" flexShrink={0}>
-                                                            · {deviceInfo}
+                                                        <Text as="span" color="gray.500" fontSize="sm" whiteSpace="nowrap">
+                                                            {' '}· {deviceInfo}
                                                         </Text>
                                                     )}
-                                                </HStack>
+                                                </Text>
 
                                                 <HStack gap={1.5} wrap="wrap">
                                                     <Box
