@@ -218,7 +218,6 @@ export const Product = memo(function Product({
                         <Heading
                             as="h3"
                             fontSize={{ base: "md", md: "xl" }}
-                            lineClamp={2}
                             color="whiteAlpha.900"
                         >
                             {title}
