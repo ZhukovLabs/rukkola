@@ -219,6 +219,9 @@ export const Product = memo(function Product({
                             as="h3"
                             fontSize={{ base: "md", md: "xl" }}
                             color="whiteAlpha.900"
+                            overflowWrap="break-word"
+                            wordBreak="break-word"
+                            hyphens="auto"
                         >
                             {title}
                         </Heading>
