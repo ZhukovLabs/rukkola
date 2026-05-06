@@ -13,8 +13,9 @@ import {
 } from "@chakra-ui/react";
 import {motion} from "framer-motion";
 import {FiShoppingCart, FiX, FiInfo, FiTrash2} from "react-icons/fi";
-import {addToCart, clearCart, type CartItem} from "@/lib/local-storage";
+import {addToCart, clearCart, getCart, type CartItem} from "@/lib/local-storage";
 import {useCart, useCartActions, useCartTotal} from "@/hooks/use-cart";
+import {trackAddToCart, trackRemoveFromCart, trackPurchase} from "@/lib/ecommerce-tracking";
 import {CartItem as CartItemComponent} from "@/app-pages/menu/cart-modal/cart-item";
 import {useCartModal} from "./use-cart-modal";
 
@@ -66,12 +67,34 @@ export const CartModal = () => {
         }
     }, [isOpen]);
 
-    const handleRemove = useCallback((id: string, size: string) => () => {
+    const handleRemove = useCallback((id: string, size: string, item?: CartItem) => () => {
         remove(id, size);
+        if (item) {
+            trackRemoveFromCart({
+                id: id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity
+            });
+        }
     }, [remove]);
 
     const handleClear = useCallback(() => {
         clearCart();
+    }, []);
+
+    const handleCompleteOrder = useCallback(() => {
+        const items = getCart();
+        if (items.length === 0) return;
+
+        trackPurchase({
+            items: items.map(item => ({
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity
+            }))
+        });
     }, []);
 
     const increaseQuantity = useCallback((item: CartItem) => () => {
@@ -83,10 +106,24 @@ export const CartModal = () => {
             image: item.image,
             blurDataURL: item.blurDataURL
         });
+        trackAddToCart({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: 1
+        });
     }, []);
 
-    const decreaseQuantity = useCallback((id: string, size: string) => () => {
+    const decreaseQuantity = useCallback((id: string, size: string, item?: CartItem) => () => {
         remove(id, size, 1);
+        if (item) {
+            trackRemoveFromCart({
+                id: id,
+                name: item.name,
+                price: item.price,
+                quantity: 1
+            });
+        }
     }, [remove]);
 
     const itemList = useMemo(() => (
@@ -100,9 +137,9 @@ export const CartModal = () => {
                     size={item.size}
                     price={item.price}
                     quantity={item.quantity}
-                    handleRemove={handleRemove(item.id, item.size)}
+                    handleRemove={handleRemove(item.id, item.size, item)}
                     onIncrease={increaseQuantity(item)}
-                    onDecrease={decreaseQuantity(item.id, item.size)}
+                    onDecrease={decreaseQuantity(item.id, item.size, item)}
                     indexDelay={i}
                 />
             ))}

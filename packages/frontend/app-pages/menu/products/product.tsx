@@ -17,6 +17,7 @@ import { FiCheck, FiImage } from "react-icons/fi";
 import { useRouter, useSearchParams } from "next/navigation";
 import { addToCart } from "@/lib/local-storage";
 import { useIsLowPerformanceDevice } from "@/hooks/use-is-low-performance-device";
+import { trackViewItem, trackAddToCart } from "@/lib/ecommerce-tracking";
 
 type Price = { size: string; price: number };
 
@@ -121,6 +122,12 @@ export const Product = memo(function Product({
                 price: firstPrice.price,
                 size: firstPrice.size
             });
+            trackAddToCart({
+                id: id,
+                name: title,
+                price: firstPrice.price,
+                quantity: 1
+            });
             setAdded(true);
             setTimeout(() => setAdded(false), 1200);
         }
@@ -136,6 +143,12 @@ export const Product = memo(function Product({
             blurDataURL: blurDataURL ?? undefined,
             price: selectedPrice.price,
             size: selectedPrice.size
+        });
+        trackAddToCart({
+            id: id,
+            name: title,
+            price: selectedPrice.price,
+            quantity: 1
         });
 
         setAdded(true);

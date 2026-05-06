@@ -15,6 +15,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { FiX } from "react-icons/fi";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { getProductById } from "./actions";
+import { trackViewItem } from "@/lib/ecommerce-tracking";
 
 type Product = {
     id: string;
@@ -84,6 +85,16 @@ export const ProductModal = () => {
         
         fetchProduct();
     }, [fetchProduct, productId]);
+
+    useEffect(() => {
+        if (product && productId) {
+            trackViewItem({
+                id: productId,
+                name: product.name,
+                price: 0
+            });
+        }
+    }, [product, productId]);
 
     const scrollYRef = useRef(0);
 

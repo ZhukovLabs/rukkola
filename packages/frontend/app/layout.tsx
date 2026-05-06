@@ -220,7 +220,13 @@ export default function RootLayout({
         <head>
             <link rel="preconnect" href="https://mc.yandex.ru" crossOrigin="anonymous" />
             <link rel="dns-prefetch" href="https://mc.yandex.ru" />
-            
+
+            <script
+                dangerouslySetInnerHTML={{
+                    __html: `window.dataLayer = window.dataLayer || [];`
+                }}
+            />
+             
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(restaurantSchema) }}
