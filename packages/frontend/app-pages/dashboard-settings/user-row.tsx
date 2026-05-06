@@ -125,7 +125,7 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                                 p={2}
                                 size="sm"
                                 value={tempUser.username ?? ''}
-                                onChange={(e) => setTempUser({...tempUser, username: e.target.value})}
+                                onChange={(e) => setTempUser({...tempUser, username: e.target.value.toLowerCase()})}
                                 bg="gray.800"
                                 color="gray.300"
                                 borderColor="gray.500"

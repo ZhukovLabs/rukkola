@@ -161,6 +161,10 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                                         }}
                                         transition="all 0.2s"
                                         {...register('username')}
+                                        onChange={(e) => {
+                                            e.target.value = e.target.value.toLowerCase()
+                                            register('username').onChange(e)
+                                        }}
                                     />
                                     <Field.ErrorText fontSize="xs">{errors.username?.message}</Field.ErrorText>
                                 </Field.Root>
@@ -209,7 +213,7 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                                 {/* Имя */}
                                 <Field.Root invalid={!!errors.name}>
                                     <Field.Label fontSize="sm" fontWeight="medium">
-                                        Имя
+                                        Имя / Название
                                     </Field.Label>
                                     <Input
                                         px={4}
@@ -234,7 +238,7 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                                 {/* Фамилия и Отчество */}
                                 <Flex gap={4}>
                                     <Field.Root flex={1}>
-                                        <Field.Label fontSize="sm" fontWeight="medium">Фамилия</Field.Label>
+                                        <Field.Label fontSize="sm" fontWeight="medium">Фамилия <Text as="span" color="gray.500" fontWeight="normal">(необязательно)</Text></Field.Label>
                                         <Input
                                             px={4}
                                             py={3}
@@ -255,7 +259,7 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                                     </Field.Root>
 
                                     <Field.Root flex={1}>
-                                        <Field.Label fontSize="sm" fontWeight="medium">Отчество</Field.Label>
+                                        <Field.Label fontSize="sm" fontWeight="medium">Отчество <Text as="span" color="gray.500" fontWeight="normal">(необязательно)</Text></Field.Label>
                                         <Input
                                             px={4}
                                             py={3}

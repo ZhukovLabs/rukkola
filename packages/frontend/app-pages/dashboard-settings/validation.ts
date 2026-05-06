@@ -16,8 +16,8 @@ export const userSchema = z.object({
         .min(1, 'Имя обязательно')
         .max(120, 'Максимум 120 символов'),
     surname: z.string()
-        .min(1, 'Фамилия обязательна')
-        .max(120, 'Максимум 120 символов'),
+        .max(120, 'Максимум 120 символов')
+        .optional(),
     patronymic: z.string()
         .max(120, 'Максимум 120 символов')
         .optional(),
@@ -35,8 +35,8 @@ export const editUserSchema = z.object({
         .min(1, 'Имя обязательно')
         .max(120, 'Максимум 120 символов'),
     surname: z.string()
-        .min(1, 'Фамилия обязательна')
-        .max(120, 'Максимум 120 символов'),
+        .max(120, 'Максимум 120 символов')
+        .optional(),
     patronymic: z.string()
         .max(120, 'Максимум 120 символов')
         .optional(),
