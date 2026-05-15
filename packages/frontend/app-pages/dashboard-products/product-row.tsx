@@ -158,23 +158,48 @@ export const ProductRow = ({
                 {p.description || <Text color="gray.600">—</Text>}
             </Table.Cell>
 
-            <Table.Cell p={4}>
+            {/* Обновленная ячейка с ценами */}
+            <Table.Cell p={4} maxW="250px">
                 {p.prices?.length ? (
-                    <Stack gap={1} fontSize="sm">
+                    <Flex wrap="wrap" gap={2}>
                         {p.prices.map(({ size, price }) => (
-                            <Flex key={size} justify="space-between" align="center" gap={3}>
-                                <Text color="gray.600" fontSize="xs">
+                            <Flex
+                                key={size}
+                                align="center"
+                                border="1px solid"
+                                borderColor="gray.700"
+                                borderRadius="md"
+                                overflow="hidden"
+                                bg="gray.850"
+                                _hover={{ borderColor: "gray.600" }}
+                                transition="all 0.2s"
+                            >
+                                <Text
+                                    bg="gray.750"
+                                    color="gray.300"
+                                    fontSize="xs"
+                                    px={2.5}
+                                    py={1}
+                                    fontWeight="medium"
+                                    borderRight="1px solid"
+                                    borderColor="gray.700"
+                                >
                                     {size}
                                 </Text>
-
-                                <Text color="gray.300" fontWeight="600" fontSize="sm">
-                                    {price} ₽
+                                <Text
+                                    color="gray.100"
+                                    fontSize="sm"
+                                    fontWeight="bold"
+                                    px={2.5}
+                                    py={1}
+                                >
+                                    {price} р.
                                 </Text>
                             </Flex>
                         ))}
-                    </Stack>
+                    </Flex>
                 ) : (
-                    <Text color="gray.600" fontSize="sm">
+                    <Text color="gray.600" fontSize="sm" fontStyle="italic">
                         нет данных
                     </Text>
                 )}
