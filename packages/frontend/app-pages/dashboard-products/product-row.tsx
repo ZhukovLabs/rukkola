@@ -94,31 +94,37 @@ export const ProductRow = ({
 
             <Table.Cell p={4}>
                 {showEmptyPlaceholder ? (
-                    <Flex
-                        boxSize="60px"
-                        borderRadius="lg"
-                        bg="gray.850"
-                        border="2px dashed"
-                        borderColor="gray.700"
-                        align="center"
-                        justify="center"
-                        color="gray.600"
-                    >
-                        <FaImage size={18} />
-                    </Flex>
+                    <Tooltip content="Изображение отсутствует" openDelay={300}>
+                        <Flex
+                            boxSize="60px"
+                            borderRadius="lg"
+                            bg="gray.850"
+                            border="2px dashed"
+                            borderColor="gray.700"
+                            align="center"
+                            justify="center"
+                            color="gray.600"
+                            cursor="help"
+                        >
+                            <FaImage size={18} />
+                        </Flex>
+                    </Tooltip>
                 ) : showBrokenPlaceholder ? (
-                    <Flex
-                        boxSize="60px"
-                        borderRadius="lg"
-                        bg="red.950"
-                        border="2px solid"
-                        borderColor="red.800"
-                        align="center"
-                        justify="center"
-                        color="red.400"
-                    >
-                        <FaExclamationTriangle size={16} />
-                    </Flex>
+                    <Tooltip content="Ошибка загрузки изображения" openDelay={300}>
+                        <Flex
+                            boxSize="60px"
+                            borderRadius="lg"
+                            bg="red.950"
+                            border="2px solid"
+                            borderColor="red.800"
+                            align="center"
+                            justify="center"
+                            color="red.400"
+                            cursor="help"
+                        >
+                            <FaExclamationTriangle size={16} />
+                        </Flex>
+                    </Tooltip>
                 ) : (
                     <Image
                         src={`${p.image}?w=300`}
