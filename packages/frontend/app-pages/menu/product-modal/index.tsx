@@ -31,13 +31,56 @@ const cacheTimestamp = new Map<string, number>();
 
 export const ProductModal = () => {
     const { productId, close: closeModalState } = useProductModal();
+
     const prevProductIdRef = useRef<string | null>(null);
+    const scrollYRef = useRef(0);
+    const closeLockRef = useRef(false);
 
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState(false);
     const [imageLoading, setImageLoading] = useState(false);
     const [error, setError] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
+
+    const restoreBodyAndScroll = useCallback(() => {
+        const html = document.documentElement;
+        const body = document.body;
+
+        const prevHtmlScrollBehavior = html.style.scrollBehavior;
+        const prevBodyScrollBehavior = body.style.scrollBehavior;
+
+        html.style.scrollBehavior = "auto";
+        body.style.scrollBehavior = "auto";
+
+        body.style.overflow = "";
+        body.style.position = "";
+        body.style.width = "";
+        body.style.top = "";
+
+        window.scrollTo(0, scrollYRef.current);
+
+        html.style.scrollBehavior = prevHtmlScrollBehavior;
+        body.style.scrollBehavior = prevBodyScrollBehavior;
+    }, []);
+
+    const closeModal = useCallback(() => {
+        if (closeLockRef.current) return;
+        closeLockRef.current = true;
+
+        restoreBodyAndScroll();
+
+        setIsModalVisible(false);
+        setProduct(null);
+        setLoading(false);
+        setImageLoading(false);
+        setError(false);
+
+        closeModalState();
+
+        window.setTimeout(() => {
+            closeLockRef.current = false;
+        }, 0);
+    }, [closeModalState, restoreBodyAndScroll]);
 
     const fetchProduct = useCallback(async () => {
         if (!productId) {
@@ -51,6 +94,9 @@ export const ProductModal = () => {
 
         if (cached && cachedTime && now - cachedTime < cacheTimeout) {
             setProduct(cached);
+            setLoading(false);
+            setError(false);
+            setImageLoading(true);
             return;
         }
 
@@ -60,28 +106,38 @@ export const ProductModal = () => {
 
         try {
             const data = await getProductById(productId);
-            if (data) {
-                productCache.set(productId, data);
-                cacheTimestamp.set(productId, now);
+
+            if (!data) {
+                closeModal();
+                return;
             }
+
+            productCache.set(productId, data);
+            cacheTimestamp.set(productId, now);
             setProduct(data);
         } catch {
             setError(true);
         } finally {
             setLoading(false);
         }
-    }, [productId]);
+    }, [closeModal, productId]);
 
     useEffect(() => {
         if (productId === prevProductIdRef.current) return;
         prevProductIdRef.current = productId;
-        
+
         if (productId) {
             setIsModalVisible(true);
             setImageLoading(true);
+            fetchProduct();
+            return;
         }
-        
-        fetchProduct();
+
+        setIsModalVisible(false);
+        setProduct(null);
+        setLoading(false);
+        setImageLoading(false);
+        setError(false);
     }, [fetchProduct, productId]);
 
     useEffect(() => {
@@ -89,51 +145,54 @@ export const ProductModal = () => {
             trackViewItem({
                 id: productId,
                 name: product.name,
-                price: 0
+                price: 0,
             });
         }
     }, [product, productId]);
 
-    const scrollYRef = useRef(0);
-
     useEffect(() => {
-        if (!productId && isModalVisible) {
-            setIsModalVisible(false);
-        }
-    }, [productId, isModalVisible]);
+        if (!isModalVisible) return;
 
-    useEffect(() => {
-        if (isModalVisible) {
-            scrollYRef.current = window.scrollY;
-            const originalStyle = document.body.style.cssText;
-            document.body.style.overflow = 'hidden';
-            document.body.style.position = 'fixed';
-            document.body.style.width = '100%';
-            document.body.style.top = `-${scrollYRef.current}px`;
-            
-            return () => {
-                document.body.style.cssText = originalStyle;
-            };
-        }
+        scrollYRef.current = window.scrollY;
+
+        const body = document.body;
+        const html = document.documentElement;
+
+        const originalBodyOverflow = body.style.overflow;
+        const originalBodyPosition = body.style.position;
+        const originalBodyWidth = body.style.width;
+        const originalBodyTop = body.style.top;
+        const originalHtmlScrollBehavior = html.style.scrollBehavior;
+        const originalBodyScrollBehavior = body.style.scrollBehavior;
+
+        html.style.scrollBehavior = "auto";
+        body.style.scrollBehavior = "auto";
+
+        body.style.overflow = "hidden";
+        body.style.position = "fixed";
+        body.style.width = "100%";
+        body.style.top = `-${scrollYRef.current}px`;
+
+        return () => {
+            body.style.overflow = originalBodyOverflow;
+            body.style.position = originalBodyPosition;
+            body.style.width = originalBodyWidth;
+            body.style.top = originalBodyTop;
+            html.style.scrollBehavior = originalHtmlScrollBehavior;
+            body.style.scrollBehavior = originalBodyScrollBehavior;
+        };
     }, [isModalVisible]);
 
-    const handleClose = useCallback(() => {
-        const scrollY = scrollYRef.current;
-        
-        document.body.style.overflow = '';
-        document.body.style.position = '';
-        document.body.style.width = '';
-        document.body.style.top = '';
-        
-        window.scrollTo({ top: scrollY, behavior: 'instant' });
-        
-        closeModalState();
-    }, [closeModalState]);
+    const handleClose = useCallback((e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        closeModal();
+    }, [closeModal]);
 
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
             if (e.key === "Escape") handleClose();
         };
+
         window.addEventListener("keydown", handleEsc);
         return () => window.removeEventListener("keydown", handleEsc);
     }, [handleClose]);
@@ -169,14 +228,14 @@ export const ProductModal = () => {
                         color="white"
                         border="1px solid rgba(255,255,255,0.2)"
                         boxShadow="0 4px 12px rgba(0,0,0,0.5)"
-                        _hover={{ 
+                        _hover={{
                             bg: "whiteAlpha.300",
                             transform: "scale(1.1)",
-                            boxShadow: "0 6px 16px rgba(0,0,0,0.6)"
+                            boxShadow: "0 6px 16px rgba(0,0,0,0.6)",
                         }}
                         _active={{ bg: "whiteAlpha.400" }}
                         transition="all 0.2s"
-                        onClick={(e) => { e.stopPropagation(); handleClose(); }}
+                        onClick={handleClose}
                     >
                         <FiX size={32} />
                     </IconButton>
@@ -200,7 +259,12 @@ export const ProductModal = () => {
 
                     {product && !loading && !error && (
                         <Flex direction="column" h="100vh" w="100vw" overflow="hidden">
-                            <Box flex="1" position="relative" minH="0" onClick={(e) => e.stopPropagation()}>
+                            <Box
+                                flex="1"
+                                position="relative"
+                                minH="0"
+                                onClick={(e) => e.stopPropagation()}
+                            >
                                 {product.image ? (
                                     <Box position="relative" w="100%" h="100%">
                                         {imageLoading && (
@@ -209,13 +273,20 @@ export const ProductModal = () => {
                                             </Center>
                                         )}
                                         <Image
-                                            src={product.image.includes('?') ? `${product.image}&w=1920` : `${product.image}?w=1920`}
+                                            src={
+                                                product.image.includes("?")
+                                                    ? `${product.image}&w=1920`
+                                                    : `${product.image}?w=1920`
+                                            }
                                             alt={product.name}
                                             fill
                                             priority
                                             placeholder="blur"
                                             blurDataURL={product.blurDataURL || undefined}
-                                            style={{ objectFit: "contain", objectPosition: "center" }}
+                                            style={{
+                                                objectFit: "contain",
+                                                objectPosition: "center",
+                                            }}
                                             sizes="100vw"
                                             onLoad={() => setImageLoading(false)}
                                             onError={() => setImageLoading(false)}
@@ -241,8 +312,13 @@ export const ProductModal = () => {
                                 css={{
                                     "&::-webkit-scrollbar": { width: "6px" },
                                     "&::-webkit-scrollbar-track": { bg: "transparent" },
-                                    "&::-webkit-scrollbar-thumb": { bg: "rgba(255,255,255,0.2)", borderRadius: "3px" },
-                                    "&::-webkit-scrollbar-thumb:hover": { bg: "rgba(255,255,255,0.3)" },
+                                    "&::-webkit-scrollbar-thumb": {
+                                        bg: "rgba(255,255,255,0.2)",
+                                        borderRadius: "3px",
+                                    },
+                                    "&::-webkit-scrollbar-thumb:hover": {
+                                        bg: "rgba(255,255,255,0.3)",
+                                    },
                                 }}
                             >
                                 <Box maxW="900px" mx="auto">
@@ -255,6 +331,7 @@ export const ProductModal = () => {
                                     >
                                         {product.name}
                                     </Heading>
+
                                     {product.description && (
                                         <Text
                                             fontSize={{ base: "sm", md: "md" }}
