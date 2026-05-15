@@ -159,17 +159,26 @@ export const ProductModal = () => {
                     <IconButton
                         aria-label="Закрыть"
                         position="absolute"
-                        top={{ base: 2, md: 4 }}
-                        right={{ base: 2, md: 4 }}
+                        top={{ base: 4, md: 6 }}
+                        right={{ base: 4, md: 6 }}
                         zIndex={20}
                         size="lg"
                         borderRadius="full"
-                        bg="blackAlpha.800"
+                        bg="whiteAlpha.200"
+                        backdropFilter="blur(10px)"
                         color="white"
-                        _hover={{ bg: "blackAlpha.900" }}
+                        border="1px solid rgba(255,255,255,0.2)"
+                        boxShadow="0 4px 12px rgba(0,0,0,0.5)"
+                        _hover={{ 
+                            bg: "whiteAlpha.300",
+                            transform: "scale(1.1)",
+                            boxShadow: "0 6px 16px rgba(0,0,0,0.6)"
+                        }}
+                        _active={{ bg: "whiteAlpha.400" }}
+                        transition="all 0.2s"
                         onClick={(e) => { e.stopPropagation(); handleClose(); }}
                     >
-                        <FiX size={28} />
+                        <FiX size={32} />
                     </IconButton>
 
                     {loading && (
@@ -221,31 +230,32 @@ export const ProductModal = () => {
                                 )}
                             </Box>
 
-                            {product.description && (
-                                <Box
-                                    bg="blackAlpha.900"
-                                    backdropFilter="blur(12px)"
-                                    borderTop="1px solid rgba(255,255,255,0.12)"
-                                    p={{ base: 4, md: 6 }}
-                                    maxH="40vh"
-                                    overflowY="auto"
-                                    css={{
-                                        "&::-webkit-scrollbar": { width: "6px" },
-                                        "&::-webkit-scrollbar-track": { bg: "transparent" },
-                                        "&::-webkit-scrollbar-thumb": { bg: "rgba(255,255,255,0.2)", borderRadius: "3px" },
-                                        "&::-webkit-scrollbar-thumb:hover": { bg: "rgba(255,255,255,0.3)" },
-                                    }}
-                                >
-                                    <Box maxW="900px" mx="auto">
-                                        <Heading
-                                            fontSize={{ base: "lg", md: "xl", lg: "2xl" }}
-                                            fontWeight="bold"
-                                            color="white"
-                                            mb={3}
-                                            letterSpacing="tight"
-                                        >
-                                            {product.name}
-                                        </Heading>
+                            <Box
+                                bg="blackAlpha.900"
+                                backdropFilter="blur(12px)"
+                                borderTop="1px solid rgba(255,255,255,0.12)"
+                                p={{ base: 4, md: 6 }}
+                                maxH="40vh"
+                                overflowY="auto"
+                                onClick={(e) => e.stopPropagation()}
+                                css={{
+                                    "&::-webkit-scrollbar": { width: "6px" },
+                                    "&::-webkit-scrollbar-track": { bg: "transparent" },
+                                    "&::-webkit-scrollbar-thumb": { bg: "rgba(255,255,255,0.2)", borderRadius: "3px" },
+                                    "&::-webkit-scrollbar-thumb:hover": { bg: "rgba(255,255,255,0.3)" },
+                                }}
+                            >
+                                <Box maxW="900px" mx="auto">
+                                    <Heading
+                                        fontSize={{ base: "lg", md: "xl", lg: "2xl" }}
+                                        fontWeight="bold"
+                                        color="white"
+                                        mb={product.description ? 3 : 0}
+                                        letterSpacing="tight"
+                                    >
+                                        {product.name}
+                                    </Heading>
+                                    {product.description && (
                                         <Text
                                             fontSize={{ base: "sm", md: "md" }}
                                             color="gray.100"
@@ -254,9 +264,9 @@ export const ProductModal = () => {
                                         >
                                             {product.description}
                                         </Text>
-                                    </Box>
+                                    )}
                                 </Box>
-                            )}
+                            </Box>
                         </Flex>
                     )}
                 </Flex>
