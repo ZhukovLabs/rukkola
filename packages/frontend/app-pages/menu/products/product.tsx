@@ -18,6 +18,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { addToCart } from "@/lib/local-storage";
 import { useIsLowPerformanceDevice } from "@/hooks/use-is-low-performance-device";
 import { trackViewItem, trackAddToCart } from "@/lib/ecommerce-tracking";
+import { useProductModal } from "../product-modal/use-product-modal";
 
 type Price = { size: string; price: number };
 
@@ -96,10 +97,12 @@ export const Product = memo(function Product({
                                                  description,
                                                  prices,
                                                  blurDataURL
-                                             }: ProductInnerProps) {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const [added, setAdded] = useState(false);
+                                                 }: ProductInnerProps) {
+                                                 const router = useRouter();
+                                                 const searchParams = useSearchParams();
+                                                 const { open: openProductModal } = useProductModal();
+                                                 const [added, setAdded] = useState(false);
+
     const [selecting, setSelecting] = useState(false);
     const [selectedPrice, setSelectedPrice] = useState<Price | null>(null);
     const [imgError, setImgError] = useState(false);
@@ -164,10 +167,8 @@ export const Product = memo(function Product({
 
     const openModal = useCallback(() => {
         if (!img) return;
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("product", id);
-        router.push(`?${params.toString()}`, { scroll: false });
-    }, [router, searchParams, id, img]);
+        openProductModal(id);
+    }, [id, img, openProductModal]);
 
     const handleHover = useCallback(() => {
         if (img) {

@@ -9,6 +9,7 @@ import {NavbarItem} from "./types";
 import {CART_QUERY_KEY} from "../constants";
 import {MobileNav} from "./mobile-nav";
 import {DesktopNav} from "./desktop-nav";
+import {useProductModal} from "../product-modal/use-product-modal";
 
 const PRODUCT_QUERY_KEY = "product";
 
@@ -22,6 +23,7 @@ const NAV_HEIGHT = 60;
 
 export function Navbar({items}: NavbarProps) {
     const searchParams = useSearchParams();
+    const { productId } = useProductModal();
     const navRef = useRef<HTMLDivElement>(null);
     
     const [isFixed, setIsFixed] = useState(false);
@@ -157,7 +159,7 @@ export function Navbar({items}: NavbarProps) {
         };
     }, [items]);
 
-    if (searchParams.has(CART_QUERY_KEY) || searchParams.has(PRODUCT_QUERY_KEY)) return null;
+    if (searchParams.has(CART_QUERY_KEY) || !!productId) return null;
 
     return (
         <Box position="relative" zIndex="10">

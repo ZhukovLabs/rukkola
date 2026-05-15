@@ -9,6 +9,8 @@ import { AdminFloatButton } from "@/components/admin-float-button";
 import { CartModalProvider } from "./cart-modal/use-cart-modal";
 import {Navbar} from "@/app-pages/menu/navbar";
 
+import { ProductModalProvider } from "./product-modal/use-product-modal";
+
 const ScrollToFooterButton = dynamic(() => import("./scroll-footer-button").then(m => m.ScrollToFooterButton));
 const ScrollToTopButton = dynamic(() => import("./scroll-top-button").then(m => m.ScrollToTopButton));
 const ProductModal = dynamic(() => import("./product-modal").then(m => m.ProductModal), { ssr: false });
@@ -18,6 +20,7 @@ const ActiveLunch = dynamic(() => import("./active-lunch").then(m => m.ActiveLun
 type MenuPageClientProps = {
     activeLunch: Partial<ComponentProps<typeof ActiveLunch>>
     navbar: ComponentProps<typeof Navbar>
+    children?: React.ReactNode
 }
 
 function CartComponents() {
@@ -29,24 +32,28 @@ function CartComponents() {
     );
 }
 
-export const MenuPageClient = ({ activeLunch, navbar }: MenuPageClientProps) => {
+export const MenuPageClient = ({ activeLunch, navbar, children }: MenuPageClientProps) => {
     return (
-        <Box display="flex" flexDirection="column">
-            {activeLunch?.image && <ActiveLunch image={activeLunch.image} />}
-            <ScrollToFooterButton />
+        <ProductModalProvider>
+            <Box display="flex" flexDirection="column">
+                {activeLunch?.image && <ActiveLunch image={activeLunch.image} />}
+                <ScrollToFooterButton />
 
-            <Navbar items={navbar.items} />
+                <Navbar items={navbar.items} />
 
-            <AdminFloatButton />
-            <ScrollToTopButton />
-            
-            <Suspense fallback={null}>
-                <CartComponents />
-            </Suspense>
+                <AdminFloatButton />
+                <ScrollToTopButton />
 
-            <Suspense fallback={null}>
-                <ProductModal />
-            </Suspense>
-        </Box>
+                {children}
+
+                <Suspense fallback={null}>
+                    <CartComponents />
+                </Suspense>
+
+                <Suspense fallback={null}>
+                    <ProductModal />
+                </Suspense>
+            </Box>
+        </ProductModalProvider>
     );
 }

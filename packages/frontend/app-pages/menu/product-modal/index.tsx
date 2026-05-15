@@ -11,11 +11,11 @@ import {
 } from "@chakra-ui/react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { useSearchParams, useRouter } from "next/navigation";
 import { FiX } from "react-icons/fi";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { getProductById } from "./actions";
 import { trackViewItem } from "@/lib/ecommerce-tracking";
+import { useProductModal } from "./use-product-modal";
 
 type Product = {
     id: string;
@@ -30,9 +30,7 @@ const cacheTimeout = 5 * 60 * 1000;
 const cacheTimestamp = new Map<string, number>();
 
 export const ProductModal = () => {
-    const searchParams = useSearchParams();
-    const router = useRouter();
-    const productId = searchParams.get("product");
+    const { productId, close: closeModalState } = useProductModal();
     const prevProductIdRef = useRef<string | null>(null);
 
     const [product, setProduct] = useState<Product | null>(null);
@@ -119,7 +117,7 @@ export const ProductModal = () => {
         }
     }, [isModalVisible]);
 
-    const closeModal = useCallback(() => {
+    const handleClose = useCallback(() => {
         const scrollY = scrollYRef.current;
         
         document.body.style.overflow = '';
@@ -129,19 +127,16 @@ export const ProductModal = () => {
         
         window.scrollTo({ top: scrollY, behavior: 'instant' });
         
-        const params = new URLSearchParams(window.location.search);
-        params.delete("product");
-        const newPath = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
-        router.replace(newPath, { scroll: false });
-    }, [router]);
+        closeModalState();
+    }, [closeModalState]);
 
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === "Escape") closeModal();
+            if (e.key === "Escape") handleClose();
         };
         window.addEventListener("keydown", handleEsc);
         return () => window.removeEventListener("keydown", handleEsc);
-    }, [closeModal]);
+    }, [handleClose]);
 
     if (!productId && !isModalVisible) return null;
 
@@ -152,7 +147,7 @@ export const ProductModal = () => {
             bg="black"
             zIndex={9999}
             overflow="hidden"
-            onClick={closeModal}
+            onClick={handleClose}
         >
             <motion.div
                 initial={{ opacity: 0 }}
@@ -172,7 +167,7 @@ export const ProductModal = () => {
                         bg="blackAlpha.800"
                         color="white"
                         _hover={{ bg: "blackAlpha.900" }}
-                        onClick={(e) => { e.stopPropagation(); closeModal(); }}
+                        onClick={(e) => { e.stopPropagation(); handleClose(); }}
                     >
                         <FiX size={28} />
                     </IconButton>

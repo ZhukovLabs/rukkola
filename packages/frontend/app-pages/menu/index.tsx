@@ -124,13 +124,13 @@ export const MenuPage = async ({searchParams}: MenuPageProps) => {
             <MenuPageClient
                 activeLunch={{image: activeLunch?.image ?? undefined}}
                 navbar={{items: navItems}}
-            />
+            >
+                <Suspense fallback={<MenuLoader/>}>
+                    <ProductsServer alcoholIsVisible={alcoholIsVisible} hasError={fetchError || categories.length === 0}/>
+                </Suspense>
 
-            <Suspense fallback={<MenuLoader/>}>
-                <ProductsServer alcoholIsVisible={alcoholIsVisible} hasError={fetchError || categories.length === 0}/>
-            </Suspense>
-
-            <Footer/>
+                <Footer/>
+            </MenuPageClient>
         </Box>
     );
 };
