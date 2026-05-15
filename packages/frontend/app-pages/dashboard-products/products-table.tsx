@@ -42,7 +42,7 @@ const COLUMNS: Column[] = [
     {key: 'photo', label: 'Фото'},
     {key: 'name', label: 'Название', minW: 200},
     {key: 'description', label: 'Описание', minW: 250},
-    {key: 'prices', label: 'Цены', minW: 180},
+    {key: 'prices', label: 'Размер/Цена', minW: 180},
     {key: 'categories', label: 'Категории', minW: 200},
     {key: 'actions', label: 'Действия', minW: 150},
 ];
