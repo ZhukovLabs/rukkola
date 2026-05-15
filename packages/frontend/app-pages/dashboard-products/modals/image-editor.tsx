@@ -102,12 +102,11 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
     const currentAspect = useMemo(() => {
         if (aspect === null) {
             if (!mediaSize.width || !mediaSize.height) return undefined
-
             return mediaSize.width / mediaSize.height
         }
-
         return aspect
     }, [aspect, mediaSize])
+
     const cropperKey = useMemo(() => {
         return `${currentAspect}-${mediaSize.width}-${mediaSize.height}`
     }, [currentAspect, mediaSize])
@@ -162,32 +161,32 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
     return (
         <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()} size="cover">
             <Dialog.Backdrop bg="blackAlpha.900" backdropFilter="blur(10px)" />
-            <Dialog.Positioner>
+            <Dialog.Positioner p={{ base: 0, md: 4 }}>
                 <Dialog.Content
                     bg="#0f1113"
-                    borderRadius="2xl"
-                    border="1px solid"
+                    borderRadius={{ base: "0", md: "2xl" }}
+                    border={{ base: "none", md: "1px solid" }}
                     borderColor="whiteAlpha.100"
                     color="white"
                     maxW="1100px"
-                    w="95vw"
-                    h="auto"
-                    maxH="90vh"
+                    w="100vw"
+                    h={{ base: "100dvh", md: "auto" }}
+                    maxH={{ base: "100dvh", md: "90vh" }}
                     overflow="hidden"
                     boxShadow="2xl"
                     display="flex"
                     flexDirection="column"
                 >
-                    <Flex justify="space-between" align="center" px={6} py={4} borderBottom="1px solid" borderColor="whiteAlpha.100">
+                    <Flex justify="space-between" align="center" px={{ base: 4, md: 6 }} py={4} borderBottom="1px solid" borderColor="whiteAlpha.100">
                         <HStack gap={3}>
-                            <Box bg="gray.700" p={2} borderRadius="lg">
+                            <Box bg="gray.700" p={2} borderRadius="lg" display={{ base: 'none', sm: 'block' }}>
                                 <FiImage size={20} color="#CBD5E0" />
                             </Box>
                             <VStack align="start" gap={0}>
-                                <Text fontWeight="bold" color="white" fontSize="md">
+                                <Text fontWeight="bold" color="white" fontSize={{ base: "sm", md: "md" }}>
                                     Редактор изображений
                                 </Text>
-                                <Text fontSize="xs" color="gray.500">
+                                <Text fontSize="xs" color="gray.500" display={{ base: 'none', sm: 'block' }}>
                                     Обрежьте и настройте изображение для товара
                                 </Text>
                             </VStack>
@@ -205,8 +204,8 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                         </Dialog.CloseTrigger>
                     </Flex>
 
-                    <Grid templateColumns={{ base: "1fr", lg: "1fr 340px" }} flex={1} overflow="hidden">
-                        <Box position="relative" bg="#050505" h={{ base: "400px", lg: "auto" }} overflow="hidden">
+                    <Grid templateColumns={{ base: "1fr", lg: "1fr 340px" }} flex={1} overflow="hidden" minH={0}>
+                        <Box position="relative" bg="#050505" h={{ base: "40vh", sm: "45vh", lg: "auto" }} minH={{ base: "250px", lg: "auto" }} overflow="hidden">
                             <Box
                                 position="absolute"
                                 inset={0}
@@ -250,13 +249,13 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                             </HStack>
                         </Box>
 
-                        <Box bg="#141619" borderLeft="1px solid" borderColor="whiteAlpha.100" p={6} overflowY="auto">
+                        <Box bg="#141619" borderLeft={{ base: "none", lg: "1px solid" }} borderTop={{ base: "1px solid", lg: "none" }} borderColor="whiteAlpha.100" p={{ base: 4, md: 6 }} overflowY="auto" flex={1}>
                             <Stack gap={6}>
                                 <VStack align="stretch" gap={3}>
                                     <Text fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase" letterSpacing="wider">
                                         Пропорции
                                     </Text>
-                                    <Grid templateColumns="repeat(3, 1fr)" gap={2}>
+                                    <Grid templateColumns={{ base: "repeat(2, 1fr)", sm: "repeat(3, 1fr)" }} gap={2}>
                                         {ASPECT_RATIOS.map((ratio) => (
                                             <Button
                                                 key={ratio.label}
@@ -270,13 +269,14 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                                     borderColor: aspect === ratio.value ? 'blue.400' : 'whiteAlpha.300',
                                                 }}
                                                 onClick={() => setAspect(ratio.value)}
-                                                flexDirection="column"
+                                                flexDirection="row"
                                                 h="auto"
-                                                py={2}
-                                                gap={1}
+                                                py={2.5}
+                                                gap={2}
+                                                justifyContent="center"
                                             >
                                                 {ratio.icon}
-                                                <Text fontSize="10px">{ratio.label}</Text>
+                                                <Text fontSize="11px">{ratio.label}</Text>
                                             </Button>
                                         ))}
                                     </Grid>
@@ -311,14 +311,14 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                             <VStack key={filter.key} align="stretch" gap={1}>
                                                 <Flex justify="space-between" align="center">
                                                     <HStack gap={2}>
-                                                        {filter.icon}
+                                                        {'icon' in filter && filter.icon}
                                                         <Text fontSize="xs" color="gray.400">{filter.label}</Text>
                                                     </HStack>
                                                     <Text fontSize="xs" color="gray.200">
                                                         {filters[filter.key]}{filter.unit}
                                                     </Text>
                                                 </Flex>
-                                                <Box px={1}>
+                                                <Box px={1} py={1}>
                                                     <input
                                                         type="range"
                                                         min={filter.min}
@@ -329,7 +329,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                                             ...prev,
                                                             [filter.key]: parseInt(e.target.value)
                                                         }))}
-                                                        style={{ width: '100%', accentColor: '#3182ce', cursor: 'pointer' }}
+                                                        style={{ width: '100%', accentColor: '#3182ce', cursor: 'pointer', height: '6px' }}
                                                     />
                                                 </Box>
                                             </VStack>
@@ -359,9 +359,9 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                         <VStack align="stretch" gap={2}>
                                             <Flex justify="space-between">
                                                 <Text fontSize="xs" color="gray.400">Поворот</Text>
-                                                <Text fontSize="xs" color="gray.200">{rotation}°</Text>
+                                                <Text fontSize="xs" color="gray.200">{Math.round(rotation)}°</Text>
                                             </Flex>
-                                            <Box px={1}>
+                                            <Box px={1} py={1}>
                                                 <input
                                                     type="range"
                                                     min={-180}
@@ -369,7 +369,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                                     step={1}
                                                     value={Math.round(rotation)}
                                                     onChange={(e) => setRotation(Math.round(parseInt(e.target.value)))}
-                                                    style={{ width: '100%', accentColor: '#3182ce', cursor: 'pointer' }}
+                                                    style={{ width: '100%', accentColor: '#3182ce', cursor: 'pointer', height: '6px' }}
                                                 />
                                             </Box>
                                             <HStack justify="space-between">
@@ -382,7 +382,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                                 >
                                                     <FiRotateCcw size={12} />
                                                 </IconButton>
-                                                <HStack gap={1}>
+                                                <HStack gap={1} overflowX="auto" py={1}>
                                                     {[-90, 0, 90].map(angle => (
                                                         <Button
                                                             key={angle}
@@ -420,6 +420,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                                     onClick={handleFlipHorizontal}
                                                     flex={1}
                                                     gap={2}
+                                                    h="36px"
                                                 >
                                                     <LuFlipHorizontal size={14} />
                                                     <Text fontSize="xs">Гориз.</Text>
@@ -433,6 +434,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                                     onClick={handleFlipVertical}
                                                     flex={1}
                                                     gap={2}
+                                                    h="36px"
                                                 >
                                                     <LuFlipVertical size={14} />
                                                     <Text fontSize="xs">Верт.</Text>
@@ -470,7 +472,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                         >
                                             <FiMinimize2 size={14} />
                                         </IconButton>
-                                        <Box flex={1}>
+                                        <Box flex={1} py={1}>
                                             <input
                                                 type="range"
                                                 min={1}
@@ -478,7 +480,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                                 step={0.01}
                                                 value={zoom}
                                                 onChange={(e) => setZoom(parseFloat(e.target.value))}
-                                                style={{ width: '100%', accentColor: '#3182ce', cursor: 'pointer' }}
+                                                style={{ width: '100%', accentColor: '#3182ce', cursor: 'pointer', height: '6px' }}
                                             />
                                         </Box>
                                         <IconButton
@@ -496,7 +498,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                         </Box>
                     </Grid>
 
-                    <Flex justify="space-between" align="center" px={6} py={4} borderTop="1px solid" borderColor="whiteAlpha.100" bg="#0f1113">
+                    <Flex justify="space-between" align="center" px={{ base: 4, md: 6 }} py={4} borderTop="1px solid" borderColor="whiteAlpha.100" bg="#0f1113">
                         <Button
                             variant="ghost"
                             size="sm"
@@ -504,9 +506,11 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                             _hover={{ color: 'red.400', bg: 'red.400/10' }}
                             onClick={handleResetAll}
                             gap={2}
+                            px={{ base: 2, md: 4 }}
                         >
                             <FiRefreshCcw size={14} />
-                            Сбросить всё
+                            <Text display={{ base: 'none', sm: 'inline' }}>Сбросить всё</Text>
+                            <Text display={{ base: 'inline', sm: 'none' }}>Сброс</Text>
                         </Button>
                         <HStack gap={3}>
                             <Button
@@ -516,6 +520,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                 color="gray.300"
                                 _hover={{ bg: 'whiteAlpha.100' }}
                                 onClick={onClose}
+                                px={{ base: 3, md: 5 }}
                             >
                                 Отмена
                             </Button>
@@ -525,7 +530,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                 color="white"
                                 _hover={{ bg: 'blue.500' }}
                                 onClick={handleSave}
-                                px={6}
+                                px={{ base: 4, md: 6 }}
                                 gap={2}
                             >
                                 <FiCheck />
