@@ -158,7 +158,6 @@ export const ProductRow = ({
                 {p.description || <Text color="gray.600">—</Text>}
             </Table.Cell>
 
-            {/* Обновленная ячейка с ценами */}
             <Table.Cell p={4} maxW="250px">
                 {p.prices?.length ? (
                     <Flex wrap="wrap" gap={2}>
@@ -183,6 +182,7 @@ export const ProductRow = ({
                                     fontWeight="medium"
                                     borderRight="1px solid"
                                     borderColor="gray.700"
+                                    whiteSpace="nowrap"
                                 >
                                     {size}
                                 </Text>
@@ -192,6 +192,7 @@ export const ProductRow = ({
                                     fontWeight="bold"
                                     px={2.5}
                                     py={1}
+                                    whiteSpace="nowrap"
                                 >
                                     {price} р.
                                 </Text>
