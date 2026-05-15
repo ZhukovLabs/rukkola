@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import Cropper, { Area } from 'react-easy-crop'
 import {
     Dialog,
@@ -12,23 +12,36 @@ import {
     HStack,
     VStack,
     Separator,
+    Grid,
+    Stack,
+    Badge,
 } from '@chakra-ui/react'
-import { FiRotateCw, FiRotateCcw, FiCheck, FiX, FiMaximize2, FiMinimize2 } from 'react-icons/fi'
-import { LuFlipHorizontal, LuFlipVertical } from 'react-icons/lu'
+import { 
+    FiRotateCw, 
+    FiRotateCcw, 
+    FiCheck, 
+    FiX, 
+    FiMaximize2, 
+    FiMinimize2,
+    FiRefreshCcw,
+    FiSquare,
+    FiImage,
+} from 'react-icons/fi'
+import { LuFlipHorizontal, LuFlipVertical, LuScaling } from 'react-icons/lu'
 
 type AspectRatioOption = {
     label: string
     value: number | null
-    icon?: React.ReactNode
+    icon: React.ReactNode
 }
 
 const ASPECT_RATIOS: AspectRatioOption[] = [
-    { label: 'Свободно', value: null, icon: <FiMaximize2 /> },
-    { label: '1:1', value: 1 },
-    { label: '4:3', value: 4 / 3 },
-    { label: '16:9', value: 16 / 9 },
-    { label: '3:2', value: 3 / 2 },
-    { label: '2:3', value: 2 / 3 },
+    { label: 'Оригинал', value: 0, icon: <FiMaximize2 size={14} /> },
+    { label: '1:1', value: 1, icon: <FiSquare size={14} /> },
+    { label: '4:3', value: 4 / 3, icon: <FiImage size={14} /> },
+    { label: '16:9', value: 16 / 9, icon: <FiImage size={14} /> },
+    { label: '3:2', value: 3 / 2, icon: <FiImage size={14} /> },
+    { label: '2:3', value: 2 / 3, icon: <FiImage size={14} /> },
 ]
 
 type ImageEditorProps = {
@@ -45,378 +58,402 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
     const [zoom, setZoom] = useState(1)
     const [rotation, setRotation] = useState(0)
     const [flip, setFlip] = useState(initialFlip ?? { horizontal: false, vertical: false })
-    const [aspect, setAspect] = useState<number | null>(null)
+    const [aspect, setAspect] = useState<number | null>(0)
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
+    const [mediaSize, setMediaSize] = useState({ width: 0, height: 0 })
 
     const onCropComplete = useCallback((_: Area, croppedAreaPixelsArg: Area) => {
         setCroppedAreaPixels(croppedAreaPixelsArg)
     }, [])
 
-    const handleRotateLeft = () => {
-        setRotation((prev) => (prev - 90) % 360)
-    }
-
-    const handleRotateRight = () => {
-        setRotation((prev) => (prev + 90) % 360)
-    }
+    const handleRotateLeft = () => setRotation((prev) => Math.round((prev - 90) % 360))
+    const handleRotateRight = () => setRotation((prev) => Math.round((prev + 90) % 360))
 
     const handleFlipHorizontal = () => {
-        const newFlip = { ...flip, horizontal: !flip.horizontal }
-        setFlip(newFlip)
-        onFlipChange?.(newFlip)
-        setCrop({ x: 0, y: 0 })
+        setFlip(prev => ({ ...prev, horizontal: !prev.horizontal }))
     }
 
     const handleFlipVertical = () => {
-        const newFlip = { ...flip, vertical: !flip.vertical }
-        setFlip(newFlip)
-        onFlipChange?.(newFlip)
-        setCrop({ x: 0, y: 0 })
+        setFlip(prev => ({ ...prev, vertical: !prev.vertical }))
     }
 
-    const handleFlipReset = () => {
-        const newFlip = { horizontal: false, vertical: false }
-        setFlip(newFlip)
-        onFlipChange?.(newFlip)
+    const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.1, 3))
+    const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.1, 1))
+
+    const handleResetTransform = () => {
+        setRotation(0)
+        setFlip({ horizontal: false, vertical: false })
     }
 
-    const handleZoomIn = () => {
-        setZoom((prev) => Math.min(prev + 0.2, 3))
-    }
-
-    const handleZoomOut = () => {
-        setZoom((prev) => Math.max(prev - 0.2, 1))
-    }
-
-    const handleFit = () => {
-        setZoom(1)
-        setCrop({ x: 0, y: 0 })
-    }
-
-    const handleSave = () => {
-        if (croppedAreaPixels) {
-            onSave(croppedAreaPixels, rotation, flip)
-            onClose()
-        }
-    }
-
-    const handleReset = () => {
+    const handleResetAll = () => {
         setCrop({ x: 0, y: 0 })
         setZoom(1)
         setRotation(0)
         setFlip({ horizontal: false, vertical: false })
-        setAspect(null)
-        onFlipChange?.({ horizontal: false, vertical: false })
+        setAspect(0)
     }
 
-    const selectedAspectLabel = ASPECT_RATIOS.find(r => r.value === aspect)?.label || 'Свободно'
+    const handleSave = () => {
+        if (croppedAreaPixels && mediaSize.width > 0) {
+            // When the cropper is visually flipped via CSS scale on the container, 
+            // the coordinate system is inverted for react-easy-crop.
+            // We need to mirror the source pixels manually.
+            const adjustedCrop = { ...croppedAreaPixels }
+            
+            if (flip.horizontal) {
+                adjustedCrop.x = mediaSize.width - croppedAreaPixels.width - croppedAreaPixels.x
+            }
+            if (flip.vertical) {
+                adjustedCrop.y = mediaSize.height - croppedAreaPixels.height - croppedAreaPixels.y
+            }
+            
+            onSave(adjustedCrop, rotation, flip)
+            onClose()
+        }
+    }
+
+    const selectedAspect = useMemo(() => 
+        ASPECT_RATIOS.find(r => r.value === aspect) || ASPECT_RATIOS[0]
+    , [aspect])
 
     return (
-        <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()} key={isOpen ? 'open' : 'closed'}>
-            <Dialog.Backdrop bg="blackAlpha.800" backdropFilter="blur(8px)" />
+        <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()} size="cover">
+            <Dialog.Backdrop bg="blackAlpha.900" backdropFilter="blur(10px)" />
             <Dialog.Positioner>
                 <Dialog.Content
-                    bg="rgba(24,26,28,0.95)"
-                    borderRadius="xl"
+                    bg="#0f1113"
+                    borderRadius="2xl"
                     border="1px solid"
-                    borderColor="gray.700"
+                    borderColor="whiteAlpha.100"
                     color="white"
-                    maxW="700px"
-                    w="full"
-                    p={4}
+                    maxW="1100px"
+                    w="95vw"
+                    h="auto"
+                    maxH="90vh"
+                    overflow="hidden"
+                    boxShadow="2xl"
+                    display="flex"
+                    flexDirection="column"
                 >
-                    <Flex justify="space-between" align="center" mb={4}>
-                        <Text fontWeight="semibold" color="gray.200" fontSize="lg">
-                            Редактирование изображения
-                        </Text>
+                    {/* Header */}
+                    <Flex justify="space-between" align="center" px={6} py={4} borderBottom="1px solid" borderColor="whiteAlpha.100">
+                        <HStack gap={3}>
+                            <Box bg="gray.700" p={2} borderRadius="lg">
+                                <FiImage size={20} color="#CBD5E0" />
+                            </Box>
+                            <VStack align="start" gap={0}>
+                                <Text fontWeight="bold" color="white" fontSize="md">
+                                    Редактор изображений
+                                </Text>
+                                <Text fontSize="xs" color="gray.500">
+                                    Обрежьте и настройте изображение для товара
+                                </Text>
+                            </VStack>
+                        </HStack>
                         <Dialog.CloseTrigger asChild>
                             <IconButton
                                 aria-label="Закрыть"
                                 variant="ghost"
                                 size="sm"
-                                color="gray.400"
-                                _hover={{ color: 'gray.200' }}
+                                color="gray.500"
+                                _hover={{ color: 'white', bg: 'whiteAlpha.100' }}
                             >
                                 <FiX />
                             </IconButton>
                         </Dialog.CloseTrigger>
                     </Flex>
 
-                    <Box 
-                        position="relative" 
-                        h="350px" 
-                        bg="gray.900" 
-                        borderRadius="md" 
-                        overflow="hidden"
-                        className="image-editor-cropper"
-                    >
-                        <Box
-                            position="absolute"
-                            inset={0}
-                            transform={`scaleX(${flip.horizontal ? -1 : 1}) scaleY(${flip.vertical ? -1 : 1})`}
-                            transformOrigin="center"
-                            transition="transform 0.3s ease"
-                            zIndex={1}
-                        >
-                            <Cropper
-                                key={imageSrc}
-                                image={imageSrc}
-                                crop={crop}
-                                zoom={zoom}
-                                rotation={rotation}
-                                aspect={aspect || 16 / 9}
-                                onCropChange={setCrop}
-                                onZoomChange={setZoom}
-                                onRotationChange={setRotation}
-                                onCropComplete={onCropComplete}
-                                showGrid={true}
+                    {/* Main Content */}
+                    <Grid templateColumns={{ base: "1fr", lg: "1fr 340px" }} flex={1} overflow="hidden">
+                        {/* Cropper Area */}
+                        <Box position="relative" bg="#050505" h={{ base: "400px", lg: "auto" }} overflow="hidden">
+                            <Box
+                                position="absolute"
+                                inset={0}
+                                zIndex={1}
                                 style={{
-                                    containerStyle: { background: '#1a1c1e' },
-                                    cropAreaStyle: { 
-                                        border: '2px solid #888888',
-                                        boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
-                                    },
+                                    transform: `scale(${flip.horizontal ? -1 : 1}, ${flip.vertical ? -1 : 1})`,
+                                    transition: 'transform 0.4s ease'
                                 }}
-                            />
-                        </Box>
-                    </Box>
-
-                    <Box mt={4}>
-                        <Flex justify="space-between" align="center" mb={2}>
-                            <Text fontSize="sm" color="gray.400">
-                                Ориентация: <Text as="span" color="gray.200">{selectedAspectLabel}</Text>
-                            </Text>
-                            <Button
-                                size="xs"
-                                variant="ghost"
-                                color="gray.300"
-                                _hover={{ bg: 'gray.700' }}
-                                onClick={handleFit}
                             >
-                                <FiMinimize2 />
-                                Вписать
-                            </Button>
-                        </Flex>
-                        <Flex gap={2} flexWrap="wrap" mb={4}>
-                            {ASPECT_RATIOS.map((ratio) => (
-                                <Button
-                                    key={ratio.label}
-                                    size="xs"
-                                    variant={aspect === ratio.value ? 'solid' : 'outline'}
-                                    bg={aspect === ratio.value ? 'gray.600' : 'transparent'}
-                                    color={aspect === ratio.value ? 'white' : 'gray.300'}
-                                    borderColor="gray.600"
-_hover={{
-                                bg: aspect === ratio.value ? 'gray.500' : 'gray.700',
-                            }}
-                                    onClick={() => setAspect(ratio.value)}
-                                >
-                                    {ratio.label}
-                                </Button>
-                            ))}
-                        </Flex>
+                                <Cropper
+                                    image={imageSrc}
+                                    crop={crop}
+                                    zoom={zoom}
+                                    rotation={rotation}
+                                    aspect={aspect === 0 ? (mediaSize.width / mediaSize.height) : (aspect || 1)}
+                                    onCropChange={setCrop}
+                                    onZoomChange={setZoom}
+                                    onRotationChange={setRotation}
+                                    onCropComplete={onCropComplete}
+                                    onMediaLoaded={setMediaSize}
+                                    showGrid={true}
+                                    restrictPosition={true}
+                                    style={{
+                                        containerStyle: { background: '#050505' },
+                                        cropAreaStyle: { 
+                                            border: '2px solid rgba(255,255,255,0.8)',
+                                            boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.75)',
+                                        },
+                                    }}
+                                />
+                            </Box>
 
-                        <Separator borderColor="gray.700" mb={4} />
+                            {/* Overlay Indicators */}
+                            <HStack position="absolute" bottom={4} left={4} zIndex={10} gap={2}>
+                                <Badge variant="subtle" bg="blackAlpha.700" color="whiteAlpha.800" textTransform="none" px={2} py={1} borderRadius="md" border="1px solid" borderColor="whiteAlpha.100">
+                                    {Math.round(zoom * 100)}%
+                                </Badge>
+                                <Badge variant="subtle" bg="blackAlpha.700" color="whiteAlpha.800" textTransform="none" px={2} py={1} borderRadius="md" border="1px solid" borderColor="whiteAlpha.100">
+                                    {Math.round(rotation)}°
+                                </Badge>
+                            </HStack>
+                        </Box>
 
-                        <VStack gap={3} align="stretch">
-                            <Flex align="center" gap={4}>
-                                <Text fontSize="sm" color="gray.400" minW="70px">
-                                    Поворот
-                                </Text>
-                                <HStack gap={2} flex={1}>
-                                    <IconButton
-                                        aria-label="Повернуть влево на 90°"
-                                        size="sm"
-                                        variant="outline"
-                                        borderColor="gray.600"
-                                        color="gray.300"
-                                        _hover={{ borderColor: 'gray.400', color: 'gray.200' }}
-                                        onClick={handleRotateLeft}
-                                        title="Повернуть влево"
-                                    >
-                                        <FiRotateCcw />
-                                    </IconButton>
-                                    <Text fontSize="sm" color="gray.300" minW="50px" textAlign="center">
-                                        {rotation}°
-                                    </Text>
-                                    <IconButton
-                                        aria-label="Повернуть вправо на 90°"
-                                        size="sm"
-                                        variant="outline"
-                                        borderColor="gray.600"
-                                        color="gray.300"
-                                        _hover={{ borderColor: 'gray.400', color: 'gray.200' }}
-                                        onClick={handleRotateRight}
-                                        title="Повернуть вправо"
-                                    >
-                                        <FiRotateCw />
-                                    </IconButton>
-                                    <Button
-                                        size="xs"
-                                        variant="outline"
-                                        borderColor="gray.600"
-                                        color="gray.300"
-                                        _hover={{ borderColor: 'gray.400', color: 'gray.200' }}
-                                        onClick={() => setRotation(0)}
-                                        ml={2}
-                                    >
-                                        Сброс
-                                    </Button>
-                                </HStack>
-                            </Flex>
 
-                            <Flex align="center" gap={4}>
-                                <Text fontSize="sm" color="gray.400" minW="70px">
-                                    Отражение
-                                </Text>
-                                <HStack gap={2} flex={1}>
-                                    <IconButton
-                                        aria-label="Отразить горизонтально"
-                                        size="sm"
-                                        variant={flip.horizontal ? 'solid' : 'outline'}
-                                        bg={flip.horizontal ? 'gray.600' : 'transparent'}
-                                        borderColor="gray.600"
-                                        color="gray.300"
-                                        _hover={{ borderColor: 'gray.400', color: 'gray.200' }}
-                                        onClick={handleFlipHorizontal}
-                                        title="Отразить горизонтально"
-                                    >
-                                        <LuFlipHorizontal size={18} />
-                                    </IconButton>
-                                    <IconButton
-                                        aria-label="Отразить вертикально"
-                                        size="sm"
-                                        variant={flip.vertical ? 'solid' : 'outline'}
-                                        bg={flip.vertical ? 'gray.600' : 'transparent'}
-                                        borderColor="gray.600"
-                                        color="gray.300"
-                                        _hover={{ borderColor: 'gray.400', color: 'gray.200' }}
-                                        onClick={handleFlipVertical}
-                                        title="Отразить вертикально"
-                                    >
-                                        <LuFlipVertical size={18} />
-                                    </IconButton>
-                                    {(flip.horizontal || flip.vertical) && (
-                                        <Button
+                        {/* Controls Sidebar */}
+                        <Box bg="#141619" borderLeft="1px solid" borderColor="whiteAlpha.100" p={6} overflowY="auto">
+                            <Stack gap={8}>
+                                {/* Orientation Section */}
+                                <VStack align="stretch" gap={3}>
+                                    <Flex justify="space-between" align="center">
+                                        <Text fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase" letterSpacing="wider">
+                                            Пропорции
+                                        </Text>
+                                    </Flex>
+                                    <Grid templateColumns="repeat(3, 1fr)" gap={2}>
+                                        {ASPECT_RATIOS.map((ratio) => (
+                                            <Button
+                                                key={ratio.label}
+                                                size="sm"
+                                                variant={aspect === ratio.value ? 'solid' : 'outline'}
+                                                bg={aspect === ratio.value ? 'blue.600' : 'transparent'}
+                                                borderColor={aspect === ratio.value ? 'blue.500' : 'whiteAlpha.200'}
+                                                color={aspect === ratio.value ? 'white' : 'gray.400'}
+                                                _hover={{
+                                                    bg: aspect === ratio.value ? 'blue.500' : 'whiteAlpha.100',
+                                                    borderColor: aspect === ratio.value ? 'blue.400' : 'whiteAlpha.300',
+                                                }}
+                                                onClick={() => setAspect(ratio.value === null ? null : ratio.value)}
+                                                flexDirection="column"
+                                                h="auto"
+                                                py={2}
+                                                gap={1}
+                                            >
+                                                {ratio.icon}
+                                                <Text fontSize="10px">{ratio.label}</Text>
+                                            </Button>
+                                        ))}
+                                    </Grid>
+                                </VStack>
+
+                                <Separator borderColor="whiteAlpha.100" />
+
+                                {/* Transform Section */}
+                                <VStack align="stretch" gap={4}>
+                                    <Flex justify="space-between" align="center">
+                                        <Text fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase" letterSpacing="wider">
+                                            Трансформация
+                                        </Text>
+                                        <IconButton
+                                            aria-label="Сбросить трансформацию"
                                             size="xs"
-                                            variant="outline"
-                                            borderColor="gray.600"
-                                            color="gray.300"
-                                            _hover={{ borderColor: 'gray.400', color: 'gray.200' }}
-                                            onClick={handleFlipReset}
+                                            variant="ghost"
+                                            color="gray.500"
+                                            onClick={handleResetTransform}
+                                            _hover={{ color: 'blue.400' }}
                                         >
-                                            Сброс
-                                        </Button>
-                                    )}
-                                </HStack>
-                            </Flex>
+                                            <FiRefreshCcw size={12} />
+                                        </IconButton>
+                                    </Flex>
+                                    
+                                    <Stack gap={4}>
+                                        <VStack align="stretch" gap={2}>
+                                            <Flex justify="space-between">
+                                                <Text fontSize="xs" color="gray.400">Поворот</Text>
+                                                <Text fontSize="xs" color="gray.200">{rotation}°</Text>
+                                            </Flex>
+                                            <Box px={1}>
+                                                <input
+                                                    type="range"
+                                                    min={-180}
+                                                    max={180}
+                                                    step={1}
+                                                    value={Math.round(rotation)}
+                                                    onChange={(e) => setRotation(Math.round(parseInt(e.target.value)))}
+                                                    style={{
+                                                        width: '100%',
+                                                        accentColor: '#3182ce',
+                                                        cursor: 'pointer',
+                                                    }}
+                                                />
+                                            </Box>
+                                            <HStack justify="space-between">
+                                                <IconButton
+                                                    aria-label="Повернуть влево"
+                                                    size="xs"
+                                                    variant="outline"
+                                                    borderColor="whiteAlpha.200"
+                                                    onClick={handleRotateLeft}
+                                                >
+                                                    <FiRotateCcw size={12} />
+                                                </IconButton>
+                                                <HStack gap={1}>
+                                                    {[ -90, 0, 90 ].map(angle => (
+                                                        <Button 
+                                                            key={angle}
+                                                            size="xs" 
+                                                            variant="ghost" 
+                                                            fontSize="10px"
+                                                            color={rotation === angle ? 'blue.400' : 'gray.500'}
+                                                            onClick={() => setRotation(angle)}
+                                                        >
+                                                            {angle}°
+                                                        </Button>
+                                                    ))}
+                                                </HStack>
+                                                <IconButton
+                                                    aria-label="Повернуть вправо"
+                                                    size="xs"
+                                                    variant="outline"
+                                                    borderColor="whiteAlpha.200"
+                                                    onClick={handleRotateRight}
+                                                >
+                                                    <FiRotateCw size={12} />
+                                                </IconButton>
+                                            </HStack>
+                                        </VStack>
 
-                            <Flex align="center" gap={4}>
-                                <Text fontSize="sm" color="gray.400" minW="70px">
-                                    Масштаб
-                                </Text>
-                                <HStack gap={2} flex={1}>
-                                    <IconButton
-                                        aria-label="Уменьшить"
-                                        size="sm"
-                                        variant="outline"
-                                        borderColor="gray.600"
-                                        color="gray.300"
-                                        _hover={{ borderColor: 'gray.400', color: 'gray.200' }}
-                                        onClick={handleZoomOut}
-                                        disabled={zoom <= 1}
-                                    >
-                                        <FiMinimize2 />
-                                    </IconButton>
-                                    <Box flex={1} position="relative" h="24px">
-                                        <input
-                                            type="range"
-                                            min={1}
-                                            max={3}
-                                            step={0.05}
-                                            value={zoom}
-                                            onChange={(e) => setZoom(parseFloat(e.target.value))}
-                                            style={{
-                                                width: '100%',
-                                                height: '4px',
-                                                position: 'absolute',
-                                                top: '50%',
-                                                transform: 'translateY(-50%)',
-                                                accentColor: '#888888',
-                                                cursor: 'pointer',
-                                                background: `linear-gradient(to right, #888888 ${((zoom - 1) / 2) * 100}%, #4a5568 ${((zoom - 1) / 2) * 100}%)`,
-                                            }}
-                                        />
-                                    </Box>
-                                    <IconButton
-                                        aria-label="Увеличить"
-                                        size="sm"
-                                        variant="outline"
-                                        borderColor="gray.600"
-                                        color="gray.300"
-                                        _hover={{ borderColor: 'gray.400', color: 'gray.200' }}
-                                        onClick={handleZoomIn}
-                                        disabled={zoom >= 3}
-                                    >
-                                        <FiMaximize2 />
-                                    </IconButton>
-                                    <Text fontSize="sm" color="gray.300" minW="45px" textAlign="right">
-                                        {Math.round(zoom * 100)}%
-                                    </Text>
-                                </HStack>
-                            </Flex>
+                                        <VStack align="stretch" gap={2}>
+                                            <Text fontSize="xs" color="gray.400">Отражение</Text>
+                                            <HStack gap={2}>
+                                                <Button
+                                                    size="sm"
+                                                    variant={flip.horizontal ? 'solid' : 'outline'}
+                                                    bg={flip.horizontal ? 'blue.600' : 'transparent'}
+                                                    borderColor={flip.horizontal ? 'blue.500' : 'whiteAlpha.200'}
+                                                    color={flip.horizontal ? 'white' : 'gray.400'}
+                                                    onClick={handleFlipHorizontal}
+                                                    flex={1}
+                                                    gap={2}
+                                                >
+                                                    <LuFlipHorizontal size={14} />
+                                                    <Text fontSize="xs">Гориз.</Text>
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant={flip.vertical ? 'solid' : 'outline'}
+                                                    bg={flip.vertical ? 'blue.600' : 'transparent'}
+                                                    borderColor={flip.vertical ? 'blue.500' : 'whiteAlpha.200'}
+                                                    color={flip.vertical ? 'white' : 'gray.400'}
+                                                    onClick={handleFlipVertical}
+                                                    flex={1}
+                                                    gap={2}
+                                                >
+                                                    <LuFlipVertical size={14} />
+                                                    <Text fontSize="xs">Верт.</Text>
+                                                </Button>
+                                            </HStack>
+                                        </VStack>
+                                    </Stack>
+                                </VStack>
 
-                            <Flex align="center" gap={4}>
-                                <Text fontSize="sm" color="gray.400" minW="70px">
-                                    Положение
-                                </Text>
-                                <HStack gap={2} flex={1}>
-                                    <Button
-                                        size="xs"
-                                        variant="outline"
-                                        borderColor="gray.600"
-                                        color="gray.300"
-                                        _hover={{ borderColor: 'gray.400', color: 'gray.200' }}
-                                        onClick={handleFit}
-                                        flex={1}
-                                    >
-                                        Центрировать
-                                    </Button>
-                                </HStack>
-                            </Flex>
-                        </VStack>
-                    </Box>
+                                <Separator borderColor="whiteAlpha.100" />
 
-                    <Flex justify="flex-end" gap={3} mt={6}>
+                                {/* Zoom Section */}
+                                <VStack align="stretch" gap={3}>
+                                    <Flex justify="space-between" align="center">
+                                        <Text fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase" letterSpacing="wider">
+                                            Масштаб
+                                        </Text>
+                                        <IconButton
+                                            aria-label="Вписать"
+                                            size="xs"
+                                            variant="ghost"
+                                            color="gray.500"
+                                            onClick={() => { setZoom(1); setCrop({ x: 0, y: 0 }) }}
+                                            _hover={{ color: 'blue.400' }}
+                                        >
+                                            <LuScaling size={12} />
+                                        </IconButton>
+                                    </Flex>
+                                    <HStack gap={3}>
+                                        <IconButton
+                                            aria-label="Уменьшить"
+                                            size="xs"
+                                            variant="ghost"
+                                            onClick={handleZoomOut}
+                                            disabled={zoom <= 1}
+                                        >
+                                            <FiMinimize2 size={14} />
+                                        </IconButton>
+                                        <Box flex={1}>
+                                            <input
+                                                type="range"
+                                                min={1}
+                                                max={3}
+                                                step={0.01}
+                                                value={zoom}
+                                                onChange={(e) => setZoom(parseFloat(e.target.value))}
+                                                style={{
+                                                    width: '100%',
+                                                    accentColor: '#3182ce',
+                                                    cursor: 'pointer',
+                                                }}
+                                            />
+                                        </Box>
+                                        <IconButton
+                                            aria-label="Увеличить"
+                                            size="xs"
+                                            variant="ghost"
+                                            onClick={handleZoomIn}
+                                            disabled={zoom >= 3}
+                                        >
+                                            <FiMaximize2 size={14} />
+                                        </IconButton>
+                                    </HStack>
+                                </VStack>
+                            </Stack>
+                        </Box>
+                    </Grid>
+
+                    {/* Footer */}
+                    <Flex justify="space-between" align="center" px={6} py={4} borderTop="1px solid" borderColor="whiteAlpha.100" bg="#0f1113">
                         <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
-                            color="gray.300"
-                            borderColor="gray.600"
-                            _hover={{ borderColor: 'gray.400', color: 'gray.200' }}
-                            onClick={handleReset}
+                            color="gray.500"
+                            _hover={{ color: 'red.400', bg: 'red.400/10' }}
+                            onClick={handleResetAll}
+                            gap={2}
                         >
+                            <FiRefreshCcw size={14} />
                             Сбросить всё
                         </Button>
-                        <Button
-                            size="sm"
-                            bg="gray.700"
-                            color="white"
-                            _hover={{ bg: 'gray.600' }}
-                            onClick={onClose}
-                        >
-                            Отмена
-                        </Button>
-                        <Button
-                            size="sm"
-                            bg="gray.500"
-                            color="white"
-                            _hover={{ bg: 'gray.400' }}
-                            onClick={handleSave}
-                        >
-                            <FiCheck />
-                            Применить
-                        </Button>
+                        <HStack gap={3}>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                borderColor="whiteAlpha.200"
+                                color="gray.300"
+                                _hover={{ bg: 'whiteAlpha.100' }}
+                                onClick={onClose}
+                            >
+                                Отмена
+                            </Button>
+                            <Button
+                                size="sm"
+                                bg="blue.600"
+                                color="white"
+                                _hover={{ bg: 'blue.500' }}
+                                onClick={handleSave}
+                                px={6}
+                                gap={2}
+                            >
+                                <FiCheck />
+                                Сохранить
+                            </Button>
+                        </HStack>
                     </Flex>
                 </Dialog.Content>
             </Dialog.Positioner>
@@ -444,19 +481,9 @@ export function getCroppedImg(
 
             const rotRad = (rotation * Math.PI) / 180
 
-            const rad = Math.abs(rotation) % 180
-            const swapDimensions = rad === 90 || rad === 270
-
-            let bBoxWidth: number
-            let bBoxHeight: number
-
-            if (swapDimensions) {
-                bBoxWidth = Math.abs(image.height * Math.cos(rotRad)) + Math.abs(image.width * Math.sin(rotRad))
-                bBoxHeight = Math.abs(image.height * Math.sin(rotRad)) + Math.abs(image.width * Math.cos(rotRad))
-            } else {
-                bBoxWidth = Math.abs(image.width * Math.cos(rotRad)) + Math.abs(image.height * Math.sin(rotRad))
-                bBoxHeight = Math.abs(image.width * Math.sin(rotRad)) + Math.abs(image.height * Math.cos(rotRad))
-            }
+            // Calculate bounding box for the rotated image
+            const bBoxWidth = Math.abs(image.width * Math.cos(rotRad)) + Math.abs(image.height * Math.sin(rotRad))
+            const bBoxHeight = Math.abs(image.width * Math.sin(rotRad)) + Math.abs(image.height * Math.cos(rotRad))
 
             canvas.width = bBoxWidth
             canvas.height = bBoxHeight
@@ -472,9 +499,9 @@ export function getCroppedImg(
             }
             
             ctx.translate(-image.width / 2, -image.height / 2)
-
             ctx.drawImage(image, 0, 0)
 
+            // Extract the cropped area
             const data = ctx.getImageData(cropPixel.x, cropPixel.y, cropPixel.width, cropPixel.height)
 
             canvas.width = cropPixel.width
