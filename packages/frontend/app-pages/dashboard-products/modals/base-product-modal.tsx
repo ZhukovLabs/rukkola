@@ -32,7 +32,8 @@ import {productSchema, ProductFormValues} from '@/app-pages/dashboard-products/v
 import {FiAlertCircle} from 'react-icons/fi'
 import {FaTrash} from 'react-icons/fa'
 import {FiEdit2} from 'react-icons/fi'
-import {ImageEditor, getCroppedImg} from './image-editor'
+import {ImageEditor, getCroppedImg, Filters} from './image-editor'
+import {Area} from "react-easy-crop";
 
 type ProductModalProps = {
     isOpen: boolean
@@ -166,16 +167,18 @@ export const BaseProductModal = ({
     }
 
     const handleImageEditorSave = async (
-        croppedAreaPixels: { x: number; y: number; width: number; height: number },
+        croppedAreaPixels: Area,
         rotation: number,
-        flip: { horizontal: boolean; vertical: boolean }
+        flip: { horizontal: boolean; vertical: boolean },
+        filters: Filters
     ) => {
         try {
             let src = imageSrcRef.current
             if (src && !src.startsWith('http') && !src.startsWith('blob:')) {
                 src = `${window.location.origin}${src}`
             }
-            const croppedFile = await getCroppedImg(src, croppedAreaPixels, rotation, flip)
+
+            const croppedFile = await getCroppedImg(src, croppedAreaPixels, rotation, flip, filters)
             setImageFile(croppedFile)
             clearErrors('imageFile')
         } catch (error) {
