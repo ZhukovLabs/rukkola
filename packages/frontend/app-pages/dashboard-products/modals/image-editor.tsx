@@ -37,7 +37,7 @@ type AspectRatioOption = {
 }
 
 const ASPECT_RATIOS: AspectRatioOption[] = [
-    { label: 'Оригинал', value: 0, icon: <FiMaximize2 size={14} /> },
+    { label: 'Оригинал', value: null, icon: <FiMaximize2 size={14} /> },
     { label: '1:1', value: 1, icon: <FiSquare size={14} /> },
     { label: '4:3', value: 4 / 3, icon: <FiImage size={14} /> },
     { label: '16:9', value: 16 / 9, icon: <FiImage size={14} /> },
@@ -91,12 +91,26 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
     const [rotation, setRotation] = useState(0)
     const [flip, setFlip] = useState(initialFlip ?? { horizontal: false, vertical: false })
     const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
-    const [aspect, setAspect] = useState<number | null>(0)
+    const [aspect, setAspect] = useState<number | null>(null)
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
+    const [mediaSize, setMediaSize] = useState({ width: 0, height: 0 })
 
     const filterStyle = useMemo(() => {
         return `brightness(${filters.brightness}%) contrast(${filters.contrast}%) grayscale(${filters.grayscale}%) sepia(${filters.sepia}%) saturate(${filters.saturate}%)`
     }, [filters])
+
+    const currentAspect = useMemo(() => {
+        if (aspect === null) {
+            if (!mediaSize.width || !mediaSize.height) return undefined
+
+            return mediaSize.width / mediaSize.height
+        }
+
+        return aspect
+    }, [aspect, mediaSize])
+    const cropperKey = useMemo(() => {
+        return `${currentAspect}-${mediaSize.width}-${mediaSize.height}`
+    }, [currentAspect, mediaSize])
 
     const onCropComplete = useCallback((_: Area, croppedAreaPixelsArg: Area) => {
         setCroppedAreaPixels(croppedAreaPixelsArg)
@@ -134,7 +148,7 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
         setZoom(1)
         setRotation(0)
         setFlip({ horizontal: false, vertical: false })
-        setAspect(0)
+        setAspect(null)
         setFilters(DEFAULT_FILTERS)
     }
 
@@ -203,15 +217,17 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                 }}
                             >
                                 <Cropper
+                                    key={cropperKey}
                                     image={imageSrc}
                                     crop={crop}
                                     zoom={zoom}
                                     rotation={rotation}
-                                    aspect={aspect === 0 ? undefined : aspect || 1}
+                                    aspect={currentAspect}
                                     onCropChange={setCrop}
                                     onZoomChange={setZoom}
                                     onRotationChange={setRotation}
                                     onCropComplete={onCropComplete}
+                                    onMediaLoaded={setMediaSize}
                                     showGrid={true}
                                     restrictPosition={true}
                                     style={{
@@ -236,7 +252,6 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
 
                         <Box bg="#141619" borderLeft="1px solid" borderColor="whiteAlpha.100" p={6} overflowY="auto">
                             <Stack gap={6}>
-                                {/* Пропорции, Фильтры, Трансформация, Масштаб — без изменений */}
                                 <VStack align="stretch" gap={3}>
                                     <Text fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase" letterSpacing="wider">
                                         Пропорции
@@ -324,7 +339,6 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
 
                                 <Separator borderColor="whiteAlpha.100" />
 
-                                {/* Трансформация и Масштаб — оставлены без изменений */}
                                 <VStack align="stretch" gap={4}>
                                     <Flex justify="space-between" align="center">
                                         <Text fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase" letterSpacing="wider">
@@ -359,7 +373,13 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                                 />
                                             </Box>
                                             <HStack justify="space-between">
-                                                <IconButton aria-label="Повернуть влево" size="xs" variant="outline" borderColor="whiteAlpha.200" onClick={handleRotateLeft}>
+                                                <IconButton
+                                                    aria-label="Повернуть влево"
+                                                    size="xs"
+                                                    variant="outline"
+                                                    borderColor="whiteAlpha.200"
+                                                    onClick={handleRotateLeft}
+                                                >
                                                     <FiRotateCcw size={12} />
                                                 </IconButton>
                                                 <HStack gap={1}>
@@ -376,7 +396,13 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                                         </Button>
                                                     ))}
                                                 </HStack>
-                                                <IconButton aria-label="Повернуть вправо" size="xs" variant="outline" borderColor="whiteAlpha.200" onClick={handleRotateRight}>
+                                                <IconButton
+                                                    aria-label="Повернуть вправо"
+                                                    size="xs"
+                                                    variant="outline"
+                                                    borderColor="whiteAlpha.200"
+                                                    onClick={handleRotateRight}
+                                                >
                                                     <FiRotateCw size={12} />
                                                 </IconButton>
                                             </HStack>
@@ -385,11 +411,31 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                         <VStack align="stretch" gap={2}>
                                             <Text fontSize="xs" color="gray.400">Отражение</Text>
                                             <HStack gap={2}>
-                                                <Button size="sm" variant={flip.horizontal ? 'solid' : 'outline'} bg={flip.horizontal ? 'blue.600' : 'transparent'} onClick={handleFlipHorizontal} flex={1} gap={2}>
-                                                    <LuFlipHorizontal size={14} /> <Text fontSize="xs">Гориз.</Text>
+                                                <Button
+                                                    size="sm"
+                                                    variant={flip.horizontal ? 'solid' : 'outline'}
+                                                    bg={flip.horizontal ? 'blue.600' : 'transparent'}
+                                                    borderColor={flip.horizontal ? 'blue.500' : 'whiteAlpha.200'}
+                                                    color={flip.horizontal ? 'white' : 'gray.400'}
+                                                    onClick={handleFlipHorizontal}
+                                                    flex={1}
+                                                    gap={2}
+                                                >
+                                                    <LuFlipHorizontal size={14} />
+                                                    <Text fontSize="xs">Гориз.</Text>
                                                 </Button>
-                                                <Button size="sm" variant={flip.vertical ? 'solid' : 'outline'} bg={flip.vertical ? 'blue.600' : 'transparent'} onClick={handleFlipVertical} flex={1} gap={2}>
-                                                    <LuFlipVertical size={14} /> <Text fontSize="xs">Верт.</Text>
+                                                <Button
+                                                    size="sm"
+                                                    variant={flip.vertical ? 'solid' : 'outline'}
+                                                    bg={flip.vertical ? 'blue.600' : 'transparent'}
+                                                    borderColor={flip.vertical ? 'blue.500' : 'whiteAlpha.200'}
+                                                    color={flip.vertical ? 'white' : 'gray.400'}
+                                                    onClick={handleFlipVertical}
+                                                    flex={1}
+                                                    gap={2}
+                                                >
+                                                    <LuFlipVertical size={14} />
+                                                    <Text fontSize="xs">Верт.</Text>
                                                 </Button>
                                             </HStack>
                                         </VStack>
@@ -403,18 +449,45 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                                         <Text fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase" letterSpacing="wider">
                                             Масштаб
                                         </Text>
-                                        <IconButton aria-label="Вписать" size="xs" variant="ghost" color="gray.500" onClick={() => { setZoom(1); setCrop({ x: 0, y: 0 }) }}>
+                                        <IconButton
+                                            aria-label="Вписать"
+                                            size="xs"
+                                            variant="ghost"
+                                            color="gray.500"
+                                            onClick={() => { setZoom(1); setCrop({ x: 0, y: 0 }) }}
+                                            _hover={{ color: 'blue.400' }}
+                                        >
                                             <LuScaling size={12} />
                                         </IconButton>
                                     </Flex>
                                     <HStack gap={3}>
-                                        <IconButton aria-label="Уменьшить" size="xs" variant="ghost" onClick={handleZoomOut} disabled={zoom <= 1}>
+                                        <IconButton
+                                            aria-label="Уменьшить"
+                                            size="xs"
+                                            variant="ghost"
+                                            onClick={handleZoomOut}
+                                            disabled={zoom <= 1}
+                                        >
                                             <FiMinimize2 size={14} />
                                         </IconButton>
                                         <Box flex={1}>
-                                            <input type="range" min={1} max={3} step={0.01} value={zoom} onChange={(e) => setZoom(parseFloat(e.target.value))} style={{ width: '100%', accentColor: '#3182ce' }} />
+                                            <input
+                                                type="range"
+                                                min={1}
+                                                max={3}
+                                                step={0.01}
+                                                value={zoom}
+                                                onChange={(e) => setZoom(parseFloat(e.target.value))}
+                                                style={{ width: '100%', accentColor: '#3182ce', cursor: 'pointer' }}
+                                            />
                                         </Box>
-                                        <IconButton aria-label="Увеличить" size="xs" variant="ghost" onClick={handleZoomIn} disabled={zoom >= 3}>
+                                        <IconButton
+                                            aria-label="Увеличить"
+                                            size="xs"
+                                            variant="ghost"
+                                            onClick={handleZoomIn}
+                                            disabled={zoom >= 3}
+                                        >
                                             <FiMaximize2 size={14} />
                                         </IconButton>
                                     </HStack>
@@ -424,15 +497,39 @@ export const ImageEditor = ({ isOpen, onClose, imageSrc, onSave, initialFlip, on
                     </Grid>
 
                     <Flex justify="space-between" align="center" px={6} py={4} borderTop="1px solid" borderColor="whiteAlpha.100" bg="#0f1113">
-                        <Button variant="ghost" size="sm" color="gray.500" _hover={{ color: 'red.400', bg: 'red.400/10' }} onClick={handleResetAll} gap={2}>
-                            <FiRefreshCcw size={14} /> Сбросить всё
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            color="gray.500"
+                            _hover={{ color: 'red.400', bg: 'red.400/10' }}
+                            onClick={handleResetAll}
+                            gap={2}
+                        >
+                            <FiRefreshCcw size={14} />
+                            Сбросить всё
                         </Button>
                         <HStack gap={3}>
-                            <Button variant="outline" size="sm" borderColor="whiteAlpha.200" color="gray.300" _hover={{ bg: 'whiteAlpha.100' }} onClick={onClose}>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                borderColor="whiteAlpha.200"
+                                color="gray.300"
+                                _hover={{ bg: 'whiteAlpha.100' }}
+                                onClick={onClose}
+                            >
                                 Отмена
                             </Button>
-                            <Button size="sm" bg="blue.600" color="white" _hover={{ bg: 'blue.500' }} onClick={handleSave} px={6} gap={2}>
-                                <FiCheck /> Сохранить
+                            <Button
+                                size="sm"
+                                bg="blue.600"
+                                color="white"
+                                _hover={{ bg: 'blue.500' }}
+                                onClick={handleSave}
+                                px={6}
+                                gap={2}
+                            >
+                                <FiCheck />
+                                Сохранить
                             </Button>
                         </HStack>
                     </Flex>
@@ -476,7 +573,6 @@ export function getCroppedImg(
             ctx.drawImage(image, 0, 0)
             ctx.restore()
 
-            // Финальный кроп
             const croppedCanvas = document.createElement('canvas')
             const croppedCtx = croppedCanvas.getContext('2d')!
             croppedCanvas.width = pixelCrop.width
