@@ -15,7 +15,7 @@ import {
     HStack,
     Heading,
 } from '@chakra-ui/react';
-import {FiUploadCloud, FiTrash2, FiPower, FiImage, FiCheck, FiX, FiStar} from 'react-icons/fi';
+import {FiUploadCloud, FiTrash2, FiPower, FiImage, FiCheck, FiX, FiStar, FiAlertCircle} from 'react-icons/fi';
 import {uploadLunch, activeLunch, deleteLunch, deactivateLunch} from './actions';
 import {useConfirmationDialog} from '@/hooks/use-confirmation-dialog';
 import {useToast} from '@/components/toast-container';
@@ -195,6 +195,23 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
 
     return (
         <>
+            <Box
+                mb={6}
+                p={4}
+                borderRadius="xl"
+                bg="blue.900/30"
+                border="1px solid"
+                borderColor="blue.500/50"
+                color="blue.200"
+            >
+                <HStack gap={3}>
+                    <Icon as={FiAlertCircle} boxSize={5} />
+                    <Text fontSize="sm" fontWeight="medium">
+                        Пожалуйста, удаляйте старые изображения, если они больше не нужны — это поможет серверу работать быстрее.
+                    </Text>
+                </HStack>
+            </Box>
+
             <Card.Root
                 w="100%"
                 borderRadius="2xl"
