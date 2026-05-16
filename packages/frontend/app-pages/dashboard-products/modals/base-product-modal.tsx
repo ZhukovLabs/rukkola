@@ -1,39 +1,45 @@
 'use client'
 
 import {
-    Dialog,
-    Button,
+    Alert,
     Box,
-    Input,
-    Textarea,
-    Text,
-    HStack,
+    Button,
+    Dialog,
     Flex,
-    Stack,
     Heading,
     IconButton,
     Image,
-    Spinner,
-    Alert,
+    Input,
     Separator,
+    Spinner,
+    Stack,
+    Text,
+    Textarea,
 } from '@chakra-ui/react'
-import {useEffect, useState, useRef} from 'react'
+import {useEffect, useMemo, useRef, useState, type FormEvent} from 'react'
 import {useQuery} from '@tanstack/react-query'
 import {
-    useForm,
-    useFieldArray,
     Controller,
-    useController,
     SubmitHandler,
+    useController,
+    useFieldArray,
+    useForm,
 } from 'react-hook-form'
 import {zodResolver} from '@hookform/resolvers/zod'
-import {getCategories} from '../actions'
-import {productSchema, ProductFormValues} from '@/app-pages/dashboard-products/validation'
-import {FiAlertCircle} from 'react-icons/fi'
+import {Area} from 'react-easy-crop'
+import {FiAlertCircle, FiEdit2} from 'react-icons/fi'
 import {FaTrash} from 'react-icons/fa'
-import {FiEdit2} from 'react-icons/fi'
-import {ImageEditor, getCroppedImg, Filters} from './image-editor'
-import {Area} from "react-easy-crop";
+
+import {getCategories} from '../actions'
+import {
+    productSchema,
+    ProductFormValues,
+} from '@/app-pages/dashboard-products/validation'
+import {
+    Filters,
+    getCroppedImg,
+    ImageEditor,
+} from './image-editor'
 
 type ProductModalProps = {
     isOpen: boolean
@@ -41,11 +47,145 @@ type ProductModalProps = {
     title: string
     submitText: string
     submitLoadingText?: string
-    onSubmit: (values: Omit<ProductFormValues, 'imageFile'> & { removeImage?: boolean }, file?: File) => Promise<void>
-    initialValues?: Partial<ProductFormValues> & { image?: string }
+    onSubmit: (
+        values: Omit<ProductFormValues, 'imageFile'> & {
+            removeImage?: boolean
+        },
+        file?: File
+    ) => Promise<void>
+    initialValues?: Partial<ProductFormValues> & {
+        image?: string
+    }
     isLoadingInitial?: boolean
     productIdForImageUpload?: string
 }
+
+const DEFAULT_PRICE = {
+    size: '',
+    price: 0,
+}
+
+const DEFAULT_FORM_VALUES: ProductFormValues = {
+    name: '',
+    description: '',
+    prices: [DEFAULT_PRICE],
+    categories: [],
+    hidden: false,
+    isAlcohol: false,
+    imageFile: null,
+}
+
+const MODAL_STYLES = {
+    background: 'rgba(24,26,28,0.95)',
+    borderColor: 'gray.700',
+    inputBackground: 'gray.800',
+}
+
+const SWITCH_STYLES = {
+    width: '38px',
+    height: '20px',
+    thumbSize: '14px',
+    translateX: '16px',
+}
+
+const normalizePriceValue = (value: string) =>
+    parseFloat(value.replace(',', '.')) || 0
+
+const sanitizePriceInput = (value: string) => {
+    let sanitizedValue = value.replace(/[^0-9.,]/g, '')
+
+    const dotIndex = sanitizedValue.indexOf('.')
+    const commaIndex = sanitizedValue.indexOf(',')
+
+    const separatorIndex = Math.min(
+        dotIndex === -1 ? Infinity : dotIndex,
+        commaIndex === -1 ? Infinity : commaIndex
+    )
+
+    if (separatorIndex !== Infinity) {
+        const separator = sanitizedValue[separatorIndex]
+
+        const integerPart = sanitizedValue
+            .slice(0, separatorIndex)
+            .replace(/[.,]/g, '')
+
+        const decimalPart = sanitizedValue
+            .slice(separatorIndex + 1)
+            .replace(/[.,]/g, '')
+
+        sanitizedValue = `${integerPart}${separator}${decimalPart}`
+    } else {
+        sanitizedValue = sanitizedValue.replace(/[.,]/g, '')
+    }
+
+    return sanitizedValue
+}
+
+const getAbsoluteImageUrl = (src?: string) => {
+    if (!src) {
+        return ''
+    }
+
+    if (src.startsWith('http') || src.startsWith('blob:')) {
+        return src
+    }
+
+    return `${window.location.origin}${src}`
+}
+
+type ToggleSwitchProps = {
+    value: boolean
+    label: string
+    activeColor: string
+    onChange: (value: boolean) => void
+}
+
+const ToggleSwitch = ({
+                          value,
+                          label,
+                          activeColor,
+                          onChange,
+                      }: ToggleSwitchProps) => (
+    <Flex align="center" gap={2} cursor="pointer" userSelect="none">
+        <Text
+            color={value ? activeColor : 'gray.300'}
+            fontWeight="500"
+            fontSize="sm"
+        >
+            {label}
+        </Text>
+
+        <Box
+            role="switch"
+            aria-checked={value}
+            tabIndex={0}
+            w={SWITCH_STYLES.width}
+            h={SWITCH_STYLES.height}
+            borderRadius="full"
+            px="2px"
+            display="flex"
+            alignItems="center"
+            bg={value ? `${activeColor}Alpha.100` : 'transparent'}
+            border="1px solid"
+            borderColor={value ? activeColor : 'gray.600'}
+            transition="all 180ms ease"
+            onClick={() => onChange(!value)}
+        >
+            <Box
+                w={SWITCH_STYLES.thumbSize}
+                h={SWITCH_STYLES.thumbSize}
+                borderRadius="full"
+                bg={value ? activeColor : 'gray.400'}
+                transform={
+                    value
+                        ? `translateX(${SWITCH_STYLES.translateX})`
+                        : 'translateX(0px)'
+                }
+                transition="all 180ms ease"
+            />
+        </Box>
+    </Flex>
+)
 
 export const BaseProductModal = ({
                                      isOpen,
@@ -56,16 +196,20 @@ export const BaseProductModal = ({
                                      onSubmit,
                                      initialValues,
                                      isLoadingInitial = false,
-                                     productIdForImageUpload
+                                     productIdForImageUpload,
                                  }: ProductModalProps) => {
-    const [isDragOver, setIsDragOver] = useState(false)
-    const [showImageEditor, setShowImageEditor] = useState(false)
-    const [imageEditorSrc, setImageEditorSrc] = useState('')
-    const [imageEditorFlip, setImageEditorFlip] = useState({ horizontal: false, vertical: false })
-    const [shouldRemoveExistingImage, setShouldRemoveExistingImage] = useState(false)
-    const imageSrcRef = useRef<string>('')
+    const [isDragActive, setIsDragActive] = useState(false)
+    const [isImageEditorOpen, setIsImageEditorOpen] = useState(false)
+    const [imageEditorSource, setImageEditorSource] = useState('')
+    const [imageFlip, setImageFlip] = useState({
+        horizontal: false,
+        vertical: false,
+    })
+    const [shouldRemoveImage, setShouldRemoveImage] = useState(false)
 
-    const {data: {data: allCategories = []} = {}} = useQuery({
+    const imageSourceRef = useRef<string>('')
+
+    const {data: {data: categories = []} = {}} = useQuery({
         queryKey: ['categories'],
         queryFn: getCategories,
     })
@@ -73,22 +217,14 @@ export const BaseProductModal = ({
     const {
         control,
         register,
-        handleSubmit,
         reset,
+        handleSubmit,
         setError,
         clearErrors,
         formState: {errors, isSubmitting},
     } = useForm<ProductFormValues>({
         resolver: zodResolver(productSchema),
-        defaultValues: {
-            name: '',
-            description: '',
-            prices: [{size: '', price: 0}],
-            categories: [],
-            hidden: false,
-            isAlcohol: false, // Добавлено
-            imageFile: null
-        },
+        defaultValues: DEFAULT_FORM_VALUES,
     })
 
     const {fields, append, remove} = useFieldArray({
@@ -97,588 +233,859 @@ export const BaseProductModal = ({
     })
 
     const {
-        field: {value: imageFile, onChange: setImageFile},
+        field: {value: selectedImageFile, onChange: setSelectedImageFile},
     } = useController({
-        name: 'imageFile',
         control,
+        name: 'imageFile',
     })
 
+    const handleClose = () => {
+        setShouldRemoveImage(false)
+        onClose()
+    }
+
     useEffect(() => {
-        if (isOpen) {
-            reset({
-                name: initialValues?.name ?? '',
-                description: initialValues?.description ?? '',
-                prices: initialValues?.prices?.length ? initialValues.prices : [{size: '', price: 0}],
-                categories: initialValues?.categories ?? [],
-                hidden: initialValues?.hidden ?? false,
-                isAlcohol: initialValues?.isAlcohol ?? false, // Добавлено
-                imageFile: null,
-            })
-            setShouldRemoveExistingImage(false)
-            clearErrors()
+        if (!isOpen) {
+            document.body.style.overflow = ''
+            return
+        }
+
+        document.body.style.overflow = 'hidden'
+
+        reset({
+            name: initialValues?.name ?? '',
+            description: initialValues?.description ?? '',
+            prices:
+                initialValues?.prices?.length
+                    ? initialValues.prices
+                    : [DEFAULT_PRICE],
+            categories: initialValues?.categories ?? [],
+            hidden: initialValues?.hidden ?? false,
+            isAlcohol: initialValues?.isAlcohol ?? false,
+            imageFile: null,
+        })
+
+        clearErrors()
+
+        return () => {
+            document.body.style.overflow = ''
         }
     }, [isOpen, initialValues, reset, clearErrors])
 
-    const handleFormSubmit: SubmitHandler<ProductFormValues> = async (data) => {
-        clearErrors()
-
-        const formatted: ProductFormValues & { removeImage?: boolean } = {
-            name: data.name,
-            description: data.description,
-            prices: data.prices.map((p) => ({
-                ...p,
-                price: parseFloat(String(p.price).replace(',', '.')) || 0,
-            })),
-            categories: data.categories,
-            hidden: data.hidden,
-            isAlcohol: data.isAlcohol,
-            removeImage: shouldRemoveExistingImage && !data.imageFile,
+    const previewImageUrl = useMemo(() => {
+        if (selectedImageFile) {
+            return URL.createObjectURL(selectedImageFile)
         }
 
-        try {
-            await onSubmit(formatted, data.imageFile || undefined);
-            onClose()
-        } catch (err) {
-            setError('root', {
-                message: err instanceof Error ? err.message : 'Ошибка при сохранении',
-            })
+        if (shouldRemoveImage) {
+            return null
         }
-    }
 
-    const currentImageUrl = imageFile ? URL.createObjectURL(imageFile) : (shouldRemoveExistingImage ? null : initialValues?.image)
-    const isUploadingImage = isSubmitting && !!imageFile && !!productIdForImageUpload
-    const imagePreviewText = imageFile
-        ? imageFile.name
+        return initialValues?.image || null
+    }, [initialValues?.image, selectedImageFile, shouldRemoveImage])
+
+    useEffect(() => {
+        return () => {
+            if (previewImageUrl?.startsWith('blob:')) {
+                URL.revokeObjectURL(previewImageUrl)
+            }
+        }
+    }, [previewImageUrl])
+
+    const isUploadingImage =
+        isSubmitting && Boolean(selectedImageFile) && Boolean(productIdForImageUpload)
+
+    const imagePreviewLabel = selectedImageFile
+        ? selectedImageFile.name
         : initialValues?.image
             ? 'Текущее изображение'
-            : undefined
+            : ''
 
-    const handleOpenImageEditor = () => {
-        let src = imageFile ? URL.createObjectURL(imageFile) : initialValues?.image
-        if (src && !src.startsWith('http') && !src.startsWith('blob:')) {
-            src = `${window.location.origin}${src}`
+    const handleImageSelect = (file?: File) => {
+        if (!file || !file.type.startsWith('image/')) {
+            return
         }
-        if (src) {
-            imageSrcRef.current = src
-            setImageEditorSrc(src)
-            setImageEditorFlip({ horizontal: false, vertical: false })
-            setShowImageEditor(true)
+
+        setSelectedImageFile(file)
+        setShouldRemoveImage(false)
+        clearErrors('imageFile')
+    }
+
+    const handleImageEditorOpen = () => {
+        const source = getAbsoluteImageUrl(previewImageUrl || undefined)
+
+        if (!source) {
+            return
         }
+
+        imageSourceRef.current = source
+        setImageEditorSource(source)
+        setImageFlip({
+            horizontal: false,
+            vertical: false,
+        })
+        setIsImageEditorOpen(true)
     }
 
     const handleImageEditorSave = async (
         croppedAreaPixels: Area,
         rotation: number,
-        flip: { horizontal: boolean; vertical: boolean },
+        flip: {
+            horizontal: boolean
+            vertical: boolean
+        },
         filters: Filters
     ) => {
         try {
-            let src = imageSrcRef.current
-            if (src && !src.startsWith('http') && !src.startsWith('blob:')) {
-                src = `${window.location.origin}${src}`
-            }
+            const croppedImageFile = await getCroppedImg(
+                imageSourceRef.current,
+                croppedAreaPixels,
+                rotation,
+                flip,
+                filters
+            )
 
-            const croppedFile = await getCroppedImg(src, croppedAreaPixels, rotation, flip, filters)
-            setImageFile(croppedFile)
+            setSelectedImageFile(croppedImageFile)
             clearErrors('imageFile')
         } catch (error) {
-            console.error('Error cropping image:', error)
+            console.error(error)
+        }
+    }
+
+    const handleFormSubmit: SubmitHandler<ProductFormValues> = async (
+        values
+    ) => {
+        clearErrors()
+
+        try {
+            await onSubmit(
+                {
+                    name: values.name,
+                    description: values.description,
+                    categories: values.categories,
+                    hidden: values.hidden,
+                    isAlcohol: values.isAlcohol,
+                    prices: values.prices.map((priceItem) => ({
+                        ...priceItem,
+                        price: normalizePriceValue(String(priceItem.price)),
+                    })),
+                    removeImage: shouldRemoveImage && !values.imageFile,
+                },
+                values.imageFile || undefined
+            )
+
+            handleClose()
+        } catch (error) {
+            setError('root', {
+                message:
+                    error instanceof Error
+                        ? error.message
+                        : 'Ошибка при сохранении',
+            })
         }
     }
 
     return (
         <>
-            <Dialog.Root open={isOpen}>
-                <Dialog.Backdrop bg="blackAlpha.800" backdropFilter="blur(8px)"/>
-                <Dialog.Positioner>
+            <Dialog.Root
+                open={isOpen}
+                onOpenChange={({open}) => {
+                    if (!open) {
+                        handleClose()
+                    }
+                }}
+            >
+                <Dialog.Backdrop
+                    bg="blackAlpha.800"
+                    backdropFilter="blur(8px)"
+                    position="fixed"
+                    inset={0}
+                    overflow="hidden"
+                />
+
+                <Dialog.Positioner
+                    position="fixed"
+                    inset={0}
+                    overflow="hidden"
+                    px={{base: 0, md: 6}}
+                    py={{base: 0, md: 8}}
+                    display="flex"
+                    alignItems={{base: 'stretch', md: 'center'}}
+                    justifyContent="center"
+                >
                     <Dialog.Content
-                        bg="rgba(24,26,28,0.95)"
-                        borderRadius="2xl"
-                        shadow="2xl"
-                        border="1px solid"
-                        borderColor="gray.700"
+                        bg={MODAL_STYLES.background}
+                        borderRadius={{base: 'none', md: '2xl'}}
+                        border={{base: 'none', md: '1px solid'}}
+                        borderColor={MODAL_STYLES.borderColor}
                         color="white"
-                        maxW="3xl"
-                        w="full"
+                        w={{base: '100vw', md: '3xl'}}
+                        h={{base: '100dvh', md: 'auto'}}
+                        minH={{base: '100dvh', md: 'unset'}}
+                        maxW={{base: '100vw', md: '3xl'}}
+                        maxH={{base: '100dvh', md: '90vh'}}
+                        m={0}
+                        overflow="hidden"
                         backdropFilter="blur(18px)"
-                        transition="all 0.25s ease"
+                        display="flex"
+                        flexDirection="column"
+                        outline="none"
+                        boxShadow="none"
+                        _focusVisible={{
+                            outline: 'none',
+                            boxShadow: 'none',
+                        }}
                     >
-                        <Dialog.Header borderBottom="1px solid" borderColor="gray.700">
-                            <Flex justify="space-between" align="center" p={4}>
-                                <Heading size="md" color="gray.200" fontWeight="semibold" letterSpacing="0.3px">
+                        <Dialog.Header
+                            borderBottom="1px solid"
+                            borderColor={MODAL_STYLES.borderColor}
+                            px={{base: 4, md: 6}}
+                            py={4}
+                            flexShrink={0}
+                        >
+                            <Flex align="center" justify="space-between" gap={4}>
+                                <Heading
+                                    size={{base: 'sm', md: 'md'}}
+                                    color="gray.200"
+                                >
                                     {title}
                                 </Heading>
+
                                 <Dialog.CloseTrigger asChild>
-                                <Button
-                                    onClick={onClose}
-                                    variant="ghost"
-                                    colorScheme="gray"
-                                    size="xs"
-                                    color="gray.400"
-                                    _hover={{bg: 'gray.700', color: 'gray.200'}}
-                                >
-                                    X
-                                </Button>
-                            </Dialog.CloseTrigger>
-                        </Flex>
-                    </Dialog.Header>
-
-                    <Dialog.Body p={6}>
-                        {isLoadingInitial ? (
-                            <Flex align="center" justify="center" p={8}>
-                                <Spinner size="lg"/>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        color="gray.400"
+                                        minW="unset"
+                                        px={3}
+                                        outline="none"
+                                        boxShadow="none"
+                                        _hover={{
+                                            bg: 'gray.700',
+                                            color: 'gray.200',
+                                        }}
+                                        _focusVisible={{
+                                            outline: 'none',
+                                            boxShadow: 'none',
+                                        }}
+                                    >
+                                        ×
+                                    </Button>
+                                </Dialog.CloseTrigger>
                             </Flex>
-                        ) : (
-                            <form onSubmit={handleSubmit(handleFormSubmit)}>
-                                <Stack gap={5}>
-                                    {errors.root && (
-                                        <Alert.Root status="error" variant="subtle">
-                                            <Alert.Indicator asChild>
-                                                <FiAlertCircle color="red.400"/>
-                                            </Alert.Indicator>
-                                            <Alert.Content>
-                                                <Alert.Description
-                                                    fontSize="sm">{errors.root.message}</Alert.Description>
-                                            </Alert.Content>
-                                        </Alert.Root>
-                                    )}
+                        </Dialog.Header>
 
-                                    {/* Название */}
-                                    <Box>
-                                        <Heading mb={1} size="sm" color="gray.200">Название</Heading>
-                                        <Input
-                                            {...register('name')}
-                                            p={2}
-                                            placeholder="Введите название"
-                                            bg="gray.800"
-                                            border="1px solid"
-                                            borderColor="gray.700"
-                                            borderRadius="md"
-                                            _focus={{borderColor: 'gray.500', boxShadow: '0 0 6px gray'}}
-                                            h="36px"
-                                            fontSize="sm"
-                                            _hover={{borderColor: 'gray.500'}}
-                                            transition="border-color 0.15s ease"
-                                        />
-                                        {errors.name &&
-                                            <Text color="red.400" mt={1} fontSize="xs">{errors.name.message}</Text>}
-                                    </Box>
+                        <Dialog.Body
+                            px={{base: 4, md: 6}}
+                            py={{base: 4, md: 5}}
+                            overflowY="auto"
+                            overscrollBehavior="contain"
+                            flex="1"
+                            minH={0}
+                        >
+                            {isLoadingInitial ? (
+                                <Flex align="center" justify="center" py={10}>
+                                    <Spinner size="lg" />
+                                </Flex>
+                            ) : (
+                                <form onSubmit={handleSubmit(handleFormSubmit)}>
+                                    <Stack gap={5}>
+                                        {errors.root && (
+                                            <Alert.Root
+                                                status="error"
+                                                variant="subtle"
+                                            >
+                                                <Alert.Indicator asChild>
+                                                    <FiAlertCircle />
+                                                </Alert.Indicator>
+                                                <Alert.Content>
+                                                    <Alert.Description fontSize="sm">
+                                                        {errors.root.message}
+                                                    </Alert.Description>
+                                                </Alert.Content>
+                                            </Alert.Root>
+                                        )}
 
-                                    {/* Описание */}
-                                    <Box>
-                                        <Heading mb={1} size="sm" color="gray.200">Описание</Heading>
-                                        <Textarea
-                                            {...register('description')}
-                                            placeholder="Краткое описание товара"
-                                            bg="gray.800"
-                                            border="1px solid"
-                                            borderColor="gray.700"
-                                            borderRadius="md"
-                                            minH="80px"
-                                            _focus={{borderColor: 'gray.500', boxShadow: '0 0 6px gray'}}
-                                            fontSize="sm"
-                                            p={2}
-                                            _hover={{borderColor: 'gray.500'}}
-                                            transition="border-color 0.15s ease"
-                                        />
-                                        {errors.description && <Text color="red.400" mt={1}
-                                                                     fontSize="xs">{errors.description.message}</Text>}
-                                    </Box>
+                                        <Box>
+                                            <Heading
+                                                mb={2}
+                                                size="sm"
+                                                color="gray.200"
+                                            >
+                                                Название
+                                            </Heading>
 
-                                    <Separator borderColor="gray.700"/>
+                                            <Input
+                                                {...register('name')}
+                                                placeholder="Введите название"
+                                                bg={MODAL_STYLES.inputBackground}
+                                                borderColor="gray.700"
+                                                h="42px"
+                                                fontSize="sm"
+                                                outline="none"
+                                                boxShadow="none"
+                                                _focusVisible={{
+                                                    outline: 'none',
+                                                    boxShadow: 'none',
+                                                    borderColor: 'gray.500',
+                                                }}
+                                            />
 
-                                        {/* Изображение */}
-                                    <Box>
-                                        <Heading size="sm" mb={2} color="gray.200">Изображение</Heading>
-                                        <Box
-                                            border="2px dashed"
-                                            borderColor={imageFile ? 'gray.400' : 'gray.700'}
-                                            borderRadius="lg"
-                                            p={4}
-                                            textAlign="center"
-                                            bg={isDragOver ? 'rgba(128,128,128,0.12)' : 'rgba(35,37,40,0.6)'}
-                                            cursor="pointer"
-                                            transition="all 0.25s ease"
-                                            onClick={() => document.getElementById('product-image-input')?.click()}
-                                            onDragOver={(e) => {
-                                                e.preventDefault();
-                                                setIsDragOver(true)
-                                            }}
-                                            onDragLeave={(e) => {
-                                                e.preventDefault();
-                                                setIsDragOver(false)
-                                            }}
-                                            onDrop={(e) => {
-                                                e.preventDefault()
-                                                setIsDragOver(false)
-                                                const file = e.dataTransfer.files[0]
-                                                if (file && file.type.startsWith('image/')) {
-                                                    setImageFile(file)
-                                                    clearErrors('imageFile')
+                                            {errors.name && (
+                                                <Text
+                                                    color="red.400"
+                                                    mt={1}
+                                                    fontSize="xs"
+                                                >
+                                                    {errors.name.message}
+                                                </Text>
+                                            )}
+                                        </Box>
+
+                                        <Box>
+                                            <Heading
+                                                mb={2}
+                                                size="sm"
+                                                color="gray.200"
+                                            >
+                                                Описание
+                                            </Heading>
+
+                                            <Textarea
+                                                {...register('description')}
+                                                placeholder="Краткое описание товара"
+                                                bg={MODAL_STYLES.inputBackground}
+                                                borderColor="gray.700"
+                                                minH={{base: '96px', md: '110px'}}
+                                                fontSize="sm"
+                                                outline="none"
+                                                boxShadow="none"
+                                                _focusVisible={{
+                                                    outline: 'none',
+                                                    boxShadow: 'none',
+                                                    borderColor: 'gray.500',
+                                                }}
+                                            />
+
+                                            {errors.description && (
+                                                <Text
+                                                    color="red.400"
+                                                    mt={1}
+                                                    fontSize="xs"
+                                                >
+                                                    {errors.description.message}
+                                                </Text>
+                                            )}
+                                        </Box>
+
+                                        <Separator borderColor="gray.700" />
+
+                                        <Box>
+                                            <Heading
+                                                size="sm"
+                                                mb={3}
+                                                color="gray.200"
+                                            >
+                                                Изображение
+                                            </Heading>
+
+                                            <Box
+                                                border="2px dashed"
+                                                borderColor={
+                                                    selectedImageFile
+                                                        ? 'gray.400'
+                                                        : 'gray.700'
                                                 }
-                                            }}
-                                        >
-                                            {currentImageUrl ? (
-                                                <Flex direction="column" align="center" gap={2}>
-                                                    <Box position="relative" onClick={(e) => e.stopPropagation()}>
-                                                        <Image src={currentImageUrl} alt="preview" borderRadius="md"
-                                                               maxH="160px" objectFit="cover"/>
+                                                borderRadius="xl"
+                                                p={{base: 4, md: 5}}
+                                                bg={
+                                                    isDragActive
+                                                        ? 'rgba(128,128,128,0.12)'
+                                                        : 'rgba(35,37,40,0.6)'
+                                                }
+                                                transition="all 0.2s ease"
+                                                textAlign="center"
+                                                cursor="pointer"
+                                                onClick={() =>
+                                                    document
+                                                        .getElementById(
+                                                            'product-image-input'
+                                                        )
+                                                        ?.click()
+                                                }
+                                                onDragOver={(event) => {
+                                                    event.preventDefault()
+                                                    setIsDragActive(true)
+                                                }}
+                                                onDragLeave={(event) => {
+                                                    event.preventDefault()
+                                                    setIsDragActive(false)
+                                                }}
+                                                onDrop={(event) => {
+                                                    event.preventDefault()
+                                                    setIsDragActive(false)
+                                                    handleImageSelect(
+                                                        event.dataTransfer.files?.[0]
+                                                    )
+                                                }}
+                                            >
+                                                {previewImageUrl ? (
+                                                    <Flex
+                                                        direction="column"
+                                                        align="center"
+                                                        gap={3}
+                                                    >
+                                                        <Box
+                                                            position="relative"
+                                                            onClick={(event) =>
+                                                                event.stopPropagation()
+                                                            }
+                                                        >
+                                                            <Image
+                                                                src={previewImageUrl}
+                                                                alt="preview"
+                                                                borderRadius="lg"
+                                                                maxH={{
+                                                                    base: '180px',
+                                                                    md: '220px',
+                                                                }}
+                                                                objectFit="cover"
+                                                            />
+
                                                             <IconButton
+                                                                type="button"
                                                                 aria-label="Удалить изображение"
-                                                                position="absolute" top={2} left={2}
+                                                                position="absolute"
+                                                                top={2}
+                                                                left={2}
                                                                 size="sm"
                                                                 bg="blackAlpha.700"
                                                                 color="red.400"
-                                                                _hover={{ bg: 'blackAlpha.800', color: 'red.300' }}
-                                                                onClick={(e) => {
-                                                                    e.preventDefault()
-                                                                    e.stopPropagation()
-                                                                    if (imageFile) {
-                                                                        setImageFile(null)
+                                                                outline="none"
+                                                                boxShadow="none"
+                                                                _focusVisible={{
+                                                                    outline: 'none',
+                                                                    boxShadow: 'none',
+                                                                }}
+                                                                onClick={(event) => {
+                                                                    event.preventDefault()
+                                                                    event.stopPropagation()
+
+                                                                    if (selectedImageFile) {
+                                                                        setSelectedImageFile(null)
                                                                     } else {
-                                                                        setShouldRemoveExistingImage(true)
+                                                                        setShouldRemoveImage(true)
                                                                     }
                                                                 }}
                                                             >
                                                                 <FaTrash size={12} />
                                                             </IconButton>
+
                                                             <IconButton
-                                                                position="absolute" top={2} right={2}
+                                                                type="button"
                                                                 aria-label="Редактировать изображение"
+                                                                position="absolute"
+                                                                top={2}
+                                                                right={2}
                                                                 size="sm"
                                                                 bg="blackAlpha.700"
                                                                 color="white"
-                                                                _hover={{ bg: 'blackAlpha.800' }}
-                                                                onClick={(e) => {
-                                                                    e.preventDefault()
-                                                                    e.stopPropagation()
-                                                                    handleOpenImageEditor()
+                                                                outline="none"
+                                                                boxShadow="none"
+                                                                _focusVisible={{
+                                                                    outline: 'none',
+                                                                    boxShadow: 'none',
+                                                                }}
+                                                                onClick={(event) => {
+                                                                    event.preventDefault()
+                                                                    event.stopPropagation()
+                                                                    handleImageEditorOpen()
                                                                 }}
                                                             >
                                                                 <FiEdit2 />
                                                             </IconButton>
-                                                    </Box>
-                                                    {isUploadingImage ? (
-                                                        <Flex align="center" gap={2} color="gray.300">
-                                                            <Spinner size="xs"/>
-                                                            <Text fontSize="xs">Загрузка изображения...</Text>
-                                                        </Flex>
-                                                    ) : (
-                                                        <Text fontSize="xs" color="gray.400">
-                                                            {imagePreviewText || 'Перетащите файл сюда или нажмите для выбора'}
-                                                        </Text>
-                                                    )}
-                                                </Flex>
-                                            ) : (
-                                                <Text color="gray.400" fontSize="sm">
-                                                    Перетащите файл сюда или нажмите для выбора
-                                                </Text>
+                                                        </Box>
+
+                                                        {isUploadingImage ? (
+                                                            <Flex align="center" gap={2}>
+                                                                <Spinner size="xs" />
+                                                                <Text fontSize="xs">
+                                                                    Загрузка изображения...
+                                                                </Text>
+                                                            </Flex>
+                                                        ) : (
+                                                            <Text
+                                                                fontSize="xs"
+                                                                color="gray.400"
+                                                                textAlign="center"
+                                                            >
+                                                                {imagePreviewLabel}
+                                                            </Text>
+                                                        )}
+                                                    </Flex>
+                                                ) : (
+                                                    <Text
+                                                        color="gray.400"
+                                                        fontSize="sm"
+                                                    >
+                                                        Перетащите файл сюда или нажмите для выбора
+                                                    </Text>
+                                                )}
+                                            </Box>
+
+                                            <Input
+                                                id="product-image-input"
+                                                type="file"
+                                                accept="image/*"
+                                                display="none"
+                                                onChange={(event) =>
+                                                    handleImageSelect(event.target.files?.[0])
+                                                }
+                                            />
+
+                                            {errors.imageFile && (
+                                                <Alert.Root
+                                                    status="error"
+                                                    variant="subtle"
+                                                    mt={3}
+                                                >
+                                                    <Alert.Indicator asChild>
+                                                        <FiAlertCircle />
+                                                    </Alert.Indicator>
+                                                    <Alert.Content>
+                                                        <Alert.Description fontSize="xs">
+                                                            {errors.imageFile.message}
+                                                        </Alert.Description>
+                                                    </Alert.Content>
+                                                </Alert.Root>
                                             )}
                                         </Box>
-                                        <Input
-                                            id="product-image-input"
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => {
-                                                const file = e.target.files?.[0]
-                                                if (file && file.type.startsWith('image/')) {
-                                                    setImageFile(file)
-                                                    clearErrors('imageFile')
-                                                }
-                                            }}
-                                            display="none"
-                                        />
-                                        {errors.imageFile && (
-                                            <Alert.Root status="error" variant="subtle" mt={2}>
-                                                <Alert.Indicator asChild>
-                                                    <FiAlertCircle color="red.400"/>
-                                                </Alert.Indicator>
-                                                <Alert.Content>
-                                                    <Alert.Description
-                                                        fontSize="xs">{errors.imageFile.message}</Alert.Description>
-                                                </Alert.Content>
-                                            </Alert.Root>
-                                        )}
-                                    </Box>
 
-                                    {/* Цены */}
-                                    <Box>
-                                        <Heading size="sm" mb={2} color="gray.200">Цены</Heading>
-                                        <Stack gap={3}>
-                                            {fields.map((field, idx) => (
-                                                <Box key={field.id} w="full">
-                                                    <HStack
-                                                        bg="gray.850"
-                                                        p={3}
-                                                        borderRadius="lg"
-                                                        border="1px solid"
-                                                        borderColor="gray.700"
-                                                        align="flex-start"
-                                                    >
-                                                        <Box flex={1}>
-                                                            <Input
-                                                                {...register(`prices.${idx}.size`)}
-                                                                px={2}
-                                                                placeholder="Размер"
-                                                                bg="gray.800"
-                                                                fontSize="sm"
-                                                                h="32px"
-                                                            />
-                                                            {errors.prices?.[idx]?.size && (
-                                                                <Text color="red.400" fontSize="xs" mt={1}>
-                                                                    {errors.prices[idx]?.size?.message}
-                                                                </Text>
-                                                            )}
-                                                        </Box>
-                                                        <Box flex={1}>
-                                                            <Input
-                                                                {...register(`prices.${idx}.price`, {
-                                                                    setValueAs: (v) => typeof v === 'string' ? parseFloat(v.replace(',', '.')) || 0 : v,
-                                                                })}
-                                                                px={2}
-                                                                placeholder="Цена"
-                                                                type="text"
-                                                                bg="gray.800"
-                                                                fontSize="sm"
-                                                                h="32px"
-                                                                onInput={(e: React.FormEvent<HTMLInputElement>) => {
-                                                                    const input = e.currentTarget
-                                                                    let v = input.value.replace(/[^0-9.,]/g, '')
-                                                                    const dotIndex = v.indexOf('.')
-                                                                    const commaIndex = v.indexOf(',')
-                                                                    const firstSepIndex = Math.min(
-                                                                        dotIndex === -1 ? Infinity : dotIndex,
-                                                                        commaIndex === -1 ? Infinity : commaIndex
-                                                                    )
-                                                                    if (firstSepIndex !== Infinity) {
-                                                                        const sep = v[firstSepIndex]
-                                                                        const before = v.slice(0, firstSepIndex).replace(/[.,]/g, '')
-                                                                        const after = v.slice(firstSepIndex + 1).replace(/[.,]/g, '')
-                                                                        v = before + sep + after
-                                                                    } else {
-                                                                        v = v.replace(/[.,]/g, '')
-                                                                    }
-                                                                    input.value = v
-                                                                }}
-                                                                onBlur={(e) => e.currentTarget.value = e.currentTarget.value.replace(',', '.')}
-                                                            />
-                                                            {errors.prices?.[idx]?.price && (
-                                                                <Text color="red.400" fontSize="xs" mt={1}>
-                                                                    {errors.prices[idx]?.price?.message}
-                                                                </Text>
-                                                            )}
-                                                        </Box>
-                                                        <IconButton
-                                                            aria-label="Удалить"
-                                                            color="red.400"
-                                                            size="xs"
-                                                            colorScheme="red"
-                                                            variant="ghost"
-                                                            mt={1}
-                                                            onClick={() => remove(idx)}
-                                                        >
-                                                            <FaTrash/>
-                                                        </IconButton>
-                                                    </HStack>
-                                                </Box>
-                                            ))}
-                                            <Button
-                                                size="xs"
-                                                variant="solid"
-                                                bg="gray.600"
-                                                color="white"
-                                                _hover={{bg: 'gray.500', boxShadow: '0 0 6px rgba(128,128,128,0.6)'}}
-                                                onClick={() => append({size: '', price: 0})}
-                                            >
-                                                Добавить цену
-                                            </Button>
-                                        </Stack>
-                                    </Box>
-
-                                    {/* Категории */}
-                                    <Box>
-                                        <Heading size="sm" mb={2} color="gray.200">Категории</Heading>
-                                        <Flex wrap="wrap" gap={2}>
-                                            {allCategories.map(({id, name}) => (
-                                                <Controller
-                                                    key={id}
-                                                    name="categories"
-                                                    control={control}
-                                                    render={({field}) => {
-                                                        const isChecked = field.value?.includes(id)
-                                                        return (
-                                                            <Box
-                                                                px={3}
-                                                                py={1.5}
-                                                                borderRadius="md"
-                                                                border="1px solid"
-                                                                borderColor={isChecked ? 'gray.400' : 'gray.700'}
-                                                                bg={isChecked ? 'gray.700' : 'gray.800'}
-                                                                color={isChecked ? 'gray.100' : 'gray.300'}
-                                                                fontWeight="medium"
-                                                                fontSize="xs"
-                                                                cursor="pointer"
-                                                                transition="all 0.2s ease"
-                                                                _hover={{
-                                                                    borderColor: 'gray.300',
-                                                                    bg: isChecked ? 'gray.600' : 'gray.750',
-                                                                }}
-                                                                onClick={() => {
-                                                                    if (isChecked) {
-                                                                        field.onChange(field.value?.filter((v: string) => v !== id))
-                                                                    } else {
-                                                                        field.onChange([...(field.value || []), id])
-                                                                    }
-                                                                }}
-                                                            >
-                                                                {name}
-                                                            </Box>
-                                                        )
-                                                    }}
-                                                />
-                                            ))}
-                                        </Flex>
-                                    </Box>
-
-                                    {/* Настройки продукта */}
-                                    <Flex gap={4}>
-                                        {/* Скрыт */}
                                         <Box>
+                                            <Heading
+                                                size="sm"
+                                                mb={3}
+                                                color="gray.200"
+                                            >
+                                                Цены
+                                            </Heading>
+
+                                            <Stack gap={3}>
+                                                {fields.map((priceField, index) => (
+                                                    <Box key={priceField.id}>
+                                                        <Flex
+                                                            direction={{
+                                                                base: 'column',
+                                                                sm: 'row',
+                                                            }}
+                                                            gap={3}
+                                                            p={3}
+                                                            borderRadius="lg"
+                                                            border="1px solid"
+                                                            borderColor="gray.700"
+                                                            bg="gray.850"
+                                                        >
+                                                            <Box flex={1}>
+                                                                <Input
+                                                                    {...register(
+                                                                        `prices.${index}.size`
+                                                                    )}
+                                                                    placeholder="Размер"
+                                                                    bg="gray.800"
+                                                                    fontSize="sm"
+                                                                    outline="none"
+                                                                    boxShadow="none"
+                                                                    _focusVisible={{
+                                                                        outline: 'none',
+                                                                        boxShadow: 'none',
+                                                                        borderColor: 'gray.500',
+                                                                    }}
+                                                                />
+
+                                                                {errors.prices?.[index]?.size && (
+                                                                    <Text
+                                                                        color="red.400"
+                                                                        fontSize="xs"
+                                                                        mt={1}
+                                                                    >
+                                                                        {
+                                                                            errors.prices?.[index]?.size?.message
+                                                                        }
+                                                                    </Text>
+                                                                )}
+                                                            </Box>
+
+                                                            <Box flex={1}>
+                                                                <Input
+                                                                    {...register(
+                                                                        `prices.${index}.price`,
+                                                                        {
+                                                                            setValueAs:
+                                                                                (value) =>
+                                                                                    typeof value ===
+                                                                                    'string'
+                                                                                        ? normalizePriceValue(value)
+                                                                                        : value,
+                                                                        }
+                                                                    )}
+                                                                    placeholder="Цена"
+                                                                    type="text"
+                                                                    bg="gray.800"
+                                                                    fontSize="sm"
+                                                                    outline="none"
+                                                                    boxShadow="none"
+                                                                    _focusVisible={{
+                                                                        outline: 'none',
+                                                                        boxShadow: 'none',
+                                                                        borderColor: 'gray.500',
+                                                                    }}
+                                                                    onInput={(
+                                                                        event: FormEvent<HTMLInputElement>
+                                                                    ) => {
+                                                                        event.currentTarget.value =
+                                                                            sanitizePriceInput(
+                                                                                event.currentTarget.value
+                                                                            )
+                                                                    }}
+                                                                    onBlur={(event) => {
+                                                                        event.currentTarget.value =
+                                                                            event.currentTarget.value.replace(
+                                                                                ',',
+                                                                                '.'
+                                                                            )
+                                                                    }}
+                                                                />
+
+                                                                {errors.prices?.[index]?.price && (
+                                                                    <Text
+                                                                        color="red.400"
+                                                                        fontSize="xs"
+                                                                        mt={1}
+                                                                    >
+                                                                        {
+                                                                            errors.prices?.[index]?.price?.message
+                                                                        }
+                                                                    </Text>
+                                                                )}
+                                                            </Box>
+
+                                                            <IconButton
+                                                                type="button"
+                                                                aria-label="Удалить цену"
+                                                                color="red.400"
+                                                                variant="ghost"
+                                                                alignSelf={{
+                                                                    base: 'flex-end',
+                                                                    sm: 'center',
+                                                                }}
+                                                                outline="none"
+                                                                boxShadow="none"
+                                                                _focusVisible={{
+                                                                    outline: 'none',
+                                                                    boxShadow: 'none',
+                                                                }}
+                                                                onClick={() => remove(index)}
+                                                            >
+                                                                <FaTrash />
+                                                            </IconButton>
+                                                        </Flex>
+                                                    </Box>
+                                                ))}
+
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    bg="gray.600"
+                                                    color="white"
+                                                    alignSelf="flex-start"
+                                                    outline="none"
+                                                    boxShadow="none"
+                                                    _focusVisible={{
+                                                        outline: 'none',
+                                                        boxShadow: 'none',
+                                                    }}
+                                                    onClick={() =>
+                                                        append(DEFAULT_PRICE)
+                                                    }
+                                                >
+                                                    Добавить цену
+                                                </Button>
+                                            </Stack>
+                                        </Box>
+
+                                        <Box>
+                                            <Heading
+                                                size="sm"
+                                                mb={3}
+                                                color="gray.200"
+                                            >
+                                                Категории
+                                            </Heading>
+
+                                            <Flex wrap="wrap" gap={2}>
+                                                {categories.map(({id, name}) => (
+                                                    <Controller
+                                                        key={id}
+                                                        name="categories"
+                                                        control={control}
+                                                        render={({field}) => {
+                                                            const isSelected =
+                                                                field.value?.includes(id)
+
+                                                            return (
+                                                                <Box
+                                                                    px={3}
+                                                                    py={2}
+                                                                    borderRadius="md"
+                                                                    border="1px solid"
+                                                                    borderColor={
+                                                                        isSelected
+                                                                            ? 'gray.400'
+                                                                            : 'gray.700'
+                                                                    }
+                                                                    bg={
+                                                                        isSelected
+                                                                            ? 'gray.700'
+                                                                            : 'gray.800'
+                                                                    }
+                                                                    color={
+                                                                        isSelected
+                                                                            ? 'gray.100'
+                                                                            : 'gray.300'
+                                                                    }
+                                                                    fontSize="xs"
+                                                                    cursor="pointer"
+                                                                    transition="all 0.2s ease"
+                                                                    onClick={() => {
+                                                                        if (isSelected) {
+                                                                            field.onChange(
+                                                                                field.value?.filter(
+                                                                                    (categoryId: string) =>
+                                                                                        categoryId !== id
+                                                                                )
+                                                                            )
+                                                                            return
+                                                                        }
+
+                                                                        field.onChange([
+                                                                            ...(field.value || []),
+                                                                            id,
+                                                                        ])
+                                                                    }}
+                                                                >
+                                                                    {name}
+                                                                </Box>
+                                                            )
+                                                        }}
+                                                    />
+                                                ))}
+                                            </Flex>
+                                        </Box>
+
+                                        <Flex
+                                            direction={{
+                                                base: 'column',
+                                                sm: 'row',
+                                            }}
+                                            gap={4}
+                                        >
                                             <Controller
                                                 name="hidden"
                                                 control={control}
-                                                render={({field}) => {
-                                                    const isChecked = !!field.value
-                                                    return (
-                                                        <Flex align="center" gap={2} cursor="pointer" userSelect="none">
-                                                            <Text color={isChecked ? 'gray.100' : 'gray.300'}
-                                                                  fontWeight="500"
-                                                                  fontSize="sm">
-                                                                Скрыт
-                                                            </Text>
-                                                            <Box
-                                                                role="switch"
-                                                                aria-checked={isChecked}
-                                                                tabIndex={0}
-                                                                w="38px"
-                                                                h="20px"
-                                                                borderRadius="full"
-                                                                px="2px"
-                                                                display="flex"
-                                                                alignItems="center"
-                                                                bg={isChecked ? 'rgba(128,128,128,0.08)' : 'transparent'}
-                                                                border="1px solid"
-                                                                borderColor={isChecked ? 'gray.300' : 'gray.600'}
-                                                                transition="all 180ms ease"
-                                                                _hover={{borderColor: 'gray.300'}}
-                                                                onClick={() => field.onChange(!isChecked)}
-                                                            >
-                                                                <Box
-                                                                    w="14px"
-                                                                    h="14px"
-                                                                    borderRadius="full"
-                                                                    bg={isChecked ? 'gray.300' : 'gray.400'}
-                                                                    transform={isChecked ? 'translateX(16px)' : 'translateX(0px)'}
-                                                                    transition="all 180ms ease"
-                                                                    boxShadow={isChecked ? '0 3px 8px rgba(128,128,128,0.18)' : 'none'}
-                                                                />
-                                                            </Box>
-                                                        </Flex>
-                                                    )
-                                                }}
+                                                render={({field}) => (
+                                                    <ToggleSwitch
+                                                        label="Скрыт"
+                                                        value={!!field.value}
+                                                        activeColor="gray.300"
+                                                        onChange={field.onChange}
+                                                    />
+                                                )}
                                             />
-                                        </Box>
 
-                                        {/* Алкогольный */}
-                                        <Box>
                                             <Controller
                                                 name="isAlcohol"
                                                 control={control}
-                                                render={({field}) => {
-                                                    const isChecked = !!field.value
-                                                    return (
-                                                        <Flex align="center" gap={2} cursor="pointer" userSelect="none">
-                                                            <Text color={isChecked ? 'purple.100' : 'gray.300'}
-                                                                  fontWeight="500"
-                                                                  fontSize="sm">
-                                                                Алкогольный
-                                                            </Text>
-                                                            <Box
-                                                                role="switch"
-                                                                aria-checked={isChecked}
-                                                                tabIndex={0}
-                                                                w="38px"
-                                                                h="20px"
-                                                                borderRadius="full"
-                                                                px="2px"
-                                                                display="flex"
-                                                                alignItems="center"
-                                                                bg={isChecked ? 'rgba(142, 45, 226, 0.08)' : 'transparent'}
-                                                                border="1px solid"
-                                                                borderColor={isChecked ? 'purple.300' : 'gray.600'}
-                                                                transition="all 180ms ease"
-                                                                _hover={{borderColor: 'purple.300'}}
-                                                                onClick={() => field.onChange(!isChecked)}
-                                                            >
-                                                                <Box
-                                                                    w="14px"
-                                                                    h="14px"
-                                                                    borderRadius="full"
-                                                                    bg={isChecked ? 'purple.300' : 'gray.400'}
-                                                                    transform={isChecked ? 'translateX(16px)' : 'translateX(0px)'}
-                                                                    transition="all 180ms ease"
-                                                                    boxShadow={isChecked ? '0 3px 8px rgba(142, 45, 226, 0.18)' : 'none'}
-                                                                />
-                                                            </Box>
-                                                        </Flex>
-                                                    )
-                                                }}
+                                                render={({field}) => (
+                                                    <ToggleSwitch
+                                                        label="Алкогольный"
+                                                        value={!!field.value}
+                                                        activeColor="purple.300"
+                                                        onChange={field.onChange}
+                                                    />
+                                                )}
                                             />
-                                        </Box>
-                                    </Flex>
-                                </Stack>
+                                        </Flex>
+                                    </Stack>
 
-                                <Dialog.Footer borderTop="1px solid" borderColor="gray.700" mt={6} pt={3} gap={3}>
-                                    <Button
-                                        p={2}
-                                        variant="outline"
-                                        size="sm"
-                                        color="gray.300"
+                                    <Dialog.Footer
+                                        borderTop="1px solid"
                                         borderColor="gray.700"
-                                        _hover={{bg: 'gray.800', borderColor: 'gray.400', color: 'gray.200'}}
-                                        onClick={onClose}
+                                        mt={6}
+                                        pt={4}
+                                        px={0}
                                     >
-                                        Отмена
-                                    </Button>
-                                    <Button
-                                        p={2}
-                                        colorScheme="gray"
-                                        size="sm"
-                                        bg="gray.500"
-                                        color="white"
-                                        borderRadius="md"
-                                        _hover={{bg: 'gray.400', boxShadow: '0 0 12px rgba(128,128,128,0.45)'}}
-                                        type="submit"
-                                        loading={isSubmitting}
-                                        loadingText={submitLoadingText}
-                                    >
-                                        {submitText}
-                                    </Button>
-                                </Dialog.Footer>
-                            </form>
-                        )}
-                    </Dialog.Body>
-                </Dialog.Content>
-            </Dialog.Positioner>
-        </Dialog.Root>
+                                        <Flex
+                                            w="full"
+                                            direction={{
+                                                base: 'column-reverse',
+                                                sm: 'row',
+                                            }}
+                                            justify="flex-end"
+                                            gap={3}
+                                        >
+                                            <Button
+                                                type="button"
+                                                w={{base: 'full', sm: 'auto'}}
+                                                variant="outline"
+                                                borderColor="gray.700"
+                                                color="gray.300"
+                                                outline="none"
+                                                boxShadow="none"
+                                                _focusVisible={{
+                                                    outline: 'none',
+                                                    boxShadow: 'none',
+                                                }}
+                                                onClick={handleClose}
+                                            >
+                                                Отмена
+                                            </Button>
+
+                                            <Button
+                                                w={{base: 'full', sm: 'auto'}}
+                                                type="submit"
+                                                loading={isSubmitting}
+                                                loadingText={submitLoadingText}
+                                                bg="gray.500"
+                                                color="white"
+                                                outline="none"
+                                                boxShadow="none"
+                                                _hover={{
+                                                    bg: 'gray.400',
+                                                }}
+                                                _focusVisible={{
+                                                    outline: 'none',
+                                                    boxShadow: 'none',
+                                                }}
+                                            >
+                                                {submitText}
+                                            </Button>
+                                        </Flex>
+                                    </Dialog.Footer>
+                                </form>
+                            )}
+                        </Dialog.Body>
+                    </Dialog.Content>
+                </Dialog.Positioner>
+            </Dialog.Root>
 
             <ImageEditor
-                isOpen={showImageEditor}
-                onClose={() => setShowImageEditor(false)}
-                imageSrc={imageEditorSrc}
+                isOpen={isImageEditorOpen}
+                onClose={() => setIsImageEditorOpen(false)}
+                imageSrc={imageEditorSource}
                 onSave={handleImageEditorSave}
-                initialFlip={imageEditorFlip}
-                onFlipChange={setImageEditorFlip}
+                initialFlip={imageFlip}
+                onFlipChange={setImageFlip}
             />
         </>
     )
