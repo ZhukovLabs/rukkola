@@ -1,5 +1,3 @@
-'use client'
-
 import {
     Alert,
     Box,
@@ -28,10 +26,37 @@ import {
 import {zodResolver} from '@hookform/resolvers/zod'
 import {Area} from 'react-easy-crop'
 import {motion, AnimatePresence} from 'framer-motion'
-import {FiAlertCircle, FiEdit2, FiUploadCloud, FiX} from 'react-icons/fi'
+import {
+    FiAlertCircle,
+    FiEdit2,
+    FiPlus,
+    FiUploadCloud,
+    FiX,
+    FiMenu,
+} from 'react-icons/fi'
 import {FaTrash} from 'react-icons/fa'
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+    DragStartEvent,
+    DragOverlay,
+    defaultDropAnimationSideEffects,
+} from '@dnd-kit/core'
+import {
+    SortableContext,
+    sortableKeyboardCoordinates,
+    horizontalListSortingStrategy,
+    useSortable,
+} from '@dnd-kit/sortable'
+import {CSS} from '@dnd-kit/utilities'
 
 const MotionFlex = motion.create(Flex)
+const MotionBox = motion.create(Box)
 
 import {getCategories} from '../actions'
 import {
@@ -80,17 +105,17 @@ const DEFAULT_FORM_VALUES: ProductFormValues = {
 }
 
 const MODAL_STYLES = {
-    background: 'rgba(20, 21, 23, 0.96)',
+    background: '#111111',
     borderColor: 'rgba(255, 255, 255, 0.08)',
     inputBackground: 'rgba(255, 255, 255, 0.03)',
-    inputFocusBorder: 'rgba(255, 255, 255, 0.2)',
+    inputFocusBorder: 'rgba(255, 255, 255, 0.12)',
     headerBorder: 'rgba(255, 255, 255, 0.05)',
 }
 
 const SWITCH_STYLES = {
-    width: '40px',
-    height: '22px',
-    thumbSize: '16px',
+    width: '38px',
+    height: '20px',
+    thumbSize: '14px',
     translateX: '18px',
 }
 
@@ -139,6 +164,20 @@ const getAbsoluteImageUrl = (src?: string) => {
     return `${window.location.origin}${src}`
 }
 
+type SectionHeaderProps = {
+    title: string
+    required?: boolean
+}
+
+const SectionHeader = ({title, required}: SectionHeaderProps) => (
+    <Box mb={4}>
+        <Heading size="xs" color="whiteAlpha.600" fontWeight="700" letterSpacing="0.05em" textTransform="uppercase">
+            {title}
+            {required && <Text as="span" color="red.500" ml={1}>*</Text>}
+        </Heading>
+    </Box>
+)
+
 type ToggleSwitchProps = {
     value: boolean
     label: string
@@ -154,13 +193,28 @@ const ToggleSwitch = ({
                       }: ToggleSwitchProps) => (
     <Flex
         align="center"
-        gap={3}
+        justify="space-between"
+        p={4}
+        borderRadius="xl"
+        bg="whiteAlpha.02"
+        border="1px solid"
+        borderColor="whiteAlpha.08"
         cursor="pointer"
         userSelect="none"
         onClick={() => onChange(!value)}
-        _hover={{opacity: 0.9}}
-        transition="opacity 0.2s"
+        transition="all 0.2s"
+        _hover={{
+            bg: 'whiteAlpha.05',
+        }}
     >
+        <Text
+            color={value ? 'white' : 'whiteAlpha.500'}
+            fontWeight="600"
+            fontSize="sm"
+        >
+            {label}
+        </Text>
+
         <Box
             role="switch"
             aria-checked={value}
@@ -168,47 +222,35 @@ const ToggleSwitch = ({
             w={SWITCH_STYLES.width}
             h={SWITCH_STYLES.height}
             borderRadius="full"
-            px="2px"
+            px="3px"
             display="flex"
             alignItems="center"
-            bg={value ? `${activeColor}Alpha.200` : 'rgba(255, 255, 255, 0.05)'}
-            border="1px solid"
-            borderColor={value ? activeColor : 'rgba(255, 255, 255, 0.1)'}
-            transition="all 200ms cubic-bezier(0.4, 0, 0.2, 1)"
+            bg={value ? activeColor : 'whiteAlpha.100'}
+            transition="background-color 0.2s"
+            position="relative"
         >
-            <Box
+            <MotionBox
                 w={SWITCH_STYLES.thumbSize}
                 h={SWITCH_STYLES.thumbSize}
                 borderRadius="full"
-                bg={value ? activeColor : 'gray.500'}
-                transform={
-                    value
-                        ? `translateX(${SWITCH_STYLES.translateX})`
-                        : 'translateX(0px)'
-                }
-                transition="all 200ms cubic-bezier(0.4, 0, 0.2, 1)"
-                boxShadow={value ? `0 0 8px ${activeColor}80` : 'none'}
+                bg="white"
+                animate={{
+                    x: value ? 18 : 0,
+                }}
+                transition={{type: 'spring', stiffness: 500, damping: 35}}
             />
         </Box>
-        <Text
-            color={value ? 'white' : 'gray.400'}
-            fontWeight="500"
-            fontSize="sm"
-            transition="color 0.2s"
-        >
-            {label}
-        </Text>
     </Flex>
 )
 
 const TAG_COLORS = [
-    '#FF5F5F', // Red
-    '#FF9F43', // Orange
-    '#2ECC71', // Green
-    '#3498DB', // Blue
-    '#9B59B6', // Purple
-    '#F368E0', // Pink
-    '#00D2D3', // Cyan
+    '#FF4757', // Red
+    '#FFA502', // Orange
+    '#2ED573', // Green
+    '#1E90FF', // Blue
+    '#A4B0BE', // Muted Blue
+    '#5352ED', // Purple
+    '#FF6B81', // Pink
     '#FFFFFF', // White
 ]
 
@@ -229,21 +271,20 @@ const TagInput = ({onAdd}: TagInputProps) => {
     }
 
     return (
-        <Stack gap={3}>
-            <Flex gap={2}>
+        <Stack gap={4}>
+            <Flex gap={3}>
                 <Input
                     placeholder="Напр. Острое"
                     value={text}
                     onChange={(e) => setText(e.target.value)}
-                    bg={MODAL_STYLES.inputBackground}
+                    bg="whiteAlpha.05"
                     borderColor="whiteAlpha.100"
                     fontSize="sm"
                     h="44px"
-                    borderRadius="xl"
+                    borderRadius="lg"
                     maxLength={12}
                     _focus={{
                         borderColor: 'whiteAlpha.300',
-                        bg: 'whiteAlpha.100'
                     }}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter') {
@@ -256,12 +297,15 @@ const TagInput = ({onAdd}: TagInputProps) => {
                     type="button"
                     px={6}
                     h="44px"
-                    borderRadius="xl"
-                    bg="white"
-                    color="black"
+                    borderRadius="lg"
+                    bg="transparent"
+                    color="whiteAlpha.500"
+                    border="1px solid"
+                    borderColor="whiteAlpha.100"
                     fontSize="sm"
-                    fontWeight="600"
-                    _hover={{bg: 'gray.100'}}
+                    fontWeight="700"
+                    _hover={{bg: 'whiteAlpha.02', color: 'whiteAlpha.800', borderColor: 'whiteAlpha.300'}}
+                    _active={{bg: 'whiteAlpha.05'}}
                     onClick={handleAdd}
                     disabled={text.trim().length < 2 || text.trim().length > 12}
                 >
@@ -273,21 +317,20 @@ const TagInput = ({onAdd}: TagInputProps) => {
                 {TAG_COLORS.map((c) => (
                     <Box
                         key={c}
-                        w="28px"
-                        h="28px"
+                        w="24px"
+                        h="24px"
                         borderRadius="full"
                         bg={c}
                         cursor="pointer"
                         border="2px solid"
                         borderColor={color === c ? 'white' : 'transparent'}
-                        boxShadow={color === c ? `0 0 12px ${c}80` : 'none'}
-                        transition="all 0.2s"
+                        transition="transform 0.2s"
                         _hover={{transform: 'scale(1.1)'}}
                         onClick={() => setColor(c)}
                     />
                 ))}
 
-                <Box position="relative" w="28px" h="28px">
+                <Box position="relative" w="24px" h="24px">
                     <Input
                         type="color"
                         position="absolute"
@@ -309,12 +352,10 @@ const TagInput = ({onAdd}: TagInputProps) => {
                         borderColor="whiteAlpha.300"
                         align="center"
                         justify="center"
-                        fontSize="lg"
                         color="whiteAlpha.600"
                         pointerEvents="none"
-                        boxShadow={!TAG_COLORS.includes(color) ? `0 0 12px ${color}80` : 'none'}
                     >
-                        +
+                        <FiPlus size={12}/>
                     </Flex>
                 </Box>
             </Flex>
@@ -322,6 +363,92 @@ const TagInput = ({onAdd}: TagInputProps) => {
     )
 }
 
+type TagProps = {
+    tag: { text: string; color: string }
+    onRemove?: VoidFunction
+    isOverlay?: boolean
+    dragHandleProps?: any
+}
+
+const Tag = ({ tag, onRemove, isOverlay, dragHandleProps }: TagProps) => (
+    <Flex
+        align="center"
+        gap={2}
+        px={3}
+        py={1}
+        borderRadius="md"
+        bg={`${tag.color}15`}
+        border="1px solid"
+        borderColor={`${tag.color}30`}
+        position="relative"
+        userSelect="none"
+        boxShadow={isOverlay ? '0 10px 20px rgba(0,0,0,0.4)' : 'none'}
+        cursor={isOverlay ? 'grabbing' : 'default'}
+    >
+        <Box
+            {...dragHandleProps}
+            cursor={isOverlay ? 'grabbing' : 'grab'}
+            color="whiteAlpha.400"
+            _active={{ color: 'whiteAlpha.600' }}
+            _hover={{ color: 'whiteAlpha.600' }}
+        >
+            <FiMenu size={12} />
+        </Box>
+
+        <Box w="6px" h="6px" borderRadius="full" bg={tag.color} />
+        <Text fontSize="10px" fontWeight="800" color="white" textTransform="uppercase">
+            {tag.text}
+        </Text>
+        {!isOverlay && onRemove && (
+            <IconButton
+                aria-label="Remove"
+                size="xs"
+                variant="ghost"
+                color="whiteAlpha.400"
+                minW="unset"
+                h="auto"
+                p={0.5}
+                _hover={{ color: 'white' }}
+                onClick={onRemove}
+            >
+                <FiX size={12} />
+            </IconButton>
+        )}
+    </Flex>
+)
+
+type SortableTagProps = {
+    id: string
+    tag: { text: string; color: string }
+    onRemove: VoidFunction
+}
+
+const SortableTag = ({ id, tag, onRemove }: SortableTagProps) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id })
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.3 : 1,
+    }
+
+    return (
+        <div ref={setNodeRef} style={style}>
+            <Tag 
+                tag={tag} 
+                onRemove={onRemove} 
+                dragHandleProps={{ ...attributes, ...listeners }} 
+            />
+        </div>
+    )
+}
 
 export const BaseProductModal = ({
                                      isOpen,
@@ -342,6 +469,7 @@ export const BaseProductModal = ({
         vertical: false,
     })
     const [shouldRemoveImage, setShouldRemoveImage] = useState(false)
+    const [activeTagId, setActiveTagId] = useState<string | null>(null)
 
     const imageSourceRef = useRef<string>('')
 
@@ -372,10 +500,43 @@ export const BaseProductModal = ({
         fields: tagFields,
         append: appendTag,
         remove: removeTag,
+        move: moveTag,
     } = useFieldArray({
         control,
         name: 'tags',
     })
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    )
+
+    const handleDragStart = (event: DragStartEvent) => {
+        setActiveTagId(event.active.id as string)
+    }
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event
+
+        if (over && active.id !== over.id) {
+            const oldIndex = tagFields.findIndex((f) => f.id === active.id)
+            const newIndex = tagFields.findIndex((f) => f.id === over.id)
+            moveTag(oldIndex, newIndex)
+        }
+        
+        setActiveTagId(null)
+    }
+
+    const activeTag = useMemo(() => {
+        if (!activeTagId) return null
+        return tagFields.find(f => f.id === activeTagId)
+    }, [activeTagId, tagFields])
 
     const {
         field: {value: selectedImageFile, onChange: setSelectedImageFile},
@@ -543,8 +704,8 @@ export const BaseProductModal = ({
                 }}
             >
                 <Dialog.Backdrop
-                    bg="blackAlpha.800"
-                    backdropFilter="blur(8px)"
+                    bg="blackAlpha.700"
+                    backdropFilter="blur(4px)"
                     position="fixed"
                     inset={0}
                     overflow="hidden"
@@ -562,22 +723,21 @@ export const BaseProductModal = ({
                 >
                     <Dialog.Content
                         bg={MODAL_STYLES.background}
-                        borderRadius={{base: 'none', md: '24px'}}
+                        borderRadius={{base: 'none', md: '20px'}}
                         border={{base: 'none', md: '1px solid'}}
                         borderColor={MODAL_STYLES.borderColor}
                         color="white"
-                        w={{base: '100vw', md: '3xl'}}
+                        w={{base: '100vw', md: '2xl'}}
                         h={{base: '100dvh', md: 'auto'}}
                         minH={{base: '100dvh', md: 'unset'}}
-                        maxW={{base: '100vw', md: '3xl'}}
-                        maxH={{base: '100dvh', md: '92vh'}}
+                        maxW={{base: '100vw', md: '2xl'}}
+                        maxH={{base: '100dvh', md: '90vh'}}
                         m={0}
                         overflow="hidden"
-                        backdropFilter="blur(24px)"
                         display="flex"
                         flexDirection="column"
                         outline="none"
-                        boxShadow="0 25px 50px -12px rgba(0, 0, 0, 0.5)"
+                        boxShadow="0 20px 40px rgba(0, 0, 0, 0.4)"
                         _focusVisible={{
                             outline: 'none',
                         }}
@@ -585,15 +745,15 @@ export const BaseProductModal = ({
                         <Dialog.Header
                             borderBottom="1px solid"
                             borderColor={MODAL_STYLES.headerBorder}
-                            px={{base: 4, md: 8}}
+                            px={{base: 6, md: 8}}
                             py={5}
                             flexShrink={0}
                         >
                             <Flex align="center" justify="space-between" gap={4}>
                                 <Heading
-                                    size={{base: 'sm', md: 'md'}}
+                                    size="sm"
                                     color="white"
-                                    fontWeight="600"
+                                    fontWeight="700"
                                     letterSpacing="-0.01em"
                                 >
                                     {title}
@@ -612,15 +772,15 @@ export const BaseProductModal = ({
                                         }}
                                         onClick={handleClose}
                                     >
-                                        <FiX size={18}/>
+                                        <FiX size={20}/>
                                     </IconButton>
                                 </Dialog.CloseTrigger>
                             </Flex>
                         </Dialog.Header>
 
                         <Dialog.Body
-                            px={{base: 4, md: 8}}
-                            py={{base: 4, md: 7}}
+                            px={{base: 6, md: 8}}
+                            py={{base: 6, md: 8}}
                             overflowY="auto"
                             overscrollBehavior="contain"
                             flex="1"
@@ -635,291 +795,159 @@ export const BaseProductModal = ({
                             }}
                         >
                             {isLoadingInitial ? (
-                                <Flex align="center" justify="center" py={20}>
-                                    <Spinner size="lg" color="whiteAlpha.400"/>
+                                <Flex align="center" justify="center" py={20} direction="column" gap={4}>
+                                    <Spinner size="md" color="whiteAlpha.400"/>
+                                    <Text fontSize="xs" color="whiteAlpha.400">Загрузка...</Text>
                                 </Flex>
                             ) : (
                                 <form onSubmit={handleSubmit(handleFormSubmit)}>
-                                    <Stack gap={7}>
+                                    <Stack gap={10}>
                                         {errors.root && (
                                             <Alert.Root
                                                 status="error"
                                                 variant="subtle"
-                                                borderRadius="xl"
-                                                bg="red.900/20"
+                                                borderRadius="lg"
+                                                bg="red.950"
                                                 border="1px solid"
-                                                borderColor="red.500/20"
+                                                borderColor="red.900"
                                             >
                                                 <Alert.Indicator color="red.400">
-                                                    <FiAlertCircle/>
+                                                    <FiAlertCircle size={16}/>
                                                 </Alert.Indicator>
                                                 <Alert.Content>
-                                                    <Alert.Description fontSize="sm" color="red.200">
+                                                    <Alert.Description fontSize="xs" color="red.200">
                                                         {errors.root.message}
                                                     </Alert.Description>
                                                 </Alert.Content>
                                             </Alert.Root>
                                         )}
 
+                                        {/* Информация */}
                                         <Box>
-                                            <Text
-                                                mb={2.5}
-                                                fontSize="sm"
-                                                fontWeight="600"
-                                                color="whiteAlpha.800"
-                                                display="flex"
-                                                alignItems="center"
-                                                gap={1.5}
-                                            >
-                                                Название
-                                                <Text as="span" color="red.400">*</Text>
-                                            </Text>
+                                            <SectionHeader title="Основное" required />
+                                            <Stack gap={4}>
+                                                <Box>
+                                                    <Input
+                                                        {...register('name')}
+                                                        placeholder="Название"
+                                                        bg={MODAL_STYLES.inputBackground}
+                                                        borderColor="whiteAlpha.100"
+                                                        h="48px"
+                                                        fontSize="sm"
+                                                        borderRadius="lg"
+                                                        _focus={{
+                                                            borderColor: MODAL_STYLES.inputFocusBorder,
+                                                            bg: 'whiteAlpha.05',
+                                                        }}
+                                                    />
+                                                    {errors.name && (
+                                                        <Text color="red.500" mt={1.5} fontSize="xs" fontWeight="600">
+                                                            {errors.name.message}
+                                                        </Text>
+                                                    )}
+                                                </Box>
 
-                                            <Input
-                                                {...register('name')}
-                                                placeholder="Например: Пицца Маргарита"
-                                                bg={MODAL_STYLES.inputBackground}
-                                                borderColor="whiteAlpha.100"
-                                                h="46px"
-                                                fontSize="sm"
-                                                borderRadius="xl"
-                                                transition="all 0.2s"
-                                                _focus={{
-                                                    borderColor: 'whiteAlpha.300',
-                                                    bg: 'whiteAlpha.100',
-                                                    boxShadow: '0 0 0 1px rgba(255, 255, 255, 0.05)'
-                                                }}
-                                                _placeholder={{color: 'whiteAlpha.300'}}
-                                            />
-
-                                            {errors.name && (
-                                                <Text
-                                                    color="red.400"
-                                                    mt={1.5}
-                                                    fontSize="xs"
-                                                    fontWeight="500"
-                                                >
-                                                    {errors.name.message}
-                                                </Text>
-                                            )}
+                                                <Box>
+                                                    <Textarea
+                                                        {...register('description')}
+                                                        placeholder="Описание"
+                                                        bg={MODAL_STYLES.inputBackground}
+                                                        borderColor="whiteAlpha.100"
+                                                        minH="100px"
+                                                        fontSize="sm"
+                                                        borderRadius="lg"
+                                                        py={3}
+                                                        _focus={{
+                                                            borderColor: MODAL_STYLES.inputFocusBorder,
+                                                            bg: 'whiteAlpha.05',
+                                                        }}
+                                                    />
+                                                    {errors.description && (
+                                                        <Text color="red.500" mt={1.5} fontSize="xs" fontWeight="600">
+                                                            {errors.description.message}
+                                                        </Text>
+                                                    )}
+                                                </Box>
+                                            </Stack>
                                         </Box>
 
+                                        {/* Медиа */}
                                         <Box>
-                                            <Text
-                                                mb={2.5}
-                                                fontSize="sm"
-                                                fontWeight="600"
-                                                color="whiteAlpha.800"
-                                            >
-                                                Описание
-                                            </Text>
-
-                                            <Textarea
-                                                {...register('description')}
-                                                placeholder="Расскажите о составе и особенностях блюда..."
-                                                bg={MODAL_STYLES.inputBackground}
-                                                borderColor="whiteAlpha.100"
-                                                minH={{base: '100px', md: '120px'}}
-                                                fontSize="sm"
-                                                borderRadius="xl"
-                                                py={3}
-                                                transition="all 0.2s"
-                                                _focus={{
-                                                    borderColor: 'whiteAlpha.300',
-                                                    bg: 'whiteAlpha.100',
-                                                    boxShadow: '0 0 0 1px rgba(255, 255, 255, 0.05)'
-                                                }}
-                                                _placeholder={{color: 'whiteAlpha.300'}}
-                                            />
-
-                                            {errors.description && (
-                                                <Text
-                                                    color="red.400"
-                                                    mt={1.5}
-                                                    fontSize="xs"
-                                                    fontWeight="500"
-                                                >
-                                                    {errors.description.message}
-                                                </Text>
-                                            )}
-                                        </Box>
-
-
-                                        <Separator borderColor="whiteAlpha.100"/>
-
-                                        <Box>
-                                            <Text
-                                                mb={3}
-                                                fontSize="sm"
-                                                fontWeight="600"
-                                                color="whiteAlpha.800"
-                                            >
-                                                Изображение
-                                            </Text>
-
+                                            <SectionHeader title="Изображение" />
                                             <Box
-                                                border="2px dashed"
-                                                borderColor={
-                                                    selectedImageFile
-                                                        ? 'whiteAlpha.300'
-                                                        : 'whiteAlpha.100'
-                                                }
-                                                borderRadius="2xl"
-                                                p={{base: 4, md: 6}}
-                                                bg={
-                                                    isDragActive
-                                                        ? 'whiteAlpha.100'
-                                                        : 'whiteAlpha.05'
-                                                }
-                                                transition="all 0.3s ease"
+                                                border="1px dashed"
+                                                borderColor="whiteAlpha.200"
+                                                borderRadius="xl"
+                                                p={2}
+                                                bg={isDragActive ? 'whiteAlpha.100' : 'whiteAlpha.02'}
+                                                transition="all 0.2s"
                                                 textAlign="center"
                                                 cursor="pointer"
-                                                _hover={{
-                                                    borderColor: 'whiteAlpha.300',
-                                                    bg: 'whiteAlpha.100'
-                                                }}
-                                                onClick={() =>
-                                                    document
-                                                        .getElementById(
-                                                            'product-image-input'
-                                                        )
-                                                        ?.click()
-                                                }
-                                                onDragOver={(event) => {
-                                                    event.preventDefault()
-                                                    setIsDragActive(true)
-                                                }}
-                                                onDragLeave={(event) => {
-                                                    event.preventDefault()
-                                                    setIsDragActive(false)
-                                                }}
-                                                onDrop={(event) => {
-                                                    event.preventDefault()
-                                                    setIsDragActive(false)
-                                                    handleImageSelect(
-                                                        event.dataTransfer.files?.[0]
-                                                    )
+                                                onClick={() => document.getElementById('product-image-input')?.click()}
+                                                onDragOver={(e) => { e.preventDefault(); setIsDragActive(true); }}
+                                                onDragLeave={(e) => { e.preventDefault(); setIsDragActive(false); }}
+                                                onDrop={(e) => {
+                                                    e.preventDefault();
+                                                    setIsDragActive(false);
+                                                    handleImageSelect(e.dataTransfer.files?.[0]);
                                                 }}
                                             >
                                                 {previewImageUrl ? (
-                                                    <Flex
-                                                        direction="column"
-                                                        align="center"
-                                                        gap={4}
-                                                    >
+                                                    <Flex direction="column" align="center" p={4} gap={4}>
                                                         <Box
                                                             position="relative"
-                                                            borderRadius="xl"
+                                                            borderRadius="lg"
                                                             overflow="hidden"
-                                                            boxShadow="0 10px 20px rgba(0,0,0,0.3)"
-                                                            onClick={(event) =>
-                                                                event.stopPropagation()
-                                                            }
+                                                            onClick={(e) => e.stopPropagation()}
                                                         >
                                                             <Image
                                                                 src={previewImageUrl}
                                                                 alt="preview"
-                                                                maxH={{
-                                                                    base: '180px',
-                                                                    md: '240px',
-                                                                }}
+                                                                maxH="240px"
+                                                                w="full"
                                                                 objectFit="cover"
-                                                                transition="transform 0.3s"
-                                                                _hover={{transform: 'scale(1.02)'}}
                                                             />
 
-                                                            <Flex
-                                                                position="absolute"
-                                                                top={3}
-                                                                right={3}
-                                                                gap={2}
-                                                            >
+                                                            <Flex position="absolute" top={2} right={2} gap={2}>
                                                                 <IconButton
                                                                     type="button"
-                                                                    aria-label="Редактировать изображение"
-                                                                    size="sm"
-                                                                    borderRadius="full"
-                                                                    bg="blackAlpha.700"
+                                                                    aria-label="Edit"
+                                                                    size="xs"
+                                                                    borderRadius="md"
+                                                                    bg="blackAlpha.800"
                                                                     color="white"
-                                                                    backdropFilter="blur(8px)"
-                                                                    _hover={{bg: 'blackAlpha.800'}}
-                                                                    onClick={(event) => {
-                                                                        event.preventDefault()
-                                                                        event.stopPropagation()
-                                                                        handleImageEditorOpen()
-                                                                    }}
+                                                                    onClick={(e) => { e.stopPropagation(); handleImageEditorOpen(); }}
                                                                 >
-                                                                    <FiEdit2 size={14}/>
+                                                                    <FiEdit2 size={12}/>
                                                                 </IconButton>
 
                                                                 <IconButton
                                                                     type="button"
-                                                                    aria-label="Удалить изображение"
-                                                                    size="sm"
-                                                                    borderRadius="full"
-                                                                    bg="blackAlpha.700"
+                                                                    aria-label="Remove"
+                                                                    size="xs"
+                                                                    borderRadius="md"
+                                                                    bg="blackAlpha.800"
                                                                     color="red.400"
-                                                                    backdropFilter="blur(8px)"
-                                                                    _hover={{bg: 'red.900', color: 'white'}}
-                                                                    onClick={(event) => {
-                                                                        event.preventDefault()
-                                                                        event.stopPropagation()
-
-                                                                        if (selectedImageFile) {
-                                                                            setSelectedImageFile(null)
-                                                                        } else {
-                                                                            setShouldRemoveImage(true)
-                                                                        }
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        if (selectedImageFile) setSelectedImageFile(null);
+                                                                        else setShouldRemoveImage(true);
                                                                     }}
                                                                 >
-                                                                    <FaTrash size={12}/>
+                                                                    <FaTrash size={10}/>
                                                                 </IconButton>
                                                             </Flex>
                                                         </Box>
-
-                                                        {isUploadingImage ? (
-                                                            <Flex align="center" gap={3}>
-                                                                <Spinner size="xs" color="whiteAlpha.400"/>
-                                                                <Text fontSize="xs" color="whiteAlpha.400">
-                                                                    Загрузка изображения...
-                                                                </Text>
-                                                            </Flex>
-                                                        ) : (
-                                                            <Text
-                                                                fontSize="xs"
-                                                                color="whiteAlpha.400"
-                                                                fontWeight="500"
-                                                            >
-                                                                {imagePreviewLabel}
-                                                            </Text>
-                                                        )}
+                                                        <Text fontSize="10px" color="whiteAlpha.400" fontWeight="700" textTransform="uppercase">
+                                                            {isUploadingImage ? 'Загрузка...' : imagePreviewLabel}
+                                                        </Text>
                                                     </Flex>
                                                 ) : (
-                                                    <Stack align="center" gap={3} py={4}>
-                                                        <Box
-                                                            p={4}
-                                                            borderRadius="full"
-                                                            bg="whiteAlpha.05"
-                                                            color="whiteAlpha.400"
-                                                        >
-                                                            <FiUploadCloud size={32}/>
-                                                        </Box>
-                                                        <Box>
-                                                            <Text
-                                                                color="white"
-                                                                fontSize="sm"
-                                                                fontWeight="600"
-                                                            >
-                                                                Нажмите или перетащите файл
-                                                            </Text>
-                                                            <Text
-                                                                color="whiteAlpha.400"
-                                                                fontSize="xs"
-                                                                mt={1}
-                                                            >
-                                                                PNG, JPG до 5МБ
-                                                            </Text>
-                                                        </Box>
+                                                    <Stack align="center" gap={3} py={10}>
+                                                        <FiUploadCloud size={24} color="rgba(255,255,255,0.2)"/>
+                                                        <Text color="whiteAlpha.500" fontSize="xs" fontWeight="600">
+                                                            Нажмите для загрузки изображения
+                                                        </Text>
                                                     </Stack>
                                                 )}
                                             </Box>
@@ -929,252 +957,135 @@ export const BaseProductModal = ({
                                                 type="file"
                                                 accept="image/*"
                                                 display="none"
-                                                onChange={(event) =>
-                                                    handleImageSelect(event.target.files?.[0])
-                                                }
+                                                onChange={(e) => handleImageSelect(e.target.files?.[0])}
                                             />
 
                                             {errors.imageFile && (
-                                                <Alert.Root
-                                                    status="error"
-                                                    variant="subtle"
-                                                    mt={3}
-                                                    borderRadius="lg"
-                                                    bg="red.900/20"
-                                                >
-                                                    <Alert.Indicator color="red.400">
-                                                        <FiAlertCircle/>
-                                                    </Alert.Indicator>
-                                                    <Alert.Content>
-                                                        <Alert.Description fontSize="xs" color="red.200">
-                                                            {errors.imageFile.message}
-                                                        </Alert.Description>
-                                                    </Alert.Content>
-                                                </Alert.Root>
+                                                <Text color="red.500" mt={2} fontSize="xs" fontWeight="600">
+                                                    {errors.imageFile.message}
+                                                </Text>
                                             )}
                                         </Box>
 
+                                        {/* Цены */}
                                         <Box>
-                                            <Text
-                                                fontSize="sm"
-                                                fontWeight="600"
-                                                mb={3.5}
-                                                color="whiteAlpha.800"
-                                                display="flex"
-                                                alignItems="center"
-                                                gap={1.5}
-                                            >
-                                                Варианты и цены
-                                                <Text as="span" color="red.400">*</Text>
-                                            </Text>
-
-                                            <Stack gap={3.5}>
+                                            <SectionHeader title="Цены" required />
+                                            <Stack gap={3}>
                                                 {priceFields.map((priceField, index) => (
-                                                    <Box key={priceField.id}>
-                                                        <Flex
-                                                            direction={{
-                                                                base: 'column',
-                                                                sm: 'row',
-                                                            }}
-                                                            gap={3}
-                                                            p={4}
-                                                            borderRadius="2xl"
-                                                            bg="whiteAlpha.05"
-                                                            border="1px solid"
-                                                            borderColor="whiteAlpha.100"
-                                                            align="flex-start"
-                                                            transition="all 0.2s"
-                                                            _hover={{
-                                                                bg: 'whiteAlpha.100',
-                                                                borderColor: 'whiteAlpha.200'
-                                                            }}
-                                                        >
-                                                            <Box flex={1} w="full">
+                                                    <MotionBox
+                                                        key={priceField.id}
+                                                        layout
+                                                        initial={{ opacity: 0 }}
+                                                        animate={{ opacity: 1 }}
+                                                        exit={{ opacity: 0 }}
+                                                    >
+                                                        <Flex gap={3} align="flex-start">
+                                                            <Box flex={2}>
                                                                 <Input
-                                                                    {...register(
-                                                                        `prices.${index}.size`
-                                                                    )}
-                                                                    placeholder="Название (напр. Большой)"
-                                                                    bg="blackAlpha.300"
+                                                                    {...register(`prices.${index}.size`)}
+                                                                    placeholder="Размер/Порция"
+                                                                    bg="whiteAlpha.05"
                                                                     borderColor="whiteAlpha.100"
                                                                     fontSize="sm"
-                                                                    borderRadius="xl"
-                                                                    h="42px"
-                                                                    _focus={{
-                                                                        borderColor: 'whiteAlpha.400',
-                                                                        bg: 'blackAlpha.500'
-                                                                    }}
+                                                                    borderRadius="lg"
+                                                                    h="44px"
+                                                                    _focus={{ borderColor: 'whiteAlpha.300' }}
                                                                 />
-
                                                                 {errors.prices?.[index]?.size && (
-                                                                    <Text
-                                                                        color="red.400"
-                                                                        fontSize="xs"
-                                                                        mt={1.5}
-                                                                        fontWeight="500"
-                                                                    >
-                                                                        {
-                                                                            errors.prices?.[index]?.size?.message
-                                                                        }
+                                                                    <Text color="red.500" fontSize="10px" mt={1} fontWeight="600">
+                                                                        {errors.prices?.[index]?.size?.message}
                                                                     </Text>
                                                                 )}
                                                             </Box>
 
-                                                            <Box flex={1} w="full">
+                                                            <Box flex={1}>
                                                                 <Input
-                                                                    {...register(
-                                                                        `prices.${index}.price`,
-                                                                        {
-                                                                            setValueAs:
-                                                                                (value) =>
-                                                                                    typeof value ===
-                                                                                    'string'
-                                                                                        ? normalizePriceValue(value)
-                                                                                        : value,
-                                                                        }
-                                                                    )}
+                                                                    {...register(`prices.${index}.price`, {
+                                                                        setValueAs: (v) => typeof v === 'string' ? normalizePriceValue(v) : v,
+                                                                    })}
                                                                     placeholder="Цена"
-                                                                    type="text"
-                                                                    bg="blackAlpha.300"
+                                                                    bg="whiteAlpha.05"
                                                                     borderColor="whiteAlpha.100"
                                                                     fontSize="sm"
-                                                                    borderRadius="xl"
-                                                                    h="42px"
-                                                                    _focus={{
-                                                                        borderColor: 'whiteAlpha.400',
-                                                                        bg: 'blackAlpha.500'
-                                                                    }}
-                                                                    onInput={(
-                                                                        event: FormEvent<HTMLInputElement>
-                                                                    ) => {
-                                                                        event.currentTarget.value =
-                                                                            sanitizePriceInput(
-                                                                                event.currentTarget.value
-                                                                            )
-                                                                    }}
-                                                                    onBlur={(event) => {
-                                                                        event.currentTarget.value =
-                                                                            event.currentTarget.value.replace(
-                                                                                ',',
-                                                                                '.'
-                                                                            )
+                                                                    borderRadius="lg"
+                                                                    h="44px"
+                                                                    _focus={{ borderColor: 'whiteAlpha.300' }}
+                                                                    onInput={(e: FormEvent<HTMLInputElement>) => {
+                                                                        e.currentTarget.value = sanitizePriceInput(e.currentTarget.value)
                                                                     }}
                                                                 />
-
                                                                 {errors.prices?.[index]?.price && (
-                                                                    <Text
-                                                                        color="red.400"
-                                                                        fontSize="xs"
-                                                                        mt={1.5}
-                                                                        fontWeight="500"
-                                                                    >
-                                                                        {
-                                                                            errors.prices?.[index]?.price?.message
-                                                                        }
+                                                                    <Text color="red.500" fontSize="10px" mt={1} fontWeight="600">
+                                                                        {errors.prices?.[index]?.price?.message}
                                                                     </Text>
                                                                 )}
                                                             </Box>
 
                                                             <IconButton
                                                                 type="button"
-                                                                aria-label="Удалить цену"
-                                                                color="whiteAlpha.400"
+                                                                aria-label="Delete"
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                borderRadius="lg"
-                                                                _hover={{
-                                                                    bg: 'red.900/40',
-                                                                    color: 'red.400',
-                                                                }}
+                                                                color="whiteAlpha.300"
+                                                                _hover={{ color: 'red.400', bg: 'transparent' }}
                                                                 onClick={() => removePrice(index)}
+                                                                disabled={priceFields.length <= 1}
+                                                                h="44px"
                                                             >
-                                                                <FaTrash size={14}/>
+                                                                <FaTrash size={12}/>
                                                             </IconButton>
                                                         </Flex>
-                                                    </Box>
+                                                    </MotionBox>
                                                 ))}
 
                                                 <Button
                                                     type="button"
-                                                    size="sm"
                                                     variant="ghost"
-                                                    color="whiteAlpha.600"
-                                                    borderRadius="xl"
-                                                    alignSelf="flex-start"
-                                                    _hover={{bg: 'whiteAlpha.100', color: 'white'}}
-                                                    onClick={() =>
-                                                        appendPrice(DEFAULT_PRICE)
-                                                    }
+                                                    color="whiteAlpha.300"
+                                                    size="sm"
+                                                    h="40px"
+                                                    w="full"
+                                                    border="1px dashed"
+                                                    borderColor="whiteAlpha.100"
+                                                    _hover={{ bg: 'transparent', color: 'whiteAlpha.600', borderColor: 'whiteAlpha.300' }}
+                                                    _active={{ bg: 'whiteAlpha.02' }}
+                                                    onClick={() => appendPrice(DEFAULT_PRICE)}
                                                 >
-                                                    <Text fontSize="lg" mb={0.5}>+</Text>Добавить вариант цены
+                                                    Добавить вариант
                                                 </Button>
                                             </Stack>
                                         </Box>
 
+                                        {/* Категории */}
                                         <Box>
-                                            <Text
-                                                fontSize="sm"
-                                                fontWeight="600"
-                                                mb={3}
-                                                color="whiteAlpha.800"
-                                            >
-                                                Категории
-                                            </Text>
-
-                                            <Flex wrap="wrap" gap={2.5}>
+                                            <SectionHeader title="Категории" />
+                                            <Flex wrap="wrap" gap={2}>
                                                 {categories.map(({id, name}) => (
                                                     <Controller
                                                         key={id}
                                                         name="categories"
                                                         control={control}
                                                         render={({field}) => {
-                                                            const isSelected =
-                                                                field.value?.includes(id)
-
+                                                            const isSelected = field.value?.includes(id)
                                                             return (
                                                                 <Box
                                                                     px={4}
-                                                                    py={2}
+                                                                    py={1.5}
                                                                     borderRadius="full"
                                                                     border="1px solid"
-                                                                    borderColor={
-                                                                        isSelected
-                                                                            ? 'white'
-                                                                            : 'whiteAlpha.100'
-                                                                    }
-                                                                    bg={
-                                                                        isSelected
-                                                                            ? 'white'
-                                                                            : 'whiteAlpha.05'
-                                                                    }
-                                                                    color={
-                                                                        isSelected
-                                                                            ? 'black'
-                                                                            : 'whiteAlpha.700'
-                                                                    }
+                                                                    borderColor={isSelected ? 'white' : 'whiteAlpha.100'}
+                                                                    bg={isSelected ? 'white' : 'transparent'}
+                                                                    color={isSelected ? 'black' : 'whiteAlpha.600'}
                                                                     fontSize="xs"
-                                                                    fontWeight="600"
+                                                                    fontWeight="700"
                                                                     cursor="pointer"
-                                                                    transition="all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
+                                                                    transition="all 0.1s"
                                                                     _hover={{
                                                                         borderColor: isSelected ? 'white' : 'whiteAlpha.300',
-                                                                        transform: 'translateY(-1px)'
                                                                     }}
                                                                     onClick={() => {
-                                                                        if (isSelected) {
-                                                                            field.onChange(
-                                                                                field.value?.filter(
-                                                                                    (categoryId: string) =>
-                                                                                        categoryId !== id
-                                                                                )
-                                                                            )
-                                                                            return
-                                                                        }
-
-                                                                        field.onChange([
-                                                                            ...(field.value || []),
-                                                                            id,
-                                                                        ])
+                                                                        if (isSelected) field.onChange(field.value?.filter((cid: string) => cid !== id));
+                                                                        else field.onChange([...(field.value || []), id]);
                                                                     }}
                                                                 >
                                                                     {name}
@@ -1186,189 +1097,128 @@ export const BaseProductModal = ({
                                             </Flex>
                                         </Box>
 
+                                        {/* Теги */}
                                         <Box>
-                                            <Flex align="center" justify="space-between" mb={3}>
-                                                <Text
-                                                    fontSize="sm"
-                                                    fontWeight="600"
-                                                    color="whiteAlpha.800"
-                                                >
-                                                    Теги
-                                                </Text>
-                                                {tagFields.length >= 2 && (
-                                                    <Text fontSize="xs" color="whiteAlpha.400" fontWeight="500">
-                                                        Максимум 2 тега
-                                                    </Text>
-                                                )}
-                                            </Flex>
-
+                                            <SectionHeader title="Теги" />
                                             <Stack gap={4}>
-                                                <Flex wrap="wrap" gap={3}>
-                                                    <AnimatePresence mode="popLayout">
-                                                        {tagFields.map((tagField, index) => (
-                                                            <MotionFlex
-                                                                key={tagField.id}
-                                                                layout
-                                                                initial={{ opacity: 0, scale: 0.8, y: 10 }}
-                                                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                                                exit={{ opacity: 0, scale: 0.8, y: 10 }}
-                                                                transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-                                                                align="center"
-                                                                gap={2.5}
-                                                                px={4}
-                                                                py={2}
-                                                                borderRadius="full"
-                                                                bg={`${(tagField as any).color}15`}
-                                                                border="1px solid"
-                                                                borderColor={`${(tagField as any).color}30`}
-                                                                backdropFilter="blur(8px)"
-                                                                boxShadow={`0 4px 12px ${(tagField as any).color}20`}
-                                                            >
-                                                                <Box
-                                                                    w="8px"
-                                                                    h="8px"
-                                                                    borderRadius="full"
-                                                                    bg={(tagField as any).color}
-                                                                    boxShadow={`0 0 10px ${(tagField as any).color}`}
-                                                                />
-                                                                <Text 
-                                                                    fontSize="xs" 
-                                                                    fontWeight="800" 
-                                                                    color="white" 
-                                                                    textTransform="uppercase"
-                                                                    letterSpacing="0.06em"
-                                                                >
-                                                                    {(tagField as any).text}
-                                                                </Text>
-                                                                <IconButton
-                                                                    aria-label="Удалить тег"
-                                                                    size="xs"
-                                                                    variant="ghost"
-                                                                    color="whiteAlpha.400"
-                                                                    minW="unset"
-                                                                    h="auto"
-                                                                    p={0.5}
-                                                                    borderRadius="full"
-                                                                    _hover={{ color: (tagField as any).color, bg: 'whiteAlpha.100' }}
-                                                                    onClick={() => removeTag(index)}
-                                                                >
-                                                                    <FiX size={14} />
-                                                                </IconButton>
-                                                            </MotionFlex>
-                                                        ))}
-                                                    </AnimatePresence>
-                                                </Flex>
+                                                <DndContext
+                                                    sensors={sensors}
+                                                    collisionDetection={closestCenter}
+                                                    onDragStart={handleDragStart}
+                                                    onDragEnd={handleDragEnd}
+                                                >
+                                                    <SortableContext
+                                                        items={tagFields.map((f) => f.id)}
+                                                        strategy={horizontalListSortingStrategy}
+                                                    >
+                                                        <Flex wrap="wrap" gap={2}>
+                                                            <AnimatePresence mode="popLayout">
+                                                                {tagFields.map((tagField, index) => (
+                                                                    <SortableTag
+                                                                        key={tagField.id}
+                                                                        id={tagField.id}
+                                                                        tag={tagField as any}
+                                                                        onRemove={() => removeTag(index)}
+                                                                    />
+                                                                ))}
+                                                            </AnimatePresence>
+                                                        </Flex>
+                                                    </SortableContext>
+                                                    
+                                                    <DragOverlay dropAnimation={{
+                                                        sideEffects: defaultDropAnimationSideEffects({
+                                                            styles: {
+                                                                active: {
+                                                                    opacity: '0.3',
+                                                                },
+                                                            },
+                                                        }),
+                                                    }}>
+                                                        {activeTag ? (
+                                                            <Tag tag={activeTag as any} isOverlay />
+                                                        ) : null}
+                                                    </DragOverlay>
+                                                </DndContext>
 
                                                 {tagFields.length < 2 && (
-                                                    <Box
-                                                        p={5}
-                                                        borderRadius="2xl"
-                                                        bg="whiteAlpha.05"
-                                                        border="1px solid"
-                                                        borderColor="whiteAlpha.100"
-                                                    >
-                                                        <TagInput
-                                                            onAdd={(tag) => appendTag(tag)}
-                                                        />
+                                                    <Box p={4} borderRadius="xl" bg="whiteAlpha.02" border="1px solid" borderColor="whiteAlpha.08">
+                                                        <TagInput onAdd={(tag) => appendTag(tag)} />
                                                     </Box>
                                                 )}
                                             </Stack>
                                         </Box>
 
-
-                                        <Flex
-                                            direction={{
-                                                base: 'column',
-                                                sm: 'row',
-                                            }}
-                                            gap={8}
-                                            p={5}
-                                            borderRadius="2xl"
-                                            bg="whiteAlpha.05"
-                                            border="1px solid"
-                                            borderColor="whiteAlpha.100"
-                                        >
-                                            <Controller
-                                                name="hidden"
-                                                control={control}
-                                                render={({field}) => (
-                                                    <ToggleSwitch
-                                                        label="Скрыть товар"
-                                                        value={!!field.value}
-                                                        activeColor="orange.400"
-                                                        onChange={field.onChange}
-                                                    />
-                                                )}
-                                            />
-
-                                            <Controller
-                                                name="isAlcohol"
-                                                control={control}
-                                                render={({field}) => (
-                                                    <ToggleSwitch
-                                                        label="Содержит алкоголь"
-                                                        value={!!field.value}
-                                                        activeColor="purple.400"
-                                                        onChange={field.onChange}
-                                                    />
-                                                )}
-                                            />
-                                        </Flex>
+                                        {/* Настройки */}
+                                        <Stack direction={{ base: 'column', sm: 'row' }} gap={4}>
+                                            <Box flex={1}>
+                                                <Controller
+                                                    name="hidden"
+                                                    control={control}
+                                                    render={({field}) => (
+                                                        <ToggleSwitch
+                                                            label="Скрыть"
+                                                            value={!!field.value}
+                                                            activeColor="#E67E22"
+                                                            onChange={field.onChange}
+                                                        />
+                                                    )}
+                                                />
+                                            </Box>
+                                            <Box flex={1}>
+                                                <Controller
+                                                    name="isAlcohol"
+                                                    control={control}
+                                                    render={({field}) => (
+                                                        <ToggleSwitch
+                                                            label="Алкоголь"
+                                                            value={!!field.value}
+                                                            activeColor="#9B59B6"
+                                                            onChange={field.onChange}
+                                                        />
+                                                    )}
+                                                />
+                                            </Box>
+                                        </Stack>
                                     </Stack>
 
                                     <Dialog.Footer
                                         borderTop="1px solid"
                                         borderColor={MODAL_STYLES.headerBorder}
-                                        mt={8}
+                                        mt={10}
                                         pt={6}
                                         px={0}
                                     >
-                                        <Flex
-                                            w="full"
-                                            direction={{
-                                                base: 'column-reverse',
-                                                sm: 'row',
-                                            }}
-                                            justify="flex-end"
-                                            gap={4}
-                                        >
+                                        <Flex w="full" justify="flex-end" gap={3}>
                                             <Button
                                                 type="button"
-                                                w={{base: 'full', sm: 'auto'}}
                                                 variant="ghost"
-                                                color="whiteAlpha.600"
-                                                borderRadius="xl"
-                                                px={8}
-                                                h="48px"
-                                                _hover={{
-                                                    bg: 'whiteAlpha.100',
-                                                    color: 'white',
-                                                }}
+                                                color="whiteAlpha.400"
+                                                borderRadius="lg"
+                                                px={6}
+                                                h="44px"
+                                                fontSize="sm"
+                                                fontWeight="600"
+                                                _hover={{ bg: 'whiteAlpha.05', color: 'white' }}
                                                 onClick={handleClose}
                                             >
                                                 Отмена
                                             </Button>
 
                                             <Button
-                                                w={{base: 'full', sm: 'auto'}}
                                                 type="submit"
                                                 loading={isSubmitting}
                                                 loadingText={submitLoadingText}
-                                                bg="white"
-                                                color="black"
-                                                borderRadius="xl"
-                                                px={10}
-                                                h="48px"
-                                                fontWeight="600"
-                                                boxShadow="0 4px 15px rgba(255, 255, 255, 0.2)"
-                                                _hover={{
-                                                    bg: 'gray.100',
-                                                    transform: 'translateY(-1px)',
-                                                    boxShadow: '0 6px 20px rgba(255, 255, 255, 0.25)',
-                                                }}
-                                                _active={{
-                                                    transform: 'translateY(0)',
-                                                }}
+                                                bg="transparent"
+                                                color="whiteAlpha.500"
+                                                border="1px solid"
+                                                borderColor="whiteAlpha.200"
+                                                borderRadius="lg"
+                                                px={8}
+                                                h="44px"
+                                                fontSize="sm"
+                                                fontWeight="700"
+                                                _hover={{ bg: 'whiteAlpha.02', color: 'whiteAlpha.900', borderColor: 'whiteAlpha.400' }}
+                                                _active={{ bg: 'whiteAlpha.05' }}
                                             >
                                                 {submitText}
                                             </Button>
@@ -1378,7 +1228,6 @@ export const BaseProductModal = ({
                             )}
                         </Dialog.Body>
                     </Dialog.Content>
-
                 </Dialog.Positioner>
             </Dialog.Root>
 

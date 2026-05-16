@@ -11,16 +11,16 @@ import {
     Icon
 } from "@chakra-ui/react";
 import Image from "next/image";
-import { memo, useState, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { FiCheck, FiImage } from "react-icons/fi";
-import { useRouter, useSearchParams } from "next/navigation";
-import { addToCart } from "@/lib/local-storage";
-import { useIsLowPerformanceDevice } from "@/hooks/use-is-low-performance-device";
-import { trackViewItem, trackAddToCart } from "@/lib/ecommerce-tracking";
-import { useProductModal } from "../product-modal/use-product-modal";
+import {memo, useState, useCallback} from "react";
+import {motion, AnimatePresence} from "framer-motion";
+import {FiCheck, FiImage} from "react-icons/fi";
+import {useRouter, useSearchParams} from "next/navigation";
+import {addToCart} from "@/lib/local-storage";
+import {useIsLowPerformanceDevice} from "@/hooks/use-is-low-performance-device";
+import {trackAddToCart} from "@/lib/ecommerce-tracking";
+import {useProductModal} from "../product-modal/use-product-modal";
 
-const MotionFlex = motion.create(Flex);
+const MotionArticle = motion.article;
 
 type Price = { size: string; price: number };
 
@@ -36,7 +36,11 @@ export type ProductInnerProps = {
     tags?: { text: string; color: string }[] | null;
 };
 
-const DEFAULT_BLUR_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/OhSPQAIZwPB9++2WgAAAABJRU5ErkJggg==";
+const DEFAULT_BLUR_DATA_URL =
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/OhSPQAIZwPB9++2WgAAAABJRU5ErkJggg==";
+
+const solidGradient = (color: string) =>
+    `linear-gradient(135deg, ${color} 0%, ${color}dd 55%, ${color}aa 100%)`;
 
 const ProductImage = memo(function ProductImage({
                                                     img,
@@ -60,7 +64,7 @@ const ProductImage = memo(function ProductImage({
             sizes="(max-width: 480px) 100vw, (max-width: 768px) 60vw, 45vw"
             placeholder="blur"
             blurDataURL={blurDataURL || DEFAULT_BLUR_DATA_URL}
-            style={{ objectFit: "cover", objectPosition: "center" }}
+            style={{objectFit: "cover", objectPosition: "center"}}
             onError={onError}
             unoptimized
         />
@@ -80,14 +84,14 @@ const PriceButton = memo(function PriceButton({
         <Button
             size="sm"
             borderRadius="full"
-            px={{ base: 2, md: 4 }}
-            py={{ base: 1, md: 2 }}
-            fontSize={{ base: "xs", md: "sm" }}
+            px={{base: 2, md: 4}}
+            py={{base: 1, md: 2}}
+            fontSize={{base: "xs", md: "sm"}}
             bg={selected ? "gray.500" : "gray.800"}
             color={selected ? "white" : "gray.300"}
             borderWidth="1px"
             borderColor="gray.500"
-            _hover={{ bg: selected ? "gray.600" : "gray.700", color: "white" }}
+            _hover={{bg: selected ? "gray.600" : "gray.700", color: "white"}}
             onClick={onClick}
         >
             {price.size} — {price.price.toFixed(2).replace(".", ",")} руб.
@@ -105,19 +109,19 @@ export const Product = memo(function Product({
                                                  prices,
                                                  blurDataURL,
                                                  tags
-                                                 }: ProductInnerProps) {
-                                                 const router = useRouter();
-                                                 const searchParams = useSearchParams();
-                                                 const { open: openProductModal } = useProductModal();
-                                                 const [added, setAdded] = useState(false);
+                                             }: ProductInnerProps) {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const {open: openProductModal} = useProductModal();
 
+    const [added, setAdded] = useState(false);
     const [selecting, setSelecting] = useState(false);
     const [selectedPrice, setSelectedPrice] = useState<Price | null>(null);
     const [imgError, setImgError] = useState(false);
 
     const disableMotion = useIsLowPerformanceDevice();
     const firstPrice = prices?.[0] ?? null;
-    const priority = typeof index === 'number' && index < 8;
+    const priority = typeof index === "number" && index < 8;
 
     const handleAddClick = useCallback(() => {
         if (!prices?.length || !firstPrice) return;
@@ -134,12 +138,14 @@ export const Product = memo(function Product({
                 price: firstPrice.price,
                 size: firstPrice.size
             });
+
             trackAddToCart({
-                id: id,
+                id,
                 name: title,
                 price: firstPrice.price,
                 quantity: 1
             });
+
             setAdded(true);
             setTimeout(() => setAdded(false), 1200);
         }
@@ -156,8 +162,9 @@ export const Product = memo(function Product({
             price: selectedPrice.price,
             size: selectedPrice.size
         });
+
         trackAddToCart({
-            id: id,
+            id,
             name: title,
             price: selectedPrice.price,
             quantity: 1
@@ -180,28 +187,30 @@ export const Product = memo(function Product({
     }, [id, img, openProductModal]);
 
     const handleHover = useCallback(() => {
-        if (img) {
-            const params = new URLSearchParams(searchParams.toString());
-            params.set("product", id);
-            router.prefetch(`?${params.toString()}`);
-            fetch(`/api/menu/product/${id}`, { method: 'HEAD' }).catch(() => {});
-        }
+        if (!img) return;
+
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("product", id);
+
+        router.prefetch(`?${params.toString()}`);
+        fetch(`/api/menu/product/${id}`, {method: "HEAD"}).catch(() => {
+        });
     }, [router, searchParams, id, img]);
 
-    const Container = disableMotion ? Box : motion.article;
+    const Container = disableMotion ? Box : MotionArticle;
 
     return (
         <Container
-            initial={disableMotion ? undefined : { opacity: 0, y: 24 }}
-            animate={disableMotion ? undefined : { opacity: 1, y: 0 }}
-            transition={disableMotion ? undefined : { duration: 0.4 }}
-            style={{ display: "flex" }}
+            initial={disableMotion ? undefined : {opacity: 0, y: 24}}
+            animate={disableMotion ? undefined : {opacity: 1, y: 0}}
+            transition={disableMotion ? undefined : {duration: 0.4}}
+            style={{display: "flex"}}
         >
             <Flex
-                direction={{ base: "column", md: "row" }}
+                direction={{base: "column", md: "row"}}
                 w="100%"
                 borderWidth="1px"
-                borderRadius={{ base: "md", md: "xl" }}
+                borderRadius={{base: "md", md: "xl"}}
                 borderColor="gray.700"
                 bg="gray.800"
                 overflow="hidden"
@@ -213,8 +222,8 @@ export const Product = memo(function Product({
                 {img && (
                     <Box
                         position="relative"
-                        w={{ base: "100%", md: "45%" }}
-                        aspectRatio={{ base: 3 / 2, md: undefined }}
+                        w={{base: "100%", md: "45%"}}
+                        aspectRatio={{base: 3 / 2}}
                         flexShrink={0}
                         overflow="hidden"
                         cursor="zoom-in"
@@ -223,7 +232,7 @@ export const Product = memo(function Product({
                     >
                         {imgError ? (
                             <Center position="absolute" inset={0} bg="gray.700">
-                                <Icon as={FiImage} boxSize={6} color="gray.400" />
+                                <Icon as={FiImage} boxSize={6} color="gray.400"/>
                             </Center>
                         ) : (
                             <ProductImage
@@ -235,135 +244,118 @@ export const Product = memo(function Product({
                             />
                         )}
 
-                        <AnimatePresence>
-                            {tags && tags.length > 0 && (
-                                <Box
-                                    position="absolute"
-                                    top={0}
-                                    left={0}
-                                    zIndex={10}
-                                    pointerEvents="none"
-                                    overflow="hidden"
-                                    w="full"
-                                    h="full"
-                                >
-                                    {tags.map((tag, idx) => (
-                                        <Box
-                                            key={idx}
-                                            as={motion.div}
-                                            initial={{ opacity: 0, x: { base: 100, md: -100 } }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ 
-                                                delay: 0.2 + idx * 0.15,
-                                                duration: 0.6,
-                                                ease: [0.23, 1, 0.32, 1]
-                                            } as any}
-                                            position="absolute"
-                                            top={`${16 + (idx * 32)}px`}
-                                            left={{ base: 'auto', md: '-10px' }}
-                                            right={{ base: '-10px', md: 'auto' }}
+                        {tags?.length ? (
+                            <Box
+                                position="absolute"
+                                top={0}
+                                left={0}
+                                w="full"
+                                h="full"
+                                pointerEvents="none"
+                            >
+                                {tags.map((tag, idx) => (
+                                    <Box
+                                        key={idx}
+                                        position="absolute"
+                                        top={`${12 + idx * 36}px`}
+                                        right={{base: "-6px", md: "auto"}}
+                                        left={{base: "auto", md: "-8px"}}
+                                        zIndex={10}
+                                    >
+                                        <Flex
+                                            align="center"
+                                            px={4.5}
+                                            py={1.5}
+                                            bg={solidGradient(tag.color)}
+                                            borderRadius="md"
+                                            boxShadow="0 8px 20px rgba(0,0,0,0.4)"
+                                            position="relative"
+                                            overflow="hidden"
+                                            transform={{
+                                                base: "skew(12deg)",
+                                                md: "skew(-12deg)"
+                                            }}
+                                            border="1px solid rgba(255,255,255,0.3)"
                                         >
-                                            <Flex
-                                                align="center"
-                                                gap={3}
-                                                pl={{ base: 8, md: 6 }}
-                                                pr={{ base: 6, md: 8 }}
-                                                py={1.5}
-                                                bg={{
-                                                    base: `linear-gradient(270deg, ${tag.color} 0%, ${tag.color}E6 70%, transparent 100%)`,
-                                                    md: `linear-gradient(90deg, ${tag.color} 0%, ${tag.color}E6 70%, transparent 100%)`
+                                            <Box
+                                                position="absolute"
+                                                top="0"
+                                                left={{base: "auto", md: "-14px"}}
+                                                right={{base: "-14px", md: "auto"}}
+                                                w="18px"
+                                                h="full"
+                                                bg={tag.color}
+                                                transform={{
+                                                    base: "skew(-25deg)",
+                                                    md: "skew(25deg)"
                                                 }}
+                                                zIndex={-1}
+                                            />
+
+                                            <Text
+                                                fontSize="10px"
+                                                fontWeight="700"
+                                                letterSpacing="0.1em"
+                                                textTransform="uppercase"
                                                 color="white"
-                                                boxShadow={`4px 4px 15px rgba(0,0,0,0.3), 0 0 10px ${tag.color}40`}
-                                                transform="none"
-                                                style={{
-                                                    clipPath: { 
-                                                        base: 'polygon(8% 0%, 100% 0%, 100% 100%, 8% 100%)', 
-                                                        md: 'polygon(0% 0%, 92% 100%, 92% 100%, 0% 100%)' // Fallback for safety, actual is below
-                                                    },
-                                                } as any}
-                                                // Using sx for complex responsive clipPath to ensure accuracy
-                                                sx={{
-                                                    clipPath: {
-                                                        base: 'polygon(8% 0%, 100% 0%, 100% 100%, 8% 100%)',
-                                                        md: 'polygon(0% 0%, 92% 0%, 100% 100%, 0% 100%)'
-                                                    }
+                                                textShadow="0 1px 3px rgba(0,0,0,0.6)"
+                                                zIndex={2}
+                                                transform={{
+                                                    base: "skew(-12deg)",
+                                                    md: "skew(12deg)"
                                                 }}
-                                                borderLeft={{ base: "none", md: "4px solid" }}
-                                                borderRight={{ base: "4px solid", md: "none" }}
-                                                borderColor="whiteAlpha.600"
                                             >
-                                                <Box 
-                                                    w="6px" 
-                                                    h="6px" 
-                                                    borderRadius="full" 
-                                                    bg="white" 
-                                                    boxShadow="0 0 8px white"
-                                                />
-                                                <Text
-                                                    fontSize="9px"
-                                                    fontWeight="900"
-                                                    textTransform="uppercase"
-                                                    letterSpacing="0.15em"
-                                                    lineHeight="1"
-                                                    textShadow="0 1px 3px rgba(0,0,0,0.3)"
-                                                >
-                                                    {tag.text}
-                                                </Text>
-                                            </Flex>
-                                        </Box>
-                                    ))}
-                                </Box>
-                            )}
-                        </AnimatePresence>
+                                                {tag.text}
+                                            </Text>
+                                        </Flex>
+                                    </Box>
+                                ))}
+                            </Box>
+                        ) : null}
                     </Box>
                 )}
 
-                <Flex direction="column" flex="1" p={{ base: 3, md: 6 }}>
-                    <Stack gap={{ base: 1, md: 4 }}>
+                <Flex direction="column" flex="1" p={{base: 3, md: 6}}>
+                    <Stack>
                         <Heading
-                            as="h3"
-                            fontSize={{ base: "md", md: "xl" }}
+                            fontSize={{base: "md", md: "xl"}}
                             color="whiteAlpha.900"
-                            overflowWrap="break-word"
-                            wordBreak="break-word"
-                            hyphens="auto"
                         >
                             {title}
                         </Heading>
 
                         {description && (
                             <Text
-                                fontSize={{ base: "xs", md: "sm" }}
+                                fontSize={{base: "xs", md: "sm"}}
                                 color="gray.400"
-                                lineClamp={{base: 2, sm: 3, md: 4}}
-                                mb={{base: 2, md: 3}}
+                                lineClamp={{base: 2, md: 4}}
                             >
                                 {description}
                             </Text>
                         )}
                     </Stack>
 
-                    <Flex direction="column" mt="auto" gap={{ base: 2, md: 3 }}>
-                        {!selecting && prices?.map(p => (
-                            <Flex key={p.size} justify="space-between" align="center">
-                                <Text fontSize={{ base: "xs", md: "sm" }} color="gray.400">
-                                    {p.size}
-                                </Text>
-                                <Text fontSize={{ base: "sm", md: "md" }} color="gray.300">
-                                    {p.price.toFixed(2).replace(".", ",")} руб.
-                                </Text>
-                            </Flex>
-                        ))}
+                    <Flex direction="column" mt="auto" gap={3}>
+                        {!selecting &&
+                            prices?.map(p => (
+                                <Flex key={p.size} justify="space-between">
+                                    <Text fontSize="sm" color="gray.400">
+                                        {p.size}
+                                    </Text>
+                                    <Text fontSize="sm" color="gray.300">
+                                        {p.price.toFixed(2).replace(".", ",")} руб.
+                                    </Text>
+                                </Flex>
+                            ))}
 
                         {selecting && (
                             <AnimatePresence>
                                 <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
+                                    initial={{opacity: 0}}
+                                    animate={{opacity: 1}}
+                                    exit={{opacity: 0}}
                                 >
-                                    <Flex gap={1} direction="column" mb={{base: 2, md: 3}}>
+                                    <Flex direction="column" gap={2}>
                                         {prices?.map(p => (
                                             <PriceButton
                                                 key={p.size}
@@ -374,26 +366,12 @@ export const Product = memo(function Product({
                                         ))}
                                     </Flex>
 
-                                    <Flex justify="space-between" mt={2}>
-                                        <Button
-                                            size="sm"
-                                            fontSize="xs"
-                                            bg="red.500"
-                                            onClick={handleCancel}
-                                            px={2}
-                                            borderRadius="full"
-                                        >
-                                            Отменить
+                                    <Flex justify="space-between" mt={3}>
+                                        <Button size="sm" onClick={handleCancel} bg="red.500">
+                                            Отмена
                                         </Button>
-                                        <Button
-                                            size="sm"
-                                            fontSize="xs"
-                                            bg="gray.500"
-                                            onClick={handleConfirm}
-                                            px={2}
-                                            borderRadius="full"
-                                        >
-                                            Подтвердить
+                                        <Button size="sm" onClick={handleConfirm} bg="gray.500">
+                                            OK
                                         </Button>
                                     </Flex>
                                 </motion.div>
@@ -403,17 +381,15 @@ export const Product = memo(function Product({
                         {!selecting && (
                             <Button
                                 size="sm"
-                                fontSize="xs"
                                 borderRadius="full"
                                 borderWidth="1px"
                                 borderColor="gray.500"
-                                bg={added ? "gray.500" : "gray.800"}
-                                color={added ? "white" : "gray.300"}
                                 onClick={handleAddClick}
+                                bg={added ? "gray.500" : "gray.800"}
                             >
                                 {added ? (
                                     <Flex align="center" gap={1}>
-                                        <FiCheck size={14} /> Добавлено
+                                        <FiCheck/> Добавлено
                                     </Flex>
                                 ) : (
                                     "Добавить"

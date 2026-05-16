@@ -150,20 +150,21 @@ export const ProductRow = ({
                 <Flex direction="column" gap={1}>
                     <Text>{p.name}</Text>
                     {p.tags && p.tags.length > 0 && (
-                        <Flex gap={1} flexWrap="wrap">
+                        <Flex gap={2} flexWrap="wrap" mt={0.5}>
                             {p.tags.map((tag, index) => (
-                                <Box
+                                <Flex
                                     key={index}
-                                    px={2}
-                                    py={0.5}
-                                    borderRadius="md"
-                                    bg={tag.color}
-                                    fontSize="xs"
-                                    color="white"
-                                    fontWeight="medium"
+                                    align="center"
+                                    gap={1.5}
+                                    fontSize="10px"
+                                    color="gray.400"
+                                    fontWeight="semibold"
+                                    textTransform="uppercase"
+                                    letterSpacing="wider"
                                 >
+                                    <Box boxSize="5px" borderRadius="full" bg={tag.color} />
                                     {tag.text}
-                                </Box>
+                                </Flex>
                             ))}
                         </Flex>
                     )}
