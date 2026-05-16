@@ -386,6 +386,29 @@ export class ProductsService {
       changes.push(`Изображение удалено`);
     }
 
+    if (data.tags !== undefined) {
+      const oldTags = product.tags || [];
+      const oldTagTexts = oldTags.map((t: any) => t.text);
+      const newTagTexts = data.tags.map(t => t.text);
+
+      const addedTags = newTagTexts.filter((t: string) => !oldTagTexts.includes(t));
+      const removedTags = oldTagTexts.filter((t: string) => !newTagTexts.includes(t));
+
+      const sameTags = newTagTexts.filter((t: string) => oldTagTexts.includes(t));
+      const oldOrder = sameTags.map((t: string) => oldTagTexts.indexOf(t));
+      const newOrder = sameTags.map((t: string) => newTagTexts.indexOf(t));
+      const orderChanged = oldOrder.some((pos: number, i: number) => pos !== newOrder[i]);
+
+      if (addedTags.length > 0 || removedTags.length > 0) {
+        const tagParts: string[] = [];
+        if (addedTags.length > 0) tagParts.push(`добавлены: ${addedTags.join(', ')}`);
+        if (removedTags.length > 0) tagParts.push(`удалены: ${removedTags.join(', ')}`);
+        changes.push(`Теги: ${tagParts.join('; ')}`);
+      } else if (orderChanged && sameTags.length > 0) {
+        changes.push(`Теги: порядок изменён (${sameTags.join(' → ')})`);
+      }
+    }
+
     if (data.removeImage && product.image) {
       const oldFileName = product.image.split('/').pop();
       if (oldFileName) {
@@ -444,6 +467,9 @@ export class ProductsService {
     }
     if (data.hidden) details.push('Скрыт: Да');
     if (data.isAlcohol) details.push('Алкогольный: Да');
+    if (data.tags && data.tags.length > 0) {
+      details.push(`Теги: ${data.tags.map(t => t.text).join(', ')}`);
+    }
 
     await this.auditLogService.createLog(
       userId,
