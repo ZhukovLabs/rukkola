@@ -1,43 +1,59 @@
 'use client';
 
 import {
-    Box,
-    Heading,
-    Text,
     Badge,
-    Spinner,
+    Box,
+    Card,
     Center,
-    VStack,
+    Flex,
+    Heading,
     HStack,
     IconButton,
-    Flex,
-    Select,
-    Portal,
-    createListCollection,
     Input,
-    Card,
+    Portal,
+    Select,
+    Spinner,
+    Text,
+    VStack,
+    createListCollection,
 } from '@chakra-ui/react';
-import {useEffect, useState, useCallback} from 'react';
-import {auditLogsApi, getUsers} from '@/lib/api';
-import {useAuth} from '@/lib/auth/auth-context';
+import {useCallback, useEffect, useMemo, useState} from 'react';
+import type {ChangeEvent, ElementType} from 'react';
+import {FiActivity, FiClock, FiFilter, FiRefreshCw, FiUser} from 'react-icons/fi';
 import {AuditLogDto} from '@rukkola/shared';
-import {FiRefreshCw, FiClock, FiUser, FiActivity, FiFilter} from 'react-icons/fi';
-import {Pagination} from '@/components/pagination';
+import {auditLogsApi, getUsers} from '@/lib/api';
 import type {SerializedUser} from '@/lib/api/users';
+import {useAuth} from '@/lib/auth/auth-context';
 import {useDebounce} from '@/hooks/use-debounce';
+import {Pagination} from '@/components/pagination';
 
 const PAGE_SIZE = 20;
 
-const ENTITY_TYPES = [
+const SORT_OPTIONS = [
+    {label: 'Новые сначала', value: 'createdAt_desc'},
+    {label: 'Старые сначала', value: 'createdAt_asc'},
+] as const;
+
+type SortValue = (typeof SORT_OPTIONS)[number]['value'];
+
+const ENTITY_TYPE_OPTIONS = [
     {label: 'Все действия', value: ''},
     {label: 'Авторизация', value: 'auth'},
     {label: 'Пользователи', value: 'user'},
     {label: 'Товары', value: 'product'},
     {label: 'Категории', value: 'category'},
     {label: 'Обеды', value: 'lunch'},
-];
+] as const;
 
-const ACTION_CONFIG: Record<string, {colorScheme: string; icon: React.ElementType}> = {
+const ENTITY_TYPE_LABELS: Record<string, string> = {
+    auth: 'Авторизация',
+    user: 'Пользователь',
+    product: 'Товар',
+    category: 'Категория',
+    lunch: 'Обед',
+};
+
+const ACTION_CONFIG: Record<string, {colorScheme: string; icon: ElementType}> = {
     'Удаление': {colorScheme: 'red', icon: FiActivity},
     'Создание': {colorScheme: 'green', icon: FiActivity},
     'Вход': {colorScheme: 'teal', icon: FiUser},
@@ -46,193 +62,298 @@ const ACTION_CONFIG: Record<string, {colorScheme: string; icon: React.ElementTyp
     'Неудачная': {colorScheme: 'orange', icon: FiActivity},
 };
 
-const SORT_OPTIONS = [
-    {label: 'Новые сначала', value: 'createdAt_desc'},
-    {label: 'Старые сначала', value: 'createdAt_asc'},
-];
+const DATE_INPUT_STYLES = {
+    bg: 'gray.800',
+    border: '1px solid',
+    borderColor: 'gray.700',
+    color: 'gray.200',
+    borderRadius: 'xl',
+    size: 'sm' as const,
+    h: '36px',
+    w: 'full',
+    _hover: {borderColor: 'gray.600'},
+    _focus: {borderColor: 'gray.500', boxShadow: '0 0 0 1px gray.500'},
+    _placeholder: {color: 'gray.500'},
+    css: {
+        '&::-webkit-calendar-picker-indicator': {
+            filter: 'invert(0.7)',
+            cursor: 'pointer',
+        },
+    },
+};
 
-const sortCollection = createListCollection({items: SORT_OPTIONS});
+const SELECT_TRIGGER_STYLES = {
+    bg: 'gray.800',
+    borderColor: 'gray.700',
+    color: 'gray.200',
+    borderRadius: 'xl',
+    w: '100%',
+    minW: 0,
+};
+
+const SELECT_CONTENT_STYLES = {
+    bg: 'gray.800',
+    borderColor: 'gray.700',
+    borderRadius: 'xl',
+};
+
+const EMPTY_FILTER_VALUE = '';
+
+const RU_DATE_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+});
 
 function getActionConfig(action: string) {
     for (const [key, config] of Object.entries(ACTION_CONFIG)) {
-        if (action.includes(key)) return config;
+        if (action.includes(key)) {
+            return config;
+        }
     }
-    return {colorScheme: 'blue', icon: FiActivity};
+
+    return {
+        colorScheme: 'blue',
+        icon: FiActivity,
+    };
 }
 
-function formatTimeAgo(dateString: string): string {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diffMs = now.getTime() - date.getTime();
-    const diffMin = Math.floor(diffMs / 60000);
+function formatRelativeTime(dateString: string): string | null {
+    const now = Date.now();
+    const date = new Date(dateString).getTime();
+
+    if (Number.isNaN(date)) {
+        return null;
+    }
+
+    const diffMs = now - date;
+    const diffMinutes = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMin < 1) return 'только что';
-    if (diffMin < 60) return `${diffMin} мин. назад`;
+    if (diffMinutes < 1) return 'только что';
+    if (diffMinutes < 60) return `${diffMinutes} мин. назад`;
     if (diffHours < 24) return `${diffHours} ч. назад`;
     if (diffDays < 7) return `${diffDays} дн. назад`;
-    return '';
+
+    return null;
 }
 
 function formatFullDate(dateString: string): string {
-    return new Date(dateString).toLocaleString('ru-RU', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
+    const date = new Date(dateString);
+
+    if (Number.isNaN(date.getTime())) {
+        return '—';
+    }
+
+    return RU_DATE_FORMATTER.format(date);
+}
+
+function parseUserAgent(userAgent: string): string | null {
+    if (!userAgent || userAgent === 'unknown') {
+        return null;
+    }
+
+    const parts: string[] = [];
+
+    if (userAgent.includes('Chrome') && !userAgent.includes('Edg')) {
+        parts.push('Chrome');
+    } else if (userAgent.includes('Edg')) {
+        parts.push('Edge');
+    } else if (userAgent.includes('Firefox')) {
+        parts.push('Firefox');
+    } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
+        parts.push('Safari');
+    }
+
+    if (userAgent.includes('Macintosh')) {
+        parts.push('macOS');
+    } else if (userAgent.includes('Windows')) {
+        parts.push('Windows');
+    } else if (userAgent.includes('Linux')) {
+        parts.push('Linux');
+    } else if (userAgent.includes('iPhone')) {
+        parts.push('iOS');
+    } else if (userAgent.includes('Android')) {
+        parts.push('Android');
+    }
+
+    return parts.length > 0 ? parts.join(', ') : null;
+}
+
+function buildDateRangeEnd(dateTo: string): string | undefined {
+    return dateTo ? `${dateTo}T23:59:59.999` : undefined;
 }
 
 export const DashboardHistoryPage = () => {
     const {user} = useAuth();
+
     const [logs, setLogs] = useState<AuditLogDto[]>([]);
+    const [users, setUsers] = useState<SerializedUser[]>([]);
     const [loading, setLoading] = useState(true);
+
     const [page, setPage] = useState(1);
     const [total, setTotal] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
-    const [sortBy, setSortBy] = useState('createdAt_desc');
-    const [filterUserId, setFilterUserId] = useState('');
-    const [filterEntityType, setFilterEntityType] = useState('');
+
+    const [sortValue, setSortValue] = useState<SortValue>(SORT_OPTIONS[0].value);
+    const [selectedUserId, setSelectedUserId] = useState(EMPTY_FILTER_VALUE);
+    const [selectedEntityType, setSelectedEntityType] = useState(EMPTY_FILTER_VALUE);
+
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
+
+    const [refreshKey, setRefreshKey] = useState(0);
+
     const debouncedDateFrom = useDebounce(dateFrom, 400);
     const debouncedDateTo = useDebounce(dateTo, 400);
-    const [users, setUsers] = useState<SerializedUser[]>([]);
+
+    const isAdmin = user?.role === 'admin';
+
+    const sortCollection = useMemo(
+        () => createListCollection({items: [...SORT_OPTIONS]}),
+        [],
+    );
+
+    const entityTypeCollection = useMemo(
+        () => createListCollection({items: [...ENTITY_TYPE_OPTIONS]}),
+        [],
+    );
+
+    const userCollection = useMemo(
+        () =>
+            createListCollection({
+                items: [
+                    {
+                        label: 'Все пользователи',
+                        value: EMPTY_FILTER_VALUE,
+                    },
+                    ...users.map((currentUser) => ({
+                        label: `${currentUser.name} @${currentUser.username}`,
+                        value: currentUser._id,
+                    })),
+                ],
+            }),
+        [users],
+    );
 
     useEffect(() => {
-        if (!user || user.role !== 'admin') return;
-        getUsers().then((res) => {
-            if (res.success && res.data) setUsers(res.data);
-        }).catch(() => {
-        });
-    }, [user]);
-
-    const fetchLogs = useCallback(async (params?: {
-        pageNum?: number;
-        sort?: string;
-        userId?: string;
-        entityType?: string;
-        dateFrom?: string;
-        dateTo?: string
-    }) => {
-        const pageNum = params?.pageNum ?? page;
-        const sort = params?.sort ?? sortBy;
-        const userId = params?.userId ?? filterUserId;
-        const entType = params?.entityType ?? filterEntityType;
-        const dFrom = params?.dateFrom ?? debouncedDateFrom;
-        const dTo = params?.dateTo ?? debouncedDateTo;
-
-        setLoading(true);
-        try {
-            const [sortField, sortOrder] = sort.split('_');
-            const response = await auditLogsApi.getLogs({
-                page: pageNum,
-                limit: PAGE_SIZE,
-                sortBy: sortField,
-                sortOrder: sortOrder as 'asc' | 'desc',
-                userId: userId || undefined,
-                entityType: entType || undefined,
-                dateFrom: dFrom || undefined,
-                dateTo: dTo ? `${dTo}T23:59:59` : undefined,
-            });
-            if (response.success && response.data) {
-                setLogs(response.data.logs);
-                setTotal(response.data.total);
-                setTotalPages(response.data.totalPages);
-                setPage(pageNum);
-            }
-        } catch (error) {
-            console.error('Failed to fetch logs:', error);
-        } finally {
-            setLoading(false);
+        if (!isAdmin) {
+            return;
         }
-    }, [page, sortBy, filterUserId, filterEntityType, debouncedDateFrom, debouncedDateTo]);
+
+        getUsers()
+            .then((response) => {
+                if (response.success && response.data) {
+                    setUsers(response.data);
+                }
+            })
+            .catch((error) => {
+                console.error('Failed to fetch users:', error);
+            });
+    }, [isAdmin]);
 
     useEffect(() => {
-        if (!user || user.role !== 'admin') return;
-        fetchLogs({pageNum: 1});
-    }, [user]);
+        if (!isAdmin) {
+            return;
+        }
 
-    useEffect(() => {
-        if (!user || user.role !== 'admin') return;
-        fetchLogs({pageNum: 1, dateFrom: debouncedDateFrom, dateTo: debouncedDateTo});
-    }, [debouncedDateFrom, debouncedDateTo]);
+        const loadLogs = async () => {
+            const [sortField, sortOrder] = sortValue.split('_') as [string, 'asc' | 'desc'];
 
-    if (!user || user.role !== 'admin') {
+            try {
+                const response = await auditLogsApi.getLogs({
+                    page,
+                    limit: PAGE_SIZE,
+                    sortBy: sortField,
+                    sortOrder,
+                    userId: selectedUserId || undefined,
+                    entityType: selectedEntityType || undefined,
+                    dateFrom: debouncedDateFrom || undefined,
+                    dateTo: buildDateRangeEnd(debouncedDateTo),
+                });
+
+                if (response.success && response.data) {
+                    setLogs(response.data.logs);
+                    setTotal(response.data.total);
+                    setTotalPages(response.data.totalPages);
+                }
+            } catch (error) {
+                console.error('Failed to fetch logs:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        void loadLogs();
+    }, [
+        isAdmin,
+        page,
+        sortValue,
+        selectedUserId,
+        selectedEntityType,
+        debouncedDateFrom,
+        debouncedDateTo,
+        refreshKey,
+    ]);
+
+    const markForReload = useCallback(() => {
+        setLoading(true);
+        setRefreshKey((current) => current + 1);
+    }, []);
+
+    const handleSortChange = useCallback((details: {value: string[]}) => {
+        const nextValue = (details.value[0] ?? SORT_OPTIONS[0].value) as SortValue;
+        setLoading(true);
+        setPage(1);
+        setSortValue(nextValue);
+    }, []);
+
+    const handleUserFilterChange = useCallback((details: {value: string[]}) => {
+        setLoading(true);
+        setPage(1);
+        setSelectedUserId(details.value[0] ?? EMPTY_FILTER_VALUE);
+    }, []);
+
+    const handleEntityTypeChange = useCallback((details: {value: string[]}) => {
+        setLoading(true);
+        setPage(1);
+        setSelectedEntityType(details.value[0] ?? EMPTY_FILTER_VALUE);
+    }, []);
+
+    const handleDateFromChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+        setLoading(true);
+        setPage(1);
+        setDateFrom(event.target.value);
+    }, []);
+
+    const handleDateToChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+        setLoading(true);
+        setPage(1);
+        setDateTo(event.target.value);
+    }, []);
+
+    const handlePageChange = useCallback((nextPage: number) => {
+        setLoading(true);
+        setPage(nextPage);
+    }, []);
+
+    const handleRefresh = useCallback(() => {
+        markForReload();
+    }, [markForReload]);
+
+    const handleResetDates = useCallback(() => {
+        setLoading(true);
+        setPage(1);
+        setDateFrom('');
+        setDateTo('');
+    }, []);
+
+    if (!isAdmin) {
         return null;
     }
-
-    const handleSortChange = (details: {value: string[]}) => {
-        const sort = details.value[0];
-        setSortBy(sort);
-        fetchLogs({pageNum: 1, sort});
-    };
-
-    const handleUserFilterChange = (details: {value: string[]}) => {
-        const userId = details.value[0];
-        setFilterUserId(userId);
-        fetchLogs({pageNum: 1, userId});
-    };
-
-    const handleEntityTypeChange = (details: {value: string[]}) => {
-        const entityType = details.value[0];
-        setFilterEntityType(entityType);
-        fetchLogs({pageNum: 1, entityType});
-    };
-
-    const handleDateFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setDateFrom(e.target.value);
-    };
-
-    const handleDateToChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setDateTo(e.target.value);
-    };
-
-    const handlePageChange = (newPage: number) => {
-        fetchLogs({pageNum: newPage});
-    };
-
-    const handleRefresh = () => {
-        fetchLogs({pageNum: page});
-    };
-
-    const userFilterCollection = createListCollection({
-        items: [
-            {label: 'Все пользователи', value: ''},
-            ...users.map((u) => ({label: `${u.name} @${u.username}`, value: u._id})),
-        ],
-    });
-
-    const entityTypeCollection = createListCollection({items: ENTITY_TYPES});
-
-    const dateInputStyles = {
-        bg: 'gray.800',
-        border: '1px solid',
-        borderColor: 'gray.700',
-        color: 'gray.200',
-        borderRadius: 'xl',
-        size: 'sm' as const,
-        h: '36px',
-        _hover: {borderColor: 'gray.600'},
-        _focus: {borderColor: 'gray.500', boxShadow: '0 0 0 1px gray.500'},
-        css: {'&::-webkit-calendar-picker-indicator': {filter: 'invert(0.7)', cursor: 'pointer'}},
-    };
-
-    const selectContentStyles = {
-        bg: 'gray.800',
-        borderColor: 'gray.700',
-        borderRadius: 'xl',
-    };
-
-    const selectTriggerStyles = {
-        bg: 'gray.800',
-        borderColor: 'gray.700',
-        color: 'gray.200',
-        borderRadius: 'xl',
-        w: '100%',
-    };
 
     return (
         <Box minH="100vh">
@@ -253,8 +374,8 @@ export const DashboardHistoryPage = () => {
                     borderBottom="1px solid"
                     borderColor="gray.800"
                 >
-                    <Flex justify="space-between" align="center">
-                        <Flex align="center" gap={3}>
+                    <Flex justify="space-between" align="center" gap={4}>
+                        <Flex align="center" gap={3} minW={0}>
                             <Box
                                 bg="gray.800"
                                 borderRadius="lg"
@@ -264,11 +385,18 @@ export const DashboardHistoryPage = () => {
                                 justifyContent="center"
                                 border="1px solid"
                                 borderColor="gray.700"
+                                flexShrink={0}
                             >
-                                <FiActivity size={20} color="white"/>
+                                <FiActivity size={20} color="white" />
                             </Box>
-                            <VStack align="start" gap={0}>
-                                <Heading size="lg" fontWeight="bold" letterSpacing="tight" color="gray.100">
+
+                            <VStack align="start" gap={0} minW={0}>
+                                <Heading
+                                    size="lg"
+                                    fontWeight="bold"
+                                    letterSpacing="tight"
+                                    color="gray.100"
+                                >
                                     История изменений
                                 </Heading>
                                 <Text color="gray.500" fontSize="sm">
@@ -276,10 +404,16 @@ export const DashboardHistoryPage = () => {
                                 </Text>
                             </VStack>
                         </Flex>
-                        <HStack gap={3}>
-                            <Text color="gray.500" fontSize="sm" display={{base: 'none', md: 'block'}}>
+
+                        <HStack gap={3} flexShrink={0}>
+                            <Text
+                                color="gray.500"
+                                fontSize="sm"
+                                display={{base: 'none', md: 'block'}}
+                            >
                                 Всего: {total}
                             </Text>
+
                             <IconButton
                                 aria-label="Обновить"
                                 onClick={handleRefresh}
@@ -290,7 +424,7 @@ export const DashboardHistoryPage = () => {
                                 _hover={{bg: 'gray.800', color: 'white'}}
                                 size="sm"
                             >
-                                <FiRefreshCw/>
+                                <FiRefreshCw />
                             </IconButton>
                         </HStack>
                     </Flex>
@@ -300,32 +434,46 @@ export const DashboardHistoryPage = () => {
                     <Flex
                         mb={5}
                         gap={3}
+                        w="full"
                         direction={{base: 'column', md: 'row'}}
                         align={{base: 'stretch', md: 'center'}}
                     >
-                        <Box minW={{md: '220px'}} flex={{md: '0 1 260px'}}>
+                        <Box minW={0} w="full" flex={{md: '0 1 260px'}}>
                             <Select.Root
                                 collection={entityTypeCollection}
-                                value={[filterEntityType]}
+                                value={[selectedEntityType]}
                                 onValueChange={handleEntityTypeChange}
                                 size="sm"
                             >
-                                <Select.HiddenSelect/>
+                                <Select.HiddenSelect />
                                 <Select.Control>
-                                    <Select.Trigger {...selectTriggerStyles}>
-                                        <HStack gap={2} w="full">
-                                            <Box flexShrink={0}><FiFilter/></Box>
-                                            <Select.ValueText placeholder="Все действия" lineClamp={1}
-                                                              wordBreak="break-word"/>
+                                    <Select.Trigger {...SELECT_TRIGGER_STYLES}>
+                                        <HStack gap={2} w="full" minW={0}>
+                                            <Box flexShrink={0}>
+                                                <FiFilter />
+                                            </Box>
+                                            <Box flex="1" minW={0} overflow="hidden">
+                                                <Select.ValueText
+                                                    placeholder="Все действия"
+                                                    overflow="hidden"
+                                                    whiteSpace="nowrap"
+                                                    textOverflow="ellipsis"
+                                                    display="block"
+                                                />
+                                            </Box>
                                         </HStack>
                                     </Select.Trigger>
                                 </Select.Control>
                                 <Portal>
                                     <Select.Positioner>
-                                        <Select.Content {...selectContentStyles}>
+                                        <Select.Content {...SELECT_CONTENT_STYLES}>
                                             {entityTypeCollection.items.map((item) => (
-                                                <Select.Item key={item.value} item={item} color="gray.200"
-                                                            _hover={{bg: 'gray.700'}}>
+                                                <Select.Item
+                                                    key={item.value}
+                                                    item={item}
+                                                    color="gray.200"
+                                                    _hover={{bg: 'gray.700'}}
+                                                >
                                                     {item.label}
                                                 </Select.Item>
                                             ))}
@@ -335,29 +483,42 @@ export const DashboardHistoryPage = () => {
                             </Select.Root>
                         </Box>
 
-                        <Box minW={{md: '220px'}} flex={{md: '0 1 260px'}}>
+                        <Box minW={0} w="full" flex={{md: '0 1 260px'}}>
                             <Select.Root
-                                collection={userFilterCollection}
-                                value={[filterUserId]}
+                                collection={userCollection}
+                                value={[selectedUserId]}
                                 onValueChange={handleUserFilterChange}
                                 size="sm"
                             >
-                                <Select.HiddenSelect/>
+                                <Select.HiddenSelect />
                                 <Select.Control>
-                                    <Select.Trigger {...selectTriggerStyles}>
-                                        <HStack gap={2} w="full">
-                                            <Box flexShrink={0}><FiFilter/></Box>
-                                            <Select.ValueText placeholder="Все пользователи" lineClamp={1}
-                                                              wordBreak="break-word"/>
+                                    <Select.Trigger {...SELECT_TRIGGER_STYLES}>
+                                        <HStack gap={2} w="full" minW={0}>
+                                            <Box flexShrink={0}>
+                                                <FiFilter />
+                                            </Box>
+                                            <Box flex="1" minW={0} overflow="hidden">
+                                                <Select.ValueText
+                                                    placeholder="Все пользователи"
+                                                    overflow="hidden"
+                                                    whiteSpace="nowrap"
+                                                    textOverflow="ellipsis"
+                                                    display="block"
+                                                />
+                                            </Box>
                                         </HStack>
                                     </Select.Trigger>
                                 </Select.Control>
                                 <Portal>
                                     <Select.Positioner>
-                                        <Select.Content {...selectContentStyles}>
-                                            {userFilterCollection.items.map((item) => (
-                                                <Select.Item key={item.value} item={item} color="gray.200"
-                                                            _hover={{bg: 'gray.700'}}>
+                                        <Select.Content {...SELECT_CONTENT_STYLES}>
+                                            {userCollection.items.map((item) => (
+                                                <Select.Item
+                                                    key={item.value}
+                                                    item={item}
+                                                    color="gray.200"
+                                                    _hover={{bg: 'gray.700'}}
+                                                >
                                                     {item.label}
                                                 </Select.Item>
                                             ))}
@@ -367,28 +528,42 @@ export const DashboardHistoryPage = () => {
                             </Select.Root>
                         </Box>
 
-                        <Box minW={{md: '200px'}} flex={{md: '0 1 240px'}}>
+                        <Box minW={0} w="full" flex={{md: '0 1 240px'}}>
                             <Select.Root
                                 collection={sortCollection}
-                                value={[sortBy]}
+                                value={[sortValue]}
                                 onValueChange={handleSortChange}
                                 size="sm"
                             >
-                                <Select.HiddenSelect/>
+                                <Select.HiddenSelect />
                                 <Select.Control>
-                                    <Select.Trigger {...selectTriggerStyles}>
-                                        <HStack gap={2} w="full">
-                                            <Box flexShrink={0}><FiClock/></Box>
-                                            <Select.ValueText placeholder="Сортировка" lineClamp={1}/>
+                                    <Select.Trigger {...SELECT_TRIGGER_STYLES}>
+                                        <HStack gap={2} w="full" minW={0}>
+                                            <Box flexShrink={0}>
+                                                <FiClock />
+                                            </Box>
+                                            <Box flex="1" minW={0} overflow="hidden">
+                                                <Select.ValueText
+                                                    placeholder="Сортировка"
+                                                    overflow="hidden"
+                                                    whiteSpace="nowrap"
+                                                    textOverflow="ellipsis"
+                                                    display="block"
+                                                />
+                                            </Box>
                                         </HStack>
                                     </Select.Trigger>
                                 </Select.Control>
                                 <Portal>
                                     <Select.Positioner>
-                                        <Select.Content {...selectContentStyles}>
+                                        <Select.Content {...SELECT_CONTENT_STYLES}>
                                             {sortCollection.items.map((item) => (
-                                                <Select.Item key={item.value} item={item} color="gray.200"
-                                                            _hover={{bg: 'gray.700'}}>
+                                                <Select.Item
+                                                    key={item.value}
+                                                    item={item}
+                                                    color="gray.200"
+                                                    _hover={{bg: 'gray.700'}}
+                                                >
                                                     {item.label}
                                                 </Select.Item>
                                             ))}
@@ -398,27 +573,46 @@ export const DashboardHistoryPage = () => {
                             </Select.Root>
                         </Box>
 
-                        <Box flex={1} minW={{md: '280px'}}>
-                            <Flex gap={2} align="center">
-                                <Box position="relative" flex={1}>
+                        <Box flex={1} minW={0} w="full">
+                            <Flex
+                                gap={2}
+                                align="stretch"
+                                direction={{base: 'column', sm: 'row'}}
+                                w="full"
+                                minW={0}
+                            >
+                                <Box position="relative" flex={1} minW={0} w="full">
                                     <Input
                                         type="date"
                                         value={dateFrom}
                                         onChange={handleDateFromChange}
-                                        placeholder="С"
-                                        {...dateInputStyles}
+                                        placeholder="Дата с"
+                                        aria-label="Дата с"
+                                        {...DATE_INPUT_STYLES}
                                     />
                                 </Box>
-                                <Text color="gray.500" fontSize="sm" flexShrink={0}>—</Text>
-                                <Box position="relative" flex={1}>
+
+                                <Text
+                                    color="gray.500"
+                                    fontSize="sm"
+                                    flexShrink={0}
+                                    display={{base: 'none', sm: 'block'}}
+                                    alignSelf="center"
+                                >
+                                    —
+                                </Text>
+
+                                <Box position="relative" flex={1} minW={0} w="full">
                                     <Input
                                         type="date"
                                         value={dateTo}
                                         onChange={handleDateToChange}
-                                        placeholder="По"
-                                        {...dateInputStyles}
+                                        placeholder="Дата по"
+                                        aria-label="Дата по"
+                                        {...DATE_INPUT_STYLES}
                                     />
                                 </Box>
+
                                 {(dateFrom || dateTo) && (
                                     <IconButton
                                         aria-label="Сбросить даты"
@@ -426,14 +620,12 @@ export const DashboardHistoryPage = () => {
                                         variant="ghost"
                                         color="gray.400"
                                         _hover={{color: 'white', bg: 'gray.700'}}
-                                        onClick={() => {
-                                            setDateFrom('');
-                                            setDateTo('');
-                                        }}
+                                        onClick={handleResetDates}
                                         h="36px"
                                         minW="36px"
+                                        alignSelf={{base: 'flex-end', sm: 'center'}}
                                     >
-                                        <FiRefreshCw/>
+                                        <FiRefreshCw />
                                     </IconButton>
                                 )}
                             </Flex>
@@ -443,50 +635,31 @@ export const DashboardHistoryPage = () => {
                     {loading && logs.length === 0 ? (
                         <Center p={10}>
                             <VStack gap={4}>
-                                <Spinner size="xl" color="gray.400"/>
+                                <Spinner size="xl" color="gray.400" />
                                 <Text color="gray.500">Загрузка истории...</Text>
                             </VStack>
                         </Center>
                     ) : logs.length === 0 ? (
                         <Center p={10}>
                             <VStack gap={3}>
-                                <Box color="gray.600"><FiClock size={40}/></Box>
-                                <Text color="gray.500" fontSize="lg">История изменений пуста</Text>
-                                <Text color="gray.600" fontSize="sm">Действия администраторов будут отображаться
-                                    здесь</Text>
+                                <Box color="gray.600">
+                                    <FiClock size={40} />
+                                </Box>
+                                <Text color="gray.500" fontSize="lg">
+                                    История изменений пуста
+                                </Text>
+                                <Text color="gray.600" fontSize="sm">
+                                    Действия администраторов будут отображаться здесь
+                                </Text>
                             </VStack>
                         </Center>
                     ) : (
                         <VStack gap={3} align="stretch">
                             {logs.map((log) => {
-                                const config = getActionConfig(log.action);
-                                const Icon = config.icon;
-
-                                const entityTypeLabels: Record<string, string> = {
-                                    auth: 'Авторизация',
-                                    user: 'Пользователь',
-                                    product: 'Товар',
-                                    category: 'Категория',
-                                    lunch: 'Обед',
-                                };
-
-                                const parseUserAgent = (ua: string) => {
-                                    if (!ua || ua === 'unknown') return null;
-                                    const parts: string[] = [];
-                                    if (ua.includes('Chrome') && !ua.includes('Edg')) parts.push('Chrome');
-                                    else if (ua.includes('Edg')) parts.push('Edge');
-                                    else if (ua.includes('Firefox')) parts.push('Firefox');
-                                    else if (ua.includes('Safari') && !ua.includes('Chrome')) parts.push('Safari');
-
-                                    if (ua.includes('Macintosh')) parts.push('macOS');
-                                    else if (ua.includes('Windows')) parts.push('Windows');
-                                    else if (ua.includes('Linux')) parts.push('Linux');
-                                    else if (ua.includes('iPhone')) parts.push('iOS');
-                                    else if (ua.includes('Android')) parts.push('Android');
-
-                                    return parts.length > 0 ? parts.join(', ') : null;
-                                };
-
+                                const actionConfig = getActionConfig(log.action);
+                                const ActionIcon = actionConfig.icon;
+                                const relativeTime = formatRelativeTime(log.createdAt);
+                                const fullDate = formatFullDate(log.createdAt);
                                 const deviceInfo = parseUserAgent(log.userAgent || '');
 
                                 return (
@@ -496,34 +669,54 @@ export const DashboardHistoryPage = () => {
                                         borderRadius="xl"
                                         border="1px solid"
                                         borderColor="gray.800"
-                                        _hover={{borderColor: 'gray.700', bg: 'gray.800'}}
+                                        _hover={{
+                                            borderColor: 'gray.700',
+                                            bg: 'gray.800',
+                                        }}
                                         transition="all 0.2s"
                                         overflow="hidden"
                                     >
-                                        <Flex gap={4} p={{base: 3, md: 4}} align="start">
+                                        <Flex
+                                            gap={4}
+                                            p={{base: 3, md: 4}}
+                                            align="start"
+                                        >
                                             <Flex
                                                 flexShrink={0}
                                                 align="center"
                                                 justify="center"
-                                                bg={`${config.colorScheme}.900`}
+                                                bg={`${actionConfig.colorScheme}.900`}
                                                 borderRadius="lg"
                                                 p={{base: 2, md: 2.5}}
                                                 boxSize={{base: '40px', md: '44px'}}
                                             >
-                                                <Icon size={18} color="white"/>
+                                                <ActionIcon
+                                                    size={18}
+                                                    color="white"
+                                                />
                                             </Flex>
 
                                             <Box flex="1" minW={0}>
                                                 <Flex
                                                     justify="space-between"
-                                                    align={{base: 'flex-start', md: 'center'}}
-                                                    direction={{base: 'column', md: 'row'}}
+                                                    align={{
+                                                        base: 'flex-start',
+                                                        md: 'center',
+                                                    }}
+                                                    direction={{
+                                                        base: 'column',
+                                                        md: 'row',
+                                                    }}
                                                     gap={{base: 1, md: 0}}
                                                     mb={1}
                                                 >
-                                                    <HStack gap={2} wrap="wrap" align="center">
+                                                    <HStack
+                                                        gap={2}
+                                                        wrap="wrap"
+                                                        align="center"
+                                                    >
                                                         <Badge
-                                                            colorScheme={config.colorScheme}
+                                                            colorScheme={actionConfig.colorScheme}
                                                             variant="subtle"
                                                             px={2}
                                                             py={0.5}
@@ -533,34 +726,64 @@ export const DashboardHistoryPage = () => {
                                                         >
                                                             {log.action}
                                                         </Badge>
-                                                        {log.entityType && entityTypeLabels[log.entityType] && (
-                                                            <HStack gap={1.5} align="center">
-                                                                <Box
-                                                                    w="6px"
-                                                                    h="6px"
-                                                                    borderRadius="full"
-                                                                    bg="teal.400"
-                                                                />
-                                                                <Text fontSize="xs" color="gray.400" whiteSpace="nowrap">
-                                                                    {entityTypeLabels[log.entityType]}
-                                                                </Text>
-                                                            </HStack>
-                                                        )}
+
+                                                        {log.entityType &&
+                                                            ENTITY_TYPE_LABELS[log.entityType] && (
+                                                                <HStack
+                                                                    gap={1.5}
+                                                                    align="center"
+                                                                >
+                                                                    <Box
+                                                                        w="6px"
+                                                                        h="6px"
+                                                                        borderRadius="full"
+                                                                        bg="teal.400"
+                                                                    />
+                                                                    <Text
+                                                                        fontSize="xs"
+                                                                        color="gray.400"
+                                                                        whiteSpace="nowrap"
+                                                                    >
+                                                                        {
+                                                                            ENTITY_TYPE_LABELS[log.entityType]
+                                                                        }
+                                                                    </Text>
+                                                                </HStack>
+                                                            )}
                                                     </HStack>
+
                                                     <HStack gap={2} flexShrink={0}>
-                                                        <Text color="gray.400" fontSize="xs" whiteSpace="nowrap">
-                                                            {formatTimeAgo(log.createdAt) && `${formatTimeAgo(log.createdAt)} · `}
-                                                            {formatFullDate(log.createdAt)}
+                                                        <Text
+                                                            color="gray.400"
+                                                            fontSize="xs"
+                                                            whiteSpace="nowrap"
+                                                        >
+                                                            {relativeTime
+                                                                ? `${relativeTime} · `
+                                                                : ''}
+                                                            {fullDate}
                                                         </Text>
                                                     </HStack>
                                                 </Flex>
 
-                                                <Text color="gray.300" fontSize="sm" fontWeight="medium"
-                                                      wordBreak="break-word" whiteSpace="pre-wrap" mb={1}>
+                                                <Text
+                                                    color="gray.300"
+                                                    fontSize="sm"
+                                                    fontWeight="medium"
+                                                    wordBreak="break-word"
+                                                    whiteSpace="pre-wrap"
+                                                    mb={1}
+                                                >
                                                     {log.details}
                                                     {deviceInfo && (
-                                                        <Text as="span" color="gray.500" fontSize="sm" whiteSpace="nowrap">
-                                                            {' '}· {deviceInfo}
+                                                        <Text
+                                                            as="span"
+                                                            color="gray.500"
+                                                            fontSize="sm"
+                                                            whiteSpace="nowrap"
+                                                        >
+                                                            {' '}
+                                                            · {deviceInfo}
                                                         </Text>
                                                     )}
                                                 </Text>
@@ -572,8 +795,12 @@ export const DashboardHistoryPage = () => {
                                                         px={2}
                                                         py={0.5}
                                                     >
-                                                        <Text fontSize="xs" color="gray.300" fontWeight="medium"
-                                                              lineClamp={1}>
+                                                        <Text
+                                                            fontSize="xs"
+                                                            color="gray.300"
+                                                            fontWeight="medium"
+                                                            truncate
+                                                        >
                                                             {log.user.name}
                                                         </Text>
                                                     </Box>
@@ -591,7 +818,12 @@ export const DashboardHistoryPage = () => {
                 </Card.Body>
 
                 {totalPages > 1 && (
-                    <Card.Footer p={5} borderTop="1px solid" borderColor="gray.800" bg="gray.950">
+                    <Card.Footer
+                        p={5}
+                        borderTop="1px solid"
+                        borderColor="gray.800"
+                        bg="gray.950"
+                    >
                         <Flex justify="center" w="full">
                             <VStack gap={3}>
                                 <Pagination
