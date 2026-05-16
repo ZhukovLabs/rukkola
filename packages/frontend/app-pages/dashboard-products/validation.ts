@@ -10,6 +10,18 @@ export const priceSchema = z.object({
         .min(0.01, 'Цена должна быть больше 0'),
 });
 
+const hexColorRegex = /^#[0-9A-Fa-f]{6}$/;
+
+export const tagSchema = z.object({
+    text: z
+        .string()
+        .min(2, 'Текст тега должен быть от 2 до 12 символов')
+        .max(12, 'Текст тега должен быть от 2 до 12 символов'),
+    color: z
+        .string()
+        .regex(hexColorRegex, 'Цвет должен быть в формате HEX (#RRGGBB)'),
+});
+
 export const productSchema = z.object({
     name: z
         .string()
@@ -31,6 +43,12 @@ export const productSchema = z.object({
 
     hidden: z.boolean(),
     isAlcohol: z.boolean(),
+
+    tags: z
+        .array(tagSchema)
+        .max(2, 'Максимум 2 тега')
+        .optional()
+        .nullable(),
 
     imageFile: z
         .instanceof(File, {message: 'Выбранный файл должен быть изображением'})

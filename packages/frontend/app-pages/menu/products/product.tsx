@@ -20,6 +20,8 @@ import { useIsLowPerformanceDevice } from "@/hooks/use-is-low-performance-device
 import { trackViewItem, trackAddToCart } from "@/lib/ecommerce-tracking";
 import { useProductModal } from "../product-modal/use-product-modal";
 
+const MotionFlex = motion.create(Flex);
+
 type Price = { size: string; price: number };
 
 export type ProductInnerProps = {
@@ -31,6 +33,7 @@ export type ProductInnerProps = {
     description: string | null;
     prices: Price[] | null;
     blurDataURL?: string | null;
+    tags?: { text: string; color: string }[] | null;
 };
 
 const DEFAULT_BLUR_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/OhSPQAIZwPB9++2WgAAAABJRU5ErkJggg==";
@@ -100,7 +103,8 @@ export const Product = memo(function Product({
                                                  title,
                                                  description,
                                                  prices,
-                                                 blurDataURL
+                                                 blurDataURL,
+                                                 tags
                                                  }: ProductInnerProps) {
                                                  const router = useRouter();
                                                  const searchParams = useSearchParams();
@@ -230,6 +234,88 @@ export const Product = memo(function Product({
                                 priority={priority}
                             />
                         )}
+
+                        <AnimatePresence>
+                            {tags && tags.length > 0 && (
+                                <Box
+                                    position="absolute"
+                                    top={0}
+                                    left={0}
+                                    zIndex={10}
+                                    pointerEvents="none"
+                                    overflow="hidden"
+                                    w="full"
+                                    h="full"
+                                >
+                                    {tags.map((tag, idx) => (
+                                        <Box
+                                            key={idx}
+                                            as={motion.div}
+                                            initial={{ opacity: 0, x: { base: 100, md: -100 } }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ 
+                                                delay: 0.2 + idx * 0.15,
+                                                duration: 0.6,
+                                                ease: [0.23, 1, 0.32, 1]
+                                            } as any}
+                                            position="absolute"
+                                            top={`${16 + (idx * 32)}px`}
+                                            left={{ base: 'auto', md: '-10px' }}
+                                            right={{ base: '-10px', md: 'auto' }}
+                                        >
+                                            <Flex
+                                                align="center"
+                                                gap={3}
+                                                pl={{ base: 8, md: 6 }}
+                                                pr={{ base: 6, md: 8 }}
+                                                py={1.5}
+                                                bg={{
+                                                    base: `linear-gradient(270deg, ${tag.color} 0%, ${tag.color}E6 70%, transparent 100%)`,
+                                                    md: `linear-gradient(90deg, ${tag.color} 0%, ${tag.color}E6 70%, transparent 100%)`
+                                                }}
+                                                color="white"
+                                                boxShadow={`4px 4px 15px rgba(0,0,0,0.3), 0 0 10px ${tag.color}40`}
+                                                transform="none"
+                                                style={{
+                                                    clipPath: { 
+                                                        base: 'polygon(8% 0%, 100% 0%, 100% 100%, 8% 100%)', 
+                                                        md: 'polygon(0% 0%, 92% 100%, 92% 100%, 0% 100%)' // Fallback for safety, actual is below
+                                                    },
+                                                } as any}
+                                                // Using sx for complex responsive clipPath to ensure accuracy
+                                                sx={{
+                                                    clipPath: {
+                                                        base: 'polygon(8% 0%, 100% 0%, 100% 100%, 8% 100%)',
+                                                        md: 'polygon(0% 0%, 92% 0%, 100% 100%, 0% 100%)'
+                                                    }
+                                                }}
+                                                borderLeft={{ base: "none", md: "4px solid" }}
+                                                borderRight={{ base: "4px solid", md: "none" }}
+                                                borderColor="whiteAlpha.600"
+                                            >
+                                                <Box 
+                                                    w="6px" 
+                                                    h="6px" 
+                                                    borderRadius="full" 
+                                                    bg="white" 
+                                                    boxShadow="0 0 8px white"
+                                                />
+                                                <Text
+                                                    fontSize="9px"
+                                                    fontWeight="900"
+                                                    textTransform="uppercase"
+                                                    letterSpacing="0.15em"
+                                                    lineHeight="1"
+                                                    textShadow="0 1px 3px rgba(0,0,0,0.3)"
+                                                >
+                                                    {tag.text}
+                                                </Text>
+                                            </Flex>
+                                        </Box>
+                                    ))}
+                                </Box>
+                            )}
+                        </AnimatePresence>
                     </Box>
                 )}
 

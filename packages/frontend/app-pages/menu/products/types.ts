@@ -13,6 +13,7 @@ export type ProductClientType = {
     hidden?: boolean;
     isAlcohol?: boolean;
     order?: number;
+    tags?: { text: string; color: string }[] | null;
 };
 
 export type SubgroupType = {

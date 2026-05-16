@@ -10,6 +10,7 @@ import {
   ArrayMinSize,
   ArrayMaxSize,
   IsNotEmpty,
+  MinLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -22,6 +23,18 @@ export class PortionPriceUpdateDto {
   @IsNumber()
   @Min(0.01)
   price!: number;
+}
+
+export class ProductTagUpdateDto {
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(2)
+  @MaxLength(12)
+  text!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  color!: string;
 }
 
 export class UpdateProductDto {
@@ -56,4 +69,11 @@ export class UpdateProductDto {
   @IsBoolean()
   @IsOptional()
   removeImage?: boolean;
+
+  @IsArray()
+  @ArrayMaxSize(2)
+  @ValidateNested({ each: true })
+  @Type(() => ProductTagUpdateDto)
+  @IsOptional()
+  tags?: ProductTagUpdateDto[];
 }

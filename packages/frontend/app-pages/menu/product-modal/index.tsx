@@ -23,6 +23,7 @@ type Product = {
     blurDataURL: string | null;
     name: string;
     description: string | null;
+    tags?: { text: string; color: string }[] | null;
 };
 
 const productCache = new Map<string, Product>();
@@ -291,10 +292,61 @@ export const ProductModal = () => {
                                             onLoad={() => setImageLoading(false)}
                                             onError={() => setImageLoading(false)}
                                         />
+
+                                        {product.tags && product.tags.length > 0 && (
+                                            <Flex
+                                                position="absolute"
+                                                top={{ base: 4, md: 10 }}
+                                                left={{ base: 4, md: 10 }}
+                                                direction="column"
+                                                align="flex-start"
+                                                gap={3}
+                                                pointerEvents="none"
+                                            >
+                                                {product.tags.map((tag, idx) => (
+                                                    <motion.div
+                                                        key={idx}
+                                                        initial={{ opacity: 0, x: -30 }}
+                                                        animate={{ opacity: 1, x: 0 }}
+                                                        transition={{ delay: 0.3 + idx * 0.1, duration: 0.6, ease: "easeOut" }}
+                                                    >
+                                                        <Flex
+                                                            align="center"
+                                                            gap={3}
+                                                            px={5}
+                                                            py={2.5}
+                                                            borderRadius="2xl"
+                                                            bg="rgba(0, 0, 0, 0.7)"
+                                                            backdropFilter="blur(20px)"
+                                                            border="1px solid"
+                                                            borderColor={`${tag.color}50`}
+                                                            boxShadow={`0 10px 40px -10px ${tag.color}40`}
+                                                        >
+                                                            <Box 
+                                                                w="10px" 
+                                                                h="10px" 
+                                                                borderRadius="full" 
+                                                                bg={tag.color} 
+                                                                boxShadow={`0 0 12px ${tag.color}`}
+                                                            />
+                                                            <Text
+                                                                fontSize={{ base: "11px", md: "14px" }}
+                                                                fontWeight="900"
+                                                                color="white"
+                                                                textTransform="uppercase"
+                                                                letterSpacing="0.08em"
+                                                            >
+                                                                {tag.text}
+                                                            </Text>
+                                                        </Flex>
+                                                    </motion.div>
+                                                ))}
+                                            </Flex>
+                                        )}
                                     </Box>
                                 ) : (
-                                    <Center h="100%" bg="gray.900">
-                                        <Text color="gray.500" fontSize="lg">
+                                    <Center h="100%" bg="rgba(10, 10, 12, 0.9)">
+                                        <Text color="whiteAlpha.400" fontSize="lg">
                                             Изображение отсутствует
                                         </Text>
                                     </Center>
@@ -302,42 +354,41 @@ export const ProductModal = () => {
                             </Box>
 
                             <Box
-                                bg="blackAlpha.900"
-                                backdropFilter="blur(12px)"
-                                borderTop="1px solid rgba(255,255,255,0.12)"
-                                p={{ base: 4, md: 6 }}
-                                maxH="40vh"
+                                bg="rgba(15, 15, 18, 0.7)"
+                                backdropFilter="blur(30px)"
+                                borderTop="1px solid rgba(255,255,255,0.08)"
+                                p={{ base: 6, md: 10 }}
+                                maxH="45vh"
                                 overflowY="auto"
                                 onClick={(e) => e.stopPropagation()}
                                 css={{
-                                    "&::-webkit-scrollbar": { width: "6px" },
+                                    "&::-webkit-scrollbar": { width: "4px" },
                                     "&::-webkit-scrollbar-track": { bg: "transparent" },
                                     "&::-webkit-scrollbar-thumb": {
-                                        bg: "rgba(255,255,255,0.2)",
-                                        borderRadius: "3px",
-                                    },
-                                    "&::-webkit-scrollbar-thumb:hover": {
-                                        bg: "rgba(255,255,255,0.3)",
+                                        bg: "rgba(255,255,255,0.15)",
+                                        borderRadius: "10px",
                                     },
                                 }}
                             >
-                                <Box maxW="900px" mx="auto">
+                                <Box maxW="1000px" mx="auto">
                                     <Heading
-                                        fontSize={{ base: "lg", md: "xl", lg: "2xl" }}
-                                        fontWeight="bold"
+                                        fontSize={{ base: "2xl", md: "4xl" }}
+                                        fontWeight="800"
                                         color="white"
-                                        mb={product.description ? 3 : 0}
-                                        letterSpacing="tight"
+                                        mb={product.description ? 6 : 0}
+                                        letterSpacing="-0.03em"
+                                        lineHeight="1.1"
                                     >
                                         {product.name}
                                     </Heading>
 
                                     {product.description && (
                                         <Text
-                                            fontSize={{ base: "sm", md: "md" }}
-                                            color="gray.100"
-                                            lineHeight="tall"
+                                            fontSize={{ base: "md", md: "lg" }}
+                                            color="whiteAlpha.700"
+                                            lineHeight="1.8"
                                             whiteSpace="pre-wrap"
+                                            fontWeight="450"
                                         >
                                             {product.description}
                                         </Text>

@@ -18,6 +18,7 @@ import { PositionDialog } from "./position-dialog";
 
 type PortionPrice = { size: string; price: number };
 type CategoryRef = { id: string; name: string };
+type ProductTag = { text: string; color: string };
 
 type ProductType = {
     id: string;
@@ -29,6 +30,7 @@ type ProductType = {
     hidden: boolean;
     isAlcohol: boolean;
     order: number;
+    tags?: ProductTag[];
 };
 
 type ProductRowProps = {
@@ -145,7 +147,27 @@ export const ProductRow = ({
             </Table.Cell>
 
             <Table.Cell fontWeight="semibold" color="gray.200" p={4}>
-                {p.name}
+                <Flex direction="column" gap={1}>
+                    <Text>{p.name}</Text>
+                    {p.tags && p.tags.length > 0 && (
+                        <Flex gap={1} flexWrap="wrap">
+                            {p.tags.map((tag, index) => (
+                                <Box
+                                    key={index}
+                                    px={2}
+                                    py={0.5}
+                                    borderRadius="md"
+                                    bg={tag.color}
+                                    fontSize="xs"
+                                    color="white"
+                                    fontWeight="medium"
+                                >
+                                    {tag.text}
+                                </Box>
+                            ))}
+                        </Flex>
+                    )}
+                </Flex>
             </Table.Cell>
 
             <Table.Cell

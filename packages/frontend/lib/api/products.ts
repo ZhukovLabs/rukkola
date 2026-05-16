@@ -8,6 +8,11 @@ export type PortionPrice = {
   price: number;
 };
 
+export type ProductTag = {
+  text: string;
+  color: string;
+};
+
 export type ProductCategory = {
   id: string;
   name: string;
@@ -32,6 +37,7 @@ export type ProductListItem = {
   parentCategoryId?: string;
   categoryOrder: number;
   parentCategoryOrder: number;
+  tags?: ProductTag[];
 };
 
 export type ProductDetail = {
@@ -44,6 +50,7 @@ export type ProductDetail = {
   hidden?: boolean;
   isAlcohol?: boolean;
   order?: number;
+  tags?: ProductTag[];
 };
 
 export type ProductsResponse = {
@@ -59,6 +66,7 @@ export type CreateProductInput = {
   categories?: string[];
   hidden?: boolean;
   isAlcohol?: boolean;
+  tags?: ProductTag[];
 };
 
 export type UpdateProductInput = {
@@ -69,6 +77,7 @@ export type UpdateProductInput = {
   hidden: boolean;
   isAlcohol: boolean;
   removeImage?: boolean;
+  tags?: ProductTag[];
 };
 
 export type CategoryOption = {

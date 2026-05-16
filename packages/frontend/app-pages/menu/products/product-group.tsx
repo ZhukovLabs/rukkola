@@ -20,14 +20,17 @@ export const ProductGroup = memo(function ProductGroup({ id, title, products, st
             {title && (
                 <Heading
                     as="h2"
-                    fontSize={{ base: "2xl", md: "3xl" }}
-                    mb={6}
-                    color="gray.300"
-                    borderBottom="2px solid"
-                    borderColor="gray.500"
-                    pb={2}
+                    fontSize={{ base: "3xl", md: "4xl" }}
+                    mb={8}
+                    color="white"
+                    fontWeight="800"
+                    letterSpacing="-0.03em"
+                    display="flex"
+                    alignItems="center"
+                    gap={4}
                 >
                     {title}
+                    <Box flex={1} h="1px" bg="linear-gradient(to right, whiteAlpha.300, transparent)" />
                 </Heading>
             )}
 
@@ -51,6 +54,7 @@ export const ProductGroup = memo(function ProductGroup({ id, title, products, st
                             title={product.name}
                             description={product.description}
                             prices={product.prices}
+                            tags={product.tags}
                         />
                     ))}
                 </SimpleGrid>

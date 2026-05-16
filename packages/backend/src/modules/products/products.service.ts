@@ -138,6 +138,7 @@ export class ProductsService {
           order: { $ifNull: ['$order', 0] },
           createdAt: 1,
           updatedAt: 1,
+          tags: 1,
           categories: {
             $map: {
               input: '$productCategories',
@@ -238,6 +239,7 @@ export class ProductsService {
           hidden: 1,
           isAlcohol: 1,
           order: 1,
+          tags: 1,
         },
       },
     ]);
@@ -426,6 +428,7 @@ export class ProductsService {
       categories: data.categories ?? [],
       hidden: Boolean(data.hidden),
       isAlcohol: Boolean(data.isAlcohol),
+      tags: data.tags ?? [],
     });
 
     await product.save();

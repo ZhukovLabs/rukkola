@@ -23,6 +23,7 @@ type ProductDoc = {
   prices?: Array<{ size: string; price: number }>;
   isAlcohol?: boolean;
   order: number;
+  tags?: Array<{ text: string; color: string }>;
 };
 
 type MenuGroup = {
@@ -76,6 +77,7 @@ export class MenuService {
       blurDataURL: product.blurDataURL,
       name: product.name,
       description: product.description,
+      tags: product.tags,
     };
   }
 
@@ -203,6 +205,7 @@ export class MenuService {
         prices: product.prices,
         isAlcohol: product.isAlcohol,
         order: product.order ?? 0,
+        tags: product.tags,
       };
 
       if (assignedCategory) {

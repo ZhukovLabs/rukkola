@@ -43,6 +43,7 @@ export const EditProductModal = () => {
                 categories: values.categories ?? [],
                 hidden: values.hidden,
                 isAlcohol: values.isAlcohol,
+                tags: values.tags ?? [],
                 removeImage: values.removeImage,
             })
 
@@ -85,6 +86,7 @@ export const EditProductModal = () => {
                         hidden: Boolean(product.hidden),
                         image: product.image,
                         isAlcohol: product.isAlcohol ?? false,
+                        tags: product.tags ?? [],
                     }
                     : undefined
             }

@@ -9,6 +9,14 @@ export class PortionPrice {
   price!: number;
 }
 
+export class ProductTag {
+  @Prop({ required: true, minlength: 2, maxlength: 12 })
+  text!: string;
+
+  @Prop({ required: true })
+  color!: string;
+}
+
 @Schema({ timestamps: true })
 export class Product extends Document {
   @Prop({ required: true, trim: true, index: 'text' })
@@ -37,6 +45,9 @@ export class Product extends Document {
 
   @Prop({ default: 0 })
   order!: number;
+
+  @Prop({ type: [{ text: String, color: String, _id: false }], required: false, default: [] })
+  tags!: ProductTag[];
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

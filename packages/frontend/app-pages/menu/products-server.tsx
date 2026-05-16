@@ -19,6 +19,7 @@ type RawProduct = {
     hidden?: boolean;
     isAlcohol?: boolean;
     order?: number;
+    tags?: Array<{ text: string; color: string }>;
 };
 
 type RawMenuGroup = {
@@ -54,6 +55,7 @@ const transformProduct = (p: RawProduct): ProductClientType => ({
     hidden: p.hidden ?? false,
     isAlcohol: p.isAlcohol ?? false,
     order: p.order ?? 0,
+    tags: p.tags ?? null,
 });
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://rukkola-gomel.by";

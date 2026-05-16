@@ -39,6 +39,7 @@ export const CreateProductModal = () => {
                 categories: values.categories ?? [],
                 hidden: values.hidden,
                 isAlcohol: values.isAlcohol,
+                tags: values.tags ?? [],
             })
 
             if (!result.success) {
