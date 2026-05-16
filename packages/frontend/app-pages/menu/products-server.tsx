@@ -142,12 +142,48 @@ export async function ProductsServer({alcoholIsVisible, hasError}: ProductsServe
         }))
     };
 
+    const productSchemas = grouped.flatMap(group => [
+        ...group.directProducts.map(p => ({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "name": p.name,
+            "description": p.description || p.name,
+            "image": p.image ? (p.image.startsWith('http') ? p.image : `${BASE_URL}${p.image}`) : undefined,
+            "offers": p.prices.map(price => ({
+                "@type": "Offer",
+                "price": price.price,
+                "priceCurrency": "BYN",
+                "availability": "https://schema.org/InStock"
+            }))
+        })),
+        ...group.subgroups.flatMap(sub => sub.products.map(p => ({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "name": p.name,
+            "description": p.description || p.name,
+            "image": p.image ? (p.image.startsWith('http') ? p.image : `${BASE_URL}${p.image}`) : undefined,
+            "offers": p.prices.map(price => ({
+                "@type": "Offer",
+                "price": price.price,
+                "priceCurrency": "BYN",
+                "availability": "https://schema.org/InStock"
+            }))
+        })))
+    ]).filter(s => s.image);
+
     return (
         <>
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(menuSchema) }}
             />
+            {productSchemas.map((schema, i) => (
+                <script
+                    key={i}
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+                />
+            ))}
             <Products grouped={grouped} uncategorized={uncategorized}/>
         </>
     );

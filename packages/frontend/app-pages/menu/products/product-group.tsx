@@ -9,9 +9,10 @@ type ProductGroupProps = {
     id?: string;
     title?: string;
     products: ProductClientType[];
+    startIndex?: number;
 };
 
-export const ProductGroup = memo(function ProductGroup({ id, title, products }: ProductGroupProps) {
+export const ProductGroup = memo(function ProductGroup({ id, title, products, startIndex = 0 }: ProductGroupProps) {
     if (!products.length) return null;
 
     return (
@@ -39,9 +40,10 @@ export const ProductGroup = memo(function ProductGroup({ id, title, products }: 
                     gap={6}
                     alignItems="stretch"
                 >
-                    {products.map((product) => (
+                    {products.map((product, index) => (
                         <Product
                             key={product.id}
+                            index={startIndex + index}
                             id={product.id}
                             img={product.image}
                             blurDataURL={product.blurDataURL}

@@ -23,6 +23,7 @@ import { useProductModal } from "../product-modal/use-product-modal";
 type Price = { size: string; price: number };
 
 export type ProductInnerProps = {
+    index?: number;
     id: string;
     img: string | null;
     alt: string | null;
@@ -38,19 +39,21 @@ const ProductImage = memo(function ProductImage({
                                                     img,
                                                     alt,
                                                     blurDataURL,
-                                                    onError
+                                                    onError,
+                                                    priority
                                                 }: {
     img: string;
     alt: string;
     blurDataURL?: string | null;
     onError: () => void;
+    priority?: boolean;
 }) {
     return (
         <Image
             src={img.includes('?') ? `${img}&w=450` : `${img}?w=450`}
             alt={alt}
             fill
-            loading="lazy"
+            loading={priority ? "eager" : "lazy"}
             sizes="(max-width: 480px) 100vw, (max-width: 768px) 60vw, 45vw"
             placeholder="blur"
             blurDataURL={blurDataURL || DEFAULT_BLUR_DATA_URL}
@@ -90,6 +93,7 @@ const PriceButton = memo(function PriceButton({
 });
 
 export const Product = memo(function Product({
+                                                 index,
                                                  id,
                                                  img,
                                                  alt,
@@ -109,6 +113,7 @@ export const Product = memo(function Product({
 
     const disableMotion = useIsLowPerformanceDevice();
     const firstPrice = prices?.[0] ?? null;
+    const priority = typeof index === 'number' && index < 8;
 
     const handleAddClick = useCallback(() => {
         if (!prices?.length || !firstPrice) return;
@@ -222,6 +227,7 @@ export const Product = memo(function Product({
                                 alt={alt || title}
                                 blurDataURL={blurDataURL}
                                 onError={() => setImgError(true)}
+                                priority={priority}
                             />
                         )}
                     </Box>

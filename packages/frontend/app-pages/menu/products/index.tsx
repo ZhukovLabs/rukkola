@@ -39,6 +39,7 @@ const CategoryHeader = memo(function CategoryHeader({ title, id }: { title: stri
 });
 
 export const Products = memo(function Products({grouped, uncategorized}: ProductsProps) {
+    let productIndex = 0;
     return (
         <Box 
             color="white" 
@@ -54,26 +55,36 @@ export const Products = memo(function Products({grouped, uncategorized}: Product
                     {cat.showGroupTitle && (
                         <CategoryHeader title={cat.categoryName} id={cat.id} />
                     )}
-                    {cat.subgroups.map((sub) => (
-                        <ProductGroupMemo
-                            key={sub.id}
-                            id={sub.id}
-                            title={sub.showGroupTitle ? sub.name : undefined}
-                            products={sub.products}
-                        />
-                    ))}
-                    {cat.directProducts.length > 0 && (
-                        <ProductGroupMemo
-                            key={`${cat.id}-direct`}
-                            id={`${cat.id}-direct`}
-                            products={cat.directProducts}
-                        />
-                    )}
+                    {cat.subgroups.map((sub) => {
+                        const startIndex = productIndex;
+                        productIndex += sub.products.length;
+                        return (
+                            <ProductGroupMemo
+                                key={sub.id}
+                                id={sub.id}
+                                title={sub.showGroupTitle ? sub.name : undefined}
+                                products={sub.products}
+                                startIndex={startIndex}
+                            />
+                        );
+                    })}
+                    {cat.directProducts.length > 0 && (() => {
+                        const startIndex = productIndex;
+                        productIndex += cat.directProducts.length;
+                        return (
+                            <ProductGroupMemo
+                                key={`${cat.id}-direct`}
+                                id={`${cat.id}-direct`}
+                                products={cat.directProducts}
+                                startIndex={startIndex}
+                            />
+                        );
+                    })()}
                 </Box>
             ))}
 
             {uncategorized.length > 0 && (
-                <ProductGroupMemo title="Без категории" products={uncategorized}/>
+                <ProductGroupMemo title="Без категории" products={uncategorized} startIndex={productIndex}/>
             )}
         </Box>
     );
