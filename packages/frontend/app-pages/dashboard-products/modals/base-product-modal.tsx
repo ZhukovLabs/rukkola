@@ -140,9 +140,12 @@ const sanitizePriceInput = (value: string) => {
             .slice(0, separatorIndex)
             .replace(/[.,]/g, '')
 
-        const decimalPart = sanitizedValue
+        let decimalPart = sanitizedValue
             .slice(separatorIndex + 1)
             .replace(/[.,]/g, '')
+
+        // Limit to 2 decimal places
+        decimalPart = decimalPart.slice(0, 2)
 
         sanitizedValue = `${integerPart}${separator}${decimalPart}`
     } else {
@@ -1050,7 +1053,7 @@ export const BaseProductModal = ({
                                                                 )}
                                                             </Box>
 
-                                                            <Box flex={1}>
+                                                            <Box flex={1} position="relative">
                                                                 <Input
                                                                     {...register(`prices.${index}.price`, {
                                                                         setValueAs: (v) => typeof v === 'string' ? normalizePriceValue(v) : v,
@@ -1061,13 +1064,24 @@ export const BaseProductModal = ({
                                                                     fontSize="sm"
                                                                     borderRadius="xl"
                                                                     h="48px"
-                                                                    px={4}
+                                                                    pl={4}
+                                                                    pr={12}
                                                                     _focus={{ borderColor: MODAL_STYLES.inputFocusBorder, bg: 'whiteAlpha.05' }}
                                                                     _placeholder={{ color: 'whiteAlpha.400' }}
                                                                     onInput={(e: FormEvent<HTMLInputElement>) => {
                                                                         e.currentTarget.value = sanitizePriceInput(e.currentTarget.value)
                                                                     }}
                                                                 />
+                                                                <Flex
+                                                                    position="absolute"
+                                                                    right={4}
+                                                                    top="0"
+                                                                    h="48px"
+                                                                    align="center"
+                                                                    pointerEvents="none"
+                                                                >
+                                                                    <Text fontSize="10px" fontWeight="800" color="whiteAlpha.300">руб.</Text>
+                                                                </Flex>
                                                                 {errors.prices?.[index]?.price && (
                                                                     <Text color="red.400" fontSize="9px" mt={2} ml={1} fontWeight="800" textTransform="uppercase">
                                                                         {errors.prices?.[index]?.price?.message}
