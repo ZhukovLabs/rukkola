@@ -173,7 +173,7 @@ export const DashboardLayout = ({children}: { children: React.ReactNode }) => {
                 <Box mt={4}>
                     <Box my={4} h="1px" bg="gray.700"/>
                     <Link
-                        href="/"
+                        href="/?token=x7fa5ca6"
                         display="flex"
                         alignItems="center"
                         gap={3}

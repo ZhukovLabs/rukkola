@@ -1,16 +1,16 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { LRUCache } from 'lru-cache';
+import {BadRequestException, Injectable, NotFoundException} from '@nestjs/common';
+import {InjectModel} from '@nestjs/mongoose';
+import {Model, Types} from 'mongoose';
+import {LRUCache} from 'lru-cache';
 import sharp from 'sharp';
-import { Product } from '../../schemas/product.schema';
-import { Category } from '../../schemas/category.schema';
-import { MinioService } from '../minio/minio.service';
-import { AuditLogService } from '../audit-log/audit-log.service';
-import { sanitizeFileName } from '../../common/utils/sanitize';
-import { optimizeImage } from '../../common/utils/image-optimize';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+import {Product} from '../../schemas/product.schema';
+import {Category} from '../../schemas/category.schema';
+import {MinioService} from '../minio/minio.service';
+import {AuditLogService} from '../audit-log/audit-log.service';
+import {sanitizeFileName} from '../../common/utils/sanitize';
+import {optimizeImage} from '../../common/utils/image-optimize';
+import {CreateProductDto} from './dto/create-product.dto';
+import {UpdateProductDto} from './dto/update-product.dto';
 
 const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -661,18 +661,45 @@ export class ProductsService {
   }
 
   async getCategories() {
-    const categories = await this.categoryModel.aggregate([
+    return this.categoryModel.aggregate([
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'parent',
+          foreignField: '_id',
+          as: 'parentCategory',
+        },
+      },
+      {
+        $addFields: {
+          isChild: {
+            $cond: [{ $ifNull: ['$parent', false] }, 1, 0],
+          },
+          parentOrder: {
+            $ifNull: [
+              { $arrayElemAt: ['$parentCategory.order', 0] },
+              '$order',
+            ],
+          },
+        },
+      },
+      {
+        $sort: {
+          parentOrder: 1,
+          isChild: 1,
+          order: 1,
+        },
+      },
       {
         $project: {
           _id: 0,
           id: { $toString: '$_id' },
           name: 1,
           order: 1,
+          parent: 1,
         },
       },
     ]);
-
-    return categories;
   }
 
   async uploadImage(productId: string, file: Express.Multer.File, userId: string) {
