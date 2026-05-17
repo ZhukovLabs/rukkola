@@ -105,17 +105,17 @@ const DEFAULT_FORM_VALUES: ProductFormValues = {
 }
 
 const MODAL_STYLES = {
-    background: '#111111',
+    background: '#141414',
     borderColor: 'rgba(255, 255, 255, 0.08)',
     inputBackground: 'rgba(255, 255, 255, 0.03)',
-    inputFocusBorder: 'rgba(255, 255, 255, 0.12)',
-    headerBorder: 'rgba(255, 255, 255, 0.05)',
+    inputFocusBorder: 'rgba(255, 255, 255, 0.2)',
+    headerBorder: 'rgba(255, 255, 255, 0.06)',
 }
 
 const SWITCH_STYLES = {
-    width: '38px',
-    height: '20px',
-    thumbSize: '14px',
+    width: '36px',
+    height: '18px',
+    thumbSize: '12px',
     translateX: '18px',
 }
 
@@ -170,10 +170,17 @@ type SectionHeaderProps = {
 }
 
 const SectionHeader = ({title, required}: SectionHeaderProps) => (
-    <Box mb={4}>
-        <Heading size="xs" color="whiteAlpha.600" fontWeight="700" letterSpacing="0.05em" textTransform="uppercase">
+    <Box mb={5}>
+        <Heading 
+            size="xs" 
+            color="whiteAlpha.500" 
+            fontWeight="800" 
+            letterSpacing="0.1em" 
+            textTransform="uppercase"
+            fontSize="10px"
+        >
             {title}
-            {required && <Text as="span" color="red.500" ml={1}>*</Text>}
+            {required && <Text as="span" color="red.400" ml={1}>*</Text>}
         </Heading>
     </Box>
 )
@@ -196,7 +203,7 @@ const ToggleSwitch = ({
         justify="space-between"
         p={4}
         borderRadius="xl"
-        bg="whiteAlpha.02"
+        bg="whiteAlpha.03"
         border="1px solid"
         borderColor="whiteAlpha.08"
         cursor="pointer"
@@ -204,13 +211,15 @@ const ToggleSwitch = ({
         onClick={() => onChange(!value)}
         transition="all 0.2s"
         _hover={{
-            bg: 'whiteAlpha.05',
+            bg: 'whiteAlpha.06',
+            borderColor: 'whiteAlpha.200',
         }}
     >
         <Text
-            color={value ? 'white' : 'whiteAlpha.500'}
+            color={value ? 'white' : 'whiteAlpha.600'}
             fontWeight="600"
             fontSize="sm"
+            transition="color 0.2s"
         >
             {label}
         </Text>
@@ -225,8 +234,8 @@ const ToggleSwitch = ({
             px="3px"
             display="flex"
             alignItems="center"
-            bg={value ? activeColor : 'whiteAlpha.100'}
-            transition="background-color 0.2s"
+            bg={value ? activeColor : 'whiteAlpha.200'}
+            transition="background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
             position="relative"
         >
             <MotionBox
@@ -236,8 +245,10 @@ const ToggleSwitch = ({
                 bg="white"
                 animate={{
                     x: value ? 18 : 0,
+                    scale: 1,
                 }}
-                transition={{type: 'spring', stiffness: 500, damping: 35}}
+                whileTap={{ scale: 0.8 }}
+                transition={{type: 'spring', stiffness: 500, damping: 30}}
             />
         </Box>
     </Flex>
@@ -271,21 +282,23 @@ const TagInput = ({onAdd}: TagInputProps) => {
     }
 
     return (
-        <Stack gap={4}>
+        <Stack gap={5}>
             <Flex gap={3}>
                 <Input
                     placeholder="Напр. Острое"
                     value={text}
                     onChange={(e) => setText(e.target.value)}
-                    bg="whiteAlpha.05"
-                    borderColor="whiteAlpha.100"
+                    bg="whiteAlpha.03"
+                    borderColor="whiteAlpha.08"
                     fontSize="sm"
                     h="44px"
                     borderRadius="lg"
                     maxLength={12}
                     _focus={{
-                        borderColor: 'whiteAlpha.300',
+                        borderColor: 'whiteAlpha.400',
+                        bg: 'whiteAlpha.06',
                     }}
+                    _placeholder={{ color: 'whiteAlpha.300' }}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                             e.preventDefault()
@@ -298,14 +311,16 @@ const TagInput = ({onAdd}: TagInputProps) => {
                     px={6}
                     h="44px"
                     borderRadius="lg"
-                    bg="transparent"
-                    color="whiteAlpha.500"
+                    bg="whiteAlpha.05"
+                    color="whiteAlpha.600"
                     border="1px solid"
                     borderColor="whiteAlpha.100"
-                    fontSize="sm"
-                    fontWeight="700"
-                    _hover={{bg: 'whiteAlpha.02', color: 'whiteAlpha.800', borderColor: 'whiteAlpha.300'}}
-                    _active={{bg: 'whiteAlpha.05'}}
+                    fontSize="xs"
+                    fontWeight="800"
+                    textTransform="uppercase"
+                    letterSpacing="0.05em"
+                    _hover={{bg: 'whiteAlpha.100', color: 'white', borderColor: 'whiteAlpha.400'}}
+                    _active={{bg: 'whiteAlpha.200', transform: 'scale(0.98)'}}
                     onClick={handleAdd}
                     disabled={text.trim().length < 2 || text.trim().length > 12}
                 >
@@ -313,24 +328,25 @@ const TagInput = ({onAdd}: TagInputProps) => {
                 </Button>
             </Flex>
 
-            <Flex wrap="wrap" gap={2}>
+            <Flex wrap="wrap" gap={3}>
                 {TAG_COLORS.map((c) => (
                     <Box
                         key={c}
-                        w="24px"
-                        h="24px"
+                        w="20px"
+                        h="20px"
                         borderRadius="full"
                         bg={c}
                         cursor="pointer"
                         border="2px solid"
                         borderColor={color === c ? 'white' : 'transparent'}
-                        transition="transform 0.2s"
-                        _hover={{transform: 'scale(1.1)'}}
+                        transition="all 0.2s"
+                        _hover={{transform: 'scale(1.2)'}}
                         onClick={() => setColor(c)}
+                        boxShadow={color === c ? `0 0 10px ${c}60` : 'none'}
                     />
                 ))}
 
-                <Box position="relative" w="24px" h="24px">
+                <Box position="relative" w="20px" h="20px">
                     <Input
                         type="color"
                         position="absolute"
@@ -352,10 +368,12 @@ const TagInput = ({onAdd}: TagInputProps) => {
                         borderColor="whiteAlpha.300"
                         align="center"
                         justify="center"
-                        color="whiteAlpha.600"
+                        color="whiteAlpha.500"
                         pointerEvents="none"
+                        transition="all 0.2s"
+                        _hover={{borderColor: 'whiteAlpha.500', color: 'whiteAlpha.700'}}
                     >
-                        <FiPlus size={12}/>
+                        <FiPlus size={10}/>
                     </Flex>
                 </Box>
             </Flex>
@@ -375,28 +393,33 @@ const Tag = ({ tag, onRemove, isOverlay, dragHandleProps }: TagProps) => (
         align="center"
         gap={2}
         px={3}
-        py={1}
+        py={1.5}
         borderRadius="md"
-        bg={`${tag.color}15`}
+        bg={`${tag.color}10`}
         border="1px solid"
         borderColor={`${tag.color}30`}
         position="relative"
         userSelect="none"
         boxShadow={isOverlay ? '0 10px 20px rgba(0,0,0,0.4)' : 'none'}
         cursor={isOverlay ? 'grabbing' : 'default'}
+        transition="all 0.2s"
+        _hover={{
+            bg: `${tag.color}20`,
+            borderColor: `${tag.color}50`,
+        }}
     >
         <Box
             {...dragHandleProps}
             cursor={isOverlay ? 'grabbing' : 'grab'}
             color="whiteAlpha.400"
-            _active={{ color: 'whiteAlpha.600' }}
-            _hover={{ color: 'whiteAlpha.600' }}
+            _active={{ color: 'white' }}
+            _hover={{ color: 'whiteAlpha.700' }}
         >
-            <FiMenu size={12} />
+            <FiMenu size={10} />
         </Box>
 
-        <Box w="6px" h="6px" borderRadius="full" bg={tag.color} />
-        <Text fontSize="10px" fontWeight="800" color="white" textTransform="uppercase">
+        <Box w="5px" h="5px" borderRadius="full" bg={tag.color} boxShadow={`0 0 6px ${tag.color}`} />
+        <Text fontSize="9px" fontWeight="800" color="white" textTransform="uppercase" letterSpacing="0.05em">
             {tag.text}
         </Text>
         {!isOverlay && onRemove && (
@@ -408,10 +431,10 @@ const Tag = ({ tag, onRemove, isOverlay, dragHandleProps }: TagProps) => (
                 minW="unset"
                 h="auto"
                 p={0.5}
-                _hover={{ color: 'white' }}
+                _hover={{ color: 'red.400', bg: 'transparent' }}
                 onClick={onRemove}
             >
-                <FiX size={12} />
+                <FiX size={10} />
             </IconButton>
         )}
     </Flex>
@@ -779,43 +802,47 @@ export const BaseProductModal = ({
                         </Dialog.Header>
 
                         <Dialog.Body
-                            px={{base: 6, md: 8}}
-                            py={{base: 6, md: 8}}
+                            px={{base: 6, md: 10}}
+                            py={{base: 6, md: 10}}
                             overflowY="auto"
                             overscrollBehavior="contain"
                             flex="1"
                             minH={0}
                             css={{
-                                '&::-webkit-scrollbar': {width: '4px'},
+                                '&::-webkit-scrollbar': {width: '3px'},
                                 '&::-webkit-scrollbar-track': {background: 'transparent'},
                                 '&::-webkit-scrollbar-thumb': {
                                     background: 'rgba(255, 255, 255, 0.1)',
                                     borderRadius: '10px'
                                 },
+                                '&::-webkit-scrollbar-thumb:hover': {
+                                    background: 'rgba(255, 255, 255, 0.2)',
+                                }
                             }}
                         >
                             {isLoadingInitial ? (
                                 <Flex align="center" justify="center" py={20} direction="column" gap={4}>
-                                    <Spinner size="md" color="whiteAlpha.400"/>
-                                    <Text fontSize="xs" color="whiteAlpha.400">Загрузка...</Text>
+                                    <Spinner size="sm" color="whiteAlpha.300" thickness="2px" />
+                                    <Text fontSize="10px" color="whiteAlpha.400" fontWeight="700" textTransform="uppercase" letterSpacing="0.05em">Загрузка...</Text>
                                 </Flex>
                             ) : (
                                 <form onSubmit={handleSubmit(handleFormSubmit)}>
-                                    <Stack gap={10}>
+                                    <Stack gap={12}>
                                         {errors.root && (
                                             <Alert.Root
                                                 status="error"
                                                 variant="subtle"
-                                                borderRadius="lg"
+                                                borderRadius="xl"
                                                 bg="red.950"
                                                 border="1px solid"
                                                 borderColor="red.900"
+                                                p={4}
                                             >
                                                 <Alert.Indicator color="red.400">
-                                                    <FiAlertCircle size={16}/>
+                                                    <FiAlertCircle size={14}/>
                                                 </Alert.Indicator>
                                                 <Alert.Content>
-                                                    <Alert.Description fontSize="xs" color="red.200">
+                                                    <Alert.Description fontSize="xs" color="red.200" fontWeight="600">
                                                         {errors.root.message}
                                                     </Alert.Description>
                                                 </Alert.Content>
@@ -825,23 +852,25 @@ export const BaseProductModal = ({
                                         {/* Информация */}
                                         <Box>
                                             <SectionHeader title="Основное" required />
-                                            <Stack gap={4}>
+                                            <Stack gap={5}>
                                                 <Box>
                                                     <Input
                                                         {...register('name')}
                                                         placeholder="Название"
                                                         bg={MODAL_STYLES.inputBackground}
                                                         borderColor="whiteAlpha.100"
-                                                        h="48px"
+                                                        h="52px"
                                                         fontSize="sm"
-                                                        borderRadius="lg"
+                                                        borderRadius="xl"
+                                                        px={4}
                                                         _focus={{
                                                             borderColor: MODAL_STYLES.inputFocusBorder,
                                                             bg: 'whiteAlpha.05',
                                                         }}
+                                                        _placeholder={{ color: 'whiteAlpha.400' }}
                                                     />
                                                     {errors.name && (
-                                                        <Text color="red.500" mt={1.5} fontSize="xs" fontWeight="600">
+                                                        <Text color="red.400" mt={2} ml={1} fontSize="10px" fontWeight="700" textTransform="uppercase">
                                                             {errors.name.message}
                                                         </Text>
                                                     )}
@@ -853,17 +882,19 @@ export const BaseProductModal = ({
                                                         placeholder="Описание"
                                                         bg={MODAL_STYLES.inputBackground}
                                                         borderColor="whiteAlpha.100"
-                                                        minH="100px"
+                                                        minH="120px"
                                                         fontSize="sm"
-                                                        borderRadius="lg"
-                                                        py={3}
+                                                        borderRadius="xl"
+                                                        px={4}
+                                                        py={4}
                                                         _focus={{
                                                             borderColor: MODAL_STYLES.inputFocusBorder,
                                                             bg: 'whiteAlpha.05',
                                                         }}
+                                                        _placeholder={{ color: 'whiteAlpha.400' }}
                                                     />
                                                     {errors.description && (
-                                                        <Text color="red.500" mt={1.5} fontSize="xs" fontWeight="600">
+                                                        <Text color="red.400" mt={2} ml={1} fontSize="10px" fontWeight="700" textTransform="uppercase">
                                                             {errors.description.message}
                                                         </Text>
                                                     )}
@@ -877,10 +908,10 @@ export const BaseProductModal = ({
                                             <Box
                                                 border="1px dashed"
                                                 borderColor="whiteAlpha.200"
-                                                borderRadius="xl"
+                                                borderRadius="20px"
                                                 p={2}
-                                                bg={isDragActive ? 'whiteAlpha.100' : 'whiteAlpha.02'}
-                                                transition="all 0.2s"
+                                                bg={isDragActive ? 'whiteAlpha.100' : 'whiteAlpha.03'}
+                                                transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
                                                 textAlign="center"
                                                 cursor="pointer"
                                                 onClick={() => document.getElementById('product-image-input')?.click()}
@@ -891,14 +922,19 @@ export const BaseProductModal = ({
                                                     setIsDragActive(false);
                                                     handleImageSelect(e.dataTransfer.files?.[0]);
                                                 }}
+                                                _hover={{
+                                                    borderColor: 'whiteAlpha.400',
+                                                    bg: 'whiteAlpha.06',
+                                                }}
                                             >
                                                 {previewImageUrl ? (
                                                     <Flex direction="column" align="center" p={4} gap={4}>
                                                         <Box
                                                             position="relative"
-                                                            borderRadius="lg"
+                                                            borderRadius="16px"
                                                             overflow="hidden"
                                                             onClick={(e) => e.stopPropagation()}
+                                                            boxShadow="0 10px 30px rgba(0,0,0,0.5)"
                                                         >
                                                             <Image
                                                                 src={previewImageUrl}
@@ -906,48 +942,61 @@ export const BaseProductModal = ({
                                                                 maxH="240px"
                                                                 w="full"
                                                                 objectFit="cover"
+                                                                transition="transform 0.5s ease"
+                                                                _hover={{ transform: 'scale(1.05)' }}
                                                             />
 
-                                                            <Flex position="absolute" top={2} right={2} gap={2}>
+                                                            <Flex position="absolute" top={3} right={3} gap={2}>
                                                                 <IconButton
                                                                     type="button"
                                                                     aria-label="Edit"
-                                                                    size="xs"
-                                                                    borderRadius="md"
+                                                                    size="sm"
+                                                                    borderRadius="lg"
                                                                     bg="blackAlpha.800"
                                                                     color="white"
+                                                                    backdropFilter="blur(8px)"
+                                                                    _hover={{ bg: 'white', color: 'black' }}
                                                                     onClick={(e) => { e.stopPropagation(); handleImageEditorOpen(); }}
                                                                 >
-                                                                    <FiEdit2 size={12}/>
+                                                                    <FiEdit2 size={14}/>
                                                                 </IconButton>
 
                                                                 <IconButton
                                                                     type="button"
                                                                     aria-label="Remove"
-                                                                    size="xs"
-                                                                    borderRadius="md"
+                                                                    size="sm"
+                                                                    borderRadius="lg"
                                                                     bg="blackAlpha.800"
                                                                     color="red.400"
+                                                                    backdropFilter="blur(8px)"
+                                                                    _hover={{ bg: 'red.500', color: 'white' }}
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         if (selectedImageFile) setSelectedImageFile(null);
                                                                         else setShouldRemoveImage(true);
                                                                     }}
                                                                 >
-                                                                    <FaTrash size={10}/>
+                                                                    <FaTrash size={12}/>
                                                                 </IconButton>
                                                             </Flex>
                                                         </Box>
-                                                        <Text fontSize="10px" color="whiteAlpha.400" fontWeight="700" textTransform="uppercase">
+                                                        <Text fontSize="9px" color="whiteAlpha.500" fontWeight="800" textTransform="uppercase" letterSpacing="0.05em">
                                                             {isUploadingImage ? 'Загрузка...' : imagePreviewLabel}
                                                         </Text>
                                                     </Flex>
                                                 ) : (
-                                                    <Stack align="center" gap={3} py={10}>
-                                                        <FiUploadCloud size={24} color="rgba(255,255,255,0.2)"/>
-                                                        <Text color="whiteAlpha.500" fontSize="xs" fontWeight="600">
-                                                            Нажмите для загрузки изображения
-                                                        </Text>
+                                                    <Stack align="center" gap={4} py={12}>
+                                                        <Box p={4} borderRadius="full" bg="whiteAlpha.06" color="whiteAlpha.400">
+                                                            <FiUploadCloud size={28}/>
+                                                        </Box>
+                                                        <Stack gap={1} align="center">
+                                                            <Text color="whiteAlpha.600" fontSize="xs" fontWeight="700">
+                                                                Нажмите или перетащите файл
+                                                            </Text>
+                                                            <Text color="whiteAlpha.300" fontSize="10px" fontWeight="600">
+                                                                PNG, JPG до 5МБ
+                                                            </Text>
+                                                        </Stack>
                                                     </Stack>
                                                 )}
                                             </Box>
@@ -961,7 +1010,7 @@ export const BaseProductModal = ({
                                             />
 
                                             {errors.imageFile && (
-                                                <Text color="red.500" mt={2} fontSize="xs" fontWeight="600">
+                                                <Text color="red.400" mt={2} ml={1} fontSize="10px" fontWeight="700" textTransform="uppercase">
                                                     {errors.imageFile.message}
                                                 </Text>
                                             )}
@@ -970,29 +1019,32 @@ export const BaseProductModal = ({
                                         {/* Цены */}
                                         <Box>
                                             <SectionHeader title="Цены" required />
-                                            <Stack gap={3}>
+                                            <Stack gap={4}>
                                                 {priceFields.map((priceField, index) => (
                                                     <MotionBox
                                                         key={priceField.id}
                                                         layout
-                                                        initial={{ opacity: 0 }}
-                                                        animate={{ opacity: 1 }}
-                                                        exit={{ opacity: 0 }}
+                                                        initial={{ opacity: 0, y: 10 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        exit={{ opacity: 0, scale: 0.95 }}
+                                                        transition={{ duration: 0.2 }}
                                                     >
                                                         <Flex gap={3} align="flex-start">
                                                             <Box flex={2}>
                                                                 <Input
                                                                     {...register(`prices.${index}.size`)}
-                                                                    placeholder="Размер/Порция"
-                                                                    bg="whiteAlpha.05"
+                                                                    placeholder="Размер / Порция"
+                                                                    bg="whiteAlpha.03"
                                                                     borderColor="whiteAlpha.100"
                                                                     fontSize="sm"
-                                                                    borderRadius="lg"
-                                                                    h="44px"
-                                                                    _focus={{ borderColor: 'whiteAlpha.300' }}
+                                                                    borderRadius="xl"
+                                                                    h="48px"
+                                                                    px={4}
+                                                                    _focus={{ borderColor: MODAL_STYLES.inputFocusBorder, bg: 'whiteAlpha.05' }}
+                                                                    _placeholder={{ color: 'whiteAlpha.400' }}
                                                                 />
                                                                 {errors.prices?.[index]?.size && (
-                                                                    <Text color="red.500" fontSize="10px" mt={1} fontWeight="600">
+                                                                    <Text color="red.400" fontSize="9px" mt={2} ml={1} fontWeight="800" textTransform="uppercase">
                                                                         {errors.prices?.[index]?.size?.message}
                                                                     </Text>
                                                                 )}
@@ -1004,18 +1056,20 @@ export const BaseProductModal = ({
                                                                         setValueAs: (v) => typeof v === 'string' ? normalizePriceValue(v) : v,
                                                                     })}
                                                                     placeholder="Цена"
-                                                                    bg="whiteAlpha.05"
+                                                                    bg="whiteAlpha.03"
                                                                     borderColor="whiteAlpha.100"
                                                                     fontSize="sm"
-                                                                    borderRadius="lg"
-                                                                    h="44px"
-                                                                    _focus={{ borderColor: 'whiteAlpha.300' }}
+                                                                    borderRadius="xl"
+                                                                    h="48px"
+                                                                    px={4}
+                                                                    _focus={{ borderColor: MODAL_STYLES.inputFocusBorder, bg: 'whiteAlpha.05' }}
+                                                                    _placeholder={{ color: 'whiteAlpha.400' }}
                                                                     onInput={(e: FormEvent<HTMLInputElement>) => {
                                                                         e.currentTarget.value = sanitizePriceInput(e.currentTarget.value)
                                                                     }}
                                                                 />
                                                                 {errors.prices?.[index]?.price && (
-                                                                    <Text color="red.500" fontSize="10px" mt={1} fontWeight="600">
+                                                                    <Text color="red.400" fontSize="9px" mt={2} ml={1} fontWeight="800" textTransform="uppercase">
                                                                         {errors.prices?.[index]?.price?.message}
                                                                     </Text>
                                                                 )}
@@ -1027,10 +1081,12 @@ export const BaseProductModal = ({
                                                                 variant="ghost"
                                                                 size="sm"
                                                                 color="whiteAlpha.300"
-                                                                _hover={{ color: 'red.400', bg: 'transparent' }}
+                                                                _hover={{ color: 'red.400', bg: 'whiteAlpha.100' }}
                                                                 onClick={() => removePrice(index)}
                                                                 disabled={priceFields.length <= 1}
-                                                                h="44px"
+                                                                h="48px"
+                                                                w="48px"
+                                                                borderRadius="xl"
                                                             >
                                                                 <FaTrash size={12}/>
                                                             </IconButton>
@@ -1040,17 +1096,23 @@ export const BaseProductModal = ({
 
                                                 <Button
                                                     type="button"
-                                                    variant="ghost"
-                                                    color="whiteAlpha.300"
+                                                    variant="outline"
+                                                    color="whiteAlpha.600"
                                                     size="sm"
-                                                    h="40px"
+                                                    h="44px"
                                                     w="full"
-                                                    border="1px dashed"
-                                                    borderColor="whiteAlpha.100"
-                                                    _hover={{ bg: 'transparent', color: 'whiteAlpha.600', borderColor: 'whiteAlpha.300' }}
-                                                    _active={{ bg: 'whiteAlpha.02' }}
+                                                    borderRadius="xl"
+                                                    borderColor="whiteAlpha.200"
+                                                    bg="whiteAlpha.05"
+                                                    fontSize="xs"
+                                                    fontWeight="800"
+                                                    textTransform="uppercase"
+                                                    letterSpacing="0.05em"
+                                                    _hover={{ bg: 'whiteAlpha.100', color: 'whiteAlpha.800', borderColor: 'whiteAlpha.400' }}
+                                                    _active={{ bg: 'whiteAlpha.200', transform: 'scale(0.99)' }}
                                                     onClick={() => appendPrice(DEFAULT_PRICE)}
                                                 >
+                                                    <FiPlus size={14} style={{ marginRight: '8px' }} />
                                                     Добавить вариант
                                                 </Button>
                                             </Stack>
@@ -1059,7 +1121,7 @@ export const BaseProductModal = ({
                                         {/* Категории */}
                                         <Box>
                                             <SectionHeader title="Категории" />
-                                            <Flex wrap="wrap" gap={2}>
+                                            <Flex wrap="wrap" gap={3}>
                                                 {categories.map(({id, name}) => (
                                                     <Controller
                                                         key={id}
@@ -1070,19 +1132,24 @@ export const BaseProductModal = ({
                                                             return (
                                                                 <Box
                                                                     px={4}
-                                                                    py={1.5}
+                                                                    py={2}
                                                                     borderRadius="full"
                                                                     border="1px solid"
-                                                                    borderColor={isSelected ? 'white' : 'whiteAlpha.100'}
+                                                                    borderColor={isSelected ? 'white' : 'whiteAlpha.200'}
                                                                     bg={isSelected ? 'white' : 'transparent'}
                                                                     color={isSelected ? 'black' : 'whiteAlpha.600'}
                                                                     fontSize="xs"
-                                                                    fontWeight="700"
+                                                                    fontWeight="800"
+                                                                    textTransform="uppercase"
+                                                                    letterSpacing="0.02em"
                                                                     cursor="pointer"
-                                                                    transition="all 0.1s"
+                                                                    transition="all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
                                                                     _hover={{
-                                                                        borderColor: isSelected ? 'white' : 'whiteAlpha.300',
+                                                                        borderColor: isSelected ? 'white' : 'whiteAlpha.500',
+                                                                        color: isSelected ? 'black' : 'whiteAlpha.900',
+                                                                        transform: 'translateY(-1px)',
                                                                     }}
+                                                                    _active={{ transform: 'translateY(0) scale(0.98)' }}
                                                                     onClick={() => {
                                                                         if (isSelected) field.onChange(field.value?.filter((cid: string) => cid !== id));
                                                                         else field.onChange([...(field.value || []), id]);
@@ -1100,7 +1167,7 @@ export const BaseProductModal = ({
                                         {/* Теги */}
                                         <Box>
                                             <SectionHeader title="Теги" />
-                                            <Stack gap={4}>
+                                            <Stack gap={5}>
                                                 <DndContext
                                                     sensors={sensors}
                                                     collisionDetection={closestCenter}
@@ -1111,7 +1178,7 @@ export const BaseProductModal = ({
                                                         items={tagFields.map((f) => f.id)}
                                                         strategy={horizontalListSortingStrategy}
                                                     >
-                                                        <Flex wrap="wrap" gap={2}>
+                                                        <Flex wrap="wrap" gap={3}>
                                                             <AnimatePresence mode="popLayout">
                                                                 {tagFields.map((tagField, index) => (
                                                                     <SortableTag
@@ -1140,25 +1207,38 @@ export const BaseProductModal = ({
                                                     </DragOverlay>
                                                 </DndContext>
 
-                                                {tagFields.length < 2 && (
-                                                    <Box p={4} borderRadius="xl" bg="whiteAlpha.02" border="1px solid" borderColor="whiteAlpha.08">
-                                                        <TagInput onAdd={(tag) => appendTag(tag)} />
-                                                    </Box>
-                                                )}
+                                                <AnimatePresence>
+                                                    {tagFields.length < 2 && (
+                                                        <MotionBox
+                                                            initial={{ opacity: 0, height: 0 }}
+                                                            animate={{ opacity: 1, height: 'auto' }}
+                                                            exit={{ opacity: 0, height: 0 }}
+                                                            transition={{ duration: 0.25, ease: 'easeInOut' }}
+                                                            overflow="hidden"
+                                                            p={5}
+                                                            borderRadius="20px"
+                                                            bg="whiteAlpha.03"
+                                                            border="1px solid"
+                                                            borderColor="whiteAlpha.08"
+                                                        >
+                                                            <TagInput onAdd={(tag) => appendTag(tag)} />
+                                                        </MotionBox>
+                                                    )}
+                                                </AnimatePresence>
                                             </Stack>
                                         </Box>
 
                                         {/* Настройки */}
-                                        <Stack direction={{ base: 'column', sm: 'row' }} gap={4}>
+                                        <Stack direction={{ base: 'column', sm: 'row' }} gap={5}>
                                             <Box flex={1}>
                                                 <Controller
                                                     name="hidden"
                                                     control={control}
                                                     render={({field}) => (
                                                         <ToggleSwitch
-                                                            label="Скрыть"
+                                                            label="Скрыть товар"
                                                             value={!!field.value}
-                                                            activeColor="#E67E22"
+                                                            activeColor="#D35400"
                                                             onChange={field.onChange}
                                                         />
                                                     )}
@@ -1170,9 +1250,9 @@ export const BaseProductModal = ({
                                                     control={control}
                                                     render={({field}) => (
                                                         <ToggleSwitch
-                                                            label="Алкоголь"
+                                                            label="Алкогольный"
                                                             value={!!field.value}
-                                                            activeColor="#9B59B6"
+                                                            activeColor="#8E44AD"
                                                             onChange={field.onChange}
                                                         />
                                                     )}
@@ -1184,21 +1264,21 @@ export const BaseProductModal = ({
                                     <Dialog.Footer
                                         borderTop="1px solid"
                                         borderColor={MODAL_STYLES.headerBorder}
-                                        mt={10}
-                                        pt={6}
+                                        mt={12}
+                                        pt={8}
                                         px={0}
                                     >
-                                        <Flex w="full" justify="flex-end" gap={3}>
+                                        <Flex w="full" justify="flex-end" gap={4}>
                                             <Button
                                                 type="button"
                                                 variant="ghost"
-                                                color="whiteAlpha.400"
-                                                borderRadius="lg"
-                                                px={6}
-                                                h="44px"
+                                                color="whiteAlpha.500"
+                                                borderRadius="xl"
+                                                px={8}
+                                                h="48px"
                                                 fontSize="sm"
-                                                fontWeight="600"
-                                                _hover={{ bg: 'whiteAlpha.05', color: 'white' }}
+                                                fontWeight="700"
+                                                _hover={{ bg: 'whiteAlpha.100', color: 'white' }}
                                                 onClick={handleClose}
                                             >
                                                 Отмена
@@ -1208,17 +1288,18 @@ export const BaseProductModal = ({
                                                 type="submit"
                                                 loading={isSubmitting}
                                                 loadingText={submitLoadingText}
-                                                bg="transparent"
-                                                color="whiteAlpha.500"
-                                                border="1px solid"
-                                                borderColor="whiteAlpha.200"
-                                                borderRadius="lg"
-                                                px={8}
-                                                h="44px"
+                                                bg="white"
+                                                color="black"
+                                                borderRadius="xl"
+                                                px={10}
+                                                h="52px"
                                                 fontSize="sm"
-                                                fontWeight="700"
-                                                _hover={{ bg: 'whiteAlpha.02', color: 'whiteAlpha.900', borderColor: 'whiteAlpha.400' }}
-                                                _active={{ bg: 'whiteAlpha.05' }}
+                                                fontWeight="800"
+                                                textTransform="uppercase"
+                                                letterSpacing="0.02em"
+                                                _hover={{ bg: 'whiteAlpha.900', transform: 'translateY(-1px)' }}
+                                                _active={{ bg: 'whiteAlpha.800', transform: 'translateY(0) scale(0.98)' }}
+                                                boxShadow="0 4px 20px rgba(255, 255, 255, 0.15)"
                                             >
                                                 {submitText}
                                             </Button>
