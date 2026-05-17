@@ -825,7 +825,7 @@ export const BaseProductModal = ({
                         >
                             {isLoadingInitial ? (
                                 <Flex align="center" justify="center" py={20} direction="column" gap={4}>
-                                    <Spinner size="sm" color="whiteAlpha.300" thickness="2px" />
+                                    <Spinner size="sm" color="whiteAlpha.300" />
                                     <Text fontSize="10px" color="whiteAlpha.400" fontWeight="700" textTransform="uppercase" letterSpacing="0.05em">Загрузка...</Text>
                                 </Flex>
                             ) : (
