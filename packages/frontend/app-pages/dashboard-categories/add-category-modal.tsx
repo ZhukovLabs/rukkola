@@ -89,8 +89,9 @@ export const AddCategoryDialog = ({categories, onRefresh}: Props) => {
         const items: Array<{ label: string; value: string }> = []
 
         cats.filter(({parent}) => !parent)
-            .forEach(({_id, name}) => {
-                items.push({label: name, value: _id.toString()})
+            .forEach((cat) => {
+                const id = cat._id?.toString() ?? cat.id
+                items.push({label: cat.name, value: id})
             })
 
         return items
