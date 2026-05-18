@@ -13,7 +13,6 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @Controller('categories')
-@UseGuards(JwtAuthGuard)
 export class CategoriesController {
   constructor(private categoriesService: CategoriesService) {}
 
@@ -27,6 +26,7 @@ export class CategoriesController {
     };
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   async create(
     @Body()
@@ -46,6 +46,7 @@ export class CategoriesController {
     };
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch('reorder')
   async reorder(
     @Body() body: { updates: { id: string; order: number }[] },
@@ -59,6 +60,7 @@ export class CategoriesController {
     };
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id/name')
   async updateName(
     @Param('id') id: string,
@@ -73,6 +75,7 @@ export class CategoriesController {
     };
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id/toggle')
   async toggleField(
     @Param('id') id: string,
@@ -87,6 +90,7 @@ export class CategoriesController {
     };
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id/move')
   async move(
     @Param('id') id: string,
@@ -101,6 +105,7 @@ export class CategoriesController {
     };
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id/move-to-position')
   async moveToPosition(
     @Param('id') id: string,
@@ -119,6 +124,7 @@ export class CategoriesController {
     };
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id/mark-alcohol')
   async markAlcohol(
     @Param('id') id: string,
@@ -132,6 +138,7 @@ export class CategoriesController {
     };
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id/mark-non-alcohol')
   async markNonAlcohol(
     @Param('id') id: string,
@@ -145,6 +152,7 @@ export class CategoriesController {
     };
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async delete(
     @Param('id') id: string,

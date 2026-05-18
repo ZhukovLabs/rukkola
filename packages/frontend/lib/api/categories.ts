@@ -4,7 +4,7 @@ import type { ActionResponse } from '@/types';
 // ---- Types ----
 
 export type CategoryItem = {
-  _id: string;
+  id: string;
   name: string;
   order: number;
   isMenuItem: boolean;

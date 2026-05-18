@@ -11,7 +11,7 @@ export const NotFoundQuickLinks = () => {
         staleTime: 60 * 1000,
     });
 
-    const categories = response?.data?.filter(c => c.isMenuItem && !c.hidden).slice(0, 4) || [];
+    const categories = response?.data?.slice(0, 4) || [];
 
     if (isLoading) {
         return (
@@ -41,10 +41,10 @@ export const NotFoundQuickLinks = () => {
             <Flex wrap="wrap" justify="center" gap={3}>
                 {categories.map((category, index) => (
                     <MotionButton
-                        key={category._id}
+                        key={category.id}
                         as={Link}
                         // @ts-expect-error - chakra v3 + next/link typing issue
-                        href={`/#${category._id}`}
+                        href={`/#${category.id}`}
                         size="sm"
                         variant="outline"
                         color="gray.300"
