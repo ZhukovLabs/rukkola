@@ -91,7 +91,7 @@ export function Navbar({items}: NavbarProps) {
         <Box
             data-navbar
             position="sticky"
-            top={0}
+            top="env(safe-area-inset-top, 0px)"
             mx="-20px"
             pt={isMobile ? "env(safe-area-inset-top, 0px)" : 0}
             pb={isMobile ? "env(safe-area-inset-bottom, 0px)" : 0}
