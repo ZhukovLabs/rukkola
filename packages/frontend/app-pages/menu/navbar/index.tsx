@@ -1,7 +1,6 @@
 'use client';
 
-import {useEffect, useState, useCallback} from "react";
-import {Box} from "@chakra-ui/react";
+import {useEffect, useState, useCallback} from "react";import {Box} from "@chakra-ui/react";
 import {useSearchParams} from "next/navigation";
 
 import {NavbarItem} from "./types";
@@ -20,7 +19,6 @@ export function Navbar({items}: NavbarProps) {
     const [activeId, setActiveId] = useState<string | null>(null);
     const [isMobile, setIsMobile] = useState(false);
     const [openIds, setOpenIds] = useState<string[]>([]);
-    const [isStuck, setIsStuck] = useState(false);
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -47,9 +45,7 @@ export function Navbar({items}: NavbarProps) {
         const handleScroll = () => {
             const currentScrollY = window.scrollY;
 
-            setIsStuck(currentScrollY > 0);
-
-            if (rafId) cancelAnimationFrame(rafId);
+if (rafId) cancelAnimationFrame(rafId);
 
             rafId = requestAnimationFrame(() => {
                 let foundId: string | null = null;
@@ -98,7 +94,7 @@ export function Navbar({items}: NavbarProps) {
             zIndex={100}
             bgGradient="linear(to-r, rgba(26,32,44,0.95), rgba(26,32,44,0.9))"
             backdropFilter="blur(10px)"
-            borderBottom={isStuck ? "1px solid rgba(255,255,255,0.06)" : "none"}
+            borderBottom="1px solid rgba(255,255,255,0.06)"
             py={{base: 2, md: 4}}
         >
             <MobileNav
@@ -112,7 +108,6 @@ export function Navbar({items}: NavbarProps) {
             <DesktopNav
                 items={items}
                 activeId={activeId}
-                isFixed={isStuck}
                 onItemClick={handleClick}
             />
         </Box>
