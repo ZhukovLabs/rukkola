@@ -139,7 +139,7 @@ function flattenCategoryTree(
     return result
 }
 
-interface SortableRowProps {
+type SortableRowProps = {
     category: CategoryWithChildren
     depth: number
     position: number

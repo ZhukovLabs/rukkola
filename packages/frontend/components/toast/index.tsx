@@ -4,13 +4,13 @@ import { Box, Text, HStack, IconButton } from '@chakra-ui/react'
 import { FiX, FiCheckCircle, FiAlertCircle } from 'react-icons/fi'
 import { motion } from 'framer-motion'
 
-interface ToastProps {
+type ToastProps = {
     message: string
     type: 'success' | 'error'
     onClose: () => void
 }
 
-const MotionBox = motion(Box)
+const MotionBox = motion.create(Box)
 
 export function Toast({ message, type, onClose }: ToastProps) {
     const bgColor = type === 'success' ? 'gray.500' : 'red.500'

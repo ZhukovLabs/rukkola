@@ -4,10 +4,10 @@ import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { CartButton } from "./cart-button";
 import { Box } from "@chakra-ui/react";
-import { ComponentProps } from "react";
 import { AdminFloatButton } from "@/components/admin-float-button";
 import { CartModalProvider } from "./cart-modal/use-cart-modal";
 import {Navbar} from "@/app-pages/menu/navbar";
+import type {NavbarItem} from "@/app-pages/menu/navbar/types";
 
 import { ProductModalProvider } from "./product-modal/use-product-modal";
 
@@ -18,8 +18,8 @@ const CartModal = dynamic(() => import("./cart-modal").then(m => m.CartModal), {
 const ActiveLunch = dynamic(() => import("./active-lunch").then(m => m.ActiveLunch));
 
 type MenuPageClientProps = {
-    activeLunch: Partial<ComponentProps<typeof ActiveLunch>>
-    navbar: ComponentProps<typeof Navbar>
+    activeLunch: { image?: string }
+    navbar: { items: NavbarItem[] }
     children?: React.ReactNode
 }
 

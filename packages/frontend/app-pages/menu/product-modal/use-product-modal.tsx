@@ -3,11 +3,11 @@
 import { createContext, useContext, useState, useCallback, type ReactNode, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
-interface ProductModalContextType {
+type ProductModalContextType = {
     productId: string | null;
     open: (id: string) => void;
     close: () => void;
-}
+};
 
 const ProductModalContext = createContext<ProductModalContextType | null>(null);
 

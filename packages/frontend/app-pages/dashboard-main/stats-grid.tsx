@@ -10,16 +10,16 @@ import {
 import {motion} from "framer-motion";
 import {FiBox, FiLayers, FiUsers} from "react-icons/fi";
 
-const MotionBox = motion(Box);
+const MotionBox = motion.create(Box);
 
-interface StatsGridProps {
+type StatsGridProps = {
     stats: {
         products: number;
         hiddenProducts?: number;
         categories: number;
         users: number;
     };
-}
+};
 
 export const StatsGrid = ({stats}: StatsGridProps) => {
     return (
@@ -47,13 +47,13 @@ export const StatsGrid = ({stats}: StatsGridProps) => {
     );
 };
 
-interface StatCardProps {
+type StatCardProps = {
     label: string;
     value: number;
     icon: React.ElementType;
     helpText?: string;
     hiddenValue?: number;
-}
+};
 
 const StatCard = ({label, value, icon, helpText, hiddenValue}: StatCardProps) => (
     <MotionBox

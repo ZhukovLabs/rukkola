@@ -2,12 +2,12 @@
 
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 
-interface CartModalContextType {
+type CartModalContextType = {
     isOpen: boolean;
     open: () => void;
     close: () => void;
     toggle: () => void;
-}
+};
 
 const CartModalContext = createContext<CartModalContextType | null>(null);
 

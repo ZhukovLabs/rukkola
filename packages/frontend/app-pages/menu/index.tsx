@@ -9,12 +9,17 @@ import {CookieNotice} from "@/components/cookie-notice";
 
 const Footer = dynamic(() => import("./footer").then(m => m.Footer));
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://rukkola-gomel.by";
 const INTERNAL_API = process.env.INTERNAL_API_URL || 'http://localhost:4000/api';
 
 type MenuPageProps = {
     searchParams: Promise<{ token?: unknown }>
 }
+
+type NavItem = {
+    id: string;
+    name: string;
+    children?: { id: string; name: string }[];
+};
 
 type MenuCategory = {
     _id: string;
@@ -38,13 +43,16 @@ type MenuDataResponse = {
     };
 };
 
+type ActiveLunchData = {
+    image: string | undefined;
+};
+
 export const MenuPage = async ({searchParams}: MenuPageProps) => {
     const {token} = await searchParams;
-
     const alcoholIsVisible = token === 'x7fa5ca6';
 
-    let activeLunch: { id: string; image: string | null; active: boolean } | null = null;
-    let categories: { id: string; name: string; parent: string | null; order: number; showGroupTitle: boolean }[] = [];
+    let activeLunch: ActiveLunchData | null = null;
+    let categories: MenuCategory[] = [];
     let fetchError = false;
 
     try {
@@ -57,20 +65,10 @@ export const MenuPage = async ({searchParams}: MenuPageProps) => {
             const json: MenuDataResponse = await res.json();
             if (json.success && json.data) {
                 activeLunch = json.data.activeLunch
-                    ? {
-                        id: json.data.activeLunch._id,
-                        image: json.data.activeLunch.image ?? null,
-                        active: json.data.activeLunch.active ?? false,
-                    }
+                    ? { image: json.data.activeLunch.image ?? undefined }
                     : null;
 
-                categories = json.data.categories.map(c => ({
-                    id: c._id,
-                    name: c.name,
-                    parent: c.parent ?? null,
-                    order: c.order ?? 0,
-                    showGroupTitle: c.showGroupTitle ?? true,
-                }));
+                categories = json.data.categories;
             }
         } else {
             fetchError = true;
@@ -80,14 +78,14 @@ export const MenuPage = async ({searchParams}: MenuPageProps) => {
         fetchError = true;
     }
 
-    const navItems = categories
-        .filter(({parent}) => !parent)
+    const navItems: NavItem[] = categories
+        .filter(c => !c.parent)
         .map(parent => ({
-            id: parent.id,
+            id: parent._id,
             name: parent.name,
             children: categories
-                .filter(c => c.parent === parent.id)
-                .map(sub => ({id: sub.id, name: sub.name}))
+                .filter(c => c.parent === parent._id)
+                .map(sub => ({ id: sub._id, name: sub.name }))
         }));
 
     return (

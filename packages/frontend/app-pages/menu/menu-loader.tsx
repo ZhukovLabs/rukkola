@@ -4,8 +4,8 @@ import {Box, Skeleton, VStack, HStack, Spinner} from "@chakra-ui/react";
 import {motion, AnimatePresence} from "framer-motion";
 import {useState, useEffect} from "react";
 
-const MotionSkeleton = motion(Skeleton);
-const MotionBox = motion(Box);
+const MotionSkeleton = motion.create(Skeleton);
+const MotionBox = motion.create(Box);
 
 const loaderTexts = [
     "Готовим вкусности…",

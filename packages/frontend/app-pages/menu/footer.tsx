@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import {ElementType, useMemo} from "react";
 import NextLink from "next/link";
 
-const MotionLink = motion(Link);
+const MotionLink = motion.create(Link);
 
 type FooterItemProps = {
     icon: ElementType;
