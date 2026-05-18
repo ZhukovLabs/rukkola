@@ -51,6 +51,8 @@ export class CategoriesService {
                     name: 1,
                     order: 1,
                     parent: 1,
+                    isMenuItem: {$ifNull: ['$isMenuItem', false]},
+                    showGroupTitle: {$ifNull: ['$showGroupTitle', false]},
                 },
             },
         ]);
