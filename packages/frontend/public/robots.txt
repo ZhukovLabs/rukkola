@@ -1,6 +1,7 @@
 # *
 User-agent: *
-Allow: /
+Allow: /api/products/image/
+Allow: /api/lunches/image/
 Disallow: /dashboard*
 Disallow: /login*
 Disallow: /api*
