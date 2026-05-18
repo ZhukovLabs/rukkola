@@ -13,8 +13,7 @@
     "analyze": "npx next experimental-analyze",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "postbuild": "next-sitemap"
+    "lint": "eslint"
   },
   "dependencies": {
     "@chakra-ui/icons": "^2.2.4",
@@ -34,7 +33,6 @@
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.16.0",
     "next": "16.2.6",
-    "next-sitemap": "^4.2.3",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-easy-crop": "^5.5.7",
