@@ -10,7 +10,7 @@ export const BackgroundBlobs = ({reducedMotion}: BackgroundBlobsProps) => {
             initial: {opacity: 0},
             animate: {opacity: 0.12},
             transition: {duration: 0}
-        } as const
+        }
         : {
             initial: {scale: 0.8, opacity: 0},
             animate: {scale: [1, 1.1, 1], opacity: 1},
@@ -20,7 +20,7 @@ export const BackgroundBlobs = ({reducedMotion}: BackgroundBlobsProps) => {
                 ease: "easeInOut" as const,
                 delay
             },
-        } as const;
+        };
 
     return (
         <>
