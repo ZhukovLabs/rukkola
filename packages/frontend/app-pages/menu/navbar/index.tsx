@@ -19,12 +19,24 @@ export function Navbar({items}: NavbarProps) {
     const [activeId, setActiveId] = useState<string | null>(null);
     const [isMobile, setIsMobile] = useState(false);
     const [openIds, setOpenIds] = useState<string[]>([]);
+    const [isStuck, setIsStuck] = useState(false);
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
         checkMobile();
         window.addEventListener('resize', checkMobile, {passive: true});
         return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    useEffect(() => {
+        const check = () => {
+            const el = document.querySelector('[data-navbar]');
+            if (!el) return;
+            setIsStuck(el.getBoundingClientRect().top <= 1);
+        };
+        check();
+        window.addEventListener('scroll', check, {passive: true});
+        return () => window.removeEventListener('scroll', check);
     }, []);
 
     const handleClick = useCallback((id: string) => {
@@ -94,7 +106,8 @@ if (rafId) cancelAnimationFrame(rafId);
             zIndex={100}
             bgGradient="linear(to-r, rgba(26,32,44,0.95), rgba(26,32,44,0.9))"
             backdropFilter="blur(10px)"
-            borderBottom="1px solid rgba(255,255,255,0.06)"
+            boxShadow={isStuck ? "0 1px 0 0 rgba(255,255,255,0.06)" : "0 0px 0 0 rgba(255,255,255,0.06)"}
+            transition="box-shadow 0.3s ease"
             py={{base: 2, md: 4}}
         >
             <MobileNav
