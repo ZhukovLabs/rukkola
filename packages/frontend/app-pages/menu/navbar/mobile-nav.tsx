@@ -14,7 +14,6 @@ type MobileNavProps = {
     activeId: string | null;
     openIds: string[];
     setOpenIds: React.Dispatch<React.SetStateAction<string[]>>;
-    isFixed: boolean;
     onItemClick: (id: string) => void;
 };
 
@@ -23,14 +22,13 @@ export const MobileNav = memo(function MobileNav({
     activeId,
     openIds,
     setOpenIds,
-    isFixed,
     onItemClick,
 }: MobileNavProps) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     return (
         <Box display={{base: "flex", md: "none"}} flexDirection="column">
-            <Box ref={scrollContainerRef} overflowX="auto" overflowY="hidden" css={hiddenScrollbar} px={isFixed ? 5 : 0}>
+            <Box ref={scrollContainerRef} overflowX="auto" css={hiddenScrollbar} pl="20px">
                 <Flex gap={2} pb={1} flexWrap="nowrap">
                     {items.map((item) => {
                         const hasChildren = !!item.children?.length;
@@ -39,7 +37,7 @@ export const MobileNav = memo(function MobileNav({
 
                         return (
                             <HStack key={item.id} data-nav-id={item.id} gap={1.5} flexShrink={0} align="start" alignItems="center">
-                                <Box as="button" flexShrink={0} display="inline-flex" alignItems="center" gap={1.5} px={4} py={2} borderRadius="full" borderWidth="1.5px" borderColor={isGroupActive || isOpen ? "gray.400" : "whiteAlpha.300"} bg={isGroupActive || isOpen ? "linear-gradient(135deg, gray.500 0%, gray.600 100%)" : "whiteAlpha.100"} color={isGroupActive || isOpen ? "white" : "whiteAlpha.800"} fontWeight="semibold" fontSize="sm" cursor="pointer" _hover={{borderColor: "gray.400", bg: isGroupActive || isOpen ? "linear-gradient(135deg, gray.400 0%, gray.500 100%)" : "whiteAlpha.200", transform: "translateY(-1px)"}} _active={{transform: "translateY(0)"}}                                 onClick={() => {
+                                <Box as="button" flexShrink={0} display="inline-flex" alignItems="center" gap={1.5} px={4} py={2} borderRadius="full" borderWidth="1.5px" borderColor={isGroupActive || isOpen ? "gray.400" : "whiteAlpha.300"} bg={isGroupActive || isOpen ? "linear-gradient(135deg, gray.500 0%, gray.600 100%)" : "whiteAlpha.100"} color={isGroupActive || isOpen ? "white" : "whiteAlpha.800"} fontWeight="semibold" fontSize="sm" cursor="pointer" _hover={{borderColor: "gray.400", bg: isGroupActive || isOpen ? "linear-gradient(135deg, gray.400 0%, gray.500 100%)" : "whiteAlpha.200"}}                                 onClick={() => {
                                     if (hasChildren) {
                                         setOpenIds((prev) => {
                                             const isOpening = !prev.includes(item.id);
@@ -70,6 +68,7 @@ export const MobileNav = memo(function MobileNav({
                             </HStack>
                         );
                     })}
+                    <Box flexShrink={0} w="1px"/>
                 </Flex>
             </Box>
         </Box>
