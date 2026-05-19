@@ -235,9 +235,10 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                     maxW={{base: '100%', md: '400px'}}
                 >
                     <HStack gap={3} align="flex-start">
-                        <Icon as={FiAlertCircle} boxSize={5} color="blue.400" mt={0.5} />
+                        <Icon as={FiAlertCircle} boxSize={5} color="blue.400" mt={0.5}/>
                         <Text fontSize="xs" color="blue.100" lineHeight="tall">
-                            Совет: Регулярно удаляйте старые изображения. Это поможет поддерживать порядок и ускорит работу системы.
+                            Совет: Регулярно удаляйте старые изображения. Это поможет поддерживать порядок и ускорит
+                            работу системы.
                         </Text>
                     </HStack>
                 </Box>
@@ -289,14 +290,15 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                         alignItems="center"
                                         gap={2}
                                     >
-                                        <Icon as={FiStar} />
-                    АКТИВЕН
+                                        <Icon as={FiStar}/>
+                                        АКТИВЕН
                                     </Badge>
                                 </Box>
 
                                 <VStack align="flex-start" gap={4} flex={1}>
                                     <Box>
-                                        <Text color="cyan.400" fontWeight="bold" fontSize="sm" textTransform="uppercase" letterSpacing="widest">
+                                        <Text color="cyan.400" fontWeight="bold" fontSize="sm" textTransform="uppercase"
+                                              letterSpacing="widest">
                                             Текущее отображение
                                         </Text>
                                         <Heading size="xl" color="white" mt={1}>
@@ -310,7 +312,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                         size="lg"
                                         borderRadius="xl"
                                     >
-                                        <FiPower />
+                                        <FiPower/>
                                         Скрыть из меню
                                     </Button>
                                 </VStack>
@@ -373,7 +375,10 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                         type="file"
                                         accept="image/*"
                                         hidden
-                                        onChange={e => dispatch({type: 'SET_FILE', payload: e.target.files?.[0] ?? null})}
+                                        onChange={e => dispatch({
+                                            type: 'SET_FILE',
+                                            payload: e.target.files?.[0] ?? null
+                                        })}
                                     />
 
                                     <AnimatePresence mode="wait">
@@ -396,8 +401,8 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                                     boxShadow="lg"
                                                 />
                                                 <HStack gap={2} bg="gray.800" px={3} py={1} borderRadius="full">
-                                                    <Icon as={FiCheck} color="cyan.400" />
-                                                    <Text fontSize="xs" color="gray.300" maxW="150px" isTruncated>
+                                                    <Icon as={FiCheck} color="cyan.400"/>
+                                                    <Text fontSize="xs" color="gray.300" maxW="150px" truncate>
                                                         {file.name}
                                                     </Text>
                                                 </HStack>
@@ -413,10 +418,11 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                                 gap={3}
                                             >
                                                 <Center boxSize={12} bg="gray.800" borderRadius="xl" color="gray.500">
-                                                    <FiPlus size={24} />
+                                                    <FiPlus size={24}/>
                                                 </Center>
                                                 <VStack gap={1}>
-                                                    <Text color="gray.200" fontWeight="bold">Нажмите или перетащите</Text>
+                                                    <Text color="gray.200" fontWeight="bold">Нажмите или
+                                                        перетащите</Text>
                                                     <Text color="gray.500" fontSize="xs">PNG, JPG до 5МБ</Text>
                                                 </VStack>
                                             </MotionFlex>
@@ -432,9 +438,8 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                         size="lg"
                                         borderRadius="xl"
                                         onClick={handleUpload}
-                                        leftIcon={<FiUploadCloud />}
                                     >
-                                        Загрузить фото
+                                        <FiUploadCloud/> Загрузить фото
                                     </Button>
                                 )}
                             </Card.Body>
@@ -460,16 +465,17 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                     zIndex={10}
                                 >
                                     <VStack gap={3}>
-                                        <Spinner size="xl" color="cyan.500" thickness="4px" />
+                                        <Spinner size="xl" color="cyan.500"/>
                                         <Text color="white" fontWeight="bold">Обновление...</Text>
                                     </VStack>
                                 </Center>
                             )}
 
                             {lunches.length === 0 && !isPending ? (
-                                <Center w="100%" h="400px" bg="gray.900/30" borderRadius="2xl" border="1px dashed" borderColor="gray.800">
+                                <Center w="100%" h="400px" bg="gray.900/30" borderRadius="2xl" border="1px dashed"
+                                        borderColor="gray.800">
                                     <VStack gap={3}>
-                                        <Icon as={FiImage} boxSize={10} color="gray.700" />
+                                        <Icon as={FiImage} boxSize={10} color="gray.700"/>
                                         <Text color="gray.600" fontWeight="medium">В архиве пока пусто</Text>
                                     </VStack>
                                 </Center>
@@ -526,7 +532,6 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                                 >
                                                     <IconButton
                                                         aria-label="Удалить"
-                                                        icon={<FiTrash2 size={14} />}
                                                         size="sm"
                                                         colorPalette="red"
                                                         variant="solid"
@@ -535,8 +540,9 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                                             e.stopPropagation();
                                                             openDeleteDialog(lunch._id);
                                                         }}
-                                                        isLoading={deletingId === lunch._id}
-                                                    />
+                                                        loading={deletingId === lunch._id}>
+                                                        <FiTrash2 size={14}/>
+                                                    </IconButton>
                                                 </Box>
 
                                                 {lunch.active && (
@@ -549,7 +555,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                                         size="xs"
                                                         borderRadius="md"
                                                     >
-                                                        <Icon as={FiStar} mr={1} /> АКТИВЕН
+                                                        <Icon as={FiStar} mr={1}/> АКТИВЕН
                                                     </Badge>
                                                 )}
 
@@ -562,9 +568,13 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                                     opacity={lunch.active ? 0 : 0}
                                                     transform="translateY(10px)"
                                                     transition="all 0.2s"
-                                                    _groupHover={{opacity: lunch.active ? 0 : 1, transform: 'translateY(0)'}}
+                                                    _groupHover={{
+                                                        opacity: lunch.active ? 0 : 1,
+                                                        transform: 'translateY(0)'
+                                                    }}
                                                 >
-                                                    <Text fontSize="xs" color="white" fontWeight="bold" textShadow="0 2px 4px rgba(0,0,0,0.5)">
+                                                    <Text fontSize="xs" color="white" fontWeight="bold"
+                                                          textShadow="0 2px 4px rgba(0,0,0,0.5)">
                                                         Активировать
                                                     </Text>
                                                 </Flex>
