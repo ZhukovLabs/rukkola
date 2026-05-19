@@ -918,7 +918,7 @@ export const DashboardHistoryPage = () => {
                         {loading && logs.length === 0 ? (
                             <Center p={16}>
                                 <VStack gap={4}>
-                                    <Spinner size="xl" color="teal.500" thickness="3px" />
+                                    <Spinner size="xl" color="teal.500" />
                                     <Text color="gray.500" fontSize="sm" fontWeight="bold" textTransform="uppercase" letterSpacing="widest">Загрузка данных...</Text>
                                 </VStack>
                             </Center>
