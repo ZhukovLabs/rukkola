@@ -347,7 +347,9 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                     textAlign="center"
                                     bg={isDragOver ? 'cyan.950/30' : 'gray.950/40'}
                                     cursor="pointer"
-                                    transition="all 0.3s ease"
+                                    transitionProperty="all"
+                                    transitionDuration="300ms"
+                                    transitionTimingFunction="ease"
                                     onClick={() => document.getElementById('lunch-image-input')?.click()}
                                     onDragOver={e => {
                                         e.preventDefault();
