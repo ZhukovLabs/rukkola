@@ -343,6 +343,7 @@ const LogDetails = ({log}: {log: AuditLogDto}) => {
                                 fontSize="sm"
                                 fontWeight="semibold"
                                 lineHeight="1.4"
+                                whiteSpace="pre-line"
                             >
                                 {log.details}
                             </Text>
