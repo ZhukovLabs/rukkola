@@ -90,7 +90,7 @@ export const UsersTable = () => {
                         </Flex>
                     ) : (
                         <Box overflowX="auto">
-                            <Table.Root size="sm" variant="line" w="full">
+                            <Table.Root size="sm" variant="outline" w="full">
                                 <Table.Header bg="whiteAlpha.50">
                                     <Table.Row borderBottom="1px solid" borderColor="whiteAlpha.100">
                                         <Table.ColumnHeader color="gray.400" py={3} px={4} fontWeight="bold"
