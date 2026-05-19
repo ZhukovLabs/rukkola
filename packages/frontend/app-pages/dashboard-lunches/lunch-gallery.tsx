@@ -309,8 +309,8 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                         colorPalette="cyan"
                                         size="lg"
                                         borderRadius="xl"
-                                        leftIcon={<FiPower />}
                                     >
+                                        <FiPower />
                                         Скрыть из меню
                                     </Button>
                                 </VStack>
