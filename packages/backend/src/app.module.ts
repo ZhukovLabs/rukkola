@@ -11,6 +11,7 @@ import { HealthModule } from './modules/health/health.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AuditLogModule } from './modules/audit-log/audit-log.module';
 import { MinioModule } from './modules/minio/minio.module';
+import { SiteSettingsModule } from './modules/site-settings/site-settings.module';
 import * as path from 'path';
 
 const ROOT_DIR = path.resolve(__dirname, '..', '..', '..');
@@ -49,6 +50,7 @@ const ROOT_DIR = path.resolve(__dirname, '..', '..', '..');
     DashboardModule,
     AuditLogModule,
     MinioModule,
+    SiteSettingsModule,
   ],
 })
 export class AppModule {}

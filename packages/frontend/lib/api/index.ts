@@ -96,3 +96,13 @@ export type {
 } from './dashboard';
 
 export { auditLogsApi } from './audit-logs';
+
+export {
+  getSiteSettings,
+  updateSiteSettings,
+} from './site-settings';
+
+export type {
+  SiteSettingsData,
+  UpdateSiteSettingsInput,
+} from './site-settings';

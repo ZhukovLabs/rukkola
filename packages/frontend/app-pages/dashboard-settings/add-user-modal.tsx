@@ -6,11 +6,14 @@ import {
     Button,
     Flex,
     Stack,
+    VStack,
     Input,
     Text,
     Heading,
     IconButton,
     Field,
+    Alert,
+    Portal,
 } from '@chakra-ui/react'
 import {Select, createListCollection} from '@chakra-ui/react'
 import {useForm, Controller} from 'react-hook-form'
@@ -86,31 +89,32 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
     }
 
     return (
-        <Dialog.Root open={isOpen} onOpenChange={onClose}>
+        <Dialog.Root open={isOpen} onOpenChange={onClose} size="lg">
             <Dialog.Backdrop
-                bg="blackAlpha.600"
-                backdropFilter="blur(10px)"
-                transition="all 0.3s"
+                bg="blackAlpha.800"
+                backdropFilter="blur(12px)"
             />
 
             <Dialog.Positioner>
                 <Dialog.Content
-                    maxW="480px"
-                    w="full"
-                    bg="gray.900"
-                    borderRadius="2xl"
-                    shadow="2xl"
+                    bg="gray.950"
+                    borderRadius="3xl"
+                    shadow="dark-lg"
                     border="1px solid"
-                    borderColor="gray.700"
+                    borderColor="whiteAlpha.100"
                     color="white"
                     overflow="hidden"
-                    transition="transform 0.3s, opacity 0.3s"
                 >
-                    <Dialog.Header py={6} px={8} bg="gray.800">
+                    <Dialog.Header py={6} px={8} bg="whiteAlpha.50" borderBottom="1px solid" borderColor="whiteAlpha.100">
                         <Flex justify="space-between" align="center">
-                            <Heading size="md" fontWeight="bold">
-                                Добавить пользователя
-                            </Heading>
+                            <VStack align="start" gap={0}>
+                                <Dialog.Title fontSize="xl" fontWeight="extrabold" color="white" letterSpacing="tight">
+                                    Новый пользователь
+                                </Dialog.Title>
+                                <Text fontSize="xs" color="gray.400">
+                                    Заполните данные для создания аккаунта
+                                </Text>
+                            </VStack>
 
                             <Dialog.CloseTrigger asChild>
                                 <IconButton
@@ -118,7 +122,8 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                                     size="sm"
                                     variant="ghost"
                                     color="gray.400"
-                                    _hover={{color: 'white', bg: 'gray.700'}}
+                                    _hover={{color: 'white', bg: 'whiteAlpha.100'}}
+                                    borderRadius="xl"
                                 >
                                     <FiX size={20}/>
                                 </IconButton>
@@ -126,132 +131,131 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                         </Flex>
                     </Dialog.Header>
 
-                    <Dialog.Body px={8} pt={6} pb={8}>
+                    <Dialog.Body px={8} pt={8} pb={10}>
                         <form onSubmit={handleSubmit(onSubmit)}>
-                            <Stack gap={5}>
+                            <Stack gap={6}>
                                 {error && (
-                                    <Text
-                                        color="red.400"
-                                        fontSize="sm"
-                                        textAlign="center"
-                                        fontWeight="medium"
-                                    >
-                                        {error}
-                                    </Text>
+                                    <Alert.Root status="error" borderRadius="xl" bg="red.950/30" border="1px solid" borderColor="red.900/50">
+                                        <Alert.Content>
+                                            <Alert.Description color="red.300/80" fontSize="sm">{error}</Alert.Description>
+                                        </Alert.Content>
+                                    </Alert.Root>
                                 )}
 
-                                {/* Логин */}
-                                <Field.Root invalid={!!errors.username}>
-                                    <Field.Label fontSize="sm" fontWeight="medium">
-                                        Логин
-                                    </Field.Label>
-                                    <Input
-                                        px={4}
-                                        py={3}
-                                        bg="gray.800"
-                                        border="1px solid"
-                                        borderColor="gray.700"
-                                        borderRadius="lg"
-                                        _placeholder={{color: 'gray.500'}}
-                                        _hover={{bg: 'gray.700'}}
-                                        _focus={{
-                                            bg: 'gray.700',
-                                            borderColor: 'gray.400',
-                                            boxShadow: '0 0 0 2px rgba(56, 178, 172, 0.3)',
-                                        }}
-                                        transition="all 0.2s"
-                                        {...register('username')}
-                                        onChange={(e) => {
-                                            e.target.value = e.target.value.toLowerCase()
-                                            register('username').onChange(e)
-                                        }}
-                                    />
-                                    <Field.ErrorText fontSize="xs">{errors.username?.message}</Field.ErrorText>
-                                </Field.Root>
-
-                                <Field.Root invalid={!!errors.password}>
-                                    <Field.Label fontSize="sm" fontWeight="medium">
-                                        Пароль
-                                    </Field.Label>
-                                    <Flex position="relative" w="full">
+                                <Flex gap={6}>
+                                    {/* Логин */}
+                                    <Field.Root invalid={!!errors.username} flex={1}>
+                                        <Field.Label fontSize="xs" fontWeight="bold" color="gray.400" textTransform="uppercase" letterSpacing="widest" mb={2}>
+                                            Логин
+                                        </Field.Label>
                                         <Input
                                             px={4}
                                             py={3}
-                                            type={showPassword ? 'text' : 'password'}
-                                            bg="gray.800"
+                                            bg="gray.900"
                                             border="1px solid"
-                                            borderColor="gray.700"
-                                            borderRadius="lg"
-                                            _placeholder={{color: 'gray.500'}}
-                                            _hover={{bg: 'gray.700'}}
+                                            borderColor="whiteAlpha.200"
+                                            borderRadius="xl"
+                                            _placeholder={{color: 'gray.600'}}
+                                            _hover={{borderColor: 'whiteAlpha.300'}}
                                             _focus={{
-                                                bg: 'gray.700',
-                                                borderColor: 'gray.400',
-                                                boxShadow: '0 0 0 2px rgba(56, 178, 172, 0.3)',
+                                                borderColor: 'white',
+                                                boxShadow: '0 0 0 1px white',
                                             }}
                                             transition="all 0.2s"
-                                            flex={1}
-                                            {...register('password')}
+                                            {...register('username')}
+                                            onChange={(e) => {
+                                                e.target.value = e.target.value.toLowerCase()
+                                                register('username').onChange(e)
+                                            }}
                                         />
-                                        <IconButton
-                                            aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
-                                            size="sm"
-                                            variant="ghost"
-                                            color="gray.400"
-                                            _hover={{color: 'white', bg: 'gray.700'}}
-                                            position="absolute"
-                                            right="2"
-                                            top="50%"
-                                            transform="translateY(-50%)"
-                                            onClick={() => setShowPassword(!showPassword)}>
-                                            {showPassword ? <FiEyeOff/> : <FiEye/>}
-                                        </IconButton>
-                                    </Flex>
-                                    <Field.ErrorText fontSize="xs">{errors.password?.message}</Field.ErrorText>
-                                </Field.Root>
+                                        <Field.ErrorText fontSize="xs" color="red.400">{errors.username?.message}</Field.ErrorText>
+                                    </Field.Root>
+
+                                    <Field.Root invalid={!!errors.password} flex={1}>
+                                        <Field.Label fontSize="xs" fontWeight="bold" color="gray.400" textTransform="uppercase" letterSpacing="widest" mb={2}>
+                                            Пароль
+                                        </Field.Label>
+                                        <Flex position="relative" w="full">
+                                            <Input
+                                                px={4}
+                                                py={3}
+                                                type={showPassword ? 'text' : 'password'}
+                                                bg="gray.900"
+                                                border="1px solid"
+                                                borderColor="whiteAlpha.200"
+                                                borderRadius="xl"
+                                                _placeholder={{color: 'gray.600'}}
+                                                _hover={{borderColor: 'whiteAlpha.300'}}
+                                                _focus={{
+                                                    borderColor: 'white',
+                                                    boxShadow: '0 0 0 1px white',
+                                                }}
+                                                transition="all 0.2s"
+                                                flex={1}
+                                                {...register('password')}
+                                            />
+                                            <IconButton
+                                                aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+                                                size="sm"
+                                                variant="ghost"
+                                                color="gray.400"
+                                                _hover={{color: 'white', bg: 'whiteAlpha.100'}}
+                                                position="absolute"
+                                                right="2"
+                                                top="50%"
+                                                transform="translateY(-50%)"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                borderRadius="lg"
+                                            >
+                                                {showPassword ? <FiEyeOff size={16}/> : <FiEye size={16}/>}
+                                            </IconButton>
+                                        </Flex>
+                                        <Field.ErrorText fontSize="xs" color="red.400">{errors.password?.message}</Field.ErrorText>
+                                    </Field.Root>
+                                </Flex>
 
                                 {/* Имя */}
                                 <Field.Root invalid={!!errors.name}>
-                                    <Field.Label fontSize="sm" fontWeight="medium">
+                                    <Field.Label fontSize="xs" fontWeight="bold" color="gray.400" textTransform="uppercase" letterSpacing="widest" mb={2}>
                                         Имя / Название
                                     </Field.Label>
                                     <Input
                                         px={4}
                                         py={3}
-                                        bg="gray.800"
+                                        bg="gray.900"
                                         border="1px solid"
-                                        borderColor="gray.700"
-                                        borderRadius="lg"
-                                        _placeholder={{color: 'gray.500'}}
-                                        _hover={{bg: 'gray.700'}}
+                                        borderColor="whiteAlpha.200"
+                                        borderRadius="xl"
+                                        _placeholder={{color: 'gray.600'}}
+                                        _hover={{borderColor: 'whiteAlpha.300'}}
                                         _focus={{
-                                            bg: 'gray.700',
-                                            borderColor: 'gray.400',
-                                            boxShadow: '0 0 0 2px rgba(56, 178, 172, 0.3)',
+                                            borderColor: 'white',
+                                            boxShadow: '0 0 0 1px white',
                                         }}
                                         transition="all 0.2s"
                                         {...register('name')}
                                     />
-                                    <Field.ErrorText fontSize="xs">{errors.name?.message}</Field.ErrorText>
+                                    <Field.ErrorText fontSize="xs" color="red.400">{errors.name?.message}</Field.ErrorText>
                                 </Field.Root>
 
                                 {/* Фамилия и Отчество */}
-                                <Flex gap={4}>
+                                <Flex gap={6}>
                                     <Field.Root flex={1}>
-                                        <Field.Label fontSize="sm" fontWeight="medium">Фамилия <Text as="span" color="gray.500" fontWeight="normal">(необязательно)</Text></Field.Label>
+                                        <Field.Label fontSize="xs" fontWeight="bold" color="gray.400" textTransform="uppercase" letterSpacing="widest" mb={2}>
+                                            Фамилия <Text as="span" textTransform="none" letterSpacing="normal" fontWeight="normal" opacity={0.6}>(необязательно)</Text>
+                                        </Field.Label>
                                         <Input
                                             px={4}
                                             py={3}
-                                            bg="gray.800"
+                                            bg="gray.900"
                                             border="1px solid"
-                                            borderColor="gray.700"
-                                            borderRadius="lg"
-                                            _placeholder={{color: 'gray.500'}}
-                                            _hover={{bg: 'gray.700'}}
+                                            borderColor="whiteAlpha.200"
+                                            borderRadius="xl"
+                                            _placeholder={{color: 'gray.600'}}
+                                            _hover={{borderColor: 'whiteAlpha.300'}}
                                             _focus={{
-                                                bg: 'gray.700',
-                                                borderColor: 'gray.400',
-                                                boxShadow: '0 0 0 2px rgba(56, 178, 172, 0.3)',
+                                                borderColor: 'white',
+                                                boxShadow: '0 0 0 1px white',
                                             }}
                                             transition="all 0.2s"
                                             {...register('surname')}
@@ -259,20 +263,21 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                                     </Field.Root>
 
                                     <Field.Root flex={1}>
-                                        <Field.Label fontSize="sm" fontWeight="medium">Отчество <Text as="span" color="gray.500" fontWeight="normal">(необязательно)</Text></Field.Label>
+                                        <Field.Label fontSize="xs" fontWeight="bold" color="gray.400" textTransform="uppercase" letterSpacing="widest" mb={2}>
+                                            Отчество <Text as="span" textTransform="none" letterSpacing="normal" fontWeight="normal" opacity={0.6}>(необязательно)</Text>
+                                        </Field.Label>
                                         <Input
                                             px={4}
                                             py={3}
-                                            bg="gray.800"
+                                            bg="gray.900"
                                             border="1px solid"
-                                            borderColor="gray.700"
-                                            borderRadius="lg"
-                                            _placeholder={{color: 'gray.500'}}
-                                            _hover={{bg: 'gray.700'}}
+                                            borderColor="whiteAlpha.200"
+                                            borderRadius="xl"
+                                            _placeholder={{color: 'gray.600'}}
+                                            _hover={{borderColor: 'whiteAlpha.300'}}
                                             _focus={{
-                                                bg: 'gray.700',
-                                                borderColor: 'gray.400',
-                                                boxShadow: '0 0 0 2px rgba(56, 178, 172, 0.3)',
+                                                borderColor: 'white',
+                                                boxShadow: '0 0 0 1px white',
                                             }}
                                             transition="all 0.2s"
                                             {...register('patronymic')}
@@ -282,7 +287,7 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
 
                                 {/* Роль */}
                                 <Field.Root>
-                                    <Field.Label fontSize="sm" fontWeight="medium">Роль</Field.Label>
+                                    <Field.Label fontSize="xs" fontWeight="bold" color="gray.400" textTransform="uppercase" letterSpacing="widest" mb={2}>Роль</Field.Label>
                                     <Controller
                                         name="role"
                                         control={control}
@@ -296,65 +301,70 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                                                     <Select.Trigger
                                                         px={4}
                                                         py={3}
-                                                        bg="gray.800"
+                                                        bg="gray.900"
                                                         border="1px solid"
-                                                        borderColor="gray.700"
-                                                        borderRadius="lg"
-                                                        _hover={{bg: 'gray.700'}}
+                                                        borderColor="whiteAlpha.200"
+                                                        borderRadius="xl"
+                                                        _hover={{borderColor: 'whiteAlpha.300'}}
                                                         _focus={{
-                                                            boxShadow: '0 0 0 2px rgba(56, 178, 172, 0.3)',
+                                                            borderColor: 'white',
+                                                            boxShadow: '0 0 0 1px white',
                                                         }}
                                                         transition="all 0.2s"
                                                     >
-                                                        <Select.ValueText placeholder="Выберите роль"/>
+                                                        <Select.ValueText placeholder="Выберите роль" fontSize="sm"/>
                                                         <Select.Indicator/>
                                                     </Select.Trigger>
                                                 </Select.Control>
 
-                                                <Select.Positioner>
-                                                    <Select.Content bg="gray.800" borderColor="gray.700" p={1}>
-                                                        {roles.items.map((item) => (
-                                                            <Select.Item key={item.value} item={item} p={2}>
-                                                                <Select.ItemText>{item.label}</Select.ItemText>
-                                                                <Select.ItemIndicator/>
-                                                            </Select.Item>
-                                                        ))}
-                                                    </Select.Content>
-                                                </Select.Positioner>
+                                                <Portal>
+                                                    <Select.Positioner>
+                                                        <Select.Content bg="gray.950" borderColor="whiteAlpha.200" borderRadius="xl" shadow="2xl">
+                                                            {roles.items.map((item) => (
+                                                                <Select.Item key={item.value} item={item} px={3} py={2} _hover={{ bg: 'whiteAlpha.100' }} cursor="pointer">
+                                                                    <Select.ItemText fontSize="sm">{item.label}</Select.ItemText>
+                                                                    <Select.ItemIndicator/>
+                                                                </Select.Item>
+                                                            ))}
+                                                        </Select.Content>
+                                                    </Select.Positioner>
+                                                </Portal>
                                             </Select.Root>
                                         )}
                                     />
                                 </Field.Root>
                             </Stack>
 
-                            <Flex gap={4} mt={10} justify="flex-end">
+                            <Flex gap={4} mt={12} justify="flex-end">
                                 <Button
-                                    variant="outline"
-                                    borderColor="gray.500"
+                                    variant="ghost"
                                     color="gray.400"
-                                    _hover={{bg: 'gray.700', color: 'white', borderColor: 'gray.400'}}
+                                    _hover={{bg: 'whiteAlpha.100', color: 'white'}}
                                     onClick={onClose}
                                     disabled={loading}
-                                    px={6}
-                                    py={3}
-                                    borderRadius="lg"
+                                    px={8}
+                                    borderRadius="xl"
+                                    fontWeight="bold"
                                 >
                                     Отмена
                                 </Button>
 
                                 <Button
-                                    px={6}
-                                    py={3}
+                                    px={10}
                                     type="submit"
-                                    colorScheme="gray"
+                                    bg="white"
+                                    color="gray.950"
                                     loading={loading}
-                                    borderRadius="lg"
-                                    border="1px solid"
-                                    borderColor="gray.500"
-                                    boxShadow="md"
-                                    _hover={{boxShadow: 'lg'}}
+                                    borderRadius="xl"
+                                    fontWeight="bold"
+                                    _hover={{
+                                        bg: 'gray.100',
+                                        shadow: '0 0 20px rgba(255,255,255,0.2)',
+                                        transform: 'translateY(-1px)'
+                                    }}
+                                    _active={{ transform: 'scale(0.98)' }}
                                 >
-                                    Добавить
+                                    Создать аккаунт
                                 </Button>
                             </Flex>
                         </form>

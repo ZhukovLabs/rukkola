@@ -100,4 +100,34 @@ export class UsersController {
       data: user,
     };
   }
+
+  @Patch(':id/toggle-block')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  async toggleBlock(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: { id: string },
+  ) {
+    const user = await this.usersService.toggleBlock(id, currentUser.id);
+    return {
+      success: true,
+      message: user.isActive ? 'Пользователь разблокирован' : 'Пользователь заблокирован',
+      data: user,
+    };
+  }
+
+  @Post(':id/logout-sessions')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  async logoutAllSessions(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: { id: string },
+  ) {
+    const result = await this.usersService.logoutAllSessions(id, currentUser.id);
+    return {
+      success: true,
+      message: `Завершено сессий: ${result.count}`,
+      data: result,
+    };
+  }
 }

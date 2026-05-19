@@ -5,6 +5,7 @@ export type SerializedUser = {
     surname?: string
     patronymic?: string
     role: string
+    isActive: boolean
 }
 
 export type UserRowProps = {

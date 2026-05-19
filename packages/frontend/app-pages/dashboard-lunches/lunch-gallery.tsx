@@ -14,12 +14,28 @@ import {
     Icon,
     HStack,
     Heading,
+    VStack,
+    Badge,
+    IconButton,
 } from '@chakra-ui/react';
-import {FiUploadCloud, FiTrash2, FiPower, FiImage, FiCheck, FiX, FiStar, FiAlertCircle} from 'react-icons/fi';
+import {
+    FiUploadCloud,
+    FiTrash2,
+    FiPower,
+    FiImage,
+    FiCheck,
+    FiStar,
+    FiAlertCircle,
+    FiPlus,
+} from 'react-icons/fi';
+import {motion, AnimatePresence} from 'framer-motion';
 import {uploadLunch, activeLunch, deleteLunch, deactivateLunch} from './actions';
 import {useConfirmationDialog} from '@/hooks/use-confirmation-dialog';
 import {useToast} from '@/components/toast-container';
 import {revalidateMenu} from '@/lib/api/revalidate';
+
+const MotionBox = motion(Box);
+const MotionFlex = motion(Flex);
 
 type Lunch = {
     _id: string;
@@ -104,6 +120,8 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
     const toast = useToast();
     const {lunches, file, isDragOver, deletingId} = state;
 
+    const activeLunchItem = lunches.find(l => l.active);
+
     const {openDialog: openDeleteDialog, confirmationDialog: deleteConfirmationDialog} = useConfirmationDialog<string>({
         onConfirm: async (id: string) => {
             dispatch({type: 'SET_DELETING', payload: id});
@@ -183,6 +201,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
             const res = await deactivateLunch();
             if (res?.success) {
                 dispatch({type: 'DEACTIVATE_ALL'});
+                revalidateMenu();
                 toast.showInfo('Отображение обеда выключено');
             } else {
                 toast.showError(res?.message || 'Не удалось выключить отображение');
@@ -194,268 +213,370 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
     };
 
     return (
-        <>
-            <Box
-                mb={6}
-                p={4}
-                borderRadius="xl"
-                bg="blue.900/30"
-                border="1px solid"
-                borderColor="blue.500/50"
-                color="blue.200"
-            >
-                <HStack gap={3}>
-                    <Icon as={FiAlertCircle} boxSize={5} />
-                    <Text fontSize="sm" fontWeight="medium">
-                        Пожалуйста, удаляйте старые изображения, если они больше не нужны — это поможет серверу работать быстрее.
+        <VStack gap={8} align="stretch" w="100%">
+            {/* Header & Tips */}
+            <Flex justify="space-between" align="flex-start" wrap="wrap" gap={4}>
+                <VStack align="flex-start" gap={1}>
+                    <Heading size="2xl" fontWeight="black" letterSpacing="tight" color="gray.100">
+                        Галерея обедов
+                    </Heading>
+                    <Text color="gray.400" fontSize="md">
+                        Управляйте изображениями ежедневных обедов
                     </Text>
-                </HStack>
-            </Box>
+                </VStack>
 
-            <Card.Root
-                w="100%"
-                borderRadius="2xl"
-                shadow="xl"
-                border="1px solid"
-                borderColor="gray.800"
-                bg="gray.950"
-                overflow="hidden"
-            >
-                <Card.Header
-                    bg="gray.900"
-                    borderTopRadius="2xl"
-                    py={4}
-                    px={6}
-                    borderBottom="1px solid"
-                    borderColor="gray.800"
+                <Box
+                    p={4}
+                    borderRadius="2xl"
+                    bg="blue.900/20"
+                    border="1px solid"
+                    borderColor="blue.500/30"
+                    backdropFilter="blur(10px)"
+                    maxW={{base: '100%', md: '400px'}}
                 >
-                    <Flex justify="space-between" align="center">
-                        <Flex align="center" gap={3}>
-                            <Box
-                                bg="gray.800"
-                                borderRadius="lg"
-                                p={2}
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="center"
-                                border="1px solid"
-                                borderColor="gray.700"
-                            >
-                                <FiImage size={20} color="white"/>
-                            </Box>
-                            <Heading size="lg" fontWeight="bold" letterSpacing="tight" color="gray.100">
-                                Галерея обедов
-                            </Heading>
-                        </Flex>
+                    <HStack gap={3} align="flex-start">
+                        <Icon as={FiAlertCircle} boxSize={5} color="blue.400" mt={0.5} />
+                        <Text fontSize="xs" color="blue.100" lineHeight="tall">
+                            Совет: Регулярно удаляйте старые изображения. Это поможет поддерживать порядок и ускорит работу системы.
+                        </Text>
+                    </HStack>
+                </Box>
+            </Flex>
 
-                        {lunches.some(l => l.active) && (
-                            <Button
-                                size="sm"
-                                onClick={handleDeactivateAll}
-                                variant="outline"
-                                borderColor="gray.600"
-                                color="gray.300"
-                                _hover={{bg: 'gray.800', borderColor: 'gray.500'}}
-                                borderRadius="lg"
-                                px={3}
-                            >
-                                <FiPower size={14}/>
-                                Скрыть обед
-                            </Button>
-                        )}
-                    </Flex>
-                </Card.Header>
-
-                <Card.Body p={{base: 4, md: 6}}>
-                    <Box
-                        border="2px dashed"
-                        borderColor={file ? 'cyan.600' : isDragOver ? 'cyan.500' : 'gray.700'}
-                        borderRadius="xl"
-                        p={{base: 6, md: 8}}
-                        textAlign="center"
-                        bg={isDragOver ? 'cyan.900/30' : 'gray.800/40'}
-                        cursor="pointer"
-                        transition="all 0.2s ease"
-                        _hover={{borderColor: 'gray.500', bg: 'gray.800/60'}}
-                        onClick={() => document.getElementById('lunch-image-input')?.click()}
-                        onDragOver={e => {
-                            e.preventDefault();
-                            dispatch({type: 'SET_DRAG_OVER', payload: true});
-                        }}
-                        onDragLeave={e => {
-                            e.preventDefault();
-                            dispatch({type: 'SET_DRAG_OVER', payload: false});
-                        }}
-                        onDrop={e => {
-                            e.preventDefault();
-                            dispatch({type: 'SET_DRAG_OVER', payload: false});
-                            const dropped = e.dataTransfer.files[0];
-                            if (dropped?.type.startsWith('image/')) {
-                                dispatch({type: 'SET_FILE', payload: dropped});
-                            }
-                        }}
+            {/* Active Lunch Section */}
+            {activeLunchItem && (
+                <MotionBox
+                    initial={{opacity: 0, y: 20}}
+                    animate={{opacity: 1, y: 0}}
+                    mb={2}
+                >
+                    <Card.Root
+                        variant="subtle"
+                        overflow="hidden"
+                        bg="cyan.950/20"
+                        border="1px solid"
+                        borderColor="cyan.500/40"
+                        borderRadius="2xl"
                     >
-                        <input
-                            id="lunch-image-input"
-                            type="file"
-                            accept="image/*"
-                            hidden
-                            onChange={e => dispatch({type: 'SET_FILE', payload: e.target.files?.[0] ?? null})}
-                        />
-
-                        {file ? (
-                            <Flex direction="column" align="center" gap={3}>
-                                <Image
-                                    src={URL.createObjectURL(file)}
-                                    alt="preview"
-                                    maxH="200px"
-                                    borderRadius="lg"
-                                    objectFit="cover"
-                                    border="1px solid"
-                                    borderColor="gray.700"
-                                />
-                                <HStack gap={1.5} color="gray.400">
-                                    <Icon as={FiCheck} boxSize={3} color="cyan.400"/>
-                                    <Text fontSize="sm" color="gray.400">{file.name}</Text>
-                                </HStack>
-                            </Flex>
-                        ) : (
-                            <Flex direction="column" align="center" gap={2}>
-                                <Icon as={FiUploadCloud} boxSize={8} color="gray.500"/>
-                                <Text color="gray.400" fontSize="sm">
-                                    Перетащите изображение или нажмите для выбора
-                                </Text>
-                            </Flex>
-                        )}
-                    </Box>
-
-                    {file && (
-                        <Flex justify="center" mt={4}>
-                            <Button
-                                onClick={handleUpload}
-                                colorPalette="cyan"
-                                size="sm"
-                                borderRadius="lg"
-                                px={5}
-                            >
-                                <FiUploadCloud size={15}/>
-                                Загрузить
-                            </Button>
-                        </Flex>
-                    )}
-
-                    <Box position="relative" minHeight="160px" mt={6}>
-                        {isPending && (
-                            <Center
-                                position="absolute"
-                                inset={0}
-                                bg="blackAlpha.600"
-                                borderRadius="xl"
-                                zIndex={10}
-                            >
-                                <HStack gap={3} bg="gray.800" px={5} py={3} borderRadius="lg" border="1px solid" borderColor="gray.700">
-                                    <Spinner size="sm" color="cyan.400"/>
-                                    <Text color="gray.300" fontSize="sm">Сохранение...</Text>
-                                </HStack>
-                            </Center>
-                        )}
-
-                        {lunches.length === 0 && !isPending ? (
-                            <Flex direction="column" align="center" gap={3} py={10}>
-                                <Icon as={FiImage} boxSize={7} color="gray.600"/>
-                                <Text color="gray.500" fontSize="sm">Нет загруженных изображений</Text>
-                            </Flex>
-                        ) : (
-                            <SimpleGrid columns={[2, 3, 4, 5]} gap={4}>
-                                {lunches.map(lunch => (
-                                    <Box
-                                        key={lunch._id}
-                                        position="relative"
-                                        borderRadius="lg"
-                                        overflow="hidden"
-                                        border="1px solid"
-                                        borderColor={lunch.active ? 'cyan.500' : 'gray.700'}
-                                        transition="all 0.2s ease"
-                                        cursor="pointer"
-                                        _hover={{borderColor: lunch.active ? 'cyan.400' : 'gray.500'}}
-                                        onClick={() => handleActivate(lunch._id)}
+                        <Card.Body p={6}>
+                            <Flex direction={{base: 'column', md: 'row'}} gap={6} align="center">
+                                <Box
+                                    position="relative"
+                                    w={{base: '100%', md: '300px'}}
+                                    h="200px"
+                                    borderRadius="xl"
+                                    overflow="hidden"
+                                    boxShadow="2xl"
+                                >
+                                    <Image
+                                        src={activeLunchItem.image}
+                                        alt="Текущий обед"
+                                        w="full"
+                                        h="full"
+                                        objectFit="cover"
+                                    />
+                                    <Badge
+                                        position="absolute"
+                                        top={3}
+                                        left={3}
+                                        colorPalette="cyan"
+                                        variant="solid"
+                                        size="lg"
+                                        px={3}
+                                        py={1}
+                                        borderRadius="full"
+                                        display="flex"
+                                        alignItems="center"
+                                        gap={2}
                                     >
-                                        <Image
-                                            src={lunch.image}
-                                            alt="Обед"
-                                            width="full"
-                                            height="160px"
-                                            objectFit="cover"
-                                        />
+                                        <Icon as={FiStar} />
+                    АКТИВЕН
+                                    </Badge>
+                                </Box>
 
-                                        {lunch.active && (
-                                            <Flex
-                                                position="absolute"
-                                                top={2}
-                                                left={2}
-                                                bg="cyan.500"
-                                                color="white"
-                                                px={1.5}
-                                                py={0.5}
-                                                borderRadius="md"
-                                                alignItems="center"
-                                                gap={1}
-                                                fontSize="2xs"
-                                                fontWeight="bold"
-                                                boxShadow="0 2px 8px rgba(0,200,200,0.3)"
-                                            >
-                                                <FiStar size={9}/>
-                                                Активен
-                                            </Flex>
-                                        )}
-
-                                        <Button
-                                            size="sm"
-                                            position="absolute"
-                                            top={2}
-                                            right={2}
-                                            variant="solid"
-                                            borderRadius="full"
-                                            w={6}
-                                            h={6}
-                                            minW={6}
-                                            p={0}
-                                            bg="blackAlpha.700"
-                                            color="gray.300"
-                                            _hover={{bg: 'red.500', color: 'white'}}
-                                            onClick={e => {
-                                                e.stopPropagation();
-                                                openDeleteDialog(lunch._id);
-                                            }}
-                                            loading={deletingId === lunch._id}
-                                        >
-                                            <FiTrash2 size={11}/>
-                                        </Button>
-
-                                        {!lunch.active && (
-                                            <Flex
-                                                position="absolute"
-                                                bottom={0}
-                                                left={0}
-                                                right={0}
-                                                bg="blackAlpha.500"
-                                                py={1}
-                                                justify="center"
-                                            >
-                                                <Text fontSize="2xs" color="gray.300">
-                                                    Нажмите для активации
-                                                </Text>
-                                            </Flex>
-                                        )}
+                                <VStack align="flex-start" gap={4} flex={1}>
+                                    <Box>
+                                        <Text color="cyan.400" fontWeight="bold" fontSize="sm" textTransform="uppercase" letterSpacing="widest">
+                                            Текущее отображение
+                                        </Text>
+                                        <Heading size="xl" color="white" mt={1}>
+                                            Это изображение сейчас видят пользователи
+                                        </Heading>
                                     </Box>
-                                ))}
-                            </SimpleGrid>
-                        )}
-                    </Box>
-                </Card.Body>
-            </Card.Root>
+                                    <Button
+                                        onClick={handleDeactivateAll}
+                                        variant="outline"
+                                        colorPalette="cyan"
+                                        size="lg"
+                                        borderRadius="xl"
+                                        leftIcon={<FiPower />}
+                                    >
+                                        Скрыть из меню
+                                    </Button>
+                                </VStack>
+                            </Flex>
+                        </Card.Body>
+                    </Card.Root>
+                </MotionBox>
+            )}
+
+            {/* Main Content Area */}
+            <SimpleGrid columns={{base: 1, lg: 3}} gap={8}>
+                {/* Upload Panel */}
+                <Box>
+                    <VStack align="flex-start" gap={4} position="sticky" top={6}>
+                        <Heading size="md" color="gray.200" fontWeight="bold">
+                            Загрузить новое
+                        </Heading>
+                        <Card.Root
+                            w="100%"
+                            bg="gray.900/50"
+                            border="1px solid"
+                            borderColor="gray.800"
+                            borderRadius="2xl"
+                            overflow="hidden"
+                        >
+                            <Card.Body p={6}>
+                                <MotionBox
+                                    whileHover={{scale: 1.01}}
+                                    whileTap={{scale: 0.99}}
+                                    border="2px dashed"
+                                    borderColor={file ? 'cyan.500' : isDragOver ? 'cyan.400' : 'gray.700'}
+                                    borderRadius="xl"
+                                    p={8}
+                                    textAlign="center"
+                                    bg={isDragOver ? 'cyan.950/30' : 'gray.950/40'}
+                                    cursor="pointer"
+                                    transition="all 0.3s ease"
+                                    onClick={() => document.getElementById('lunch-image-input')?.click()}
+                                    onDragOver={e => {
+                                        e.preventDefault();
+                                        dispatch({type: 'SET_DRAG_OVER', payload: true});
+                                    }}
+                                    onDragLeave={e => {
+                                        e.preventDefault();
+                                        dispatch({type: 'SET_DRAG_OVER', payload: false});
+                                    }}
+                                    onDrop={e => {
+                                        e.preventDefault();
+                                        dispatch({type: 'SET_DRAG_OVER', payload: false});
+                                        const dropped = e.dataTransfer.files[0];
+                                        if (dropped?.type.startsWith('image/')) {
+                                            dispatch({type: 'SET_FILE', payload: dropped});
+                                        }
+                                    }}
+                                >
+                                    <input
+                                        id="lunch-image-input"
+                                        type="file"
+                                        accept="image/*"
+                                        hidden
+                                        onChange={e => dispatch({type: 'SET_FILE', payload: e.target.files?.[0] ?? null})}
+                                    />
+
+                                    <AnimatePresence mode="wait">
+                                        {file ? (
+                                            <MotionFlex
+                                                key="preview"
+                                                initial={{opacity: 0, scale: 0.9}}
+                                                animate={{opacity: 1, scale: 1}}
+                                                exit={{opacity: 0, scale: 0.9}}
+                                                direction="column"
+                                                align="center"
+                                                gap={4}
+                                            >
+                                                <Image
+                                                    src={URL.createObjectURL(file)}
+                                                    alt="preview"
+                                                    maxH="180px"
+                                                    borderRadius="lg"
+                                                    objectFit="cover"
+                                                    boxShadow="lg"
+                                                />
+                                                <HStack gap={2} bg="gray.800" px={3} py={1} borderRadius="full">
+                                                    <Icon as={FiCheck} color="cyan.400" />
+                                                    <Text fontSize="xs" color="gray.300" maxW="150px" isTruncated>
+                                                        {file.name}
+                                                    </Text>
+                                                </HStack>
+                                            </MotionFlex>
+                                        ) : (
+                                            <MotionFlex
+                                                key="empty"
+                                                initial={{opacity: 0}}
+                                                animate={{opacity: 1}}
+                                                exit={{opacity: 0}}
+                                                direction="column"
+                                                align="center"
+                                                gap={3}
+                                            >
+                                                <Center boxSize={12} bg="gray.800" borderRadius="xl" color="gray.500">
+                                                    <FiPlus size={24} />
+                                                </Center>
+                                                <VStack gap={1}>
+                                                    <Text color="gray.200" fontWeight="bold">Нажмите или перетащите</Text>
+                                                    <Text color="gray.500" fontSize="xs">PNG, JPG до 5МБ</Text>
+                                                </VStack>
+                                            </MotionFlex>
+                                        )}
+                                    </AnimatePresence>
+                                </MotionBox>
+
+                                {file && (
+                                    <Button
+                                        mt={6}
+                                        w="full"
+                                        colorPalette="cyan"
+                                        size="lg"
+                                        borderRadius="xl"
+                                        onClick={handleUpload}
+                                        leftIcon={<FiUploadCloud />}
+                                    >
+                                        Загрузить фото
+                                    </Button>
+                                )}
+                            </Card.Body>
+                        </Card.Root>
+                    </VStack>
+                </Box>
+
+                {/* Gallery Grid */}
+                <Box gridColumn={{lg: 'span 2'}}>
+                    <VStack align="flex-start" gap={4}>
+                        <Heading size="md" color="gray.200" fontWeight="bold">
+                            Архив изображений
+                        </Heading>
+
+                        <Box position="relative" w="100%" minH="400px">
+                            {isPending && (
+                                <Center
+                                    position="absolute"
+                                    inset={0}
+                                    bg="blackAlpha.700"
+                                    backdropFilter="blur(4px)"
+                                    borderRadius="2xl"
+                                    zIndex={10}
+                                >
+                                    <VStack gap={3}>
+                                        <Spinner size="xl" color="cyan.500" thickness="4px" />
+                                        <Text color="white" fontWeight="bold">Обновление...</Text>
+                                    </VStack>
+                                </Center>
+                            )}
+
+                            {lunches.length === 0 && !isPending ? (
+                                <Center w="100%" h="400px" bg="gray.900/30" borderRadius="2xl" border="1px dashed" borderColor="gray.800">
+                                    <VStack gap={3}>
+                                        <Icon as={FiImage} boxSize={10} color="gray.700" />
+                                        <Text color="gray.600" fontWeight="medium">В архиве пока пусто</Text>
+                                    </VStack>
+                                </Center>
+                            ) : (
+                                <SimpleGrid columns={{base: 2, sm: 3, md: 4}} gap={4}>
+                                    <AnimatePresence>
+                                        {lunches.map((lunch, index) => (
+                                            <MotionBox
+                                                key={lunch._id}
+                                                layout
+                                                initial={{opacity: 0, scale: 0.9}}
+                                                animate={{opacity: 1, scale: 1}}
+                                                exit={{opacity: 0, scale: 0.8}}
+                                                transition={{duration: 0.2, delay: index * 0.05}}
+                                                position="relative"
+                                                borderRadius="xl"
+                                                overflow="hidden"
+                                                role="group"
+                                                cursor="pointer"
+                                                boxShadow="md"
+                                                border="2px solid"
+                                                borderColor={lunch.active ? 'cyan.500' : 'transparent'}
+                                                onClick={() => handleActivate(lunch._id)}
+                                            >
+                                                <Image
+                                                    src={lunch.image}
+                                                    alt="Обед"
+                                                    w="full"
+                                                    h="160px"
+                                                    objectFit="cover"
+                                                    transition="transform 0.5s ease"
+                                                    _groupHover={{transform: 'scale(1.1)'}}
+                                                />
+
+                                                {/* Overlay */}
+                                                <Box
+                                                    position="absolute"
+                                                    inset={0}
+                                                    bgGradient="linear(to-t, blackAlpha.800, transparent, blackAlpha.400)"
+                                                    opacity={lunch.active ? 1 : 0}
+                                                    transition="opacity 0.3s"
+                                                    _groupHover={{opacity: 1}}
+                                                />
+
+                                                {/* Status & Actions */}
+                                                <Box
+                                                    position="absolute"
+                                                    top={2}
+                                                    right={2}
+                                                    opacity={0}
+                                                    transform="translateY(-10px)"
+                                                    transition="all 0.2s"
+                                                    _groupHover={{opacity: 1, transform: 'translateY(0)'}}
+                                                >
+                                                    <IconButton
+                                                        aria-label="Удалить"
+                                                        icon={<FiTrash2 size={14} />}
+                                                        size="sm"
+                                                        colorPalette="red"
+                                                        variant="solid"
+                                                        borderRadius="lg"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            openDeleteDialog(lunch._id);
+                                                        }}
+                                                        isLoading={deletingId === lunch._id}
+                                                    />
+                                                </Box>
+
+                                                {lunch.active && (
+                                                    <Badge
+                                                        position="absolute"
+                                                        top={2}
+                                                        left={2}
+                                                        colorPalette="cyan"
+                                                        variant="solid"
+                                                        size="xs"
+                                                        borderRadius="md"
+                                                    >
+                                                        <Icon as={FiStar} mr={1} /> АКТИВЕН
+                                                    </Badge>
+                                                )}
+
+                                                <Flex
+                                                    position="absolute"
+                                                    bottom={2}
+                                                    left={2}
+                                                    right={2}
+                                                    justify="center"
+                                                    opacity={lunch.active ? 0 : 0}
+                                                    transform="translateY(10px)"
+                                                    transition="all 0.2s"
+                                                    _groupHover={{opacity: lunch.active ? 0 : 1, transform: 'translateY(0)'}}
+                                                >
+                                                    <Text fontSize="xs" color="white" fontWeight="bold" textShadow="0 2px 4px rgba(0,0,0,0.5)">
+                                                        Активировать
+                                                    </Text>
+                                                </Flex>
+                                            </MotionBox>
+                                        ))}
+                                    </AnimatePresence>
+                                </SimpleGrid>
+                            )}
+                        </Box>
+                    </VStack>
+                </Box>
+            </SimpleGrid>
 
             {deleteConfirmationDialog}
-        </>
+        </VStack>
     );
 };

@@ -8,6 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
 import { User } from '../../schemas/user.schema';
+import { Session } from '../../schemas/session.schema';
 import { AuditLogService } from '../audit-log/audit-log.service';
 
 export interface SerializedUser {
@@ -17,6 +18,7 @@ export interface SerializedUser {
   surname?: string;
   patronymic?: string;
   role: string;
+  isActive: boolean;
 }
 
 function serializeUser(user: {
@@ -26,6 +28,7 @@ function serializeUser(user: {
   surname?: string;
   patronymic?: string;
   role: string;
+  isActive: boolean;
 }): SerializedUser {
   return {
     _id: user._id.toString(),
@@ -34,6 +37,7 @@ function serializeUser(user: {
     surname: user.surname,
     patronymic: user.patronymic,
     role: user.role,
+    isActive: user.isActive,
   };
 }
 
@@ -41,6 +45,7 @@ function serializeUser(user: {
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(Session.name) private sessionModel: Model<Session>,
     private auditLogService: AuditLogService,
   ) {}
 
@@ -55,6 +60,7 @@ export class UsersService {
           surname?: string;
           patronymic?: string;
           role: string;
+          isActive: boolean;
         }[]
       >()
       .exec();
@@ -71,6 +77,7 @@ export class UsersService {
         surname?: string;
         patronymic?: string;
         role: string;
+        isActive: boolean;
       }>()
       .exec();
     if (!user) return null;
@@ -143,6 +150,7 @@ export class UsersService {
         surname?: string;
         patronymic?: string;
         role: string;
+        isActive: boolean;
       }>()
       .exec();
 
@@ -184,6 +192,7 @@ export class UsersService {
         surname?: string;
         patronymic?: string;
         role: string;
+        isActive: boolean;
       }>()
       .exec();
 
@@ -226,5 +235,51 @@ export class UsersService {
       `Пользователь ${user.name} (@${user.username}) изменил пароль`,
       { entityType: 'user', entityId: userId },
     );
+  }
+
+  async toggleBlock(id: string, currentUserId: string): Promise<SerializedUser> {
+    if (id === currentUserId) {
+      throw new ForbiddenException('Нельзя заблокировать самого себя');
+    }
+
+    const user = await this.userModel.findById(id);
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    user.isActive = !user.isActive;
+    await user.save();
+
+    const action = user.isActive ? 'Разблокировка' : 'Блокировка';
+    await this.auditLogService.createLog(
+      currentUserId,
+      `${action} пользователя`,
+      `Пользователь: ${user.name} (@${user.username}) — ${user.isActive ? 'разблокирован' : 'заблокирован'}`,
+      { entityType: 'user', entityId: id },
+    );
+
+    return serializeUser(user);
+  }
+
+  async logoutAllSessions(id: string, currentUserId: string): Promise<{ count: number }> {
+    const isSelf = id === currentUserId;
+
+    const user = await this.userModel.findById(id);
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    const result = await this.sessionModel.deleteMany({ userId: user._id });
+
+    if (!isSelf) {
+      await this.auditLogService.createLog(
+        currentUserId,
+        'Принудительный выход',
+        `Все сессии пользователя ${user.name} (@${user.username}) завершены (${result.deletedCount} шт.)`,
+        { entityType: 'user', entityId: id },
+      );
+    }
+
+    return { count: result.deletedCount };
   }
 }

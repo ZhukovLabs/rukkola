@@ -9,10 +9,11 @@ import {
     IconButton,
     Portal,
     Badge,
-    HStack
+    HStack,
+    VStack
 } from '@chakra-ui/react'
-import {FiEdit, FiTrash2, FiCheck, FiX} from 'react-icons/fi'
-import {updateUser, deleteUser} from './actions'
+import {FiEdit, FiTrash2, FiCheck, FiX, FiLogOut, FiShieldOff, FiShield} from 'react-icons/fi'
+import {updateUser, deleteUser, toggleBlockUser, logoutUserSessions} from './actions'
 import {Tooltip} from '@/components/tooltip'
 import {Select, createListCollection} from '@chakra-ui/react'
 import {useConfirmationDialog} from '@/hooks/use-confirmation-dialog'
@@ -65,6 +66,35 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
         colorScheme: 'red',
     })
 
+    const handleToggleBlock = async () => {
+        setError(null)
+        try {
+            const res = await toggleBlockUser(user._id.toString())
+            if (res.success && res.data) {
+                onUserUpdate(res.data)
+                toast.showSuccess(res.data.isActive ? 'Пользователь разблокирован' : 'Пользователь заблокирован')
+            } else {
+                toast.showError(res.message || 'Ошибка')
+            }
+        } catch {
+            toast.showError('Не удалось изменить статус')
+        }
+    }
+
+    const handleLogoutSessions = async () => {
+        setError(null)
+        try {
+            const res = await logoutUserSessions(user._id.toString())
+            if (res.success) {
+                toast.showSuccess(res.message || 'Сессии завершены')
+            } else {
+                toast.showError(res.message || 'Ошибка')
+            }
+        } catch {
+            toast.showError('Не удалось завершить сессии')
+        }
+    }
+
     const handleSave = async () => {
         setError(null)
         const result = editUserSchema.safeParse(tempUser)
@@ -112,59 +142,66 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
     return (
         <>
             <Table.Row
-                bg="gray.900"
+                bg={user.isActive ? 'transparent' : 'red.500/5'}
                 borderBottom="1px solid"
-                borderColor="gray.700"
-                _hover={{bg: 'gray.600', transition: '0.18s ease'}}
-                style={{transition: 'background 180ms ease, transform 180ms ease'}}
+                borderColor={user.isActive ? 'whiteAlpha.100' : 'red.500/20'}
+                _hover={{ bg: user.isActive ? 'whiteAlpha.50' : 'red.500/10' }}
+                transition="all 0.2s ease"
             >
-                <Table.Cell p={3} verticalAlign="middle">
+                <Table.Cell py={3} px={4} verticalAlign="middle">
                     <HStack gap={3} align="center">
                         {editing ? (
                             <Input
-                                p={2}
+                                px={2}
                                 size="sm"
                                 value={tempUser.username ?? ''}
                                 onChange={(e) => setTempUser({...tempUser, username: e.target.value.toLowerCase()})}
-                                bg="gray.800"
-                                color="gray.300"
-                                borderColor="gray.500"
-                                height="36px"
-                                _focus={{borderColor: 'gray.400', boxShadow: '0 0 0 1px gray.400'}}
-                                borderRadius="md"
+                                bg="gray.900"
+                                color="white"
+                                borderColor="whiteAlpha.200"
+                                height="32px"
+                                _focus={{borderColor: 'white', boxShadow: '0 0 0 1px white'}}
+                                borderRadius="lg"
+                                fontSize="xs"
                             />
                         ) : (
-                            <Text color="gray.200" fontWeight="medium" lineHeight="20px">
-                                {user.username}
-                            </Text>
+                            <VStack align="start" gap={0}>
+                                <Text color="white" fontWeight="bold" fontSize="xs">
+                                    {user.username}
+                                </Text>
+                                <Text color="gray.500" fontSize="2xs">
+                                    ID: {user._id.toString().slice(-6)}
+                                </Text>
+                            </VStack>
                         )}
                     </HStack>
                 </Table.Cell>
 
                 {(['name', 'surname', 'patronymic'] as const).map((field) => (
-                    <Table.Cell key={field} p={3} verticalAlign="middle">
+                    <Table.Cell key={field} py={3} px={4} verticalAlign="middle" textAlign="center">
                         {editing ? (
                             <Input
-                                p={2}
+                                px={2}
                                 size="sm"
                                 value={getFieldValue(tempUser, field)}
                                 onChange={(e) => handleFieldChange(field, e.target.value)}
-                                bg="gray.800"
-                                color="gray.300"
-                                borderColor="gray.500"
-                                height="36px"
-                                _focus={{borderColor: 'gray.400', boxShadow: '0 0 0 1px gray.400'}}
-                                borderRadius="md"
+                                bg="gray.900"
+                                color="white"
+                                borderColor="whiteAlpha.200"
+                                height="32px"
+                                _focus={{borderColor: 'white', boxShadow: '0 0 0 1px white'}}
+                                borderRadius="lg"
+                                fontSize="xs"
                             />
                         ) : (
-                            <Text color="gray.200" lineHeight="36px" textAlign="center">
-                                {getFieldValue({username: user.username, name: user.name, surname: user.surname, patronymic: user.patronymic, role: user.role}, field) || '-'}
+                            <Text color="gray.300" fontSize="xs">
+                                {getFieldValue({username: user.username, name: user.name, surname: user.surname, patronymic: user.patronymic, role: user.role}, field) || '—'}
                             </Text>
                         )}
                     </Table.Cell>
                 ))}
 
-                <Table.Cell p={3} verticalAlign="middle">
+                <Table.Cell py={3} px={4} verticalAlign="middle">
                     {editing ? (
                         <Select.Root
                             collection={roles}
@@ -175,17 +212,16 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                         >
                             <Select.HiddenSelect/>
                             <Select.Control>
-                                <Select.Trigger px={2} bg="gray.800" color="gray.200" borderColor="gray.500"
-                                                height="36px">
-                                    <Select.ValueText placeholder="Роль"/>
+                                <Select.Trigger px={2} bg="gray.900" color="white" borderColor="whiteAlpha.200" height="32px" borderRadius="lg">
+                                    <Select.ValueText placeholder="Роль" fontSize="xs"/>
                                 </Select.Trigger>
                             </Select.Control>
                             <Portal>
                                 <Select.Positioner>
-                                    <Select.Content bg="gray.800" borderColor="gray.600">
+                                    <Select.Content bg="gray.900" borderColor="whiteAlpha.200" borderRadius="lg">
                                         {roles.items.map((item) => (
-                                            <Select.Item key={item.value} item={item} p={2} color="white">
-                                                {item.label}
+                                            <Select.Item key={item.value} item={item} px={2} py={1} color="white" _hover={{ bg: 'whiteAlpha.100' }} cursor="pointer">
+                                                <Text fontSize="xs">{item.label}</Text>
                                                 <Select.ItemIndicator/>
                                             </Select.Item>
                                         ))}
@@ -194,15 +230,17 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                             </Portal>
                         </Select.Root>
                     ) : (
-                        <Flex direction="column" align="center">
+                        <Flex justify="center">
                             <Badge
-                                px={3}
-                                py={1}
+                                variant="surface"
+                                px={2}
+                                py={0.5}
                                 borderRadius="full"
-                                bg={user.role === 'admin' ? 'linear-gradient(90deg,#0ea5a4, #06b6d4)' : 'gray.800'}
-                                color={user.role === 'admin' ? 'white' : 'gray.300'}
-                                fontSize="xs"
-                                boxShadow="sm"
+                                colorPalette={user.role === 'admin' ? 'cyan' : 'gray'}
+                                fontSize="2xs"
+                                fontWeight="extrabold"
+                                textTransform="uppercase"
+                                letterSpacing="wider"
                             >
                                 {roles.items.find(({value}) => user.role === value)?.label}
                             </Badge>
@@ -210,48 +248,61 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                     )}
                 </Table.Cell>
 
-                <Table.Cell p={3} verticalAlign="middle">
+                <Table.Cell py={3} px={4} verticalAlign="middle">
+                    <Flex justify="center">
+                        <Badge
+                            variant="solid"
+                            px={2}
+                            py={0.5}
+                            borderRadius="full"
+                            bg={user.isActive ? 'green.500/20' : 'red.500/20'}
+                            color={user.isActive ? 'green.400' : 'red.400'}
+                            border="1px solid"
+                            borderColor={user.isActive ? 'green.500/30' : 'red.500/30'}
+                            fontSize="2xs"
+                            fontWeight="extrabold"
+                            textTransform="uppercase"
+                            letterSpacing="wider"
+                        >
+                            {user.isActive ? 'Активен' : 'Заблокирован'}
+                        </Badge>
+                    </Flex>
+                </Table.Cell>
+
+                <Table.Cell py={3} px={4} verticalAlign="middle">
                     <Flex direction="column" gap={1} align="center">
                         {error && (
-                            <Text color="red.400" fontSize="xs">
+                            <Text color="red.400" fontSize="2xs" mb={1}>
                                 {error}
                             </Text>
                         )}
 
-                        <Flex justify="center" gap={2}>
+                        <Flex justify="center" gap={1.5}>
                             {editing ? (
                                 <>
                                     <Tooltip content="Сохранить">
                                         <IconButton
                                             aria-label="Сохранить"
-                                            size="sm"
-                                            borderRadius="xl"
-                                            bgGradient="linear(to-r, green.400, green.500)"
-                                            color="white"
-                                            _hover={{
-                                                transform: 'scale(1.06)',
-                                                bgGradient: 'linear(to-r, green.500, green.600)'
-                                            }}
+                                            size="xs"
+                                            borderRadius="md"
+                                            variant="subtle"
+                                            colorPalette="green"
                                             onClick={handleSave}
                                         >
-                                            <FiCheck/>
+                                            <FiCheck size={14}/>
                                         </IconButton>
                                     </Tooltip>
 
                                     <Tooltip content="Отмена">
                                         <IconButton
                                             aria-label="Отмена"
-                                            size="sm"
-                                            borderRadius="xl"
-                                            bgGradient="linear(to-r, gray.500, gray.600)"
-                                            color="white"
-                                            _hover={{
-                                                transform: 'scale(1.06)',
-                                                bgGradient: 'linear(to-r, gray.600, gray.700)'
-                                            }}
+                                            size="xs"
+                                            borderRadius="md"
+                                            variant="subtle"
+                                            colorPalette="gray"
                                             onClick={handleCancel}
                                         >
-                                            <FiX/>
+                                            <FiX size={14}/>
                                         </IconButton>
                                     </Tooltip>
                                 </>
@@ -260,37 +311,61 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
                                     <Tooltip content="Редактировать">
                                         <IconButton
                                             aria-label="Редактировать"
-                                            size="sm"
-                                            borderRadius="xl"
-                                            bgGradient="linear(to-r, blue.400, blue.500)"
-                                            color="white"
-                                            _hover={{
-                                                transform: 'scale(1.06)',
-                                                bgGradient: 'linear(to-r, blue.500, blue.600)'
-                                            }}
+                                            size="xs"
+                                            borderRadius="md"
+                                            variant="ghost"
+                                            color="whiteAlpha.600"
+                                            _hover={{ color: 'white', bg: 'whiteAlpha.100' }}
                                             onClick={() => setEditing(true)}
                                         >
-                                            <FiEdit/>
+                                            <FiEdit size={14}/>
+                                        </IconButton>
+                                    </Tooltip>
+
+                                    <Tooltip content="Завершить сессии">
+                                        <IconButton
+                                            aria-label="Завершить сессии"
+                                            size="xs"
+                                            borderRadius="md"
+                                            variant="ghost"
+                                            color="purple.400/60"
+                                            _hover={{ color: 'purple.400', bg: 'whiteAlpha.100' }}
+                                            onClick={handleLogoutSessions}
+                                        >
+                                            <FiLogOut size={14}/>
                                         </IconButton>
                                     </Tooltip>
 
                                     {!isOwnAccount && (
-                                        <Tooltip content="Удалить">
-                                            <IconButton
-                                                aria-label="Удалить"
-                                                size="sm"
-                                                borderRadius="xl"
-                                                bgGradient="linear(to-r, red.500, red.600)"
-                                                color="white"
-                                                _hover={{
-                                                    transform: 'scale(1.06)',
-                                                    bgGradient: 'linear(to-r, red.600, red.700)'
-                                                }}
-                                                onClick={() => openDialog(user._id.toString())}
-                                            >
-                                                <FiTrash2/>
-                                            </IconButton>
-                                        </Tooltip>
+                                        <>
+                                            <Tooltip content={user.isActive ? 'Заблокировать' : 'Разблокировать'}>
+                                                <IconButton
+                                                    aria-label={user.isActive ? 'Заблокировать' : 'Разблокировать'}
+                                                    size="xs"
+                                                    borderRadius="md"
+                                                    variant="ghost"
+                                                    color={user.isActive ? 'orange.400/60' : 'green.400/60'}
+                                                    _hover={{ color: user.isActive ? 'orange.400' : 'green.400', bg: 'whiteAlpha.100' }}
+                                                    onClick={handleToggleBlock}
+                                                >
+                                                    {user.isActive ? <FiShieldOff size={14}/> : <FiShield size={14}/>}
+                                                </IconButton>
+                                            </Tooltip>
+
+                                            <Tooltip content="Удалить">
+                                                <IconButton
+                                                    aria-label="Удалить"
+                                                    size="xs"
+                                                    borderRadius="md"
+                                                    variant="ghost"
+                                                    color="red.400/60"
+                                                    _hover={{ color: 'red.400', bg: 'whiteAlpha.100' }}
+                                                    onClick={() => openDialog(user._id.toString())}
+                                                >
+                                                    <FiTrash2 size={14}/>
+                                                </IconButton>
+                                            </Tooltip>
+                                        </>
                                     )}
                                 </>
                             )}

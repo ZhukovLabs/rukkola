@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Flex, Spinner, Text, Button, Card, Table, Box } from '@chakra-ui/react'
+import { Flex, Spinner, Text, Button, Card, Table, Box, VStack } from '@chakra-ui/react'
 import { getUsers } from './actions'
 import { AddUserModal } from './add-user-modal'
 import { UserRow } from './user-row'
@@ -38,66 +38,79 @@ export const UsersTable = () => {
         <>
             <Card.Root
                 w="100%"
-                borderRadius="xl"
-                shadow="xl"
+                borderRadius="3xl"
                 border="1px solid"
-                borderColor="gray.700"
-                bg="gray.800"
+                borderColor="whiteAlpha.100"
+                bg="whiteAlpha.50"
                 overflow="hidden"
+                shadow="none"
             >
                 <Card.Header
-                    bgGradient="linear(to-r, gray.600, cyan.600)"
-                    borderTopRadius="xl"
-                    py={4}
-                    textAlign="center"
-                    color="white"
-                    backdropFilter="blur(10px)"
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    flexDir="row"
+                    bg="whiteAlpha.100"
+                    py={3}
+                    px={5}
+                    borderBottom="1px solid"
+                    borderColor="whiteAlpha.100"
                 >
-                    <Text fontSize="lg" fontWeight="bold" letterSpacing="tight" w="100%">
-                        Пользователи
-                    </Text>
-                    <Button
-                        size="sm"
-                        bg="whiteAlpha.200"
-                        color="white"
-                        _hover={{bg: "whiteAlpha.300"}}
-                        onClick={() => setIsAddOpen(true)}
-                        borderRadius="lg"
-                    >
-                        + Добавить
-                    </Button>
+                    <Flex justify="space-between" align="center" w="full">
+                        <VStack align="start" gap={0}>
+                            <Text fontSize="lg" fontWeight="extrabold" color="white" letterSpacing="tight" lineHeight="1.2">
+                                Пользователи
+                            </Text>
+                            <Text fontSize="xs" color="gray.400" lineHeight="1">
+                                Доступ к панели управления
+                            </Text>
+                        </VStack>
+                        <Button
+                            size="sm"
+                            bg="white"
+                            color="gray.950"
+                            _hover={{
+                                bg: "gray.100",
+                                shadow: "0 0 20px rgba(255,255,255,0.15)",
+                                transform: "translateY(-1px)"
+                            }}
+                            _active={{ transform: "scale(0.98)" }}
+                            onClick={() => setIsAddOpen(true)}
+                            borderRadius="lg"
+                            fontWeight="bold"
+                            px={4}
+                            h="32px"
+                        >
+                            + Добавить
+                        </Button>
+                    </Flex>
                 </Card.Header>
 
-                <Card.Body px={0} py={0} minH="200px">
+                <Card.Body px={0} py={0}>
                     {loading ? (
                         <Flex justify="center" align="center" h="200px">
-                            <Spinner size="xl" color="gray.300"/>
+                            <Spinner size="lg" color="whiteAlpha.400" thickness="3px"/>
                         </Flex>
                     ) : (
                         <Box overflowX="auto">
-                            <Table.Root size="md" variant="outline" w="full" minWidth="700px">
-                                <Table.Header bg="gray.900" borderBottomWidth="2px" borderColor="gray.700">
-                                    <Table.Row>
-                                        <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">
-                                            Логин
+                            <Table.Root size="sm" variant="plain" w="full">
+                                <Table.Header bg="whiteAlpha.50">
+                                    <Table.Row borderBottom="1px solid" borderColor="whiteAlpha.100">
+                                        <Table.ColumnHeader color="gray.400" py={3} px={4} fontWeight="bold" fontSize="xs" textTransform="uppercase" letterSpacing="widest">
+                                            Пользователь
                                         </Table.ColumnHeader>
-                                        <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">
+                                        <Table.ColumnHeader color="gray.400" py={3} px={4} fontWeight="bold" fontSize="xs" textTransform="uppercase" letterSpacing="widest" textAlign="center">
                                             Имя
                                         </Table.ColumnHeader>
-                                        <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">
+                                        <Table.ColumnHeader color="gray.400" py={3} px={4} fontWeight="bold" fontSize="xs" textTransform="uppercase" letterSpacing="widest" textAlign="center">
                                             Фамилия
                                         </Table.ColumnHeader>
-                                        <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">
+                                        <Table.ColumnHeader color="gray.400" py={3} px={4} fontWeight="bold" fontSize="xs" textTransform="uppercase" letterSpacing="widest" textAlign="center">
                                             Отчество
                                         </Table.ColumnHeader>
-                                        <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">
+                                        <Table.ColumnHeader color="gray.400" py={3} px={4} fontWeight="bold" fontSize="xs" textTransform="uppercase" letterSpacing="widest" textAlign="center">
                                             Роль
                                         </Table.ColumnHeader>
-                                        <Table.ColumnHeader color="gray.200" p={4} fontWeight="semibold" fontSize="sm" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">
+                                        <Table.ColumnHeader color="gray.400" py={3} px={4} fontWeight="bold" fontSize="xs" textTransform="uppercase" letterSpacing="widest" textAlign="center">
+                                            Статус
+                                        </Table.ColumnHeader>
+                                        <Table.ColumnHeader color="gray.400" py={3} px={4} fontWeight="bold" fontSize="xs" textTransform="uppercase" letterSpacing="widest" textAlign="center">
                                             Действия
                                         </Table.ColumnHeader>
                                     </Table.Row>
@@ -122,8 +135,13 @@ export const UsersTable = () => {
                                         ))
                                     ) : (
                                         <Table.Row>
-                                            <Table.Cell colSpan={6} textAlign="center" py={8}>
-                                                <Text color="gray.500">Нет пользователей</Text>
+                                            <Table.Cell colSpan={7} textAlign="center" py={12}>
+                                                <VStack gap={2}>
+                                                    <Text color="gray.500" fontWeight="medium">Пользователи не найдены</Text>
+                                                    <Button variant="link" size="sm" color="whiteAlpha.600" onClick={() => setIsAddOpen(true)}>
+                                                        Добавить первого пользователя
+                                                    </Button>
+                                                </VStack>
                                             </Table.Cell>
                                         </Table.Row>
                                     )}

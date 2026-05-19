@@ -4,4 +4,6 @@ export {
   updateUser,
   deleteUser,
   updatePassword,
+  toggleBlockUser,
+  logoutUserSessions,
 } from '@/lib/api/users';

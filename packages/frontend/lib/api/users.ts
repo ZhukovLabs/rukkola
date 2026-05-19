@@ -10,6 +10,7 @@ export type SerializedUser = {
   surname?: string;
   patronymic?: string;
   role: string;
+  isActive: boolean;
 };
 
 export type CreateUserInput = {
@@ -63,4 +64,20 @@ export async function updatePassword(
     oldPassword,
     newPassword,
   });
+}
+
+export async function toggleBlockUser(
+  id: string,
+): Promise<ActionResponse<SerializedUser>> {
+  return apiClient.patch<ActionResponse<SerializedUser>>(
+    `/users/${id}/toggle-block`,
+  );
+}
+
+export async function logoutUserSessions(
+  id: string,
+): Promise<ActionResponse<{ count: number }>> {
+  return apiClient.post<ActionResponse<{ count: number }>>(
+    `/users/${id}/logout-sessions`,
+  );
 }

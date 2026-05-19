@@ -59,3 +59,15 @@ export const passwordSchema = z
 export type PasswordFormData = z.infer<typeof passwordSchema>
 export type UserFormData = z.infer<typeof userSchema>
 export type EditUserFormData = z.infer<typeof editUserSchema>
+
+export const siteSettingsSchema = z.object({
+    address: z.string().min(1, 'Адрес обязателен'),
+    addressLink: z.string().url('Введите корректную ссылку').or(z.literal('')),
+    addressNote: z.string().optional(),
+    phone: z.string().min(1, 'Телефон обязателен'),
+    phoneLink: z.string().min(1, 'Ссылка для телефона обязательна'),
+    workHours: z.string().min(1, 'Время работы обязательно'),
+    workHoursNote: z.string().optional(),
+})
+
+export type SiteSettingsFormData = z.infer<typeof siteSettingsSchema>

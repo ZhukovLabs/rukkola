@@ -19,6 +19,8 @@ import { useSession } from '@/lib/auth/auth-context'
 import { passwordSchema, type PasswordFormData } from './validation'
 import { useToast } from '@/components/toast-container'
 
+import { InputField } from '@/components/input-field'
+
 export const PasswordChangeForm = () => {
     const { data } = useSession()
     const [isPending, startTransition] = useTransition()
@@ -65,103 +67,110 @@ export const PasswordChangeForm = () => {
         })
     }
 
-    const fieldErrorText = (fieldName: keyof PasswordFormData) =>
-        errors[fieldName] ? String(errors[fieldName]?.message) : ''
-
     const renderInput = (label: string, field: keyof PasswordFormData, show: boolean, setShow: (b: boolean) => void) => (
         <Box>
-            <Text mb={2} color="gray.200" fontWeight="medium">{label}</Text>
-            <Box position="relative">
-                <Input
-                    p={2}
-                    type={show ? 'text' : 'password'}
-                    bg="gray.900"
-                    color="gray.200"
-                    borderColor={fieldErrorText(field) ? 'red.700' : 'gray.700'}
-                    _focus={{
-                        borderColor: fieldErrorText(field) ? 'red.600' : 'gray.400',
-                        boxShadow: fieldErrorText(field) ? '0 0 8px rgba(255,90,90,0.14)' : '0 0 10px rgba(128,128,128,0.4)'
-                    }}
-                    _hover={{ borderColor: 'gray.600' }}
-                    rounded="lg"
-                    size="md"
-                    {...register(field)}
-                />
-                <IconButton
-                    size="sm"
-                    aria-label={show ? 'Скрыть пароль' : 'Показать пароль'}
-                    variant="ghost"
-                    position="absolute"
-                    right={2}
-                    top="50%"
-                    transform="translateY(-50%)"
-                    onClick={() => setShow(!show)}
-                    color="gray.200"
-                    _hover={{ bg: 'blackAlpha.400' }}>
-                    {show ? <FiEyeOff /> : <FiEye />}
-                </IconButton>
-            </Box>
-            {fieldErrorText(field) && (
-                <Text mt={2} color="red.300" fontSize="sm">{fieldErrorText(field)}</Text>
-            )}
+            <Text mb={2} color="gray.400" fontSize="sm" fontWeight="bold" textTransform="uppercase" letterSpacing="wider">
+                {label}
+            </Text>
+            <InputField
+                icon={<FiLock />}
+                type={show ? 'text' : 'password'}
+                placeholder="••••••••"
+                register={register(field)}
+                error={errors[field]}
+                rightElement={
+                    <IconButton
+                        size="xs"
+                        aria-label={show ? 'Скрыть пароль' : 'Показать пароль'}
+                        variant="ghost"
+                        onClick={() => setShow(!show)}
+                        color="gray.400"
+                        _hover={{ color: 'white', bg: 'whiteAlpha.100' }}
+                        borderRadius="md"
+                    >
+                        {show ? <FiEyeOff size={14} /> : <FiEye size={14} />}
+                    </IconButton>
+                }
+            />
         </Box>
     )
 
     return (
         <Box>
-            <Flex align="center" gap={3} mb={6}>
-                <Box bg="gray.700" p={3} rounded="full" boxShadow="0 0 15px rgba(128,128,128,0.6)">
-                    <FiLock size={20} color="white" />
+            <Flex align="center" gap={4} mb={10}>
+                <Box 
+                    bg="whiteAlpha.100" 
+                    p={3.5} 
+                    rounded="2xl" 
+                    border="1px solid"
+                    borderColor="whiteAlpha.200"
+                    shadow="inner"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                >
+                    <FiLock size={24} color="white" />
                 </Box>
-                <Text fontSize="2xl" color="gray.200"  fontWeight="bold" bgGradient="linear(to-r, gray.300, gray.100)">
-                    Настройки безопасности
-                </Text>
+                <VStack align="start" gap={0}>
+                    <Text fontSize="2xl" color="white" fontWeight="extrabold" letterSpacing="tight">
+                        Безопасность
+                    </Text>
+                    <Text fontSize="sm" color="gray.400">
+                        Обновите пароль для защиты вашего аккаунта
+                    </Text>
+                </VStack>
             </Flex>
 
             <form onSubmit={handleSubmit(onSubmit)}>
-                <VStack gap={5} align="stretch" maxW={600}>
+                <VStack gap={6} align="stretch" maxW={500}>
                     {renderInput('Текущий пароль', 'oldPassword', showOld, setShowOld)}
                     {renderInput('Новый пароль', 'newPassword', showNew, setShowNew)}
                     {renderInput('Подтвердите новый пароль', 'confirmPassword', showConfirm, setShowConfirm)}
 
                     {serverError && (
-                        <Alert.Root>
-                            <Alert.Indicator>
+                        <Alert.Root status="error" borderRadius="xl" bg="red.950/30" border="1px solid" borderColor="red.900/50">
+                            <Alert.Indicator color="red.400">
                                 <FiAlertTriangle />
                             </Alert.Indicator>
                             <Alert.Content>
-                                <Alert.Title fontWeight="bold">Ошибка</Alert.Title>
-                                <Alert.Description>{serverError}</Alert.Description>
+                                <Alert.Title color="red.200" fontWeight="bold">Ошибка</Alert.Title>
+                                <Alert.Description color="red.300/80">{serverError}</Alert.Description>
                             </Alert.Content>
                         </Alert.Root>
                     )}
 
                     {serverSuccess && (
-                        <Alert.Root>
-                            <Alert.Indicator>
+                        <Alert.Root status="success" borderRadius="xl" bg="green.950/30" border="1px solid" borderColor="green.900/50">
+                            <Alert.Indicator color="green.400">
                                 <FiCheckCircle />
                             </Alert.Indicator>
                             <Alert.Content>
-                                <Alert.Title fontWeight="bold">Успех</Alert.Title>
-                                <Alert.Description>{serverSuccess}</Alert.Description>
+                                <Alert.Title color="green.200" fontWeight="bold">Успех</Alert.Title>
+                                <Alert.Description color="green.300/80">{serverSuccess}</Alert.Description>
                             </Alert.Content>
                         </Alert.Root>
                     )}
 
                     <Button
-                        mt={2}
-                        size="md"
+                        mt={4}
+                        size="lg"
                         type="submit"
                         loading={isPending}
                         loadingText="Сохранение..."
-                        bg="gray.500"
-                        color="whitesmoke"
-                        _hover={{ bg: 'gray.400', boxShadow: '0 0 20px rgba(128,128,128,0.4)' }}
+                        bg="white"
+                        color="gray.950"
+                        _hover={{ 
+                            bg: 'gray.100', 
+                            shadow: '0 0 30px rgba(255,255,255,0.2)',
+                            transform: 'translateY(-1px)'
+                        }}
                         _active={{ transform: 'scale(0.98)' }}
-                        rounded="xl"
+                        borderRadius="2xl"
+                        fontWeight="bold"
                         transition="all 0.2s ease"
+                        w="full"
                     >
-                        Сохранить изменения
+                        Обновить пароль
                     </Button>
                 </VStack>
             </form>
