@@ -493,6 +493,7 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                                 position="relative"
                                                 borderRadius="xl"
                                                 overflow="hidden"
+                                                data-group
                                                 role="group"
                                                 cursor="pointer"
                                                 boxShadow="md"
@@ -520,30 +521,26 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                                     _groupHover={{opacity: 1}}
                                                 />
 
-                                                {/* Status & Actions */}
-                                                <Box
+                                                {/* Delete Button */}
+                                                <IconButton
+                                                    aria-label="Удалить"
+                                                    size="sm"
+                                                    colorPalette="red"
+                                                    variant="solid"
+                                                    borderRadius="lg"
                                                     position="absolute"
                                                     top={2}
                                                     right={2}
-                                                    opacity={0}
-                                                    transform="translateY(-10px)"
-                                                    transition="all 0.2s"
-                                                    _groupHover={{opacity: 1, transform: 'translateY(0)'}}
-                                                >
-                                                    <IconButton
-                                                        aria-label="Удалить"
-                                                        size="sm"
-                                                        colorPalette="red"
-                                                        variant="solid"
-                                                        borderRadius="lg"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            openDeleteDialog(lunch._id);
-                                                        }}
-                                                        loading={deletingId === lunch._id}>
-                                                        <FiTrash2 size={14}/>
-                                                    </IconButton>
-                                                </Box>
+                                                    zIndex={2}
+                                                    opacity={0.85}
+                                                    _hover={{opacity: 1, bg: 'red.600'}}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        openDeleteDialog(lunch._id);
+                                                    }}
+                                                    loading={deletingId === lunch._id}>
+                                                    <FiTrash2 size={14}/>
+                                                </IconButton>
 
                                                 {lunch.active && (
                                                     <Badge
