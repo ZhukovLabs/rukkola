@@ -330,8 +330,8 @@ export const FilterSection = () => {
     const visibilityTriggerPaddingRight = selectedVisibility ? '104px' : '56px';
 
     return (
-        <Box px={6} py={5} borderBottom="1px solid" borderColor="gray.800" bg="gray.950">
-            <Flex gap={4} align="center" flexWrap="wrap">
+        <Box borderBottom="1px solid" borderColor="gray.800" bg="gray.950">
+            <Flex px={6} py={5} gap={4} align="center" flexWrap="wrap">
                 <SearchField
                     initialValue={searchValue}
                     onCommit={commitSearchValue}

@@ -96,12 +96,12 @@ export const ProductsPage = () => {
                             <ProductsTable/>
                         </Card.Body>
 
+                        <Box borderTop="1px solid" borderColor="gray.800" />
+
                         <Card.Footer 
                             p={8} 
-                            borderTop="1px solid" 
-                            borderColor="gray.800" 
                             bg="gray.950"
-                            justify="center"
+                            justifyContent="center"
                         >
                             <Pagination page={page} totalPages={totalPages} onPageChange={setPageParam}/>
                         </Card.Footer>

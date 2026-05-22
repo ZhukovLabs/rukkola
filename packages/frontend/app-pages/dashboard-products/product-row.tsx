@@ -85,7 +85,7 @@ export const ProductRow = ({
 
     return (
         <>
-            <Table.Cell p={3} border="none">
+            <Table.Cell p={3}>
                 <PositionDialog
                     currentPosition={position}
                     totalItems={totalItems}
@@ -94,7 +94,7 @@ export const ProductRow = ({
                 />
             </Table.Cell>
 
-            <Table.Cell p={4} border="none">
+            <Table.Cell p={4}>
                 <Box position="relative" boxSize="60px">
                     {showEmptyPlaceholder ? (
                         <Tooltip content="Изображение отсутствует" openDelay={300}>
@@ -174,7 +174,7 @@ export const ProductRow = ({
                 </Box>
             </Table.Cell>
 
-            <Table.Cell p={4} border="none">
+            <Table.Cell p={4}>
                 <Stack gap={1.5}>
                     <Text fontSize="md" fontWeight="bold" letterSpacing="tight" color="gray.100">{p.name}</Text>
                     {p.tags && p.tags.length > 0 && (
@@ -206,13 +206,13 @@ export const ProductRow = ({
                 p={4}
                 fontSize="xs"
                 lineHeight="relaxed"
-                border="none"
+               
                 fontWeight="medium"
             >
                 {p.description || <Text color="gray.700" fontStyle="italic" opacity={0.5}>Описание отсутствует</Text>}
             </Table.Cell>
 
-            <Table.Cell p={4} border="none">
+            <Table.Cell p={4}>
                 {p.prices?.length ? (
                     <Flex wrap="wrap" gap={2}>
                         {p.prices.map(({ size, price }) => (
@@ -248,7 +248,7 @@ export const ProductRow = ({
                 )}
             </Table.Cell>
 
-            <Table.Cell p={4} border="none">
+            <Table.Cell p={4}>
                 {p.categories?.length ? (
                     <Flex wrap="wrap" gap={2}>
                         {p.categories.map((c: CategoryRef) => (
@@ -275,7 +275,7 @@ export const ProductRow = ({
                 )}
             </Table.Cell>
 
-            <Table.Cell p={4} border="none">
+            <Table.Cell p={4}>
                 <Flex gap={2} align="center" justify="flex-end">
                     <Tooltip content={p.isAlcohol ? "Алкоголь" : "Без алкоголя"} openDelay={400}>
                         <IconButton

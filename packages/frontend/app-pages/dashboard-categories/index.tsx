@@ -43,7 +43,7 @@ export const DashboardCategoriesPage = () => {
     if (loading) {
         return (
             <Center minH="400px">
-                <Spinner size="xl" color="green.500" thickness="4px" />
+                <Spinner size="xl" color="green.500" />
             </Center>
         );
     }

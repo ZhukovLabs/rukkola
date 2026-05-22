@@ -31,8 +31,6 @@ export function SortableRow({id, children}: SortableRowProps) {
             ref={setNodeRef}
             style={style}
             bg={isDragging ? 'orange.900/20' : 'transparent'}
-            borderBottom="1px solid"
-            borderColor="gray.900"
             transition="all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
             position="relative"
             zIndex={isDragging ? 10 : 1}
@@ -46,7 +44,7 @@ export function SortableRow({id, children}: SortableRowProps) {
                     aria-label="Перетащить"
                     size="xs"
                     variant="ghost"
-                    color="gray.600"
+                    color="gray.800"
                     cursor={isDragging ? 'grabbing' : 'grab'}
                     _hover={{ color: "gray.300", bg: "gray.700" }}
                     {...attributes}

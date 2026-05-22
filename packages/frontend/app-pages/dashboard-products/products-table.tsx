@@ -4,6 +4,7 @@ import {memo, useCallback, useMemo} from 'react';
 import {
     Box,
     Flex,
+    Portal,
     Spinner,
     Stack,
     Table,
@@ -180,8 +181,7 @@ export const ProductsTable = memo(() => {
                     inset={0}
                     justify="center"
                     align="center"
-                    bg="rgba(0, 0, 0, 0.7)"
-                    backdropFilter="blur(8px)"
+                    bg="transparent"
                     zIndex={10}
                     rounded="md"
                 >
@@ -194,14 +194,13 @@ export const ProductsTable = memo(() => {
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
             >
-                <Table.Root size={{base: 'sm', md: 'md', lg: 'lg'}} variant="ghost" w="full" border="none">
+                <Table.Root size={{base: 'sm', md: 'md', lg: 'lg'}} variant="line" w="full" border="none" css={{ "& td, & th": { borderBottomColor: "rgba(255,255,255,0.05)" } }}>
                     <Table.Header>
                         <Table.Row bg="gray.950">
                             <Table.ColumnHeader
                                 minW="40px"
                                 w="40px"
                                 bg="gray.950"
-                                border="none"
                                 position="sticky"
                                 top={0}
                                 zIndex={2}
@@ -218,7 +217,6 @@ export const ProductsTable = memo(() => {
                                     letterSpacing="0.15em"
                                     whiteSpace="nowrap"
                                     bg="gray.950"
-                                    border="none"
                                     position="sticky"
                                     top={0}
                                     zIndex={2}
@@ -240,7 +238,7 @@ export const ProductsTable = memo(() => {
                 </Table.Root>
             </DndContext>
 
-            {confirmationDialog}
+            <Portal>{confirmationDialog}</Portal>
         </Box>
     );
 });

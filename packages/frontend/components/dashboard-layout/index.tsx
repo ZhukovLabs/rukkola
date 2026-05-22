@@ -1,6 +1,6 @@
 "use client";
 
-import {Box, Flex, VStack, Text, Icon, IconButton, Link, Badge, HStack} from "@chakra-ui/react";
+import {Box, Flex, VStack, Text, Icon, IconButton, Link, HStack} from "@chakra-ui/react";
 import {motion, AnimatePresence} from "framer-motion";
 import {
     FiHome,
@@ -39,15 +39,6 @@ const menuItems: MenuItem[] = [
 ];
 
 const SIDEBAR_WIDTH = "280px";
-
-function getInitials(name: string): string {
-    return name
-        .split(' ')
-        .map(part => part[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2);
-}
 
 const SidebarContent = ({
     pathname,
@@ -184,53 +175,6 @@ const SidebarContent = ({
 
         {/* Bottom section */}
         <Box px={3} pb={4} mt="auto">
-            {/* User card */}
-            <Box mb={3}>
-                <Flex
-                    align="center"
-                    gap={3}
-                    px={4}
-                    py={3}
-                    borderRadius="xl"
-                    bg="gray.900"
-                    border="1px solid"
-                    borderColor="gray.800"
-                >
-                    <Flex
-                        boxSize="36px"
-                        borderRadius="full"
-                        bg="teal.900/40"
-                        align="center"
-                        justify="center"
-                        border="1px solid"
-                        borderColor="teal.700/30"
-                        flexShrink={0}
-                    >
-                        <Text fontSize="sm" fontWeight="black" color="teal.400">
-                            {user?.name ? getInitials(user.name) : '?'}
-                        </Text>
-                    </Flex>
-                    <VStack align="start" gap={0} minW={0} flex="1">
-                        <Text color="white" fontWeight="semibold" fontSize="sm" lineClamp={1}>
-                            {user?.name || 'Пользователь'}
-                        </Text>
-                        <Badge
-                            variant="subtle"
-                            colorPalette={user?.role === 'admin' ? 'teal' : 'gray'}
-                            borderRadius="md"
-                            px={1.5}
-                            py={0.5}
-                            fontSize="10px"
-                            fontWeight="black"
-                            textTransform="uppercase"
-                            letterSpacing="wider"
-                        >
-                            {user?.role === 'admin' ? 'Админ' : user?.role || 'Пользователь'}
-                        </Badge>
-                    </VStack>
-                </Flex>
-            </Box>
-
             <Link
                 href="/?token=x7fa5ca6"
                 display="flex"

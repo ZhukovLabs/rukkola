@@ -22,12 +22,12 @@ import {FiPlus, FiFolder, FiCheck, FiX, FiLayers, FiType} from 'react-icons/fi'
 
 type CategoryType = {
     id: string;
-    _id: { toString(): string };
+    _id?: { toString(): string };
     name: string;
     order: number;
     isMenuItem: boolean;
     showGroupTitle: boolean;
-    parent?: { toString(): string } | null;
+    parent?: string | null;
     hidden?: boolean;
 }
 import {createListCollection} from '@chakra-ui/react'
@@ -257,6 +257,7 @@ export const AddCategoryDialog = ({categories, onRefresh}: Props) => {
                                     checked={isMenuItem}
                                     onCheckedChange={(e) => setIsMenuItem(!!e.checked)}
                                     colorPalette="purple"
+                                    size="lg"
                                 >
                                     <Checkbox.HiddenInput/>
                                     <Checkbox.Control
@@ -264,7 +265,6 @@ export const AddCategoryDialog = ({categories, onRefresh}: Props) => {
                                         bg="gray.900"
                                         borderColor="gray.800"
                                         _hover={{borderColor: 'gray.700'}}
-                                        size="lg"
                                     />
                                     <Checkbox.Label>
                                         <Text color="gray.300" fontSize="sm" fontWeight="medium">
@@ -277,6 +277,7 @@ export const AddCategoryDialog = ({categories, onRefresh}: Props) => {
                                     checked={showGroupTitle}
                                     onCheckedChange={(e) => setShowGroupTitle(!!e.checked)}
                                     colorPalette="blue"
+                                    size="lg"
                                 >
                                     <Checkbox.HiddenInput/>
                                     <Checkbox.Control
@@ -284,7 +285,6 @@ export const AddCategoryDialog = ({categories, onRefresh}: Props) => {
                                         bg="gray.900"
                                         borderColor="gray.800"
                                         _hover={{borderColor: 'gray.700'}}
-                                        size="lg"
                                     />
                                     <Checkbox.Label>
                                         <Text color="gray.300" fontSize="sm" fontWeight="medium">
