@@ -225,7 +225,7 @@ function SortableRow({
                         top={0}
                         bottom={0}
                         w="1.5px"
-                        bg="purple.800/40"
+                        bg="green.800/40"
                         _after={{
                             content: '""',
                             position: 'absolute',
@@ -233,7 +233,7 @@ function SortableRow({
                             top: '50%',
                             w: '12px',
                             h: '1.5px',
-                            bg: 'purple.800/40',
+                            bg: 'green.800/40',
                         }}
                     />
                 )}
@@ -255,7 +255,7 @@ function SortableRow({
                                 color="gray.600"
                                 p={1.5}
                                 borderRadius="lg"
-                                _hover={{color: 'purple.400', bg: 'purple.900/20'}}
+                                _hover={{color: 'green.400', bg: 'green.900/20'}}
                                 transition="all 0.2s"
                             >
                                 <FiMove size={14}/>
@@ -274,7 +274,7 @@ function SortableRow({
                             }}
                             autoFocus
                             bg="gray.850"
-                            borderColor="purple.500"
+                            borderColor="green.500"
                             borderRadius="xl"
                             h="36px"
                             fontSize="sm"
@@ -290,7 +290,7 @@ function SortableRow({
                                 {category.name}
                             </Text>
                             {depth === 0 && (
-                                <Text fontSize="10px" color="purple.500" fontWeight="bold" textTransform="uppercase"
+                                <Text fontSize="10px" color="green.500" fontWeight="bold" textTransform="uppercase"
                                       letterSpacing="widest">
                                     Основная
                                 </Text>
@@ -308,9 +308,9 @@ function SortableRow({
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => onToggleField(category._id, 'isMenuItem')}
-                                color={category.isMenuItem ? 'purple.400' : 'gray.600'}
+                                color={category.isMenuItem ? 'green.400' : 'gray.600'}
                                 borderRadius="lg"
-                                bg={category.isMenuItem ? 'purple.900/20' : 'transparent'}
+                                bg={category.isMenuItem ? 'green.900/20' : 'transparent'}
                                 _hover={{bg: 'gray.800'}}
                                 transition="all 0.2s"
                                 loading={isToggling}
@@ -371,7 +371,7 @@ function SortableRow({
                             size="sm"
                             variant="ghost"
                             color="gray.500"
-                            _hover={{color: 'purple.400', bg: 'purple.900/10'}}
+                            _hover={{color: 'green.400', bg: 'green.900/10'}}
                             borderRadius="xl"
                             onClick={() => onEditStart(category)}
                         >
@@ -399,7 +399,7 @@ function SortableRow({
                                 size="sm"
                                 variant="ghost"
                                 color="gray.500"
-                                _hover={{color: 'purple.300', bg: 'purple.900/10'}}
+                                _hover={{color: 'green.300', bg: 'green.900/10'}}
                                 borderRadius="xl"
                                 onClick={() => onMarkAlcohol(category._id)}
                                 loading={isMarkingAlcohol}
@@ -584,7 +584,7 @@ export default function CategoriesTable({categories: initialCategories, onRefres
         description: 'Все продукты в этой категории и её подкатегориях будут помечены как алкогольные.',
         confirmText: 'Да, пометить',
         cancelText: 'Отмена',
-        colorScheme: 'purple',
+        colorScheme: 'green',
         onConfirm: (id) => markAlcoholMutation.mutate(id),
     })
 
@@ -750,7 +750,7 @@ export default function CategoriesTable({categories: initialCategories, onRefres
                             zIndex: 100
                         }}
                     >
-                        <Spinner size="xl" color="purple.500"/>
+                        <Spinner size="xl" color="green.500"/>
                     </motion.div>
                 )}
             </AnimatePresence>

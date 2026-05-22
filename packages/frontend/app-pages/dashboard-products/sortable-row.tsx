@@ -30,21 +30,29 @@ export function SortableRow({id, children}: SortableRowProps) {
         <Table.Row
             ref={setNodeRef}
             style={style}
-            bg={isDragging ? 'gray.700' : 'gray.900'}
+            bg={isDragging ? 'orange.900/20' : 'transparent'}
             borderBottom="1px solid"
-            borderColor="gray.800"
-            _hover={{bg: isDragging ? 'gray.700' : 'gray.800', transition: '0.2s ease'}}
+            borderColor="gray.900"
+            transition="all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
+            position="relative"
+            zIndex={isDragging ? 10 : 1}
+            _hover={{
+                bg: isDragging ? 'orange.900/30' : 'whiteAlpha.50',
+                boxShadow: isDragging ? '0 10px 40px rgba(0,0,0,0.6)' : 'none',
+            }}
         >
-            <Table.Cell p={2} w="40px">
+            <Table.Cell p={2} w="40px" textAlign="center">
                 <IconButton
                     aria-label="Перетащить"
-                    size="sm"
+                    size="xs"
                     variant="ghost"
+                    color="gray.600"
                     cursor={isDragging ? 'grabbing' : 'grab'}
+                    _hover={{ color: "gray.300", bg: "gray.700" }}
                     {...attributes}
                     {...listeners}
                 >
-                    <GripVertical size={16}/>
+                    <GripVertical size={14}/>
                 </IconButton>
             </Table.Cell>
             {children}

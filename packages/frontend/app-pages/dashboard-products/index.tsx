@@ -1,6 +1,6 @@
 'use client'
 
-import {Box, Heading, Card, Flex} from '@chakra-ui/react'
+import {Box, Heading, Card, Flex, Text, Icon} from '@chakra-ui/react'
 import {useSearchParams, useRouter} from 'next/navigation'
 import {Pagination} from '@/components/pagination'
 import {CreateProductButton} from './create-product-button'
@@ -9,6 +9,9 @@ import {ProductsTable} from "./products-table";
 import {useProductsTable} from "./hooks/use-products-table";
 import dynamic from 'next/dynamic'
 import {FiPackage} from 'react-icons/fi'
+import {motion} from 'framer-motion'
+
+const MotionBox = motion.create(Box);
 
 const CreateProductModal = dynamic(
     () => import('./modals/create-modal-product').then(mod => ({default: mod.CreateProductModal})),
@@ -24,7 +27,7 @@ export const ProductsPage = () => {
     const searchParams = useSearchParams();
     const router = useRouter();
 
-    const {page, data: {totalPages}} = useProductsTable();
+    const {page, data: {totalPages, total}} = useProductsTable();
 
     const setPageParam = (newPage: number) => {
         const params = new URLSearchParams(searchParams)
@@ -33,56 +36,78 @@ export const ProductsPage = () => {
     }
 
     return (
-        <Box minH="100vh">
-            <Card.Root
-                w="100%"
-                borderRadius="2xl"
-                shadow="xl"
-                border="1px solid"
-                borderColor="gray.800"
-                bg="gray.950"
-                overflow="hidden"
-            >
-<Card.Header
-                    bg="gray.900"
-                    borderTopRadius="2xl"
-                    py={4}
-                    px={6}
-                    borderBottom="1px solid"
-                    borderColor="gray.800"
+        <Box minH="100vh" pb={12}>
+            <Flex direction="column" gap={8}>
+                <MotionBox
+                    initial={{opacity: 0, y: -20}}
+                    animate={{opacity: 1, y: 0}}
+                    transition={{duration: 0.6, ease: "easeOut"}}
                 >
-                    <Flex justify="space-between" align="center">
-                        <Flex align="center" gap={3}>
+                    <Flex justify="space-between" align="center" wrap="wrap" gap={6}>
+                        <Flex align="center" gap={5}>
                             <Box
-                                bg="gray.800"
-                                borderRadius="lg"
-                                p={2}
+                                bg="orange.900/20"
+                                borderRadius="2xl"
+                                p={3.5}
                                 display="flex"
                                 alignItems="center"
                                 justifyContent="center"
                                 border="1px solid"
-                                borderColor="gray.700"
+                                borderColor="orange.800/30"
+                                shadow="0 0 20px rgba(237, 137, 54, 0.15)"
                             >
-                                <FiPackage size={20} color="white"/>
+                                <Icon as={FiPackage} boxSize={7} color="orange.400"/>
                             </Box>
-                            <Heading size="lg" fontWeight="bold" letterSpacing="tight" color="gray.100">
-                                Товары
-                            </Heading>
+                            <Box>
+                                <Heading size="2xl" fontWeight="bold" letterSpacing="tight" color="white" mb={1}>
+                                    Товары
+                                </Heading>
+                                <Flex align="center" gap={2}>
+                                    <Box boxSize="6px" borderRadius="full" bg="orange.500" shadow="0 0 8px rgba(237, 137, 54, 0.6)" />
+                                    <Text color="gray.500" fontSize="sm" fontWeight="medium">
+                                        {total} {total === 1 ? 'позиция' : total > 1 && total < 5 ? 'позиции' : 'позиций'} в меню
+                                    </Text>
+                                </Flex>
+                            </Box>
                         </Flex>
+                        
                         <CreateProductButton/>
                     </Flex>
-                </Card.Header>
+                </MotionBox>
 
-                <FilterSection/>
+                <MotionBox
+                    initial={{opacity: 0, y: 20}}
+                    animate={{opacity: 1, y: 0}}
+                    transition={{duration: 0.6, delay: 0.2, ease: "easeOut"}}
+                >
+                    <Card.Root
+                        w="100%"
+                        borderRadius="3xl"
+                        shadow="0 30px 60px rgba(0,0,0,0.5)"
+                        border="1px solid"
+                        borderColor="gray.800"
+                        bg="gray.950"
+                        overflow="hidden"
+                        backdropFilter="blur(10px)"
+                    >
+                        <FilterSection/>
 
-                <Card.Body px={0} py={0}>
-                    <ProductsTable/>
-                </Card.Body>
+                        <Card.Body px={0} py={0}>
+                            <ProductsTable/>
+                        </Card.Body>
 
-                <Card.Footer p={5} borderTop="1px solid" borderColor="gray.800" bg="gray.950">
-                    <Pagination page={page} totalPages={totalPages} onPageChange={setPageParam}/>
-                </Card.Footer>
-            </Card.Root>
+                        <Card.Footer 
+                            p={8} 
+                            borderTop="1px solid" 
+                            borderColor="gray.800" 
+                            bg="gray.950"
+                            justify="center"
+                        >
+                            <Pagination page={page} totalPages={totalPages} onPageChange={setPageParam}/>
+                        </Card.Footer>
+                    </Card.Root>
+                </MotionBox>
+            </Flex>
 
             <CreateProductModal/>
             <EditProductModal/>

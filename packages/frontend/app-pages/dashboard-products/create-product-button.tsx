@@ -16,30 +16,34 @@ export const CreateProductButton = ({searchParams}: { searchParams?: Record<stri
         >
             <Box
                 as="button"
-                px={4}
-                py={2}
-                bg="gray.800"
-                borderRadius="lg"
-                fontWeight="600"
+                px={5}
+                py={3}
+                bg="orange.600/10"
+                borderRadius="2xl"
+                fontWeight="extrabold"
                 fontSize="sm"
-                transition="all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
+                transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
                 _hover={{
-                    bg: 'gray.700',
-                    boxShadow: '0 0 12px rgba(100, 150, 200, 0.15)',
+                    bg: 'orange.600/20',
+                    borderColor: 'orange.500/50',
+                    transform: 'translateY(-2px)',
+                    shadow: '0 10px 20px rgba(237, 137, 54, 0.15)',
+                    color: 'orange.200',
                 }}
                 _active={{
                     transform: 'translateY(0)',
                 }}
-                color="gray.300"
+                color="orange.300"
                 border="1px solid"
-                borderColor="gray.700"
+                borderColor="orange.800/40"
                 display="flex"
                 alignItems="center"
-                gap={2}
+                gap={3}
                 cursor="pointer"
+                backdropFilter="blur(8px)"
             >
-                <PlusIcon size={16}/>
-                Добавить
+                <PlusIcon size={18} strokeWidth={3}/>
+                Добавить товар
             </Box>
         </Link>
     )

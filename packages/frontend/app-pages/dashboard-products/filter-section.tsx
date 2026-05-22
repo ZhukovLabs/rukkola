@@ -36,7 +36,7 @@ type SearchFieldProps = {
     onClear: () => void;
 };
 
-const CONTROL_HEIGHT = '44px';
+const CONTROL_HEIGHT = '42px';
 const INPUT_MIN_WIDTH = '200px';
 const CATEGORY_SELECT_MIN_WIDTH = '200px';
 const VISIBILITY_SELECT_MIN_WIDTH = '180px';
@@ -44,37 +44,42 @@ const DROPDOWN_MAX_HEIGHT = '320px';
 
 const SELECT_TRIGGER_STYLES = {
     h: CONTROL_HEIGHT,
-    bg: 'gray.900',
+    bg: 'gray.800',
     border: '1px solid',
-    borderColor: 'gray.800',
-    borderRadius: 'lg',
-    transition: 'all 0.2s',
+    borderColor: 'gray.700',
+    borderRadius: 'xl',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     _hover: {
-        borderColor: 'gray.700',
+        borderColor: 'gray.600',
+        bg: 'gray.800',
+        transform: 'translateY(-1px)',
     },
     _open: {
-        borderColor: 'gray.600',
-        boxShadow: '0 0 0 1px gray.700',
+        borderColor: 'gray.500',
+        boxShadow: '0 0 0 1px gray.500, 0 8px 24px rgba(0,0,0,0.3)',
+        bg: 'gray.850',
     },
 };
 
 const SEARCH_INPUT_STYLES = {
-    bg: 'gray.900',
+    bg: 'gray.800',
     border: '1px solid',
-    borderColor: 'gray.800',
+    borderColor: 'gray.700',
     color: 'gray.200',
     fontSize: 'sm',
     fontWeight: 'medium',
     h: CONTROL_HEIGHT,
     pl: '44px',
-    borderRadius: 'lg',
-    transition: 'all 0.2s',
+    borderRadius: 'xl',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     _hover: {
-        borderColor: 'gray.700',
+        borderColor: 'gray.600',
     },
     _focus: {
-        borderColor: 'gray.600',
-        boxShadow: '0 0 0 1px gray.700',
+        borderColor: 'gray.500',
+        boxShadow: '0 0 0 1px gray.500, 0 8px 24px rgba(0,0,0,0.3)',
+        bg: 'gray.850',
+        transform: 'translateY(-1px)',
     },
     _placeholder: {
         color: 'gray.600',
@@ -83,7 +88,7 @@ const SEARCH_INPUT_STYLES = {
 
 const SELECT_VALUE_TEXT_STYLES = {
     color: 'gray.200',
-    _placeholder: { color: 'gray.600' },
+    _placeholder: { color: 'gray.500' },
     fontSize: 'sm',
     fontWeight: 'medium',
     flex: '1',
@@ -94,10 +99,10 @@ const SELECT_VALUE_TEXT_STYLES = {
 };
 
 const SELECT_PANEL_STYLES = {
-    bg: 'gray.900',
+    bg: 'gray.800',
     border: '1px solid',
-    borderColor: 'gray.800',
-    borderRadius: 'lg',
+    borderColor: 'gray.700',
+    borderRadius: 'xl',
     boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
     py: 1,
     mt: 2,
@@ -108,17 +113,17 @@ const SELECT_ITEM_STYLES = {
     py: 2.5,
     fontSize: 'sm',
     fontWeight: 'medium',
-    color: 'gray.300',
+    color: 'gray.400',
     _highlighted: {
-        bg: 'gray.800',
+        bg: 'gray.700',
         color: 'gray.100',
-        borderRadius: 'md',
+        borderRadius: 'lg',
         mx: 1,
     },
     _selected: {
-        bg: 'gray.800',
+        bg: 'gray.700',
         color: 'gray.100',
-        borderRadius: 'md',
+        borderRadius: 'lg',
         mx: 1,
     },
 };

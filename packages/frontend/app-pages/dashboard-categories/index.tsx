@@ -4,7 +4,7 @@ import {useEffect, useState, useCallback, useMemo} from 'react';
 import CategoriesTable from './categories-table';
 import {AddCategoryButton} from './add-category-button';
 import {AddCategoryDialog} from './add-category-modal';
-import {Box, Heading, Card, Flex, Spinner, Center, Input} from '@chakra-ui/react';
+import {Box, Heading, Card, Flex, Spinner, Center, Input, Icon} from '@chakra-ui/react';
 import {FiFolder, FiSearch} from 'react-icons/fi';
 import {getCategories, type CategoryItem} from '@/lib/api/categories';
 
@@ -43,7 +43,7 @@ export const DashboardCategoriesPage = () => {
     if (loading) {
         return (
             <Center minH="400px">
-                <Spinner size="xl" color="purple.500" thickness="4px" />
+                <Spinner size="xl" color="green.500" thickness="4px" />
             </Center>
         );
     }
@@ -70,25 +70,28 @@ export const DashboardCategoriesPage = () => {
                     <Flex justify="space-between" align="center" gap={4} wrap="wrap">
                         <Flex align="center" gap={4}>
                             <Box
-                                bg="purple.900/30"
+                                bg="green.900/20"
                                 borderRadius="2xl"
                                 p={3}
                                 display="flex"
                                 alignItems="center"
                                 justifyContent="center"
                                 border="1px solid"
-                                borderColor="purple.800/50"
-                                shadow="0 0 15px rgba(168, 85, 247, 0.1)"
+                                borderColor="green.800/30"
+                                shadow="0 0 15px rgba(72, 187, 120, 0.1)"
                             >
-                                <FiFolder size={24} color="#A855F7"/>
+                                <Icon as={FiFolder} boxSize={6} color="green.400"/>
                             </Box>
                             <Box>
                                 <Heading size="xl" fontWeight="bold" letterSpacing="tight" color="gray.100">
                                     Категории
                                 </Heading>
-                                <Box fontSize="xs" color="gray.500" fontWeight="medium">
-                                    {categories.length} {categories.length === 1 ? 'категория' : 'категорий'} всего
-                                </Box>
+                                <Flex align="center" gap={2}>
+                                    <Box boxSize="6px" borderRadius="full" bg="green.500" shadow="0 0 8px rgba(72, 187, 120, 0.6)" />
+                                    <Box fontSize="xs" color="gray.500" fontWeight="medium">
+                                        {categories.length} {categories.length === 1 ? 'категория' : 'категорий'} всего
+                                    </Box>
+                                </Flex>
                             </Box>
                         </Flex>
 
@@ -115,8 +118,8 @@ export const DashboardCategoriesPage = () => {
                                     borderColor="gray.700"
                                     borderRadius="xl"
                                     _focus={{
-                                        borderColor: 'purple.500',
-                                        boxShadow: '0 0 0 1px purple.500',
+                                        borderColor: 'green.500',
+                                        boxShadow: '0 0 0 1px green.500',
                                         bg: 'gray.850'
                                     }}
                                     _hover={{ borderColor: 'gray.600' }}

@@ -85,7 +85,7 @@ export const ProductRow = ({
 
     return (
         <>
-            <Table.Cell p={2}>
+            <Table.Cell p={3} border="none">
                 <PositionDialog
                     currentPosition={position}
                     totalItems={totalItems}
@@ -94,273 +94,255 @@ export const ProductRow = ({
                 />
             </Table.Cell>
 
-            <Table.Cell p={4}>
-                {showEmptyPlaceholder ? (
-                    <Tooltip content="Изображение отсутствует" openDelay={300}>
-                        <Flex
-                            boxSize="60px"
-                            borderRadius="lg"
-                            bg="gray.850"
-                            border="2px dashed"
-                            borderColor="gray.700"
-                            align="center"
-                            justify="center"
-                            color="gray.600"
-                            cursor="help"
+            <Table.Cell p={4} border="none">
+                <Box position="relative" boxSize="60px">
+                    {showEmptyPlaceholder ? (
+                        <Tooltip content="Изображение отсутствует" openDelay={300}>
+                            <Flex
+                                boxSize="100%"
+                                borderRadius="xl"
+                                bg="gray.900"
+                                border="1px solid"
+                                borderColor="gray.800"
+                                align="center"
+                                justify="center"
+                                color="gray.700"
+                                cursor="help"
+                            >
+                                <FaImage size={20} />
+                            </Flex>
+                        </Tooltip>
+                    ) : showBrokenPlaceholder ? (
+                        <Tooltip content="Ошибка загрузки изображения" openDelay={300}>
+                            <Flex
+                                boxSize="100%"
+                                borderRadius="xl"
+                                bg="red.950/10"
+                                border="1px solid"
+                                borderColor="red.900/20"
+                                align="center"
+                                justify="center"
+                                color="red.400/30"
+                                cursor="help"
+                            >
+                                <FaExclamationTriangle size={16} />
+                            </Flex>
+                        </Tooltip>
+                    ) : (
+                        <Box 
+                            boxSize="100%" 
+                            borderRadius="xl" 
+                            overflow="hidden" 
+                            border="1px solid" 
+                            borderColor="gray.800"
+                            bg="gray.900"
+                            shadow="xl"
+                            transition="all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)"
+                            _hover={{ transform: "scale(1.1)", shadow: "0 10px 20px rgba(0,0,0,0.5)", zIndex: 10, position: "relative" }}
                         >
-                            <FaImage size={18} />
-                        </Flex>
-                    </Tooltip>
-                ) : showBrokenPlaceholder ? (
-                    <Tooltip content="Ошибка загрузки изображения" openDelay={300}>
-                        <Flex
-                            boxSize="60px"
-                            borderRadius="lg"
-                            bg="red.950"
+                            <Image
+                                src={`${p.image}?w=300`}
+                                alt={p.name}
+                                boxSize="100%"
+                                objectFit="cover"
+                                onError={() => setImageError(true)}
+                            />
+                        </Box>
+                    )}
+
+                    {p.hidden && (
+                        <Box
+                            position="absolute"
+                            top="-4px"
+                            right="-4px"
+                            bg="orange.500"
+                            color="white"
+                            borderRadius="full"
+                            p={1}
+                            shadow="0 0 10px rgba(237, 137, 54, 0.5)"
+                            zIndex={11}
                             border="2px solid"
-                            borderColor="red.800"
-                            align="center"
-                            justify="center"
-                            color="red.400"
-                            cursor="help"
+                            borderColor="gray.950"
                         >
-                            <FaExclamationTriangle size={16} />
-                        </Flex>
-                    </Tooltip>
-                ) : (
-                    <Image
-                        src={`${p.image}?w=300`}
-                        alt={p.name}
-                        boxSize="60px"
-                        borderRadius="lg"
-                        objectFit="cover"
-                        border="2px solid"
-                        borderColor="gray.800"
-                        _hover={{
-                            borderColor: "gray.600",
-                            transform: "scale(1.05)",
-                        }}
-                        transition="all 0.2s"
-                        onError={() => setImageError(true)}
-                    />
-                )}
+                            <Tooltip content="Товар скрыт" openDelay={200}>
+                                <Box>
+                                    <FaEyeSlash size={10} />
+                                </Box>
+                            </Tooltip>
+                        </Box>
+                    )}
+                </Box>
             </Table.Cell>
 
-            <Table.Cell fontWeight="semibold" color="gray.200" p={4}>
-                <Flex direction="column" gap={1}>
-                    <Text>{p.name}</Text>
+            <Table.Cell p={4} border="none">
+                <Stack gap={1.5}>
+                    <Text fontSize="md" fontWeight="bold" letterSpacing="tight" color="gray.100">{p.name}</Text>
                     {p.tags && p.tags.length > 0 && (
-                        <Flex gap={2} flexWrap="wrap" mt={0.5}>
+                        <Flex gap={2} flexWrap="wrap">
                             {p.tags.map((tag, index) => (
                                 <Flex
                                     key={index}
                                     align="center"
                                     gap={1.5}
-                                    fontSize="10px"
-                                    color="gray.400"
-                                    fontWeight="semibold"
+                                    fontSize="9px"
+                                    color="gray.500"
+                                    fontWeight="bold"
                                     textTransform="uppercase"
-                                    letterSpacing="wider"
+                                    letterSpacing="0.05em"
                                 >
-                                    <Box boxSize="5px" borderRadius="full" bg={tag.color} />
+                                    <Box boxSize="5px" borderRadius="full" bg={tag.color} shadow={`0 0 6px ${tag.color}`} />
                                     {tag.text}
                                 </Flex>
                             ))}
                         </Flex>
                     )}
-                </Flex>
+                </Stack>
             </Table.Cell>
 
             <Table.Cell
-                maxW="450px"
+                maxW="250px"
                 whiteSpace="normal"
                 color="gray.500"
                 p={4}
-                fontSize="sm"
+                fontSize="xs"
+                lineHeight="relaxed"
+                border="none"
+                fontWeight="medium"
             >
-                {p.description || <Text color="gray.600">—</Text>}
+                {p.description || <Text color="gray.700" fontStyle="italic" opacity={0.5}>Описание отсутствует</Text>}
             </Table.Cell>
 
-            <Table.Cell p={4} maxW="250px">
+            <Table.Cell p={4} border="none">
                 {p.prices?.length ? (
                     <Flex wrap="wrap" gap={2}>
                         {p.prices.map(({ size, price }) => (
                             <Flex
                                 key={size}
                                 align="center"
+                                gap={2}
+                                bg="whiteAlpha.50"
                                 border="1px solid"
-                                borderColor="gray.700"
-                                borderRadius="md"
-                                overflow="hidden"
-                                bg="gray.850"
-                                _hover={{ borderColor: "gray.600" }}
+                                borderColor="whiteAlpha.100"
+                                borderRadius="full"
+                                px={3}
+                                py={1}
                                 transition="all 0.2s"
+                                _hover={{ 
+                                    bg: "whiteAlpha.100", 
+                                    borderColor: "whiteAlpha.200", 
+                                    transform: "translateY(-1px)"
+                                }}
                             >
-                                <Text
-                                    bg="gray.750"
-                                    color="gray.300"
-                                    fontSize="xs"
-                                    px={2.5}
-                                    py={1}
-                                    fontWeight="medium"
-                                    borderRight="1px solid"
-                                    borderColor="gray.700"
-                                    whiteSpace="nowrap"
-                                >
+                                <Text color="gray.400" fontSize="10px" fontWeight="bold" textTransform="uppercase" letterSpacing="wider">
                                     {size}
                                 </Text>
-                                <Text
-                                    color="gray.100"
-                                    fontSize="sm"
-                                    fontWeight="bold"
-                                    px={2.5}
-                                    py={1}
-                                    whiteSpace="nowrap"
-                                >
-                                    {price} р.
+                                <Box w="1px" h="10px" bg="gray.800" />
+                                <Text color="white" fontSize="xs" fontWeight="bold" whiteSpace="nowrap">
+                                    {price} <Box as="span" fontSize="9px" color="gray.500" ml={0.5} fontWeight="medium">руб.</Box>
                                 </Text>
                             </Flex>
                         ))}
                     </Flex>
                 ) : (
-                    <Text color="gray.600" fontSize="sm" fontStyle="italic">
-                        нет данных
-                    </Text>
+                    <Text color="gray.700" fontSize="xs">—</Text>
                 )}
             </Table.Cell>
 
-            <Table.Cell p={4}>
+            <Table.Cell p={4} border="none">
                 {p.categories?.length ? (
-                    <Flex wrap="wrap" gap={1}>
+                    <Flex wrap="wrap" gap={2}>
                         {p.categories.map((c: CategoryRef) => (
                             <Box
                                 key={c.id}
-                                bg="gray.800"
-                                color="gray.400"
-                                px={2.5}
-                                py={0.5}
-                                borderRadius="full"
-                                fontSize="xs"
-                                fontWeight="medium"
+                                bg="green.950/10"
+                                color="green.300/80"
+                                px={3}
+                                py={1}
+                                borderRadius="lg"
+                                fontSize="10px"
+                                fontWeight="bold"
                                 border="1px solid"
-                                borderColor="gray.750"
+                                borderColor="green.900/30"
+                                transition="all 0.2s"
+                                _hover={{ borderColor: "green.700/50", color: "green.200" }}
                             >
                                 {c.name}
                             </Box>
                         ))}
                     </Flex>
                 ) : (
-                    <Text color="gray.600" fontSize="sm">
-                        —
-                    </Text>
+                    <Text color="gray.700" fontSize="sm">—</Text>
                 )}
             </Table.Cell>
 
-            <Table.Cell p={4}>
-                <Stack direction="row" gap={2} align="center">
-                    <Tooltip
-                        content={
-                            p.isAlcohol
-                                ? "Алкогольный — нажмите для переключения"
-                                : "Безалкогольный — нажмите для переключения"
-                        }
-                        openDelay={400}
-                    >
-                        <Button
-                            size="xs"
-                            borderRadius="lg"
-                            bg="gray.850"
-                            color="gray.200"
-                            px={2.5}
-                            py={1}
-                            fontSize="xs"
-                            fontWeight="semibold"
-                            border="1px solid"
-                            borderColor="gray.700"
+            <Table.Cell p={4} border="none">
+                <Flex gap={2} align="center" justify="flex-end">
+                    <Tooltip content={p.isAlcohol ? "Алкоголь" : "Без алкоголя"} openDelay={400}>
+                        <IconButton
+                            aria-label="Тип"
+                            size="sm"
+                            borderRadius="xl"
+                            variant="ghost"
+                            color={p.isAlcohol ? "orange.400" : "gray.600"}
                             _hover={{
-                                bg: "gray.800",
-                                borderColor: "gray.600",
+                                bg: p.isAlcohol ? "orange.950/40" : "gray.800",
+                                color: p.isAlcohol ? "orange.300" : "gray.300",
                             }}
-                            _active={{ transform: "scale(0.96)" }}
                             loading={togglingAlcoholId === p.id}
                             onClick={() => onToggleAlcohol(p.id)}
-                            flexShrink={0}
                         >
-                            {p.isAlcohol ? <FaWineBottle /> : <FaWineGlassAlt />}
-                            {p.isAlcohol ? "Алк." : "Без алк."}
-                        </Button>
-                    </Tooltip>
-
-                    <Tooltip content={p.hidden ? "Показать товар" : "Скрыть товар"} openDelay={400}>
-                        <IconButton
-                            aria-label={p.hidden ? "Показать" : "Скрыть"}
-                            size="xs"
-                            borderRadius="lg"
-                            bg="gray.850"
-                            color="gray.200"
-                            border="1px solid"
-                            borderColor="gray.700"
-                            _hover={{
-                                bg: "gray.800",
-                                borderColor: "gray.600",
-                            }}
-                            _active={{ transform: "scale(0.96)" }}
-                            loading={loadingId === p.id}
-                            onClick={() => onToggle(p.id)}
-                            flexShrink={0}
-                        >
-                            {p.hidden ? <FaEye /> : <FaEyeSlash />}
+                            {p.isAlcohol ? <FaWineBottle size={16} /> : <FaWineGlassAlt size={16} />}
                         </IconButton>
                     </Tooltip>
 
-                    <Tooltip content="Редактировать" openDelay={400}>
+                    <Tooltip content={p.hidden ? "Показать" : "Скрыть"} openDelay={400}>
+                        <IconButton
+                            aria-label="Видимость"
+                            size="sm"
+                            borderRadius="xl"
+                            variant="ghost"
+                            color={p.hidden ? "gray.600" : "gray.400"}
+                            _hover={{ bg: "gray.800", color: "white" }}
+                            loading={loadingId === p.id}
+                            onClick={() => onToggle(p.id)}
+                        >
+                            {p.hidden ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+                        </IconButton>
+                    </Tooltip>
+
+                    <Tooltip content="Изменить" openDelay={400}>
                         <IconButton
                             aria-label="Редактировать"
-                            size="xs"
-                            borderRadius="lg"
-                            bg="gray.850"
-                            color="gray.200"
-                            border="1px solid"
-                            borderColor="gray.700"
-                            _hover={{
-                                bg: "gray.800",
-                                borderColor: "gray.600",
-                            }}
-                            _active={{ transform: "scale(0.96)" }}
+                            size="sm"
+                            borderRadius="xl"
+                            variant="ghost"
+                            color="gray.400"
+                            _hover={{ bg: "gray.800", color: "white" }}
                             onClick={() => {
                                 const params = new URLSearchParams(window.location.search);
                                 params.set("edit", p.id);
                                 router.push(`?${params.toString()}`, { scroll: false });
                             }}
-                            flexShrink={0}
                         >
-                            <FaEdit />
+                            <FaEdit size={16} />
                         </IconButton>
                     </Tooltip>
 
                     <Tooltip content="Удалить" openDelay={400}>
                         <IconButton
                             aria-label="Удалить"
-                            size="xs"
-                            borderRadius="lg"
-                            bg="gray.850"
-                            color="gray.400"
-                            border="1px solid"
-                            borderColor="gray.700"
-                            _hover={{
-                                bg: "gray.800",
-                                color: "red.400",
-                                borderColor: "gray.600",
-                            }}
-                            _active={{ transform: "scale(0.96)" }}
+                            size="sm"
+                            borderRadius="xl"
+                            variant="ghost"
+                            color="gray.600"
+                            _hover={{ bg: "red.950/20", color: "red.400" }}
                             onClick={() => onDelete(p.id)}
                             loading={deletePending === p.id}
-                            flexShrink={0}
                         >
-                            <FaTrash />
+                            <FaTrash size={16} />
                         </IconButton>
                     </Tooltip>
-                </Stack>
+                </Flex>
             </Table.Cell>
         </>
     );

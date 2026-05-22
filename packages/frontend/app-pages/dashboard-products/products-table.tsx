@@ -5,6 +5,7 @@ import {
     Box,
     Flex,
     Spinner,
+    Stack,
     Table,
     Text,
     useBreakpointValue,
@@ -115,15 +116,26 @@ export const ProductsTable = memo(() => {
 
     const renderEmptyState = () => (
         <Table.Row>
-            <Table.Cell colSpan={COLUMNS.length + 1} textAlign="center" py={{base: 8, md: 12}}>
-                <Flex direction="column" align="center" gap={3} color="gray.500">
-                    <FiSearch size={emptySize}/>
-                    <Text fontSize={{base: 'md', md: 'lg'}} fontWeight="medium">
-                        Товары не найдены
-                    </Text>
-                    <Text fontSize="sm" opacity={0.8}>
-                        Попробуйте изменить поиск или фильтр
-                    </Text>
+            <Table.Cell colSpan={COLUMNS.length + 1} textAlign="center" py={{base: 12, md: 20}}>
+                <Flex direction="column" align="center" gap={4} color="gray.500">
+                    <Box
+                        bg="gray.800"
+                        p={6}
+                        borderRadius="full"
+                        border="1px solid"
+                        borderColor="gray.700"
+                        color="gray.500"
+                    >
+                        <FiSearch size={emptySize}/>
+                    </Box>
+                    <Stack gap={1} align="center">
+                        <Text fontSize={{base: 'lg', md: 'xl'}} fontWeight="bold" color="gray.200">
+                            Товары не найдены
+                        </Text>
+                        <Text fontSize="sm" color="gray.500" maxW="300px">
+                            Попробуйте изменить параметры поиска или сбросить фильтры.
+                        </Text>
+                    </Stack>
                 </Flex>
             </Table.Cell>
         </Table.Row>
@@ -182,24 +194,34 @@ export const ProductsTable = memo(() => {
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
             >
-                <Table.Root size={{base: 'sm', md: 'md', lg: 'lg'}} variant="outline" w="full">
+                <Table.Root size={{base: 'sm', md: 'md', lg: 'lg'}} variant="ghost" w="full" border="none">
                     <Table.Header>
-                        <Table.Row>
-                            <Table.ColumnHeader minW="40px" w="40px" bg="gray.950" borderBottom="1px solid" borderColor="gray.800"/>
+                        <Table.Row bg="gray.950">
+                            <Table.ColumnHeader
+                                minW="40px"
+                                w="40px"
+                                bg="gray.950"
+                                border="none"
+                                position="sticky"
+                                top={0}
+                                zIndex={2}
+                            />
                             {COLUMNS.map(({key, label, minW}) => (
                                 <Table.ColumnHeader
                                     key={key}
                                     minW={minW}
-                                    color="gray.500"
+                                    color="gray.600"
                                     p={{base: 3, md: 4}}
-                                    fontWeight="600"
-                                    fontSize="xs"
+                                    fontWeight="800"
+                                    fontSize="9px"
                                     textTransform="uppercase"
-                                    letterSpacing="wider"
+                                    letterSpacing="0.15em"
                                     whiteSpace="nowrap"
                                     bg="gray.950"
-                                    borderBottom="1px solid"
-                                    borderColor="gray.800"
+                                    border="none"
+                                    position="sticky"
+                                    top={0}
+                                    zIndex={2}
                                 >
                                     {label}
                                 </Table.ColumnHeader>

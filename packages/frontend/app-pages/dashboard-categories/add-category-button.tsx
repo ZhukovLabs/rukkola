@@ -18,25 +18,28 @@ export const AddCategoryButton = ({searchParams}: { searchParams?: Record<string
                 as="button"
                 px={6}
                 h="42px"
-                bg="purple.600"
+                bg="green.600/10"
                 borderRadius="xl"
-                fontWeight="700"
+                fontWeight="extrabold"
                 fontSize="sm"
-                transition="all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
+                transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
                 _hover={{
-                    bg: 'purple.500',
-                    boxShadow: '0 0 20px rgba(168, 85, 247, 0.4)',
+                    bg: 'green.600/20',
+                    borderColor: 'green.500/50',
                     transform: 'translateY(-1px)',
+                    shadow: '0 10px 20px rgba(72, 187, 120, 0.15)',
+                    color: 'green.200',
                 }}
                 _active={{
                     transform: 'translateY(0)',
-                    bg: 'purple.700',
                 }}
-                color="white"
+                color="green.300"
                 align="center"
-                gap={2}
+                gap={2.5}
                 cursor="pointer"
-                border="none"
+                border="1px solid"
+                borderColor="green.800/40"
+                backdropFilter="blur(8px)"
             >
                 <FiPlus size={18}/>
                 Добавить категорию
