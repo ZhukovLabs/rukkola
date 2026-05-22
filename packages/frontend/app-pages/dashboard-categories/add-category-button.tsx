@@ -1,7 +1,7 @@
 'use client';
 
-import {PlusIcon} from "lucide-react"
-import {Box} from "@chakra-ui/react"
+import {FiPlus} from "react-icons/fi"
+import {Box, Flex} from "@chakra-ui/react"
 import Link from "next/link";
 
 export const AddCategoryButton = ({searchParams}: { searchParams?: Record<string, string> }) => {
@@ -14,33 +14,33 @@ export const AddCategoryButton = ({searchParams}: { searchParams?: Record<string
             scroll={false}
             style={{textDecoration: 'none'}}
         >
-            <Box
+            <Flex
                 as="button"
-                px={4}
-                py={2}
-                bg="gray.800"
-                borderRadius="lg"
-                fontWeight="600"
+                px={6}
+                h="42px"
+                bg="purple.600"
+                borderRadius="xl"
+                fontWeight="700"
                 fontSize="sm"
                 transition="all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
                 _hover={{
-                    bg: 'gray.700',
-                    boxShadow: '0 0 12px rgba(168, 85, 247, 0.15)',
+                    bg: 'purple.500',
+                    boxShadow: '0 0 20px rgba(168, 85, 247, 0.4)',
+                    transform: 'translateY(-1px)',
                 }}
                 _active={{
                     transform: 'translateY(0)',
+                    bg: 'purple.700',
                 }}
-                color="gray.300"
-                border="1px solid"
-                borderColor="gray.700"
-                display="flex"
-                alignItems="center"
+                color="white"
+                align="center"
                 gap={2}
                 cursor="pointer"
+                border="none"
             >
-                <PlusIcon size={16}/>
-                Добавить
-            </Box>
+                <FiPlus size={18}/>
+                Добавить категорию
+            </Flex>
         </Link>
     )
 }

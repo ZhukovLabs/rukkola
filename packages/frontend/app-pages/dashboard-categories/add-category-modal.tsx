@@ -10,11 +10,16 @@ import {
     Heading,
     Checkbox,
     Select,
+    Flex,
+    VStack,
+    IconButton,
 } from '@chakra-ui/react'
 import {useState, useTransition} from 'react'
 import {useSearchParams, useRouter, usePathname} from 'next/navigation'
 import {useQueryClient} from '@tanstack/react-query'
 import {createCategory} from './actions'
+import {FiPlus, FiFolder, FiCheck, FiX, FiLayers, FiType} from 'react-icons/fi'
+
 type CategoryType = {
     id: string;
     _id: { toString(): string };
@@ -42,14 +47,14 @@ export const AddCategoryDialog = ({categories, onRefresh}: Props) => {
 
     const [name, setName] = useState('')
     const [parent, setParent] = useState<string | undefined>(undefined)
-    const [isMenuItem, setIsMenuItem] = useState(false)
-    const [showGroupTitle, setShowGroupTitle] = useState(false)
+    const [isMenuItem, setIsMenuItem] = useState(true)
+    const [showGroupTitle, setShowGroupTitle] = useState(true)
 
     const resetForm = () => {
         setName('')
         setParent(undefined)
-        setIsMenuItem(false)
-        setShowGroupTitle(false)
+        setIsMenuItem(true)
+        setShowGroupTitle(true)
     }
 
     const close = () => {
@@ -108,74 +113,77 @@ export const AddCategoryDialog = ({categories, onRefresh}: Props) => {
                 close();
             }
         }}>
-            <Dialog.Backdrop bg="blackAlpha.800" backdropFilter="blur(8px)"/>
+            <Dialog.Backdrop bg="blackAlpha.900/80" backdropFilter="blur(12px)"/>
             <Dialog.Positioner>
                 <Dialog.Content
-                    bg="rgba(24,26,28,0.95)"
-                    borderRadius="2xl"
-                    shadow="2xl"
+                    bg="gray.950"
+                    borderRadius="3xl"
+                    shadow="dark-lg"
                     border="1px solid"
-                    borderColor="gray.700"
+                    borderColor="gray.800"
                     color="white"
                     maxW="md"
                     w="full"
-                    backdropFilter="blur(18px)"
-                    transition="all 0.25s ease"
-                    p={0}
+                    overflow="hidden"
                 >
-                    <Dialog.Header borderBottom="1px solid" borderColor="gray.700">
-                        <Box display="flex" alignItems="center" justifyContent="space-between" p={4}>
-                            <Heading size="md" color="gray.200" fontWeight="semibold" letterSpacing="0.3px">
-                                Добавить категорию
-                            </Heading>
+                    <Dialog.Header bg="gray.900/50" py={5} px={6} borderBottom="1px solid" borderColor="gray.800">
+                        <Flex align="center" justify="space-between">
+                            <Flex align="center" gap={3}>
+                                <Box bg="purple.900/30" p={2} borderRadius="xl" border="1px solid" borderColor="purple.800/50">
+                                    <FiPlus size={20} color="#A855F7"/>
+                                </Box>
+                                <Heading size="md" color="gray.100" fontWeight="bold" letterSpacing="tight">
+                                    Новая категория
+                                </Heading>
+                            </Flex>
                             <Dialog.CloseTrigger asChild>
-                                <Button
+                                <IconButton
                                     onClick={close}
                                     variant="ghost"
-                                    colorScheme="gray"
-                                    size="xs"
-                                    color="gray.400"
-                                    _hover={{bg: 'gray.700', color: 'gray.200'}}
+                                    colorPalette="gray"
+                                    size="sm"
+                                    borderRadius="full"
+                                    color="gray.500"
+                                    _hover={{bg: 'gray.800', color: 'gray.200'}}
                                 >
-                                    X
-                                </Button>
+                                    <FiX size={18}/>
+                                </IconButton>
                             </Dialog.CloseTrigger>
-                        </Box>
+                        </Flex>
                     </Dialog.Header>
 
-                    <Dialog.Body p={6}>
-                        <Box as="form" onSubmit={(e) => {
-                            e.preventDefault();
-                            onSubmit();
-                        }}>
-
-                            {/* Название */}
-                            <Box mb={4}>
-                                <Heading mb={1} size="sm" color="gray.200">
+                    <Dialog.Body p={8}>
+                        <VStack gap={6} align="stretch">
+                            <Box>
+                                <Heading mb={2} size="xs" color="gray.400" textTransform="uppercase" letterSpacing="widest">
                                     Название
                                 </Heading>
-                                <Input
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    p={2}
-                                    placeholder="Введите название категории"
-                                    bg="gray.800"
-                                    border="1px solid"
-                                    borderColor="gray.700"
-                                    borderRadius="md"
-                                    _focus={{borderColor: 'gray.500', boxShadow: '0 0 6px gray'}}
-                                    h="36px"
-                                    fontSize="sm"
-                                    _hover={{borderColor: 'gray.500'}}
-                                    transition="border-color 0.15s ease"
-                                    autoFocus
-                                />
+                                <Flex position="relative" align="center">
+                                    <Box position="absolute" left={3} color="gray.500" zIndex={1}>
+                                        <FiType size={18}/>
+                                    </Box>
+                                    <Input
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        pl={10}
+                                        placeholder="Напр., Пицца, Суши..."
+                                        bg="gray.900"
+                                        border="1px solid"
+                                        borderColor="gray.800"
+                                        borderRadius="xl"
+                                        _focus={{borderColor: 'purple.500', boxShadow: '0 0 0 1px purple.500', bg: 'gray.850'}}
+                                        h="44px"
+                                        fontSize="sm"
+                                        _hover={{borderColor: 'gray.700'}}
+                                        transition="all 0.2s ease"
+                                        autoFocus
+                                    />
+                                </Flex>
                             </Box>
 
-                            {/* Родитель */}
-                            <Box mb={4}>
-                                <Heading mb={1} size="sm" color="gray.200">
-                                    Родитель
+                            <Box>
+                                <Heading mb={2} size="xs" color="gray.400" textTransform="uppercase" letterSpacing="widest">
+                                    Родительская категория
                                 </Heading>
 
                                 <Select.Root
@@ -187,131 +195,137 @@ export const AddCategoryDialog = ({categories, onRefresh}: Props) => {
                                     }}
                                 >
                                     <Select.HiddenSelect/>
-                                    <Select.Label>Выберите родителя</Select.Label>
-
-                                    <Select.Control bg="gray.800" borderColor="gray.500" border="1px solid"
-                                                    borderRadius="md">
-                                        <Select.Trigger>
-                                            <Select.ValueText placeholder="Нет родителя">
-                                                {parent
-                                                    ? categories.find((c) => c._id.toString() === parent)?.name
-                                                    : 'Нет родителя'}
-                                            </Select.ValueText>
+                                    <Select.Control>
+                                        <Select.Trigger 
+                                            bg="gray.900" 
+                                            borderColor="gray.800" 
+                                            border="1px solid"
+                                            borderRadius="xl"
+                                            h="44px"
+                                            _hover={{borderColor: 'gray.700'}}
+                                            px={4}
+                                        >
+                                            <Flex align="center" gap={3} w="full">
+                                                <Box color="gray.500">
+                                                    <FiLayers size={18}/>
+                                                </Box>
+                                                <Select.ValueText placeholder="Нет родителя" color="gray.200" fontSize="sm">
+                                                    {parent
+                                                        ? categories.find((c) => (c._id?.toString() ?? c.id) === parent)?.name
+                                                        : 'Нет родителя'}
+                                                </Select.ValueText>
+                                            </Flex>
                                         </Select.Trigger>
-                                        <Select.IndicatorGroup>
-                                            <Select.Indicator/>
-                                            <Select.ClearTrigger onClick={() => setParent(undefined)}/>
-                                        </Select.IndicatorGroup>
                                     </Select.Control>
 
                                     <Select.Positioner>
                                         <Select.Content
-                                            bg="gray.800"
+                                            bg="gray.900"
                                             color="gray.200"
                                             borderWidth="1px"
-                                            borderColor="gray.600"
-                                            rounded="md"
-                                            boxShadow="lg"
+                                            borderColor="gray.800"
+                                            borderRadius="xl"
+                                            shadow="dark-lg"
                                             maxH="220px"
                                             overflowY="auto"
+                                            p={1}
                                         >
                                             {collection.items.map((item) => (
-                                                <Select.Item key={item.value} item={item}>
-                                                    {item.label}
-                                                    <Select.ItemIndicator/>
+                                                <Select.Item 
+                                                    key={item.value} 
+                                                    item={item}
+                                                    borderRadius="lg"
+                                                    _hover={{bg: 'gray.800'}}
+                                                    cursor="pointer"
+                                                    px={3}
+                                                    py={2}
+                                                >
+                                                    <Text fontSize="sm">{item.label}</Text>
+                                                    <Select.ItemIndicator color="purple.500"/>
                                                 </Select.Item>
                                             ))}
                                         </Select.Content>
                                     </Select.Positioner>
                                 </Select.Root>
+                                <Text mt={1.5} fontSize="10px" color="gray.600">
+                                    Выберите основную категорию, если создаете подкатегорию
+                                </Text>
                             </Box>
 
-                            {/* Чекбоксы (новый стиль Chakra v3) */}
-                            <HStack gap={6} mb={1}>
-                                {/* isMenuItem */}
+                            <HStack gap={8} py={2}>
                                 <Checkbox.Root
                                     checked={isMenuItem}
                                     onCheckedChange={(e) => setIsMenuItem(!!e.checked)}
-                                    className="flex items-center gap-2"
+                                    colorPalette="purple"
                                 >
                                     <Checkbox.HiddenInput/>
-
                                     <Checkbox.Control
-                                        className="
-                                            size-4 rounded-md border border-gray-600 bg-gray-800
-                                            data-[checked]:bg-gray-500 data-[checked]:border-gray-400
-                                            transition-all duration-150
-                                        "
+                                        borderRadius="lg"
+                                        bg="gray.900"
+                                        borderColor="gray.800"
+                                        _hover={{borderColor: 'gray.700'}}
+                                        size="lg"
                                     />
-
                                     <Checkbox.Label>
-                                        <Text color={isMenuItem ? 'gray.200' : 'gray.300'} fontSize="sm">
-                                            В меню
+                                        <Text color="gray.300" fontSize="sm" fontWeight="medium">
+                                            Видна в меню
                                         </Text>
                                     </Checkbox.Label>
                                 </Checkbox.Root>
 
-                                {/* showGroupTitle */}
                                 <Checkbox.Root
                                     checked={showGroupTitle}
                                     onCheckedChange={(e) => setShowGroupTitle(!!e.checked)}
-                                    className="flex items-center gap-2"
+                                    colorPalette="blue"
                                 >
                                     <Checkbox.HiddenInput/>
-
                                     <Checkbox.Control
-                                        className="
-                                            size-4 rounded-md border border-gray-600 bg-gray-800
-                                            data-[checked]:bg-gray-500 data-[checked]:border-gray-400
-                                            transition-all duration-150
-                                        "
+                                        borderRadius="lg"
+                                        bg="gray.900"
+                                        borderColor="gray.800"
+                                        _hover={{borderColor: 'gray.700'}}
+                                        size="lg"
                                     />
-
                                     <Checkbox.Label>
-                                        <Text color={showGroupTitle ? 'gray.200' : 'gray.300'} fontSize="sm">
+                                        <Text color="gray.300" fontSize="sm" fontWeight="medium">
                                             Показывать заголовок
                                         </Text>
                                     </Checkbox.Label>
                                 </Checkbox.Root>
                             </HStack>
-
-                        </Box>
+                        </VStack>
                     </Dialog.Body>
 
-                    <Dialog.Footer borderTop="1px solid" borderColor="gray.700" mt={0} p={4} gap={3} display="flex"
-                                   justifyContent="flex-end">
+                    <Dialog.Footer bg="gray.900/30" p={6} borderTop="1px solid" borderColor="gray.800" gap={3}>
                         <Button
-                            p={2}
-                            variant="outline"
-                            size="sm"
-                            color="gray.300"
-                            borderColor="gray.700"
-                            _hover={{
-                                bg: 'gray.800',
-                                borderColor: 'gray.400',
-                                color: 'gray.200',
-                            }}
-                            _active={{bg: 'gray.700'}}
+                            variant="ghost"
+                            size="md"
+                            color="gray.400"
+                            borderRadius="xl"
+                            _hover={{bg: 'gray.800', color: 'gray.200'}}
                             onClick={close}
+                            flex={1}
                         >
                             Отмена
                         </Button>
                         <Button
-                            p={2}
-                            colorScheme="gray"
-                            size="sm"
-                            bg="gray.500"
+                            size="md"
+                            colorPalette="purple"
+                            bg="purple.600"
                             color="white"
-                            borderRadius="md"
+                            borderRadius="xl"
                             _hover={{
-                                bg: 'gray.400',
-                                boxShadow: '0 0 12px rgba(128,128,128,0.45)',
+                                bg: 'purple.500',
+                                shadow: '0 0 20px rgba(168, 85, 247, 0.4)',
                             }}
-                            _active={{bg: 'gray.600'}}
+                            _active={{bg: 'purple.700'}}
                             onClick={onSubmit}
                             loading={isPending}
+                            flex={2}
+                            gap={2}
                         >
-                            Создать
+                            <FiCheck/>
+                            Создать категорию
                         </Button>
                     </Dialog.Footer>
 
@@ -320,3 +334,4 @@ export const AddCategoryDialog = ({categories, onRefresh}: Props) => {
         </Dialog.Root>
     )
 }
+

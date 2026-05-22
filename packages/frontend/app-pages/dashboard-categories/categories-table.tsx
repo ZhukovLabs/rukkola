@@ -1,15 +1,15 @@
 'use client'
 
-import React, {useState} from 'react'
+import React, {useState, useMemo} from 'react'
 import {
     Box,
     Flex,
     IconButton,
     Input,
-    Table,
     Text,
     Spinner,
-    Checkbox,
+    HStack,
+    VStack,
 } from '@chakra-ui/react'
 import {useMutation, useQueryClient} from '@tanstack/react-query'
 import {
@@ -18,6 +18,10 @@ import {
     FiCheck,
     FiX,
     FiMove,
+    FiSearch,
+    FiEye,
+    FiEyeOff,
+    FiType,
 } from 'react-icons/fi'
 import {FaWineBottle, FaWineGlassAlt} from 'react-icons/fa'
 import {
@@ -36,17 +40,7 @@ import {
     verticalListSortingStrategy,
     useSortable,
 } from '@dnd-kit/sortable'
-
-type CategoryType = {
-    id: string;
-    _id?: { toString(): string };
-    name: string;
-    order: number;
-    isMenuItem: boolean;
-    showGroupTitle: boolean;
-    parent?: { toString(): string } | null;
-    hidden?: boolean;
-}
+import {motion, AnimatePresence} from 'framer-motion'
 import {
     toggleCategoryField,
     reorderCategories,
@@ -62,6 +56,18 @@ import {useToast} from "@/components/toast-container"
 import {CategoryPositionDialog} from './category-position-dialog'
 import {revalidateMenu} from '@/lib/api/revalidate'
 
+type CategoryType = {
+    id: string;
+    _id?: { toString(): string };
+    name: string;
+    order: number;
+    isMenuItem: boolean;
+    showGroupTitle: boolean;
+    parent?: { toString(): string } | null;
+    hidden?: boolean;
+}
+
+
 type CategoryData = {
     id: string;
     _id: string;
@@ -73,10 +79,14 @@ type CategoryData = {
 }
 
 type CategoryWithChildren = CategoryData & {
-    children?: CategoryWithChildren[]
+    children: CategoryWithChildren[]
 }
 
-type Props = { categories: CategoryType[]; onRefresh?: () => Promise<void> }
+type Props = {
+    categories: CategoryType[];
+    onRefresh?: () => Promise<void>;
+    isSearching?: boolean;
+}
 
 function toCategoryData(cat: CategoryType): CategoryData {
     const id = cat.id || (cat._id ? cat._id.toString() : '')
@@ -106,8 +116,9 @@ function buildCategoryTree(categories: CategoryType[]): CategoryWithChildren[] {
         if (data.parent) {
             const parent = map.get(data.parent)
             if (parent) {
-                parent.children = parent.children || []
                 parent.children.push(node)
+            } else {
+                roots.push(node)
             }
         } else {
             roots.push(node)
@@ -123,20 +134,6 @@ function buildCategoryTree(categories: CategoryType[]): CategoryWithChildren[] {
     sortChildren(roots)
 
     return roots
-}
-
-function flattenCategoryTree(
-    nodes: CategoryWithChildren[],
-    depth = 0
-): { category: CategoryWithChildren; depth: number }[] {
-    const result: { category: CategoryWithChildren; depth: number }[] = []
-    for (const node of nodes) {
-        result.push({category: node, depth})
-        if (node.children?.length) {
-            result.push(...flattenCategoryTree(node.children, depth + 1))
-        }
-    }
-    return result
 }
 
 type SortableRowProps = {
@@ -161,8 +158,8 @@ type SortableRowProps = {
     isMarkingAlcohol: boolean
     isMarkingNonAlcohol: boolean
     isMoving: boolean
-    siblingsCount: number
-    indexInSiblings: number
+    isDraggable: boolean
+    renderChildren: () => React.ReactNode
 }
 
 function SortableRow({
@@ -187,6 +184,8 @@ function SortableRow({
                          isMarkingAlcohol,
                          isMarkingNonAlcohol,
                          isMoving,
+                         isDraggable,
+                         renderChildren,
                      }: SortableRowProps) {
     const {
         attributes,
@@ -195,54 +194,73 @@ function SortableRow({
         transform,
         transition,
         isDragging,
-    } = useSortable({id: category._id.toString()})
+    } = useSortable({id: category._id, disabled: !isDraggable})
 
     const style = {
         transform: transform ? `translateY(${transform.y}px)` : undefined,
         transition,
-        opacity: isDragging ? 0.5 : 1,
+        opacity: isDragging ? 0.4 : 1,
+        zIndex: isDragging ? 10 : 1,
     }
 
     return (
-        <Table.Row
-            ref={setNodeRef}
-            style={style}
-            bg={depth > 0 ? 'gray.900' : 'gray.950'}
-            borderBottom="1px solid"
-            borderColor="gray.800"
-            _hover={{bg: 'gray.800', transition: '0.2s ease'}}
-        >
-            <Table.Cell p={4}>
-                <Flex align="center" gap={3} pl={depth * 6}>
-                    <CategoryPositionDialog
-                        currentPosition={position}
-                        totalItems={totalSiblings}
-                        depth={depth}
-                        onMove={(pos) => onMoveToPosition(category._id.toString(), pos)}
-                        isLoading={isMoving}
-                    />
-
+        <Box ref={setNodeRef} style={style} w="full">
+            <Flex
+                bg={depth > 0 ? 'gray.900/40' : 'gray.900/20'}
+                borderBottom="1px solid"
+                borderColor="gray.800/60"
+                _hover={{bg: 'gray.800/40'}}
+                transition="all 0.2s"
+                py={3}
+                px={4}
+                align="center"
+                gap={4}
+                position="relative"
+            >
+                {/* Indentation Markers */}
+                {depth > 0 && (
                     <Box
-                        {...attributes}
-                        {...listeners}
-                        cursor="grab"
-                        color="gray.700"
-                        _hover={{color: 'gray.500'}}
-                        transition="color 0.2s"
-                        display="flex"
-                        alignItems="center"
-                    >
-                        <FiMove size={16}/>
-                    </Box>
+                        position="absolute"
+                        left={`${depth * 24 - 12}px`}
+                        top={0}
+                        bottom={0}
+                        w="1.5px"
+                        bg="purple.800/40"
+                        _after={{
+                            content: '""',
+                            position: 'absolute',
+                            left: 0,
+                            top: '50%',
+                            w: '12px',
+                            h: '1.5px',
+                            bg: 'purple.800/40',
+                        }}
+                    />
+                )}
 
-                    {depth > 0 && (
-                        <Box
-                            borderLeft="2px solid"
-                            borderColor="gray.700"
-                            height="20px"
-                            opacity={0.4}
-                            borderRadius="1px"
-                        />
+                <Flex align="center" gap={3} pl={depth * 6} flex={1}>
+                    {isDraggable && (
+                        <Flex align="center" gap={1}>
+                            <CategoryPositionDialog
+                                currentPosition={position}
+                                totalItems={totalSiblings}
+                                depth={depth}
+                                onMove={(pos) => onMoveToPosition(category._id, pos)}
+                                isLoading={isMoving}
+                            />
+                            <Box
+                                {...attributes}
+                                {...listeners}
+                                cursor="grab"
+                                color="gray.600"
+                                p={1.5}
+                                borderRadius="lg"
+                                _hover={{color: 'purple.400', bg: 'purple.900/20'}}
+                                transition="all 0.2s"
+                            >
+                                <FiMove size={14}/>
+                            </Box>
+                        </Flex>
                     )}
 
                     {isEditing ? (
@@ -251,603 +269,560 @@ function SortableRow({
                             value={tempName}
                             onChange={(e) => setTempName(e.target.value)}
                             onKeyDown={(e) => {
-                                if (e.key === 'Enter') onNameSave(category._id.toString())
+                                if (e.key === 'Enter') onNameSave(category._id)
                                 if (e.key === 'Escape') onNameCancel()
                             }}
                             autoFocus
-                            bg="gray.800"
-                            color="gray.200"
-                            borderColor="gray.700"
-                            _focus={{borderColor: 'gray.600', boxShadow: '0 0 0 1px gray.600'}}
-                            width="250px"
-                            borderRadius="lg"
+                            bg="gray.850"
+                            borderColor="purple.500"
+                            borderRadius="xl"
+                            h="36px"
+                            fontSize="sm"
+                            w="300px"
                         />
                     ) : (
-                        <Text fontWeight="semibold" color={depth > 0 ? "gray.400" : "gray.200"} flex={1}>
-                            {category.name}
-                        </Text>
+                        <VStack align="start" gap={0} flex={1}>
+                            <Text
+                                fontWeight={depth === 0 ? "700" : "600"}
+                                color={depth === 0 ? "white" : "gray.200"}
+                                fontSize={depth === 0 ? "md" : "sm"}
+                            >
+                                {category.name}
+                            </Text>
+                            {depth === 0 && (
+                                <Text fontSize="10px" color="purple.500" fontWeight="bold" textTransform="uppercase"
+                                      letterSpacing="widest">
+                                    Основная
+                                </Text>
+                            )}
+                        </VStack>
                     )}
                 </Flex>
-            </Table.Cell>
 
-            <Table.Cell p={4} textAlign="center">
-                <Tooltip content={category.isMenuItem ? 'Отображается в меню' : 'Скрыто из меню'}
-                         openDelay={400}>
-                    <Box display="inline-flex">
-                        <Checkbox.Root
-                            checked={category.isMenuItem}
-                            onCheckedChange={() =>
-                                onToggleField(category._id.toString(), 'isMenuItem')
-                            }
-                            disabled={isToggling}
-                        >
-                            <Checkbox.HiddenInput/>
-                            <Checkbox.Control
-                                bg="gray.800"
-                                borderColor="gray.700"
-                                _checked={{
-                                    bg: 'gray.700',
-                                    borderColor: 'gray.600',
-                                    boxShadow: '0 0 6px 1px rgba(168, 85, 247, 0.15)',
-                                }}
-                                _hover={{borderColor: 'gray.500'}}
-                                transition="all 0.2s"
-                            >
-                                <Checkbox.Indicator color="gray.300"/>
-                            </Checkbox.Control>
-                        </Checkbox.Root>
-                    </Box>
-                </Tooltip>
-            </Table.Cell>
-
-            <Table.Cell p={4} textAlign="center">
-                <Tooltip content={category.showGroupTitle ? 'Заголовок виден' : 'Заголовок скрыт'}
-                         openDelay={400}>
-                    <Box display="inline-flex">
-                        <Checkbox.Root
-                            checked={category.showGroupTitle}
-                            onCheckedChange={() =>
-                                onToggleField(category._id.toString(), 'showGroupTitle')
-                            }
-                            disabled={isToggling}
-                        >
-                            <Checkbox.HiddenInput/>
-                            <Checkbox.Control
-                                bg="gray.800"
-                                borderColor="gray.700"
-                                _checked={{
-                                    bg: 'gray.700',
-                                    borderColor: 'gray.600',
-                                    boxShadow: '0 0 6px 1px rgba(168, 85, 247, 0.15)',
-                                }}
-                                _hover={{borderColor: 'gray.500'}}
-                                transition="all 0.2s"
-                            >
-                                <Checkbox.Indicator color="gray.300"/>
-                            </Checkbox.Control>
-                        </Checkbox.Root>
-                    </Box>
-                </Tooltip>
-            </Table.Cell>
-
-            <Table.Cell p={4}>
-                <Flex gap={2} align="center" justify="center" alignSelf="center">
-                    {isEditing ? (
-                        <>
-                            <Tooltip content="Сохранить" openDelay={400}>
-                                <IconButton
-                                    aria-label="Сохранить"
-                                    size="xs"
-                                    borderRadius="lg"
-                                    bg="green.600"
-                                    color="white"
-                                    border="1px solid"
-                                    borderColor="green.500"
-                                    _hover={{bg: 'green.700', borderColor: 'green.600'}}
-                                    _active={{transform: 'scale(0.96)'}}
-                                    onClick={() => onNameSave(category._id.toString())}
-                                    loading={isUpdatingName}
-                                >
-                                    <FiCheck/>
-                                </IconButton>
-                            </Tooltip>
-
-                            <Tooltip content="Отмена" openDelay={400}>
-                                <IconButton
-                                    aria-label="Отмена"
-                                    size="xs"
-                                    borderRadius="lg"
-                                    bg="gray.850"
-                                    color="gray.400"
-                                    border="1px solid"
-                                    borderColor="gray.750"
-                                    _hover={{bg: 'gray.800', color: 'gray.200', borderColor: 'gray.700'}}
-                                    _active={{transform: 'scale(0.96)'}}
-                                    onClick={onNameCancel}
-                                >
-                                    <FiX/>
-                                </IconButton>
-                            </Tooltip>
-                        </>
-                    ) : (
-                        <Tooltip content="Редактировать" openDelay={400}>
+                {/* Toggles */}
+                <Flex w="280px" justify="center" align="center" flexShrink={0}>
+                    <Box flex={1} display="flex" justifyContent="center">
+                        <Tooltip content={category.isMenuItem ? 'Видна в меню' : 'Скрыта из меню'}>
                             <IconButton
-                                aria-label="Редактировать"
-                                size="xs"
+                                aria-label="Toggle Menu Visibility"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => onToggleField(category._id, 'isMenuItem')}
+                                color={category.isMenuItem ? 'purple.400' : 'gray.600'}
                                 borderRadius="lg"
-                                bg="gray.850"
-                                color="gray.400"
-                                border="1px solid"
-                                borderColor="gray.750"
-                                _hover={{
-                                    bg: 'gray.800',
-                                    color: 'gray.200',
-                                    borderColor: 'gray.700',
-                                }}
-                                _active={{transform: 'scale(0.96)'}}
-                                onClick={() => onEditStart(category)}
+                                bg={category.isMenuItem ? 'purple.900/20' : 'transparent'}
+                                _hover={{bg: 'gray.800'}}
+                                transition="all 0.2s"
+                                loading={isToggling}
                             >
-                                <FiEdit/>
+                                {category.isMenuItem ? <FiEye size={18}/> : <FiEyeOff size={18}/>}
                             </IconButton>
                         </Tooltip>
+                    </Box>
+
+                    <Box flex={1} display="flex" justifyContent="center">
+                        <Tooltip content={category.showGroupTitle ? 'Заголовок виден' : 'Заголовок скрыт'}>
+                            <IconButton
+                                aria-label="Toggle Title Visibility"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => onToggleField(category._id, 'showGroupTitle')}
+                                color={category.showGroupTitle ? 'blue.400' : 'gray.600'}
+                                borderRadius="lg"
+                                bg={category.showGroupTitle ? 'blue.900/20' : 'transparent'}
+                                _hover={{bg: 'gray.800'}}
+                                transition="all 0.2s"
+                                loading={isToggling}
+                            >
+                                <FiType size={18}/>
+                            </IconButton>
+                        </Tooltip>
+                    </Box>
+                </Flex>
+
+                {/* Actions */}
+                <HStack gap={1} w="220px" justify="center">
+                    {isEditing ? (
+                        <>
+                            <IconButton
+                                aria-label="Save"
+                                size="sm"
+                                variant="solid"
+                                colorPalette="green"
+                                borderRadius="xl"
+                                onClick={() => onNameSave(category._id)}
+                                loading={isUpdatingName}
+                            >
+                                <FiCheck/>
+                            </IconButton>
+                            <IconButton
+                                aria-label="Cancel"
+                                size="sm"
+                                variant="ghost"
+                                borderRadius="xl"
+                                onClick={onNameCancel}
+                            >
+                                <FiX/>
+                            </IconButton>
+                        </>
+                    ) : (
+                        <IconButton
+                            aria-label="Edit"
+                            size="sm"
+                            variant="ghost"
+                            color="gray.500"
+                            _hover={{color: 'purple.400', bg: 'purple.900/10'}}
+                            borderRadius="xl"
+                            onClick={() => onEditStart(category)}
+                        >
+                            <FiEdit size={16}/>
+                        </IconButton>
                     )}
 
-                    <Tooltip content="Удалить" openDelay={400}>
-                        <IconButton
-                            aria-label="Удалить"
-                            size="xs"
-                            borderRadius="lg"
-                            bg="gray.850"
-                            color="gray.400"
-                            border="1px solid"
-                            borderColor="gray.750"
-                            _hover={{
-                                bg: 'gray.800',
-                                color: 'red.400',
-                                borderColor: 'gray.700',
-                            }}
-                            _active={{transform: 'scale(0.96)'}}
-                            onClick={() => onDelete(category._id.toString())}
-                            loading={isDeleting}
-                        >
-                            <FiTrash2/>
-                        </IconButton>
-                    </Tooltip>
+                    <IconButton
+                        aria-label="Delete"
+                        size="sm"
+                        variant="ghost"
+                        color="gray.500"
+                        _hover={{color: 'red.400', bg: 'red.900/10'}}
+                        borderRadius="xl"
+                        onClick={() => onDelete(category._id)}
+                        loading={isDeleting}
+                    >
+                        <FiTrash2 size={16}/>
+                    </IconButton>
 
-                    <Tooltip content="Пометить все продукты как алкогольные" openDelay={400}>
-                        <IconButton
-                            aria-label="Пометить как алкогольные"
-                            size="xs"
-                            borderRadius="lg"
-                            bg="gray.850"
-                            color="gray.400"
-                            border="1px solid"
-                            borderColor="gray.750"
-                            _hover={{
-                                bg: 'gray.800',
-                                color: 'gray.200',
-                                borderColor: 'gray.700',
-                            }}
-                            _active={{transform: 'scale(0.96)'}}
-                            onClick={() => onMarkAlcohol(category._id.toString())}
-                            loading={isMarkingAlcohol}
-                        >
-                            <FaWineBottle/>
-                        </IconButton>
-                    </Tooltip>
+                    <HStack gap={0} ml={2}>
+                        <Tooltip content="Алкоголь">
+                            <IconButton
+                                aria-label="Alcohol"
+                                size="sm"
+                                variant="ghost"
+                                color="gray.500"
+                                _hover={{color: 'purple.300', bg: 'purple.900/10'}}
+                                borderRadius="xl"
+                                onClick={() => onMarkAlcohol(category._id)}
+                                loading={isMarkingAlcohol}
+                            >
+                                <FaWineBottle size={14}/>
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip content="Безалкоголь">
+                            <IconButton
+                                aria-label="Non-alcohol"
+                                size="sm"
+                                variant="ghost"
+                                color="gray.500"
+                                _hover={{color: 'green.300', bg: 'green.900/10'}}
+                                borderRadius="xl"
+                                onClick={() => onMarkNonAlcohol(category._id)}
+                                loading={isMarkingNonAlcohol}
+                            >
+                                <FaWineGlassAlt size={14}/>
+                            </IconButton>
+                        </Tooltip>
+                    </HStack>
+                </HStack>
+            </Flex>
 
-                    <Tooltip content="Пометить все продукты как безалкогольные" openDelay={400}>
-                        <IconButton
-                            aria-label="Пометить как безалкогольные"
-                            size="xs"
-                            borderRadius="lg"
-                            bg="gray.850"
-                            color="gray.400"
-                            border="1px solid"
-                            borderColor="gray.750"
-                            _hover={{
-                                bg: 'gray.800',
-                                color: 'gray.200',
-                                borderColor: 'gray.700',
-                            }}
-                            _active={{transform: 'scale(0.96)'}}
-                            onClick={() => onMarkNonAlcohol(category._id.toString())}
-                            loading={isMarkingNonAlcohol}
-                        >
-                            <FaWineGlassAlt/>
-                        </IconButton>
-                    </Tooltip>
-                </Flex>
-            </Table.Cell>
-        </Table.Row>
+            {/* Children Rendering */}
+            <AnimatePresence>
+                {category.children.length > 0 && (
+                    <motion.div
+                        initial={{opacity: 0, height: 0}}
+                        animate={{opacity: 1, height: 'auto'}}
+                        exit={{opacity: 0, height: 0}}
+                    >
+                        {renderChildren()}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </Box>
     )
 }
 
-export default function CategoriesTable({categories: initialCategories, onRefresh}: Props) {
+function SortableLevel({
+                           nodes,
+                           depth,
+                           editingId,
+                           tempName,
+                           setTempName,
+                           onEditStart,
+                           onNameSave,
+                           onNameCancel,
+                           onDelete,
+                           onMarkAlcohol,
+                           onMarkNonAlcohol,
+                           onToggleField,
+                           onMoveToPosition,
+                           togglingId,
+                           deleteMutation,
+                           updateNameMutation,
+                           markAlcoholMutation,
+                           markNonAlcoholMutation,
+                           moveMutation,
+                           isSearching,
+                       }: {
+    nodes: CategoryWithChildren[]
+    depth: number
+    editingId: string | null
+    tempName: string
+    setTempName: (s: string) => void
+    onEditStart: (c: CategoryData) => void
+    onNameSave: (id: string) => void
+    onNameCancel: () => void
+    onDelete: (id: string) => void
+    onMarkAlcohol: (id: string) => void
+    onMarkNonAlcohol: (id: string) => void
+    onToggleField: (id: string, field: 'isMenuItem' | 'showGroupTitle') => void
+    onMoveToPosition: (id: string, pos: number) => void
+    togglingId: string | null
+    deleteMutation: any
+    updateNameMutation: any
+    markAlcoholMutation: any
+    markNonAlcoholMutation: any
+    moveMutation: any
+    isSearching?: boolean
+}) {
+    const items = useMemo(() => nodes.map(n => n._id), [nodes])
+
+    return (
+        <SortableContext items={items} strategy={verticalListSortingStrategy}>
+            {nodes.map((node, index) => {
+                const isEditing = editingId === node._id
+                const isToggling = togglingId === node._id
+                const isDeleting = deleteMutation.isPending && deleteMutation.variables === node._id
+                const isUpdatingName = updateNameMutation.isPending && updateNameMutation.variables?.id === node._id
+                const isMarkingAlcohol = markAlcoholMutation.isPending && markAlcoholMutation.variables === node._id
+                const isMarkingNonAlcohol = markNonAlcoholMutation.isPending && markNonAlcoholMutation.variables === node._id
+                const isMoving = moveMutation.isPending && moveMutation.variables?.categoryId === node._id
+
+                return (
+                    <SortableRow
+                        key={node._id}
+                        category={node}
+                        depth={depth}
+                        position={index}
+                        totalSiblings={nodes.length}
+                        isEditing={isEditing}
+                        tempName={tempName}
+                        setTempName={setTempName}
+                        onEditStart={onEditStart}
+                        onNameSave={onNameSave}
+                        onNameCancel={onNameCancel}
+                        onDelete={onDelete}
+                        onMarkAlcohol={onMarkAlcohol}
+                        onMarkNonAlcohol={onMarkNonAlcohol}
+                        onToggleField={onToggleField}
+                        onMoveToPosition={onMoveToPosition}
+                        isToggling={isToggling}
+                        isDeleting={isDeleting}
+                        isUpdatingName={isUpdatingName}
+                        isMarkingAlcohol={isMarkingAlcohol}
+                        isMarkingNonAlcohol={isMarkingNonAlcohol}
+                        isMoving={isMoving}
+                        isDraggable={!isSearching}
+                        renderChildren={() => (
+                            <SortableLevel
+                                nodes={node.children}
+                                depth={depth + 1}
+                                editingId={editingId}
+                                tempName={tempName}
+                                setTempName={setTempName}
+                                onEditStart={onEditStart}
+                                onNameSave={onNameSave}
+                                onNameCancel={onNameCancel}
+                                onDelete={onDelete}
+                                onMarkAlcohol={onMarkAlcohol}
+                                onMarkNonAlcohol={onMarkNonAlcohol}
+                                onToggleField={onToggleField}
+                                onMoveToPosition={onMoveToPosition}
+                                togglingId={togglingId}
+                                deleteMutation={deleteMutation}
+                                updateNameMutation={updateNameMutation}
+                                markAlcoholMutation={markAlcoholMutation}
+                                markNonAlcoholMutation={markNonAlcoholMutation}
+                                moveMutation={moveMutation}
+                                isSearching={isSearching}
+                            />
+                        )}
+                    />
+                )
+            })}
+        </SortableContext>
+    )
+}
+
+export default function CategoriesTable({categories: initialCategories, onRefresh, isSearching}: Props) {
     const queryClient = useQueryClient()
     const [editingId, setEditingId] = useState<string | null>(null)
     const [tempName, setTempName] = useState('')
     const toast = useToast()
-
-    const [localItems, setLocalItems] = useState<{ category: CategoryWithChildren; depth: number }[]>(() =>
-        flattenCategoryTree(buildCategoryTree(initialCategories))
-    )
-
     const [togglingId, setTogglingId] = useState<string | null>(null)
 
-    React.useEffect(() => {
-        setLocalItems(flattenCategoryTree(buildCategoryTree(initialCategories)))
-    }, [initialCategories])
+    const tree = useMemo(() => buildCategoryTree(initialCategories), [initialCategories])
 
     const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 8,
-            },
-        }),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
+        useSensor(PointerSensor, {activationConstraint: {distance: 8}}),
+        useSensor(KeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates})
     )
 
-    const {
-        openDialog: openDeleteDialog,
-        confirmationDialog: deleteConfirmationDialog,
-    } = useConfirmationDialog<string>({
-        title: 'Удаление категории',
-        description: 'Категория будет удалена без возможности восстановления.',
+    const {openDialog: openDeleteDialog, confirmationDialog: deleteConfirmationDialog} = useConfirmationDialog<string>({
+        title: 'Удалить категорию?',
+        description: 'Все подкатегории также будут удалены. Это действие необратимо.',
         confirmText: 'Удалить',
         cancelText: 'Отмена',
         colorScheme: 'red',
-        onConfirm: (categoryId) => {
-            deleteMutation.mutate(categoryId)
-        },
+        onConfirm: (id) => deleteMutation.mutate(id),
     })
 
     const {
         openDialog: openMarkAlcoholDialog,
-        confirmationDialog: markAlcoholConfirmationDialog,
+        confirmationDialog: markAlcoholConfirmationDialog
     } = useConfirmationDialog<string>({
-        title: 'Пометка продуктов как алкогольных',
-        description: 'Все продукты в этой категории (включая подкатегории) будут помечены как алкогольные. Продолжить?',
+        title: 'Пометка как алкоголь',
+        description: 'Все продукты в этой категории и её подкатегориях будут помечены как алкогольные.',
         confirmText: 'Да, пометить',
         cancelText: 'Отмена',
         colorScheme: 'purple',
-        onConfirm: (categoryId) => {
-            markAlcoholMutation.mutate(categoryId)
-        },
+        onConfirm: (id) => markAlcoholMutation.mutate(id),
     })
 
     const {
         openDialog: openMarkNonAlcoholDialog,
-        confirmationDialog: markNonAlcoholConfirmationDialog,
+        confirmationDialog: markNonAlcoholConfirmationDialog
     } = useConfirmationDialog<string>({
-        title: 'Пометка продуктов как безалкогольных',
-        description: 'Все продукты в этой категории (включая подкатегории) будут помечены как безалкогольные. Продолжить?',
+        title: 'Пометка как безалкоголь',
+        description: 'Все продукты в этой категории и её подкатегориях будут помечены как безалкогольные.',
         confirmText: 'Да, пометить',
         cancelText: 'Отмена',
         colorScheme: 'green',
-        onConfirm: (categoryId) => {
-            markNonAlcoholMutation.mutate(categoryId)
-        },
+        onConfirm: (id) => markNonAlcoholMutation.mutate(id),
     })
 
     const toggleMutation = useMutation({
-        mutationFn: ({id, field}: { id: string; field: 'isMenuItem' | 'showGroupTitle' }) =>
-            toggleCategoryField(id, field),
-        onMutate: async ({id, field}) => {
+        mutationFn: ({id, field}: {
+            id: string;
+            field: 'isMenuItem' | 'showGroupTitle'
+        }) => toggleCategoryField(id, field),
+        onMutate: async ({id}) => {
             setTogglingId(id)
-            setLocalItems(prev => prev.map(item => {
-                if (item.category._id.toString() === id) {
-                    return {
-                        ...item,
-                        category: {
-                            ...item.category,
-                            [field]: !item.category[field]
-                        }
-                    }
-                }
-                return item
-            }))
         },
         onSuccess: (result) => {
-            if (onRefresh) { onRefresh() }
+            if (onRefresh) onRefresh()
             revalidateMenu()
             setTogglingId(null)
-            if (result.success) {
-                toast.showSuccess('Настройки категории обновлены')
-            } else {
-                toast.showError(result.message || 'Не удалось обновить настройки категории')
-            }
+            if (result.success) toast.showSuccess('Обновлено')
+            else toast.showError(result.message || 'Ошибка')
         },
         onError: () => {
-            if (onRefresh) { onRefresh() }
             setTogglingId(null)
-            toast.showError('Не удалось обновить настройки категории')
+            toast.showError('Ошибка сети')
         },
     })
 
     const reorderMutation = useMutation({
         mutationFn: (updates: { id: string; order: number }[]) => reorderCategories(updates),
         onSuccess: (result) => {
-            if (onRefresh) { onRefresh() }
+            if (onRefresh) onRefresh()
             revalidateMenu()
-            if (result.success) {
-                toast.showSuccess('Порядок категорий обновлен')
-            } else {
-                toast.showError(result.message || 'Не удалось обновить порядок')
-            }
+            if (result.success) toast.showSuccess('Порядок обновлен')
+            else toast.showError(result.message || 'Ошибка')
         },
-        onError: () => toast.showError('Не удалось обновить порядок'),
+        onError: () => toast.showError('Ошибка сети'),
     })
 
     const updateNameMutation = useMutation({
         mutationFn: ({id, name}: { id: string; name: string }) => updateCategoryName(id, name),
         onSuccess: (result) => {
             setEditingId(null)
-            if (onRefresh) { onRefresh() }
+            if (onRefresh) onRefresh()
             revalidateMenu()
-            if (result.success) {
-                toast.showSuccess('Название категории обновлено')
-            } else {
-                toast.showError(result.message || 'Не удалось обновить название')
-            }
+            if (result.success) toast.showSuccess('Название обновлено')
+            else toast.showError(result.message || 'Ошибка')
         },
         onError: () => {
             setEditingId(null)
-            toast.showError('Не удалось обновить название')
+            toast.showError('Ошибка сети')
         },
     })
 
     const deleteMutation = useMutation({
         mutationFn: deleteCategory,
         onSuccess: (result) => {
-            if (onRefresh) { onRefresh() }
+            if (onRefresh) onRefresh()
             revalidateMenu()
-            if (result.success) {
-                toast.showSuccess('Категория удалена')
-            } else {
-                toast.showError(result.message || 'Не удалось удалить категорию')
-            }
+            if (result.success) toast.showSuccess('Удалено')
+            else toast.showError(result.message || 'Ошибка')
         },
-        onError: () => toast.showError('Не удалось удалить категорию'),
+        onError: () => toast.showError('Ошибка сети'),
     })
 
     const markAlcoholMutation = useMutation({
-        mutationFn: (categoryId: string) => markCategoryProductsAlcohol(categoryId),
+        mutationFn: (id: string) => markCategoryProductsAlcohol(id),
         onSuccess: (result) => {
             queryClient.invalidateQueries({queryKey: ['products']})
             revalidateMenu()
-            if (result.success) {
-                toast.showSuccess(result.message || 'Продукты помечены как алкогольные')
-            } else {
-                toast.showError(result.message || 'Не удалось пометить продукты')
-            }
+            if (result.success) toast.showSuccess('Обновлено')
+            else toast.showError(result.message || 'Ошибка')
         },
-        onError: () => toast.showError('Не удалось пометить продукты'),
+        onError: () => toast.showError('Ошибка сети'),
     })
 
     const markNonAlcoholMutation = useMutation({
-        mutationFn: (categoryId: string) => markCategoryProductsNonAlcohol(categoryId),
+        mutationFn: (id: string) => markCategoryProductsNonAlcohol(id),
         onSuccess: (result) => {
             queryClient.invalidateQueries({queryKey: ['products']})
             revalidateMenu()
-            if (result.success) {
-                toast.showSuccess(result.message || 'Продукты помечены как безалкогольные')
-            } else {
-                toast.showError(result.message || 'Не удалось пометить продукты')
-            }
+            if (result.success) toast.showSuccess('Обновлено')
+            else toast.showError(result.message || 'Ошибка')
         },
-        onError: () => toast.showError('Не удалось пометить продукты'),
+        onError: () => toast.showError('Ошибка сети'),
     })
 
     const moveMutation = useMutation({
-        mutationFn: ({categoryId, newPosition}: { categoryId: string; newPosition: number }) =>
-            moveCategoryToPosition(categoryId, newPosition),
+        mutationFn: ({categoryId, newPosition}: {
+            categoryId: string;
+            newPosition: number
+        }) => moveCategoryToPosition(categoryId, newPosition),
         onSuccess: async (result) => {
-            if (onRefresh) {
-                await onRefresh()
-            }
+            if (onRefresh) await onRefresh()
             revalidateMenu()
-            if (result.success) {
-                toast.showSuccess('Позиция категории обновлена')
-            } else {
-                toast.showError(result.message || 'Не удалось обновить позицию')
-            }
+            if (result.success) toast.showSuccess('Позиция обновлена')
+            else toast.showError(result.message || 'Ошибка')
         },
-        onError: () => toast.showError('Не удалось обновить позицию'),
+        onError: () => toast.showError('Ошибка сети'),
     })
-
-    const handleMoveToPosition = (categoryId: string, newPosition: number) => {
-        moveMutation.mutate({categoryId, newPosition})
-    }
-
-    const handleEditStart = (category: CategoryData) => {
-        setEditingId(category._id)
-        setTempName(category.name)
-    }
-
-    const handleNameSave = (id: string) => {
-        if (!tempName.trim()) return
-        updateNameMutation.mutate({id, name: tempName.trim()})
-    }
-
-    const handleNameCancel = () => {
-        setEditingId(null)
-        setTempName('')
-    }
 
     const handleDragEnd = (event: DragEndEvent) => {
         const {active, over} = event
-
         if (!over || active.id === over.id) return
 
-        const oldIndex = localItems.findIndex(
-            (item) => item.category._id.toString() === active.id
-        )
-        const newIndex = localItems.findIndex(
-            (item) => item.category._id.toString() === over.id
-        )
+        // Find the level where the active item exists
+        const findSiblings = (nodes: CategoryWithChildren[]): CategoryWithChildren[] | null => {
+            if (nodes.some(n => n._id === active.id)) return nodes
+            for (const node of nodes) {
+                const found = findSiblings(node.children)
+                if (found) return found
+            }
+            return null
+        }
 
-        if (oldIndex === -1 || newIndex === -1) return
+        const siblings = findSiblings(tree)
+        if (!siblings) return
 
-        const activeDepth = localItems[oldIndex].depth
-        const overDepth = localItems[newIndex].depth
+        // Ensure the "over" item is a sibling
+        if (!siblings.some(n => n._id === over.id)) return
 
-        if (activeDepth !== overDepth) return
+        const oldIndex = siblings.findIndex(n => n._id === active.id)
+        const newIndex = siblings.findIndex(n => n._id === over.id)
 
-        const activeParent = localItems[oldIndex].category.parent?.toString() || null
-        const overParent = localItems[newIndex].category.parent?.toString() || null
-
-        if (activeParent !== overParent) return
-
-        const newItems = arrayMove(localItems, oldIndex, newIndex)
-        setLocalItems(newItems)
-
-        const parentId = activeParent
-        const siblings = newItems.filter(
-            (item) => (item.category.parent?.toString() || null) === parentId
-        )
-
-        const updates: { id: string; order: number }[] = []
-        siblings.forEach((item, index) => {
-            updates.push({
-                id: item.category._id.toString(),
-                order: index,
-            })
-        })
+        const newSiblings = arrayMove(siblings, oldIndex, newIndex)
+        const updates = newSiblings.map((item, index) => ({
+            id: item._id,
+            order: index,
+        }))
 
         reorderMutation.mutate(updates)
     }
 
     return (
-        <Box position="relative" overflowX="auto">
-            {(toggleMutation.isPending ||
-                updateNameMutation.isPending ||
-                deleteMutation.isPending ||
-                markAlcoholMutation.isPending ||
-                markNonAlcoholMutation.isPending ||
-                moveMutation.isPending) && (
-                <Flex
-                    position="absolute"
-                    inset={0}
-                    justify="center"
-                    align="center"
-                    bg="rgba(0,0,0,0.7)"
-                    backdropFilter="blur(8px)"
-                    zIndex={10}
-                    borderRadius="md"
-                >
-                    <Spinner size="xl" color="gray.300"/>
-                </Flex>
-            )}
+        <Box position="relative" minH="400px">
+            <AnimatePresence>
+                {(toggleMutation.isPending ||
+                    updateNameMutation.isPending ||
+                    deleteMutation.isPending ||
+                    markAlcoholMutation.isPending ||
+                    markNonAlcoholMutation.isPending ||
+                    moveMutation.isPending) && (
+                    <motion.div
+                        initial={{opacity: 0}}
+                        animate={{opacity: 1}}
+                        exit={{opacity: 0}}
+                        style={{
+                            position: 'absolute',
+                            inset: 0,
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            background: 'rgba(10,10,10,0.5)',
+                            backdropFilter: 'blur(4px)',
+                            zIndex: 100
+                        }}
+                    >
+                        <Spinner size="xl" color="purple.500"/>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
             >
-                <Table.Root size="md" variant="outline" w="100%">
-                    <Table.Header>
-                        <Table.Row>
-                            {['Название', 'В меню', 'Отображать заголовок', 'Действия'].map((col) => (
-                                <Table.ColumnHeader
-                                    key={col}
-                                    textAlign={col === "Название" ? "left" : "center"}
-                                    color="gray.500"
-                                    p={4}
-                                    fontWeight="600"
-                                    fontSize="xs"
-                                    textTransform="uppercase"
-                                    letterSpacing="wider"
-                                    bg="gray.950"
-                                    borderBottom="1px solid"
-                                    borderColor="gray.800"
-                                    minW={col === "Название" ? undefined : col === "Действия" ? "180px" : "80px"}
-                                >
-                                    {col}
-                                </Table.ColumnHeader>
-                            ))}
-                        </Table.Row>
-                    </Table.Header>
+                <VStack gap={0} align="stretch" w="full">
+                    {/* Header */}
+                    <Flex bg="gray.950" borderBottom="2px solid" borderColor="gray.800" py={4} px={6} align="center"
+                          gap={4}>
+                        <Text flex={1} color="gray.500" fontSize="xs" fontWeight="bold" textTransform="uppercase"
+                              letterSpacing="widest">
+                            Название и структура
+                        </Text>
+                        <Flex w="280px" justify="center" align="center" flexShrink={0}>
+                            <Box flex={1} display="flex" justifyContent="center">
+                                <Text color="gray.500" fontSize="xs" fontWeight="bold" textTransform="uppercase"
+                                      letterSpacing="widest" whiteSpace="nowrap">В навигации</Text>
+                            </Box>
+                            <Box flex={1} display="flex" justifyContent="center">
+                                <Text color="gray.500" fontSize="xs" fontWeight="bold" textTransform="uppercase"
+                                      letterSpacing="widest" whiteSpace="nowrap">Заголовок</Text>
+                            </Box>
+                        </Flex>
+                        <Text w="220px" textAlign="center" color="gray.500" fontSize="xs" fontWeight="bold"
+                              textTransform="uppercase" letterSpacing="widest">
+                            Действия
+                        </Text>
+                    </Flex>
 
-                    <Table.Body>
-                        <SortableContext
-                            items={localItems.map((item) => item.category._id.toString())}
-                            strategy={verticalListSortingStrategy}
-                        >
-                            {localItems.length > 0 ? (
-                                localItems.map(({category, depth}) => {
-                                    const isEditing = editingId === category._id.toString()
-                                    const isToggling = togglingId === category._id.toString()
-                                    const isDeleting =
-                                        deleteMutation.isPending &&
-                                        deleteMutation.variables === category._id.toString()
-                                    const isUpdatingName =
-                                        updateNameMutation.isPending &&
-                                        updateNameMutation.variables?.id === category._id.toString()
-                                    const isMarkingAlcohol =
-                                        markAlcoholMutation.isPending &&
-                                        markAlcoholMutation.variables === category._id.toString()
-                                    const isMarkingNonAlcohol =
-                                        markNonAlcoholMutation.isPending &&
-                                        markNonAlcoholMutation.variables === category._id.toString()
-                                    const isMoving =
-                                        moveMutation.isPending &&
-                                        moveMutation.variables?.categoryId === category._id.toString()
-
-                                    const parentKey = category.parent
-                                        ? category.parent.toString()
-                                        : 'root'
-                                    const siblings = localItems.filter(
-                                        (item) =>
-                                            (item.category.parent?.toString() || 'root') === parentKey
-                                    )
-                                    const indexInSiblings = siblings.findIndex(
-                                        (s) => s.category._id.toString() === category._id.toString()
-                                    )
-
-                                    return (
-                                        <SortableRow
-                                            key={category._id.toString()}
-                                            category={category}
-                                            depth={depth}
-                                            position={indexInSiblings}
-                                            totalSiblings={siblings.length}
-                                            isEditing={isEditing}
-                                            tempName={tempName}
-                                            setTempName={setTempName}
-                                            onEditStart={handleEditStart}
-                                            onNameSave={handleNameSave}
-                                            onNameCancel={handleNameCancel}
-                                            onDelete={(id) => openDeleteDialog(id)}
-                                            onMarkAlcohol={(id) => openMarkAlcoholDialog(id)}
-                                            onMarkNonAlcohol={(id) => openMarkNonAlcoholDialog(id)}
-                                            onToggleField={(id, field) =>
-                                                toggleMutation.mutate({id, field})
-                                            }
-                                            onMoveToPosition={handleMoveToPosition}
-                                            isToggling={isToggling}
-                                            isDeleting={isDeleting}
-                                            isUpdatingName={isUpdatingName}
-                                            isMarkingAlcohol={isMarkingAlcohol}
-                                            isMarkingNonAlcohol={isMarkingNonAlcohol}
-                                            isMoving={isMoving}
-                                            siblingsCount={siblings.length}
-                                            indexInSiblings={indexInSiblings}
-                                        />
-                                    )
-                                })
-                            ) : (
-                                <Table.Row>
-                                    <Table.Cell colSpan={4} textAlign="center" color="gray.600" py={8}>
-                                        Нет категорий
-                                    </Table.Cell>
-                                </Table.Row>
-                            )}
-                        </SortableContext>
-                    </Table.Body>
-                </Table.Root>
+                    {tree.length > 0 ? (
+                        <SortableLevel
+                            nodes={tree}
+                            depth={0}
+                            editingId={editingId}
+                            tempName={tempName}
+                            setTempName={setTempName}
+                            onEditStart={(c) => {
+                                setEditingId(c._id);
+                                setTempName(c.name);
+                            }}
+                            onNameSave={(id) => {
+                                if (tempName.trim()) updateNameMutation.mutate({id, name: tempName.trim()});
+                            }}
+                            onNameCancel={() => setEditingId(null)}
+                            onDelete={(id) => openDeleteDialog(id)}
+                            onMarkAlcohol={(id) => openMarkAlcoholDialog(id)}
+                            onMarkNonAlcohol={(id) => openMarkNonAlcoholDialog(id)}
+                            onToggleField={(id, field) => toggleMutation.mutate({id, field})}
+                            onMoveToPosition={(id, pos) => moveMutation.mutate({categoryId: id, newPosition: pos})}
+                            togglingId={togglingId}
+                            deleteMutation={deleteMutation}
+                            updateNameMutation={updateNameMutation}
+                            markAlcoholMutation={markAlcoholMutation}
+                            markNonAlcoholMutation={markNonAlcoholMutation}
+                            moveMutation={moveMutation}
+                            isSearching={isSearching}
+                        />
+                    ) : (
+                        <Flex direction="column" align="center" py={20} gap={4}>
+                            <Box bg="gray.800" p={6} borderRadius="full" color="gray.600">
+                                <FiSearch size={40}/>
+                            </Box>
+                            <Text color="gray.400" fontWeight="medium">
+                                {isSearching ? 'Ничего не найдено' : 'Список категорий пуст'}
+                            </Text>
+                        </Flex>
+                    )}
+                </VStack>
             </DndContext>
 
             {deleteConfirmationDialog}
