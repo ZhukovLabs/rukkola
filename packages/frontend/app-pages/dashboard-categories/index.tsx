@@ -114,6 +114,7 @@ export const DashboardCategoriesPage = () => {
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     pl={12}
                                     bg="gray.800"
+                                    color="gray.100"
                                     border="1px solid"
                                     borderColor="gray.700"
                                     borderRadius="xl"

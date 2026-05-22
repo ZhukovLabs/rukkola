@@ -274,6 +274,7 @@ function SortableRow({
                             }}
                             autoFocus
                             bg="gray.850"
+                            color="gray.100"
                             borderColor="green.500"
                             borderRadius="xl"
                             h="36px"

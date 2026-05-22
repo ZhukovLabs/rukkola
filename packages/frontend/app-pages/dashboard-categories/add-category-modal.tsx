@@ -168,6 +168,7 @@ export const AddCategoryDialog = ({categories, onRefresh}: Props) => {
                                         pl={10}
                                         placeholder="Напр., Пицца, Суши..."
                                         bg="gray.900"
+                                        color="gray.100"
                                         border="1px solid"
                                         borderColor="gray.800"
                                         borderRadius="xl"
