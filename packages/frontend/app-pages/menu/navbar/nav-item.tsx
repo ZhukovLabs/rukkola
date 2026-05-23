@@ -3,7 +3,6 @@
 import {Button, Portal, useBreakpointValue} from "@chakra-ui/react";
 import {ChevronDownIcon} from "@chakra-ui/icons";
 import {useRef, useState, useEffect} from "react";
-import {AnimatePresence} from "framer-motion";
 import {NavbarItem} from "./types";
 import {Menu} from "./menu";
 
@@ -121,17 +120,15 @@ export const NavItem = ({
             </Button>
 
             <Portal>
-                <AnimatePresence>
-                    {isOpen && (
-                        <Menu
-                            triggerRef={triggerRef}
-                            menuRef={menuRef}
-                            isMobile={!!isMobile}
-                            items={childrenItems}
-                            onItemClick={handleChildClick}
-                        />
-                    )}
-                </AnimatePresence>
+                {isOpen && (
+                    <Menu
+                        triggerRef={triggerRef}
+                        menuRef={menuRef}
+                        isMobile={!!isMobile}
+                        items={childrenItems}
+                        onItemClick={handleChildClick}
+                    />
+                )}
             </Portal>
         </>
     );

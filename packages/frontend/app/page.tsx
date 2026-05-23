@@ -20,13 +20,14 @@ type HomePageProps = {
 };
 
 const HomePage = async ({searchParams}: HomePageProps) => {
+    const {token} = await searchParams;
     return (
         <>
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
             />
-            <MenuPage searchParams={searchParams} />
+            <MenuPage token={token} />
         </>
     );
 };

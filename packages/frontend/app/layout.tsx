@@ -243,7 +243,7 @@ export default function RootLayout({
         <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Providers>{children}</Providers>
 
-        <Script id="yandex-metrika" strategy="afterInteractive">
+        <Script id="yandex-metrika" strategy="lazyOnload">
             {`
             (function(m,e,t,r,i,k,a){
               m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
@@ -256,11 +256,17 @@ export default function RootLayout({
 
             ym(109079283,'init',{
               ssr:true,
-              webvisor:true,
               clickmap:true,
               ecommerce:"dataLayer",
               accurateTrackBounce:true,
               trackLinks:true
+            });
+
+            var _ym_bfcache = function(){
+              if(window.ym) ym(109079283,'init',{trackHash:true});
+            };
+            window.addEventListener('pageshow',function(e){
+              if(e.persisted) setTimeout(_ym_bfcache,0);
             });
           `}
         </Script>

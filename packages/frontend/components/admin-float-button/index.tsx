@@ -4,9 +4,6 @@ import {useSession} from '@/lib/auth/auth-context'
 import {useRouter} from 'next/navigation'
 import {Box, IconButton, Icon} from '@chakra-ui/react'
 import {FiSettings} from 'react-icons/fi'
-import {motion} from 'framer-motion'
-
-const MotionBox = motion.create(Box)
 
 export function AdminFloatButton() {
     const {data: session, status} = useSession()
@@ -16,14 +13,12 @@ export function AdminFloatButton() {
     if (!session?.user) return null
 
     return (
-        <MotionBox
+        <Box
             position="fixed"
             top="140px"
             right="20px"
             zIndex={9995}
-            initial={{opacity: 0, x: 20}}
-            animate={{opacity: 1, x: 0}}
-            transition={{duration: 0.3}}
+            css={{animation: "slideIn 0.3s ease-out"}}
         >
             <IconButton
                 aria-label="Админ панель"
@@ -46,6 +41,6 @@ export function AdminFloatButton() {
             >
                 <Icon as={FiSettings} boxSize={5}/>
             </IconButton>
-        </MotionBox>
+        </Box>
     )
 }

@@ -2,8 +2,7 @@
 
 import type {NavbarItem} from "./types";
 import {Box} from "@chakra-ui/react";
-import {useEffect, useState, useCallback, useRef} from "react";
-import {MotionBox} from "@/lib/motion-box";
+import {useEffect, useState, useCallback} from "react";
 
 function MenuItem({item, isMobile, onClick}: { item: NavbarItem; isMobile: boolean; onClick: () => void }) {
     return (
@@ -89,16 +88,14 @@ export const Menu = ({triggerRef, menuRef, isMobile, items, onItemClick}: MenuPr
     }, [computePosition]);
 
     return (
-        <MotionBox
+        <Box
             ref={menuRef}
             style={style}
             width={isMobile ? "90vw" : undefined}
             maxW={isMobile ? "90vw" : "240px"}
             minW={isMobile ? "90vw" : "180px"}
             zIndex={1000}
-            initial={{opacity: 0, y: -8}}
-            animate={{opacity: 1, y: 0}}
-            transition={{duration: 0.15, ease: "easeOut"}}
+            animation="fadeIn 0.15s ease-out"
         >
             <Box
                 bgGradient="linear(to-r, rgba(26, 32, 44, 0.85), rgba(26, 32, 44, 0.75))"
@@ -121,6 +118,6 @@ export const Menu = ({triggerRef, menuRef, isMobile, items, onItemClick}: MenuPr
                 </Box>
                 {!isMobile && <Arrow/>}
             </Box>
-        </MotionBox>
+        </Box>
     );
 };

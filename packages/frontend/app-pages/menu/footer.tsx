@@ -109,6 +109,7 @@ export const Footer = () => {
                     href="https://www.instagram.com/rukkola.gomel"
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label="Instagram"
                     color="gray.400"
                     _hover={{color: "gray.200"}}
                     display="inline-flex"

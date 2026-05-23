@@ -2,7 +2,6 @@
 
 import {Box, Skeleton, SimpleGrid, HStack, VStack, Text} from "@chakra-ui/react";
 import {useState, useEffect} from "react";
-import {MotionBox} from "@/lib/motion-box";
 
 const loaderTexts = [
     "Готовим вкусности…",
@@ -68,7 +67,7 @@ export const MenuLoader = () => {
 
     return (
         <Box my={6} px={4} position="relative">
-            <MotionBox
+            <Box
                 position="fixed"
                 top={4}
                 left="50%"
@@ -100,7 +99,7 @@ export const MenuLoader = () => {
                         {text}
                     </Text>
                 </HStack>
-            </MotionBox>
+            </Box>
 
             <VStack gap={6} align="stretch" mt={16}>
                 <Box as="section">

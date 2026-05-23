@@ -11,7 +11,7 @@ import {Footer} from "./footer";
 import type {NavbarItem} from "./navbar/types";
 
 type MenuPageProps = {
-    searchParams: Promise<{ token?: unknown }>
+    token?: unknown;
 }
 
 type MenuDataResponse = {
@@ -22,10 +22,8 @@ type MenuDataResponse = {
     };
 };
 
-export const MenuPage = async ({searchParams}: MenuPageProps) => {
-    const {token} = await searchParams;
+export const MenuPage = async ({token}: MenuPageProps) => {
     const alcoholIsVisible = token === 'x7fa5ca6';
-
     const json = await serverFetch<MenuDataResponse>(`/menu?showAlcohol=${alcoholIsVisible}`);
 
     const activeLunchImage = json?.success ? json?.data?.activeLunch?.image ?? undefined : undefined;
@@ -43,6 +41,7 @@ export const MenuPage = async ({searchParams}: MenuPageProps) => {
         }));
 
     return (
+        <main>
         <Box 
             display="flex" 
             flexDirection="column" 
@@ -84,5 +83,6 @@ export const MenuPage = async ({searchParams}: MenuPageProps) => {
                 <Footer/>
             </MenuPageClient>
         </Box>
+        </main>
     );
 };

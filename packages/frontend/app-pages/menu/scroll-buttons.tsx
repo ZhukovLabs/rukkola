@@ -1,9 +1,8 @@
 'use client';
 
 import {useState, useEffect} from "react";
-import {Flex, Button, Icon, IconButton} from "@chakra-ui/react";
+import {Flex, Button, Icon, IconButton, Box} from "@chakra-ui/react";
 import {FiArrowUp, FiChevronDown} from "react-icons/fi";
-import {MotionBox} from "@/lib/motion-box";
 
 export const ScrollToFooterButton = () => {
     const handleClick = () => {
@@ -65,15 +64,12 @@ export const ScrollToTopButton = () => {
     if (!isVisible) return null;
 
     return (
-        <MotionBox
+        <Box
             position="fixed"
             top="80px"
             right="16px"
             zIndex={9996}
-            initial={{opacity: 0, scale: 0.8, y: 20}}
-            animate={{opacity: 1, scale: 1, y: 0}}
-            exit={{opacity: 0, scale: 0.8, y: 20}}
-            transition={{duration: 0.3, type: "spring", stiffness: 200, damping: 18}}
+            css={{animation: "fadeIn 0.25s ease-out"}}
         >
             <IconButton
                 aria-label="Наверх"
@@ -94,6 +90,6 @@ export const ScrollToTopButton = () => {
             >
                 <FiArrowUp size={24}/>
             </IconButton>
-        </MotionBox>
+        </Box>
     );
 };
