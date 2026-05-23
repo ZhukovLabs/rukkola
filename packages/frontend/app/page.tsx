@@ -15,14 +15,18 @@ const breadcrumbSchema = {
     ]
 };
 
-const HomePage = async (props: any) => {
+type HomePageProps = {
+    searchParams: Promise<{ token?: unknown }>;
+};
+
+const HomePage = async ({searchParams}: HomePageProps) => {
     return (
         <>
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
             />
-            <MenuPage {...props} />
+            <MenuPage searchParams={searchParams} />
         </>
     );
 };

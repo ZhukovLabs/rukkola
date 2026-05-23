@@ -12,15 +12,12 @@ import {
 import Image from "next/image";
 import {useState} from "react";
 import {FiX} from "react-icons/fi";
-import {useIsLowPerformanceDevice} from "@/hooks/use-is-low-performance-device";
 
 type ActiveLunchProps = {
     image: string;
 };
 
 export const ActiveLunch = ({image}: ActiveLunchProps) => {
-    const disableMotion = useIsLowPerformanceDevice();
-
     const [loadedPreview, setLoadedPreview] = useState(false);
     const [loadedFullscreen, setLoadedFullscreen] = useState(false);
 
@@ -37,15 +34,11 @@ export const ActiveLunch = ({image}: ActiveLunchProps) => {
                         maxW="640px"
                         w="100%"
                         minH="220px"
-                        transition={!disableMotion ? "all 0.25s ease" : undefined}
-                        _hover={
-                            !disableMotion
-                                ? {
-                                    transform: "translateY(-2px)",
-                                    boxShadow: "0 12px 36px rgba(0,0,0,0.38)",
-                                }
-                                : undefined
-                        }
+                        transition="all 0.25s ease"
+                        _hover={{
+                            transform: "translateY(-2px)",
+                            boxShadow: "0 12px 36px rgba(0,0,0,0.38)",
+                        }}
                         cursor="pointer"
                         border="1px solid"
                         borderColor="#3a3a3a"

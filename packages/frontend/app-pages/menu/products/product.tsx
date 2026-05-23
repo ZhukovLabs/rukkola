@@ -9,58 +9,31 @@ import {
     Box,
     Center,
     Icon,
-    Grid
 } from "@chakra-ui/react";
 import Image from "next/image";
-import {memo, useState, useCallback} from "react";
-import {motion} from "framer-motion";
-
-const MotionBox = motion.create(Box);
+import {useState} from "react";
 import {FiCheck, FiImage} from "react-icons/fi";
-import {useRouter, useSearchParams} from "next/navigation";
 import {addToCart} from "@/lib/local-storage";
 import {trackAddToCart} from "@/lib/ecommerce-tracking";
 import {useProductModal} from "../product-modal/use-product-modal";
-
-type Price = { size: string; price: number };
-
-export type ProductInnerProps = {
-    index?: number;
-    id: string;
-    img: string | null;
-    alt: string | null;
-    title: string;
-    description: string | null;
-    prices: Price[] | null;
-    blurDataURL?: string | null;
-    tags?: { text: string; color: string }[] | null;
-};
+import {ProductTags} from "./product-tags";
+import type {ProductClientType} from "./types";
+import {PriceSelector} from "./price-selector";
 
 const DEFAULT_BLUR_DATA_URL =
     "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/OhSPQAIZwPB9++2WgAAAABJRU5ErkJggg==";
 
-const solidGradient = (color: string) =>
-    `linear-gradient(135deg, ${color} 0%, ${color}dd 55%, ${color}aa 100%)`;
-
-const ProductImage = memo(function ProductImage({
-                                                    img,
-                                                    alt,
-                                                    blurDataURL,
-                                                    onError,
-                                                    priority
-                                                }: {
+function ProductImage({img, alt, blurDataURL, onError}: {
     img: string;
     alt: string;
     blurDataURL?: string | null;
     onError: () => void;
-    priority?: boolean;
 }) {
     return (
         <Image
             src={img.includes('?') ? `${img}&w=450` : `${img}?w=450`}
             alt={alt}
             fill
-            loading={priority ? "eager" : "lazy"}
             sizes="(max-width: 480px) 100vw, (max-width: 768px) 60vw, 45vw"
             placeholder="blur"
             blurDataURL={blurDataURL || DEFAULT_BLUR_DATA_URL}
@@ -69,362 +42,68 @@ const ProductImage = memo(function ProductImage({
             unoptimized
         />
     );
-});
+}
 
-const PriceButton = memo(function PriceButton({
-                                                  price,
-                                                  selected,
-                                                  onClick
-                                              }: {
-    price: Price;
-    selected: boolean;
-    onClick: () => void;
-}) {
-    return (
-        <Button
-            size="sm"
-            borderRadius="full"
-            px={{base: 2, md: 4}}
-            py={{base: 1, md: 2}}
-            fontSize={{base: "xs", md: "sm"}}
-            bg={selected ? "gray.500" : "gray.800"}
-            color={selected ? "white" : "gray.300"}
-            borderWidth="1px"
-            borderColor="gray.500"
-            w="full"
-            _notLast={{mb: 2}}
-            _hover={{bg: selected ? "gray.600" : "gray.700", color: "white"}}
-            onClick={onClick}
-        >
-            {price.size} — {price.price.toFixed(2).replace(".", ",")} руб.
-        </Button>
-    );
-});
-
-export const Product = memo(function Product({
-                                                 index,
-                                                 id,
-                                                 img,
-                                                 alt,
-                                                 title,
-                                                 description,
-                                                 prices,
-                                                 blurDataURL,
-                                                 tags
-                                             }: ProductInnerProps) {
-    const router = useRouter();
-    const searchParams = useSearchParams();
+export function Product({product}: { product: ProductClientType }) {
     const {open: openProductModal} = useProductModal();
+    const {id, name: title, description, image: img, blurDataURL, prices, tags} = product;
 
     const [added, setAdded] = useState(false);
-    const [selecting, setSelecting] = useState(false);
-    const [selectedPrice, setSelectedPrice] = useState<Price | null>(null);
     const [imgError, setImgError] = useState(false);
 
-    const firstPrice = prices?.[0] ?? null;
-    const priority = typeof index === "number" && index < 8;
-
-    const handleAddClick = useCallback(() => {
-        if (!prices?.length || !firstPrice) return;
-
-        if (prices.length > 1) {
-            setSelecting(true);
-            setSelectedPrice(firstPrice);
-        } else {
-            addToCart({
-                id,
-                name: title,
-                image: img ?? "",
-                blurDataURL: blurDataURL ?? undefined,
-                price: firstPrice.price,
-                size: firstPrice.size
-            });
-
-            trackAddToCart({
-                id,
-                name: title,
-                price: firstPrice.price,
-                quantity: 1
-            });
-
-            setAdded(true);
-            setTimeout(() => setAdded(false), 1200);
-        }
-    }, [prices, firstPrice, id, title, img, blurDataURL]);
-
-    const handleConfirm = useCallback(() => {
-        if (!selectedPrice) return;
-
-        addToCart({
-            id,
-            name: title,
-            image: img ?? "",
-            blurDataURL: blurDataURL ?? undefined,
-            price: selectedPrice.price,
-            size: selectedPrice.size
-        });
-
-        trackAddToCart({
-            id,
-            name: title,
-            price: selectedPrice.price,
-            quantity: 1
-        });
-
+    const addItem = (price: number, size: string) => {
+        addToCart({id, name: title, image: img ?? "", blurDataURL: blurDataURL ?? undefined, price, size});
+        trackAddToCart({id, name: title, price, quantity: 1});
         setAdded(true);
-        setSelecting(false);
-        setSelectedPrice(null);
         setTimeout(() => setAdded(false), 1200);
-    }, [selectedPrice, id, title, img, blurDataURL]);
-
-    const handleCancel = useCallback(() => {
-        setSelecting(false);
-        setSelectedPrice(null);
-    }, []);
-
-    const openModal = useCallback(() => {
-        if (!img) return;
-        openProductModal(id);
-    }, [id, img, openProductModal]);
-
-    const handleHover = useCallback(() => {
-        if (!img) return;
-
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("product", id);
-
-        router.prefetch(`?${params.toString()}`);
-        fetch(`/api/menu/product/${id}`, {method: "HEAD"}).catch(() => {
-        });
-    }, [router, searchParams, id, img]);
-
-    const animateEntry = typeof index === 'number' && index < 6;
-    const Container = animateEntry ? MotionBox : Box;
+    };
 
     return (
-        <Container
-            initial={animateEntry ? {opacity: 0, y: 24} : undefined}
-            animate={animateEntry ? {opacity: 1, y: 0} : undefined}
-            transition={animateEntry ? {duration: 0.4} : undefined}
-            display="flex"
+        <Flex
+            direction={{base: "column", md: "row"}}
+            w="100%"
+            borderWidth="1px"
+            borderRadius={{base: "md", md: "xl"}}
+            borderColor="gray.700"
+            bg="gray.800"
         >
-            <Flex
-                direction={{base: "column", md: "row"}}
-                w="100%"
-                borderWidth="1px"
-                borderRadius={{base: "md", md: "xl"}}
-                borderColor="gray.700"
-                bg="gray.800"
-                _hover={{
-                    borderColor: "gray.500",
-                    boxShadow: "0 6px 18px rgba(128,128,128,0.15)"
-                }}
-            >
-                {img && (
-                    <Box
-                        position="relative"
-                        w={{base: "100%", md: "45%"}}
-                        aspectRatio={{base: 3 / 2}}
-                        flexShrink={0}
-                        overflow="hidden"
-                        cursor="zoom-in"
-                        onClick={openModal}
-                        onMouseEnter={handleHover}
-                    >
-                        {imgError ? (
-                            <Center position="absolute" inset={0} bg="gray.700">
-                                <Icon as={FiImage} boxSize={6} color="gray.400"/>
-                            </Center>
-                        ) : (
-                            <ProductImage
-                                img={img}
-                                alt={alt || title}
-                                blurDataURL={blurDataURL}
-                                onError={() => setImgError(true)}
-                                priority={priority}
-                            />
-                        )}
+            {img && (
+                <Box
+                    position="relative"
+                    w={{base: "100%", md: "45%"}}
+                    aspectRatio={{base: 3 / 2}}
+                    flexShrink={0}
+                    overflow="hidden"
+                    cursor="zoom-in"
+                    onClick={() => openProductModal(id)}
+                >
+                    {imgError ? (
+                        <Center position="absolute" inset={0} bg="gray.700">
+                            <Icon as={FiImage} boxSize={6} color="gray.400"/>
+                        </Center>
+                    ) : (
+                        <ProductImage img={img} alt={title} blurDataURL={blurDataURL} onError={() => setImgError(true)}/>
+                    )}
+                    {tags?.length ? <ProductTags tags={tags}/> : null}
+                </Box>
+            )}
 
-                        {tags?.length ? (
-                            <Box
-                                position="absolute"
-                                top={0}
-                                left={0}
-                                w="full"
-                                h="full"
-                                pointerEvents="none"
-                            >
-                                {tags.map((tag, idx) => (
-                                    <Box
-                                        key={idx}
-                                        position="absolute"
-                                        top={`${12 + idx * 36}px`}
-                                        right={{base: "-6px", md: "auto"}}
-                                        left={{base: "auto", md: "-8px"}}
-                                        zIndex={10}
-                                    >
-                                        <Flex
-                                            align="center"
-                                            px={4.5}
-                                            py={1.5}
-                                            bg={solidGradient(tag.color)}
-                                            borderRadius="md"
-                                            boxShadow="0 8px 20px rgba(0,0,0,0.4)"
-                                            position="relative"
-                                            overflow="hidden"
-                                            transform={{
-                                                base: "skew(12deg)",
-                                                md: "skew(-12deg)"
-                                            }}
-                                            border="1px solid rgba(255,255,255,0.3)"
-                                        >
-                                            <Box
-                                                position="absolute"
-                                                top="0"
-                                                left={{base: "auto", md: "-14px"}}
-                                                right={{base: "-14px", md: "auto"}}
-                                                w="18px"
-                                                h="full"
-                                                bg={tag.color}
-                                                transform={{
-                                                    base: "skew(-25deg)",
-                                                    md: "skew(25deg)"
-                                                }}
-                                                zIndex={-1}
-                                            />
+            <Flex direction="column" flex="1" p={{base: 3, md: 6}}>
+                <Stack>
+                    <Heading fontSize={{base: "md", md: "xl"}} color="whiteAlpha.900">
+                        {title}
+                    </Heading>
+                    {description && (
+                        <Text fontSize={{base: "xs", md: "sm"}} color="gray.400" lineClamp={{base: 2, md: 4}}>
+                            {description}
+                        </Text>
+                    )}
+                </Stack>
 
-                                            <Text
-                                                fontSize="10px"
-                                                fontWeight="700"
-                                                letterSpacing="0.1em"
-                                                textTransform="uppercase"
-                                                color="white"
-                                                textShadow="0 1px 3px rgba(0,0,0,0.6)"
-                                                zIndex={2}
-                                                transform={{
-                                                    base: "skew(-12deg)",
-                                                    md: "skew(12deg)"
-                                                }}
-                                            >
-                                                {tag.text}
-                                            </Text>
-                                        </Flex>
-                                    </Box>
-                                ))}
-                            </Box>
-                        ) : null}
-                    </Box>
-                )}
-
-                <Flex direction="column" flex="1" p={{base: 3, md: 6}}>
-                    <Stack>
-                        <Heading
-                            fontSize={{base: "md", md: "xl"}}
-                            color="whiteAlpha.900"
-                        >
-                            {title}
-                        </Heading>
-
-                        {description && (
-                            <Text
-                                fontSize={{base: "xs", md: "sm"}}
-                                color="gray.400"
-                                lineClamp={{base: 2, md: 4}}
-                            >
-                                {description}
-                            </Text>
-                        )}
-                    </Stack>
-
-                    <Box mt="auto">
-                        <Box display="grid" gridTemplateColumns="1fr" gridTemplateRows="1fr">
-                            <Box
-                                gridRow="1"
-                                gridColumn="1"
-                                w="full"
-                                opacity={selecting ? 0 : 1}
-                                pointerEvents={selecting ? 'none' : 'auto'}
-                                transition="opacity 0.2s"
-                            >
-                                <Flex direction="column" gap={3} h="full" w="full">
-                                    {prices?.map(p => (
-                                        <Flex key={p.size} justify="space-between">
-                                            <Text fontSize="sm" color="gray.400">
-                                                {p.size}
-                                            </Text>
-                                            <Text fontSize="sm" color="gray.300">
-                                                {p.price.toFixed(2).replace(".", ",")} руб.
-                                            </Text>
-                                        </Flex>
-                                    ))}
-
-                                    <Button
-                                        size="sm"
-                                        borderRadius="full"
-                                        borderWidth="1px"
-                                        borderColor="gray.500"
-                                        onClick={handleAddClick}
-                                        bg={added ? "gray.500" : "gray.800"}
-                                        w="full"
-                                        mt="auto"
-                                    >
-                                        {added ? (
-                                            <Flex align="center" gap={1}>
-                                                <FiCheck/> Добавлено
-                                            </Flex>
-                                        ) : (
-                                            "Добавить"
-                                        )}
-                                    </Button>
-                                </Flex>
-                            </Box>
-
-                            <Box
-                                gridRow="1"
-                                gridColumn="1"
-                                w="full"
-                                opacity={selecting ? 1 : 0}
-                                pointerEvents={selecting ? 'auto' : 'none'}
-                                transition="opacity 0.2s"
-                            >
-                                <Flex direction="column" gap={2} h="full" w="full">
-                                    <Box>
-                                        {prices?.map(p => (
-                                            <PriceButton
-                                                key={p.size}
-                                                price={p}
-                                                selected={selectedPrice?.size === p.size}
-                                                onClick={() => setSelectedPrice(p)}
-                                            />
-                                        ))}
-                                    </Box>
-
-                                    <Grid templateColumns="1fr 1fr" gap={3} mt="auto" w="full">
-                                    <Button
-                                        size="sm"
-                                        borderRadius="full"
-                                        onClick={handleCancel}
-                                        bg="red.500"
-                                        w="full"
-                                    >
-                                        Отмена
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        borderRadius="full"
-                                        onClick={handleConfirm}
-                                        bg="#059669"
-                                        w="full"
-                                    >
-                                        OK
-                                    </Button>
-                                </Grid>
-                                </Flex>
-                            </Box>
-                        </Box>
-                    </Box>
-                </Flex>
+                <Box mt="auto">
+                    <PriceSelector prices={prices ?? []} onAdd={addItem} added={added}/>
+                </Box>
             </Flex>
-        </Container>
+        </Flex>
     );
-});
+}

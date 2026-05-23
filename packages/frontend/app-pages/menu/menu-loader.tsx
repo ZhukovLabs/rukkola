@@ -1,10 +1,8 @@
 'use client';
 
 import {Box, Skeleton, SimpleGrid, HStack, VStack, Text} from "@chakra-ui/react";
-import {motion} from "framer-motion";
 import {useState, useEffect} from "react";
-
-const MotionBox = motion.create(Box);
+import {MotionBox} from "@/lib/motion-box";
 
 const loaderTexts = [
     "Готовим вкусности…",

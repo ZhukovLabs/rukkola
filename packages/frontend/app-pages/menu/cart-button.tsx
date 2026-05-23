@@ -1,19 +1,18 @@
 'use client';
 
-import React, { useMemo } from "react";
+import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Box, Badge, IconButton } from "@chakra-ui/react";
 import { FiShoppingCart, FiX } from "react-icons/fi";
 import { useCartCount } from "@/hooks/use-cart";
 import { useCartModal } from "./cart-modal/use-cart-modal";
-
-const MotionBox = motion.create(Box);
+import {MotionBox} from "@/lib/motion-box";
 
 export const CartButton = () => {
     const { isOpen, toggle } = useCartModal();
     const count = useCartCount();
 
-    const Icon = useMemo(() => (isOpen ? FiX : FiShoppingCart), [isOpen]);
+    const Icon = isOpen ? FiX : FiShoppingCart;
 
     if (count <= 0) return null;
 
@@ -30,18 +29,6 @@ export const CartButton = () => {
                 transition={{ duration: 0.35, type: "spring", stiffness: 200, damping: 18 }}
             >
                 <Box position="relative">
-                    <MotionBox
-                        position="absolute"
-                        inset="-12px"
-                        borderRadius="full"
-                        bg="gray.400"
-                        filter="blur(20px)"
-                        opacity={0.25}
-                        pointerEvents="none"
-                        animate={{ scale: [1, 1.05, 1], opacity: [0.2, 0.35, 0.25] }}
-                        transition={{ duration: 3, repeat: Infinity, repeatType: "mirror" }}
-                    />
-
                     <IconButton
                         aria-label={isOpen ? "Закрыть корзину" : "Открыть корзину"}
                         borderRadius="full"
@@ -54,7 +41,7 @@ export const CartButton = () => {
                             transform: "translateY(-3px) scale(1.05)",
                             color: "gray.100",
                             boxShadow:
-                                "0 10px 18px rgba(0,0,0,0.6), inset 0 -3px 6px rgba(255,255,255,0.08), inset 0 3px 8px rgba(255,255,255,0.08), 0 0 12px rgba(128,128,128,0.4)",
+                                "0 10px 18px rgba(0,0,0,0.6), inset 0 -3px 6px rgba(255,255,255,0.08), inset 0 3px 8px rgba(255,255,255,0.08)",
                         }}
                         _active={{
                             transform: "scale(0.96)",

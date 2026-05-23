@@ -1,13 +1,10 @@
 'use client';
 
-import {memo} from "react";
 import { Box, Flex, Text, IconButton, Icon } from "@chakra-ui/react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { FiTrash2, FiMinus, FiPlus } from "react-icons/fi";
-
-const MotionBox = motion.create(Box);
-const MotionText = motion.create(Text);
+import {MotionBox, MotionText} from "@/lib/motion-box";
 
 type CartItemProps = {
     name: string;
@@ -22,7 +19,7 @@ type CartItemProps = {
     indexDelay?: number;
 };
 
-export const CartItem = memo(function CartItem({
+export function CartItem({
     name,
     image,
     blurDataURL,
@@ -56,7 +53,6 @@ export const CartItem = memo(function CartItem({
             boxShadow="0 4px 24px rgba(0,0,0,0.25)"
         >
             <Flex gap={{ base: 3.5, md: 5 }} align="start">
-                {/* Image: Slightly larger on mobile for better visibility */}
                 {image && (
                     <Box 
                         position="relative" 
@@ -81,7 +77,6 @@ export const CartItem = memo(function CartItem({
                     </Box>
                 )}
 
-                {/* Content Container */}
                 <Flex direction="column" flex="1" minW="0" minH={{ base: "85px", md: "100px" }} justify="space-between">
                     <Box pr={8}>
                         <Text 
@@ -95,8 +90,7 @@ export const CartItem = memo(function CartItem({
                         >
                             {name}
                         </Text>
-                        
-                        {/* Size Badge: More native look */}
+
                         <Box 
                             display="inline-block"
                             bg="whiteAlpha.100"
@@ -117,7 +111,6 @@ export const CartItem = memo(function CartItem({
                         </Box>
                     </Box>
 
-                    {/* Footer: Controls and Price */}
                     <Flex align="center" justify="space-between" mt={{ base: 2, md: 0 }}>
                         <Flex 
                             align="center" 
@@ -137,12 +130,11 @@ export const CartItem = memo(function CartItem({
                                 color="white"
                                 borderRadius="full"
                                 _hover={{ bg: "whiteAlpha.200" }}
-                                _active={{ scale: 0.9 }}
                                 _disabled={{ opacity: 0.2, cursor: "not-allowed" }}
                             >
                                 <Icon as={FiMinus} boxSize={3.5} />
                             </IconButton>
-                            
+
                             <AnimatePresence mode="wait">
                                 <MotionText
                                     key={quantity}
@@ -171,7 +163,6 @@ export const CartItem = memo(function CartItem({
                                 color="white"
                                 borderRadius="full"
                                 _hover={{ bg: "whiteAlpha.200" }}
-                                _active={{ scale: 0.9 }}
                             >
                                 <Icon as={FiPlus} boxSize={3.5} />
                             </IconButton>
@@ -193,7 +184,6 @@ export const CartItem = memo(function CartItem({
                     </Flex>
                 </Flex>
 
-                {/* Delete: Minimalist circle button */}
                 <IconButton
                     position="absolute"
                     top={2}
@@ -213,4 +203,4 @@ export const CartItem = memo(function CartItem({
             </Flex>
         </MotionBox>
     );
-});
+}

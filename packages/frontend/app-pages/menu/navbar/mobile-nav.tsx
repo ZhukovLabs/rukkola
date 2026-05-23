@@ -1,13 +1,13 @@
 'use client';
 
-import {useRef, memo} from "react";
+import {useRef} from "react";
 import {
     Box,
     Flex,
     HStack,
 } from "@chakra-ui/react";
 import {FiChevronRight} from "react-icons/fi";
-import {NavbarItem} from "./types";
+import type {NavbarItem} from "./types";
 
 type MobileNavProps = {
     items: NavbarItem[];
@@ -17,7 +17,7 @@ type MobileNavProps = {
     onItemClick: (id: string) => void;
 };
 
-export const MobileNav = memo(function MobileNav({
+export function MobileNav({
     items,
     activeId,
     openIds,
@@ -73,7 +73,7 @@ export const MobileNav = memo(function MobileNav({
             </Box>
         </Box>
     );
-});
+}
 
 const hiddenScrollbar = {
     WebkitOverflowScrolling: "touch",

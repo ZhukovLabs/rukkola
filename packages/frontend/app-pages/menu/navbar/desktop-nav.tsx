@@ -1,8 +1,7 @@
 'use client';
 
-import {memo} from "react";
 import {Box} from "@chakra-ui/react";
-import {NavbarItem} from "./types";
+import type {NavbarItem} from "./types";
 import {NavItem} from "./nav-item";
 
 type DesktopNavProps = {
@@ -11,7 +10,7 @@ type DesktopNavProps = {
     onItemClick: (id: string) => void;
 };
 
-export const DesktopNav = memo(function DesktopNav({
+export function DesktopNav({
     items,
     activeId,
     onItemClick,
@@ -53,4 +52,4 @@ export const DesktopNav = memo(function DesktopNav({
             ))}
         </Box>
     );
-});
+}

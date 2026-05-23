@@ -1,8 +1,8 @@
-import {Products} from './products';
+import {serverFetch} from "@/lib/api/server-fetch";
+import { Products } from './products';
 import type {ProductGroupClientType, ProductClientType} from "./products/types";
-import {ErrorFallback} from "./error-fallback";
-
-const INTERNAL_API = process.env.INTERNAL_API_URL || 'http://localhost:4000/api';
+import { ErrorFallback } from "./error-fallback";
+import { generateMenuSchema, generateProductSchemas } from "./schema";
 
 type ProductsServerProps = {
     alcoholIsVisible: boolean;
@@ -45,7 +45,7 @@ type MenuProductsResponse = {
     };
 };
 
-const transformProduct = (p: RawProduct): ProductClientType => ({
+const toProductClient = (p: RawProduct): ProductClientType => ({
     id: typeof p._id === 'string' ? p._id : p._id.toString(),
     name: p.name,
     description: p.description ?? null,
@@ -58,120 +58,33 @@ const transformProduct = (p: RawProduct): ProductClientType => ({
     tags: p.tags ?? null,
 });
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://rukkola-gomel.by";
-
 export async function ProductsServer({alcoholIsVisible, hasError}: ProductsServerProps) {
-    let grouped: ProductGroupClientType[] = [];
-    let uncategorized: ProductClientType[] = [];
-    let fetchError = hasError ?? false;
+    if (hasError) return <ErrorFallback />;
 
-    try {
-        const res = await fetch(`${INTERNAL_API}/menu/products?showAlcohol=${alcoholIsVisible}`, {
-            next: {revalidate: 60},
-        });
+    const json = await serverFetch<MenuProductsResponse>(
+        `/menu/products?showAlcohol=${alcoholIsVisible}`
+    );
 
-        if (res.ok) {
-            const json: MenuProductsResponse = await res.json();
-            if (json.success && json.data) {
-                grouped = json.data.groupedProducts.map((group) => ({
-                    id: group._id,
-                    categoryName: group.name,
-                    categoryOrder: group.order ?? 0,
-                    showGroupTitle: group.showGroupTitle ?? true,
-                    subgroups: group.subgroups.map((sub) => ({
-                        id: sub._id,
-                        name: sub.name,
-                        order: sub.order ?? 0,
-                        showGroupTitle: sub.showGroupTitle ?? true,
-                        products: sub.products.map(transformProduct),
-                    })),
-                    directProducts: group.directProducts.map(transformProduct),
-                }));
+    if (!json?.success) return <ErrorFallback />;
 
-                uncategorized = json.data.uncategorizedProduct.map(transformProduct);
-            }
-        } else {
-            fetchError = true;
-        }
-    } catch (error) {
-        console.error('Failed to fetch menu products:', error);
-        fetchError = true;
-    }
-
-    if (fetchError) {
-        return <ErrorFallback />;
-    }
-
-    const menuSchema = {
-        "@context": "https://schema.org",
-        "@type": "Menu",
-        "name": "Меню кафе Руккола",
-        "mainEntityOfPage": BASE_URL,
-        "inLanguage": "ru",
-        "hasMenuSection": grouped.map(group => ({
-            "@type": "MenuSection",
-            "name": group.categoryName,
-            "hasMenuItem": [
-                ...group.directProducts.map(p => ({
-                    "@type": "MenuItem",
-                    "name": p.name,
-                    "description": p.description || p.name,
-                    "image": p.image ? (p.image.startsWith('http') ? p.image : `${BASE_URL}${p.image}`) : undefined,
-                    "suitableForDiet": p.description?.toLowerCase().includes("веган") ? "https://schema.org/VegetarianDiet" : undefined,
-                    "offers": p.prices.map(price => ({
-                        "@type": "Offer",
-                        "price": price.price,
-                        "priceCurrency": "BYN",
-                        "description": price.size,
-                        "availability": "https://schema.org/InStock"
-                    }))
-                })),
-                ...group.subgroups.flatMap(sub => sub.products.map(p => ({
-                    "@type": "MenuItem",
-                    "name": p.name,
-                    "description": p.description || p.name,
-                    "image": p.image ? (p.image.startsWith('http') ? p.image : `${BASE_URL}${p.image}`) : undefined,
-                    "suitableForDiet": p.description?.toLowerCase().includes("веган") ? "https://schema.org/VegetarianDiet" : undefined,
-                    "offers": p.prices.map(price => ({
-                        "@type": "Offer",
-                        "price": price.price,
-                        "priceCurrency": "BYN",
-                        "description": price.size,
-                        "availability": "https://schema.org/InStock"
-                    }))
-                })))
-            ]
-        }))
-    };
-
-    const productSchemas = grouped.flatMap(group => [
-        ...group.directProducts.map(p => ({
-            "@context": "https://schema.org",
-            "@type": "Product",
-            "name": p.name,
-            "description": p.description || p.name,
-            "image": p.image ? (p.image.startsWith('http') ? p.image : `${BASE_URL}${p.image}`) : undefined,
-            "offers": p.prices.map(price => ({
-                "@type": "Offer",
-                "price": price.price,
-                "priceCurrency": "BYN",
-                "availability": "https://schema.org/InStock"
-            }))
+    const grouped: ProductGroupClientType[] = json.data.groupedProducts.map((group) => ({
+        id: group._id,
+        categoryName: group.name,
+        categoryOrder: group.order ?? 0,
+        showGroupTitle: group.showGroupTitle ?? true,
+        subgroups: group.subgroups.map((sub) => ({
+            id: sub._id,
+            name: sub.name,
+            order: sub.order ?? 0,
+            showGroupTitle: sub.showGroupTitle ?? true,
+            products: sub.products.map(toProductClient),
         })),
-        ...group.subgroups.flatMap(sub => sub.products.map(p => ({
-            "@context": "https://schema.org",
-            "@type": "Product",
-            "name": p.name,
-            "description": p.description || p.name,
-            "image": p.image ? (p.image.startsWith('http') ? p.image : `${BASE_URL}${p.image}`) : undefined,
-            "offers": p.prices.map(price => ({
-                "@type": "Offer",
-                "price": price.price,
-                "priceCurrency": "BYN",
-                "availability": "https://schema.org/InStock"
-            }))
-        })))
-    ]).filter(s => s.image);
+        directProducts: group.directProducts.map(toProductClient),
+    }));
+
+    const uncategorized = json.data.uncategorizedProduct.map(toProductClient);
+    const menuSchema = generateMenuSchema(grouped);
+    const productSchemas = generateProductSchemas(grouped);
 
     return (
         <>
@@ -179,9 +92,9 @@ export async function ProductsServer({alcoholIsVisible, hasError}: ProductsServe
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(menuSchema) }}
             />
-            {productSchemas.map((schema, i) => (
+            {productSchemas.map((schema) => (
                 <script
-                    key={i}
+                    key={schema.name}
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
                 />

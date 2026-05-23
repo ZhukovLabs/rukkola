@@ -24,7 +24,7 @@ export type SubgroupType = {
     products: ProductClientType[];
 };
 
-export type GroupWithProducts = {
+export type ProductGroupClientType = {
     id: string;
     categoryName: string;
     categoryOrder: number;
@@ -32,5 +32,3 @@ export type GroupWithProducts = {
     subgroups: SubgroupType[];
     directProducts: ProductClientType[];
 };
-
-export type ProductGroupClientType = GroupWithProducts;

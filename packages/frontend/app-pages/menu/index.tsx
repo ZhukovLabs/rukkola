@@ -4,36 +4,15 @@ import {MenuPageClient} from "./menu-page-client";
 import {Suspense} from "react";
 import {MenuLoader} from "@/app-pages/menu/menu-loader";
 import {ProductsServer} from "./products-server";
-import dynamic from "next/dynamic";
 import {CookieNotice} from "@/components/cookie-notice";
-
-const Footer = dynamic(() => import("./footer").then(m => m.Footer));
-
-const INTERNAL_API = process.env.INTERNAL_API_URL || 'http://localhost:4000/api';
+import {serverFetch} from "@/lib/api/server-fetch";
+import type {MenuCategory, MenuLunch} from "@/lib/api/menu";
+import {Footer} from "./footer";
+import type {NavbarItem} from "./navbar/types";
 
 type MenuPageProps = {
     searchParams: Promise<{ token?: unknown }>
 }
-
-type NavItem = {
-    id: string;
-    name: string;
-    children?: { id: string; name: string }[];
-};
-
-type MenuCategory = {
-    _id: string;
-    name: string;
-    order: number;
-    parent?: string | null;
-    showGroupTitle?: boolean;
-};
-
-type MenuLunch = {
-    _id: string;
-    image: string;
-    active: boolean;
-};
 
 type MenuDataResponse = {
     success: boolean;
@@ -43,42 +22,17 @@ type MenuDataResponse = {
     };
 };
 
-type ActiveLunchData = {
-    image: string | undefined;
-};
-
 export const MenuPage = async ({searchParams}: MenuPageProps) => {
     const {token} = await searchParams;
     const alcoholIsVisible = token === 'x7fa5ca6';
 
-    let activeLunch: ActiveLunchData | null = null;
-    let categories: MenuCategory[] = [];
-    let fetchError = false;
+    const json = await serverFetch<MenuDataResponse>(`/menu?showAlcohol=${alcoholIsVisible}`);
 
-    try {
-        const res = await fetch(`${INTERNAL_API}/menu?showAlcohol=${alcoholIsVisible}`, {
-            next: {revalidate: 60},
-            signal: AbortSignal.timeout(5000),
-        });
+    const activeLunchImage = json?.success ? json?.data?.activeLunch?.image ?? undefined : undefined;
+    const categories = json?.success ? json?.data?.categories ?? [] : [];
+    const fetchError = !json?.success;
 
-        if (res.ok) {
-            const json: MenuDataResponse = await res.json();
-            if (json.success && json.data) {
-                activeLunch = json.data.activeLunch
-                    ? { image: json.data.activeLunch.image ?? undefined }
-                    : null;
-
-                categories = json.data.categories;
-            }
-        } else {
-            fetchError = true;
-        }
-    } catch (error) {
-        console.error('Failed to fetch menu data:', error);
-        fetchError = true;
-    }
-
-    const navItems: NavItem[] = categories
+    const navItems: NavbarItem[] = categories
         .filter(c => !c.parent)
         .map(parent => ({
             id: parent._id,
@@ -120,7 +74,7 @@ export const MenuPage = async ({searchParams}: MenuPageProps) => {
             </h1>
 
             <MenuPageClient
-                activeLunch={{image: activeLunch?.image ?? undefined}}
+                activeLunch={{image: activeLunchImage}}
                 navbar={{items: navItems}}
             >
                 <Suspense fallback={<MenuLoader/>}>

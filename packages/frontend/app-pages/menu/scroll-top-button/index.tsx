@@ -1,11 +1,9 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { Box, IconButton } from "@chakra-ui/react";
+import { IconButton } from "@chakra-ui/react";
 import { FiArrowUp } from "react-icons/fi";
-import { motion } from "framer-motion";
-
-const MotionBox = motion.create(Box);
+import {MotionBox} from "@/lib/motion-box";
 
 export const ScrollToTopButton = () => {
     const [isVisible, setIsVisible] = useState(false);
@@ -18,14 +16,6 @@ export const ScrollToTopButton = () => {
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
-
-    const handleClick = () => {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-        setTimeout(() => {
-            window.scrollTo(0, 0);
-            window.dispatchEvent(new Event("scroll"));
-        }, 350);
-    };
 
     if (!isVisible) return null;
 
@@ -44,7 +34,7 @@ export const ScrollToTopButton = () => {
                 aria-label="Наверх"
                 borderRadius="full"
                 size="lg"
-                onClick={handleClick}
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                 bg="gray.700"
                 color="gray.300"
                 boxShadow="0 4px 10px rgba(0,0,0,0.3)"

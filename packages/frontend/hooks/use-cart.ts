@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useSyncExternalStore } from "react";
-import { cartStore, type CartItem, addToCart as addItem, removeFromCart as removeItem, clearCart as clearItems } from "@/lib/local-storage";
+import { useMemo, useSyncExternalStore } from "react";
+import { cartStore, type CartItem, addToCart, removeFromCart, clearCart } from "@/lib/local-storage";
 
 const emptyCart: CartItem[] = [];
 
@@ -29,21 +29,11 @@ export function useCartTotal(): number {
     return useMemo(() => items.reduce((sum, {price, quantity}) => sum + price * quantity, 0), [items]);
 }
 
-export function useCartActions() {
-    const add = useCallback((item: Omit<CartItem, "timestamp" | "quantity">, quantity = 1) => {
-        addItem(item, quantity);
-    }, []);
-
-    const remove = useCallback((id: string, size: string, quantity?: number) => {
-        removeItem(id, size, quantity);
-    }, []);
-
-    const clear = useCallback(() => {
-        clearItems();
-    }, []);
-
-    return { add, remove, clear };
-}
+export const useCartActions = () => ({
+    add: addToCart,
+    remove: removeFromCart,
+    clear: clearCart,
+});
 
 export function useCartItem(id: string, size: string) {
     const items = useCart();

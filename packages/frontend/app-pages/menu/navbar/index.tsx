@@ -1,10 +1,10 @@
 'use client';
 
-import {useEffect, useState, useCallback} from "react";import {Box} from "@chakra-ui/react";
+import {useEffect, useState} from "react";
+import {Box, useBreakpointValue} from "@chakra-ui/react";
 import {useSearchParams} from "next/navigation";
 
 import {NavbarItem} from "./types";
-import {CART_QUERY_KEY} from "../constants";
 import {MobileNav} from "./mobile-nav";
 import {DesktopNav} from "./desktop-nav";
 import {useProductModal} from "../product-modal/use-product-modal";
@@ -17,16 +17,9 @@ export function Navbar({items}: NavbarProps) {
     const searchParams = useSearchParams();
     const {productId} = useProductModal();
     const [activeId, setActiveId] = useState<string | null>(null);
-    const [isMobile, setIsMobile] = useState(false);
     const [openIds, setOpenIds] = useState<string[]>([]);
     const [isStuck, setIsStuck] = useState(false);
-
-    useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 768);
-        checkMobile();
-        window.addEventListener('resize', checkMobile, {passive: true});
-        return () => window.removeEventListener('resize', checkMobile);
-    }, []);
+    const isMobile = useBreakpointValue({base: true, md: false});
 
     useEffect(() => {
         const check = () => {
@@ -39,61 +32,48 @@ export function Navbar({items}: NavbarProps) {
         return () => window.removeEventListener('scroll', check);
     }, []);
 
-    const handleClick = useCallback((id: string) => {
+    const handleClick = (id: string) => {
         const section = document.getElementById(id);
         if (!section) return;
         const navEl = document.querySelector('[data-navbar]');
         const navHeight = navEl?.getBoundingClientRect().height || 60;
         const y = section.getBoundingClientRect().top + window.scrollY - navHeight;
         window.scrollTo({top: y, behavior: "smooth"});
-    }, []);
+    };
 
     useEffect(() => {
         if (!items.length) return;
 
         const allIds = items.flatMap(item => [item.id, ...(item.children?.map(c => c.id) || [])]);
-        let rafId = 0;
 
         const handleScroll = () => {
-            const currentScrollY = window.scrollY;
+            let foundId: string | null = null;
 
-if (rafId) cancelAnimationFrame(rafId);
-
-            rafId = requestAnimationFrame(() => {
-                let foundId: string | null = null;
-
-                for (let i = allIds.length - 1; i >= 0; i--) {
-                    const id = allIds[i];
-                    const sectionId = `section-${id}`;
-                    const section = document.getElementById(sectionId) || document.getElementById(id);
-                    if (section) {
-                        const rect = section.getBoundingClientRect();
-                        if (rect.top <= window.innerHeight / 2) {
-                            foundId = id;
-                            break;
-                        }
+            for (let i = allIds.length - 1; i >= 0; i--) {
+                const id = allIds[i];
+                const section = document.getElementById(`section-${id}`) || document.getElementById(id);
+                if (section) {
+                    const rect = section.getBoundingClientRect();
+                    if (rect.top <= window.innerHeight / 2) {
+                        foundId = id;
+                        break;
                     }
                 }
+            }
 
-                if (foundId) {
-                    setActiveId(foundId);
-                } else if (currentScrollY === 0 && allIds.length > 0) {
-                    setActiveId(allIds[0]);
-                }
-            });
+            if (foundId) {
+                setActiveId(foundId);
+            } else if (window.scrollY === 0 && allIds.length > 0) {
+                setActiveId(allIds[0]);
+            }
         };
 
         handleScroll();
-
         window.addEventListener("scroll", handleScroll, {passive: true});
-
-        return () => {
-            window.removeEventListener("scroll", handleScroll);
-            if (rafId) cancelAnimationFrame(rafId);
-        };
+        return () => window.removeEventListener("scroll", handleScroll);
     }, [items]);
 
-    if (searchParams.has(CART_QUERY_KEY) || !!productId) return null;
+    if (searchParams.has('cart') || !!productId) return null;
 
     return (
         <Box
@@ -117,12 +97,7 @@ if (rafId) cancelAnimationFrame(rafId);
                 setOpenIds={setOpenIds}
                 onItemClick={handleClick}
             />
-
-            <DesktopNav
-                items={items}
-                activeId={activeId}
-                onItemClick={handleClick}
-            />
+            <DesktopNav items={items} activeId={activeId} onItemClick={handleClick}/>
         </Box>
     );
 }
