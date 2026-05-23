@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { apiClient } from '@/lib/api/client';
 
 type UserRole = 'admin' | 'moderator';
@@ -29,6 +29,7 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [status, setStatus] = useState<'loading' | 'authenticated' | 'unauthenticated'>('loading');
+  const fetchedRef = useRef(false);
 
   const fetchUser = useCallback(async () => {
     try {
@@ -47,7 +48,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    fetchUser();
+    if (!fetchedRef.current) {
+      fetchedRef.current = true;
+      fetchUser();
+    }
+
+    const handleExpired = () => {
+      setUser(null);
+      setStatus('unauthenticated');
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchUser();
+      }
+    };
+
+    window.addEventListener('auth:expired', handleExpired);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.removeEventListener('auth:expired', handleExpired);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [fetchUser]);
 
   const login = useCallback(async (username: string, password: string, captchaToken?: string) => {
