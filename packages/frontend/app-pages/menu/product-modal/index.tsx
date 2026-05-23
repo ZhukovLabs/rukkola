@@ -61,9 +61,10 @@ export const ProductModal = () => {
                     bg="#050505"
                     zIndex={9999}
                     onClick={handleBackdropClick}
+                    overflow="hidden"
                 >
                     {/* Atmospheric Blurred Background */}
-                    <Box position="absolute" inset={0} overflow="hidden" opacity={0.4}>
+                    <Box position="absolute" inset={0} overflow="hidden" opacity={0.4} pointerEvents="none">
                         {imageSrc && (
                             <Image
                                 src={imageSrc}
@@ -86,14 +87,13 @@ export const ProductModal = () => {
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            padding: "env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0"
                         }}
                     >
                         <Flex
                             direction={{base: "column", md: "row"}}
                             w={{base: "100%", md: "92%", lg: "85%"}}
                             maxW="1600px"
-                            h={{base: "100%", md: "85vh"}}
+                            h={{base: "100dvh", md: "85vh"}}
                             bg="rgba(10, 10, 12, 0.8)"
                             backdropFilter="blur(40px)"
                             borderRadius={{base: 0, md: "2xl"}}
@@ -105,26 +105,30 @@ export const ProductModal = () => {
                             <IconButton
                                 aria-label="Закрыть"
                                 position="absolute"
-                                top={{base: 4, md: 8}}
+                                top={{base: "calc(env(safe-area-inset-top, 0px) + 24px)", md: 8}}
                                 right={{base: 4, md: 8}}
-                                zIndex={30}
+                                zIndex={100}
                                 size="lg"
-                                variant="ghost"
-                                color="whiteAlpha.600"
+                                bg="blackAlpha.700"
+                                backdropFilter="blur(15px)"
+                                color="white"
+                                border="1px solid rgba(255,255,255,0.2)"
+                                boxShadow="0 8px 32px rgba(0,0,0,0.5)"
                                 borderRadius="full"
-                                _hover={{color: "white", bg: "whiteAlpha.100", transform: "rotate(90deg)"}}
-                                transition="all 0.3s"
+                                _hover={{bg: "blackAlpha.800", transform: "rotate(90deg) scale(1.1)"}}
+                                _active={{bg: "black", transform: "scale(0.9)"}}
+                                transition="all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)"
                                 onClick={close}
                             >
-                                <FiX size={32}/>
+                                <FiX size={28}/>
                             </IconButton>
 
                             {loading && (
-                                <Center flex="1"><Spinner size="xl" color="whiteAlpha.300"/></Center>
+                                <Center flex="1" h="100%"><Spinner size="xl" color="whiteAlpha.300"/></Center>
                             )}
 
                             {error && (
-                                <Center flex="1" flexDirection="column" color="white">
+                                <Center flex="1" h="100%" flexDirection="column" color="white">
                                     <Text fontSize="2xl" fontWeight="200" mb={4}>Не удалось загрузить блюдо</Text>
                                     <Text fontSize="sm" color="whiteAlpha.400" cursor="pointer" onClick={close}>Вернуться в меню</Text>
                                 </Center>
@@ -133,8 +137,8 @@ export const ProductModal = () => {
                             {product && !loading && !error && (
                                 <>
                                     <Box
-                                        flex={{base: "none", md: "1"}}
-                                        h={{base: "75vh", md: "100%"}}
+                                        flex="1"
+                                        h="100%"
                                         position="relative"
                                         onClick={(e) => e.stopPropagation()}
                                         overflow="hidden"
@@ -178,7 +182,9 @@ export const ProductModal = () => {
                                     </Box>
 
                                     <Box
-                                        flex={{base: "1", md: "1"}}
+                                        flex={{base: "none", md: "1"}}
+                                        h={{base: "auto", md: "100%"}}
+                                        maxH={{base: "55vh", md: "100%"}}
                                         position="relative"
                                         display="flex"
                                         flexDirection="column"
@@ -187,7 +193,12 @@ export const ProductModal = () => {
                                         onClick={(e) => e.stopPropagation()}
                                         overflowY="auto"
                                         px={{base: 5, md: 12, lg: 20}}
-                                        py={{base: 5, md: 12}}
+                                        py={{base: 6, md: 12}}
+                                        css={{
+                                            "&::-webkit-scrollbar": { width: "4px" },
+                                            "&::-webkit-scrollbar-track": { bg: "transparent" },
+                                            "&::-webkit-scrollbar-thumb": { bg: "rgba(255,255,255,0.05)", borderRadius: "10px" },
+                                        }}
                                     >
                                         <motion.div
                                             initial={{opacity: 0, y: 20}}
