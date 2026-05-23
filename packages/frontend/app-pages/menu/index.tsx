@@ -57,7 +57,7 @@ export const MenuPage = async ({token}: MenuPageProps) => {
         >
             <CookieNotice/>
 
-            <h1 id="page-title" style={{margin: 0}}>
+            <h1 id="page-title" aria-label="Меню кафе Руккола в Гомеле — Пицца, суши и роллы" style={{margin: 0}}>
                 <Box mx="auto" w={{base: "80%", sm: "60%", md: "400px"}} maxW="90vw" mb={{base: 4, md: 6}}>
                     <Image
                         src="/logo.svg"
