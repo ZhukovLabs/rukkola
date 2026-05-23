@@ -26,6 +26,14 @@ export const DashboardCategoriesPage = () => {
         staleTime: 0,
     });
 
+    const filteredCategories = useMemo(() => {
+        if (!searchQuery.trim()) return categories;
+        const query = searchQuery.toLowerCase();
+        return categories.filter(cat => 
+            cat.name.toLowerCase().includes(query)
+        );
+    }, [categories, searchQuery]);
+
     if (status === 'loading') {
         return (
             <Center minH="400px">
@@ -36,14 +44,6 @@ export const DashboardCategoriesPage = () => {
             </Center>
         );
     }
-
-    const filteredCategories = useMemo(() => {
-        if (!searchQuery.trim()) return categories;
-        const query = searchQuery.toLowerCase();
-        return categories.filter(cat => 
-            cat.name.toLowerCase().includes(query)
-        );
-    }, [categories, searchQuery]);
 
     if (isLoading) {
         return (
