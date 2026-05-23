@@ -82,7 +82,10 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 
     const isAuthRequest = endpoint === '/auth/login' || endpoint === '/auth/refresh' || endpoint === '/auth/me';
     if (!isAuthRequest && !skipRedirect && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('auth:expired'));
       window.location.href = '/login';
+    } else if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('auth:expired'));
     }
     
     throw new ApiError(401, errorMessage);

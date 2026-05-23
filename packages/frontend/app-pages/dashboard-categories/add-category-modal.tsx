@@ -91,6 +91,8 @@ export const AddCategoryDialog = ({categories}: Props) => {
     }
 
     const buildCollectionItems = (cats: CategoryType[]) => {
+        if (!Array.isArray(cats)) return []
+
         const items: Array<{ label: string; value: string }> = []
 
         cats.filter(({parent}) => !parent)
