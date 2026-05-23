@@ -21,97 +21,6 @@ const geistMono = Geist_Mono({
 const BASE_URL =
     process.env.NEXT_PUBLIC_BASE_URL || "https://rukkola-gomel.by";
 
-const restaurantSchema = {
-    "@context": "https://schema.org",
-    "@type": "Restaurant",
-    "@id": `${BASE_URL}/#restaurant`,
-    name: "Руккола",
-    url: BASE_URL,
-    logo: {
-        "@type": "ImageObject",
-        url: `${BASE_URL}/logo.svg`,
-        width: "400",
-        height: "200",
-    },
-    image: {
-        "@type": "ImageObject",
-        url: `${BASE_URL}/og-image.webp`,
-        width: "1200",
-        height: "630",
-    },
-    description:
-        "Уютное кафе Руккола в центре Гомеля. Авторская пицца на тонком тесте, свежие суши и роллы, блюда паназиатской кухни. Ежедневные ланчи и завтраки на Советской 60.",
-    telephone: "+375447703003",
-    priceRange: "10-45 BYN",
-    servesCuisine: [
-        "Итальянская",
-        "Японская",
-        "Паназиатская",
-        "Пицца",
-        "Суши",
-        "Европейская",
-    ],
-    address: {
-        "@type": "PostalAddress",
-        streetAddress: "ул. Советская, 60",
-        addressLocality: "Гомель",
-        addressRegion: "Гомельская область",
-        postalCode: "246000",
-        addressCountry: "BY",
-    },
-    geo: {
-        "@type": "GeoCoordinates",
-        latitude: 52.4393223,
-        longitude: 31.0029487,
-    },
-    hasMap: "https://www.google.com/maps?cid=10915677044161894942",
-    openingHoursSpecification: [
-        {
-            "@type": "OpeningHoursSpecification",
-            dayOfWeek: [
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-                "Saturday",
-                "Sunday",
-            ],
-            opens: "11:00",
-            closes: "23:00",
-        },
-    ],
-    acceptsReservations: "true",
-    aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: "4.8",
-        reviewCount: "347",
-        bestRating: "5",
-        worstRating: "1",
-    },
-    paymentAccepted: ["Наличные", "Банковская карта"],
-    currenciesAccepted: "BYN",
-    potentialAction: {
-        "@type": "OrderAction",
-        target: {
-            "@type": "EntryPoint",
-            urlTemplate: `${BASE_URL}/`,
-            inLanguage: "ru",
-            actionPlatform: [
-                "http://schema.org/DesktopWebPlatform",
-                "http://schema.org/MobileWebPlatform",
-            ],
-        },
-        deliveryMethod: ["http://purl.org/goodrelations/v1#Pickup"],
-    },
-    areaServed: {
-        "@type": "City",
-        name: "Гомель",
-    },
-    sameAs: ["https://www.instagram.com/rukkola.gomel"],
-    hasMenu: `${BASE_URL}/`,
-};
-
 export const metadata: Metadata = {
     metadataBase: new URL(BASE_URL),
     title: {
@@ -119,7 +28,7 @@ export const metadata: Metadata = {
         template: "%s | Руккола Гомель",
     },
     description:
-        "Ищете где поесть в Гомеле? Кафе Руккола (Советская 60): авторская пицца, свежие суши, роллы и WOK. Ежедневные ланчи и завтраки. Бронируйте столик: +375 (44) 770-30-03.",
+        "Кафе Руккола Гомель — авторская пицца, пинца, свежие суши и роллы, вок. Вкусные бизнес-ланчи каждый день. Ул. Советская, 60. Приятная атмосфера в центре города. Звоните и бронируйте: +375 (44) 770-30-03",
     keywords: [
         "кафе гомель",
         "пицца гомель",
@@ -231,13 +140,6 @@ export default function RootLayout({
                 crossOrigin="anonymous"
             />
             <link rel="dns-prefetch" href="https://mc.yandex.ru"/>
-
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{
-                    __html: JSON.stringify(restaurantSchema),
-                }}
-            />
         </head>
 
         <body className={`${geistSans.variable} ${geistMono.variable}`}>

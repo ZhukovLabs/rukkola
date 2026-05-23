@@ -7,6 +7,9 @@ import {ProductsServer} from "./products-server";
 import {CookieNotice} from "@/components/cookie-notice";
 import {serverFetch} from "@/lib/api/server-fetch";
 import type {MenuCategory, MenuLunch} from "@/lib/api/menu";
+import type {SiteSettingsData} from "@/lib/api/site-settings";
+import type {ActionResponse} from "@/types";
+import {generateRestaurantSchema} from "./schema";
 import {Footer} from "./footer";
 import type {NavbarItem} from "./navbar/types";
 
@@ -24,7 +27,11 @@ type MenuDataResponse = {
 
 export const MenuPage = async ({token}: MenuPageProps) => {
     const alcoholIsVisible = token === 'x7fa5ca6';
-    const json = await serverFetch<MenuDataResponse>(`/menu?showAlcohol=${alcoholIsVisible}`);
+
+    const [json, settingsRes] = await Promise.all([
+        serverFetch<MenuDataResponse>(`/menu?showAlcohol=${alcoholIsVisible}`),
+        serverFetch<ActionResponse<SiteSettingsData>>('/site-settings'),
+    ]);
 
     const activeLunchImage = json?.success ? json?.data?.activeLunch?.image ?? undefined : undefined;
     const categories = json?.success ? json?.data?.categories ?? [] : [];
@@ -40,8 +47,18 @@ export const MenuPage = async ({token}: MenuPageProps) => {
                 .map(sub => ({ id: sub._id, name: sub.name }))
         }));
 
+    const settings = settingsRes?.data;
+    const restaurantSchema = settings ? generateRestaurantSchema(settings) : null;
+
     return (
-        <main>
+        <>
+            {restaurantSchema && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(restaurantSchema) }}
+                />
+            )}
+            <main>
         <Box 
             display="flex" 
             flexDirection="column" 
@@ -84,5 +101,6 @@ export const MenuPage = async ({token}: MenuPageProps) => {
             </MenuPageClient>
         </Box>
         </main>
+        </>
     );
 };
