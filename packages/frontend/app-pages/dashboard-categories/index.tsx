@@ -4,16 +4,18 @@ import {useState, useMemo} from 'react';
 import CategoriesTable from './categories-table';
 import {AddCategoryButton} from './add-category-button';
 import {AddCategoryDialog} from './add-category-modal';
-import {Box, Heading, Card, Flex, Spinner, Center, Input, Icon} from '@chakra-ui/react';
+import {Box, Heading, Card, Flex, Spinner, Center, Input, Icon, VStack, Text} from '@chakra-ui/react';
 import {FiFolder, FiSearch} from 'react-icons/fi';
 import {getCategories, type CategoryItem} from '@/lib/api/categories';
 import {useQuery} from '@tanstack/react-query';
+import {useAuth} from '@/lib/auth/auth-context';
 
 export const DashboardCategoriesPage = () => {
+    const {status} = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
 
     const {data: categories = [], isLoading} = useQuery({
-        queryKey: ['categories'],
+        queryKey: ['categories', 'tree'],
         queryFn: async () => {
             const result = await getCategories();
             if (result.success && result.data) {
@@ -21,7 +23,19 @@ export const DashboardCategoriesPage = () => {
             }
             return [] as CategoryItem[];
         },
+        staleTime: 0,
     });
+
+    if (status === 'loading') {
+        return (
+            <Center minH="400px">
+                <VStack gap={4}>
+                    <Spinner size="xl" color="green.500" />
+                    <Text color="gray.500" fontSize="sm">Загрузка...</Text>
+                </VStack>
+            </Center>
+        );
+    }
 
     const filteredCategories = useMemo(() => {
         if (!searchQuery.trim()) return categories;

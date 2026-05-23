@@ -49,8 +49,8 @@ export function Providers({children}: ProvidersProps) {
     const system = useMemo(() => createSystem(defaultConfig), [])
     
     return (
-        <AuthProvider>
-            <QueryClientProvider client={queryClient}>
+        <QueryClientProvider client={queryClient}>
+            <AuthProvider>
                 <ChakraProvider value={system}>
                     <ToastProvider>
                         <ErrorBoundary>
@@ -58,7 +58,7 @@ export function Providers({children}: ProvidersProps) {
                         </ErrorBoundary>
                     </ToastProvider>
                 </ChakraProvider>
-            </QueryClientProvider>
-        </AuthProvider>
+            </AuthProvider>
+        </QueryClientProvider>
     )
 }

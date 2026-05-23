@@ -7,14 +7,14 @@ import {Providers} from "@/components/providers";
 const geistSans = Geist({
     variable: "--font-geist-sans",
     subsets: ["latin", "cyrillic"],
-    display: "swap",
+    display: "optional",
     preload: true,
 });
 
 const geistMono = Geist_Mono({
     variable: "--font-geist-mono",
     subsets: ["latin", "cyrillic"],
-    display: "swap",
+    display: "optional",
     preload: true,
 });
 

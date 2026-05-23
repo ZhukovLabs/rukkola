@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api/client';
 
 type UserRole = 'admin' | 'moderator';
@@ -30,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [status, setStatus] = useState<'loading' | 'authenticated' | 'unauthenticated'>('loading');
   const fetchedRef = useRef(false);
+  const queryClient = useQueryClient();
 
   const fetchUser = useCallback(async () => {
     try {
@@ -83,6 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.success && response.data) {
         setUser(response.data.user);
         setStatus('authenticated');
+        queryClient.invalidateQueries();
         return { ok: true };
       }
 

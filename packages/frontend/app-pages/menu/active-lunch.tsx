@@ -33,7 +33,7 @@ export const ActiveLunch = ({image}: ActiveLunchProps) => {
                         bg="#2a2a2a"
                         maxW="640px"
                         w="100%"
-                        minH="220px"
+                        aspectRatio={16 / 9}
                         transition="all 0.25s ease"
                         _hover={{
                             transform: "translateY(-2px)",

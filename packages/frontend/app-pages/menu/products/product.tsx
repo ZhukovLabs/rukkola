@@ -67,26 +67,24 @@ export function Product({product}: { product: ProductClientType }) {
             borderColor="gray.700"
             bg="gray.800"
         >
-            {img && (
-                <Box
-                    position="relative"
-                    w={{base: "100%", md: "45%"}}
-                    aspectRatio={{base: 3 / 2}}
-                    flexShrink={0}
-                    overflow="hidden"
-                    cursor="zoom-in"
-                    onClick={() => openProductModal(id)}
-                >
-                    {imgError ? (
-                        <Center position="absolute" inset={0} bg="gray.700">
-                            <Icon as={FiImage} boxSize={6} color="gray.400"/>
-                        </Center>
-                    ) : (
-                        <ProductImage img={img} alt={title} blurDataURL={blurDataURL} onError={() => setImgError(true)}/>
-                    )}
-                    {tags?.length ? <ProductTags tags={tags}/> : null}
-                </Box>
-            )}
+            <Box
+                position="relative"
+                w={{base: "100%", md: "45%"}}
+                aspectRatio={{base: 3 / 2}}
+                flexShrink={0}
+                overflow="hidden"
+                cursor={img ? "zoom-in" : undefined}
+                onClick={() => img && openProductModal(id)}
+            >
+                {!img || imgError ? (
+                    <Center position="absolute" inset={0} bg="gray.700">
+                        <Icon as={FiImage} boxSize={6} color="gray.400"/>
+                    </Center>
+                ) : (
+                    <ProductImage img={img} alt={title} blurDataURL={blurDataURL} onError={() => setImgError(true)}/>
+                )}
+                {tags?.length ? <ProductTags tags={tags}/> : null}
+            </Box>
 
             <Flex direction="column" flex="1" p={{base: 3, md: 6}}>
                 <Stack>
