@@ -24,23 +24,23 @@ type MenuPageClientProps = {
 export const MenuPageClient = ({activeLunch, navbar, children}: MenuPageClientProps) => {
     return (
         <Suspense fallback={null}>
-        <ProductModalProvider>
-            <Box display="flex" flexDirection="column">
-                {activeLunch?.image && <ActiveLunch image={activeLunch.image}/>}
-                <ScrollToFooterButton/>
-                <Suspense fallback={null}>
-                    <Navbar items={navbar.items}/>
-                </Suspense>
-                <AdminFloatButton/>
-                <ScrollToTopButton/>
-                {children}
-                <CartModalProvider>
-                    <CartButton/>
-                    <CartModal/>
-                </CartModalProvider>
-                <ProductModal/>
-            </Box>
-        </ProductModalProvider>
+            <ProductModalProvider>
+                <Box display="flex" flexDirection="column">
+                    {activeLunch?.image && <ActiveLunch image={activeLunch.image}/>}
+                    <ScrollToFooterButton/>
+                    <Suspense fallback={null}>
+                        <Navbar items={navbar.items}/>
+                    </Suspense>
+                    <AdminFloatButton/>
+                    <ScrollToTopButton/>
+                    {children}
+                    <CartModalProvider>
+                        <CartButton/>
+                        <CartModal/>
+                    </CartModalProvider>
+                    <ProductModal/>
+                </Box>
+            </ProductModalProvider>
         </Suspense>
     );
 };

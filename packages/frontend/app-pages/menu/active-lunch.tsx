@@ -10,7 +10,7 @@ import {
     VStack,
 } from "@chakra-ui/react";
 import Image from "next/image";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {FiX} from "react-icons/fi";
 
 type ActiveLunchProps = {
@@ -18,8 +18,20 @@ type ActiveLunchProps = {
 };
 
 export const ActiveLunch = ({image}: ActiveLunchProps) => {
-    const [loadedPreview, setLoadedPreview] = useState(false);
+    const [ready, setReady] = useState(false);
+    const [aspectRatio, setAspectRatio] = useState(16 / 9);
     const [loadedFullscreen, setLoadedFullscreen] = useState(false);
+
+    useEffect(() => {
+        setReady(false);
+        setAspectRatio(16 / 9);
+        const img = new window.Image();
+        img.onload = () => {
+            setAspectRatio(img.naturalWidth / img.naturalHeight);
+            setReady(true);
+        };
+        img.src = image;
+    }, [image]);
 
     return (
         <Flex justify="center" align="center" mt={4} mb={6} px={4}>
@@ -33,7 +45,7 @@ export const ActiveLunch = ({image}: ActiveLunchProps) => {
                         bg="#2a2a2a"
                         maxW="640px"
                         w="100%"
-                        aspectRatio={16 / 9}
+                        aspectRatio={aspectRatio}
                         transition="all 0.25s ease"
                         _hover={{
                             transform: "translateY(-2px)",
@@ -43,7 +55,7 @@ export const ActiveLunch = ({image}: ActiveLunchProps) => {
                         border="1px solid"
                         borderColor="#3a3a3a"
                     >
-                        {!loadedPreview && (
+                        {!ready && (
                             <Flex
                                 position="absolute"
                                 inset={0}
@@ -73,19 +85,17 @@ export const ActiveLunch = ({image}: ActiveLunchProps) => {
                         <Image
                             src={image}
                             alt="Обеденное меню"
-                            width={1920}
-                            height={1080}
+                            fill
                             sizes="(max-width: 640px) 100vw, 640px"
                             style={{
                                 objectFit: "contain",
-                                opacity: loadedPreview ? 1 : 0,
+                                opacity: ready ? 1 : 0,
                                 transition: "opacity 0.2s ease",
                                 display: "block",
                                 backgroundColor: "#2a2a2a",
                             }}
                             priority
                             fetchPriority="high"
-                            onLoad={() => setLoadedPreview(true)}
                         />
                     </Box>
                 </Dialog.Trigger>
