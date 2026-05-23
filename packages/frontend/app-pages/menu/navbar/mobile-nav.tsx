@@ -116,7 +116,7 @@ export function MobileNav({items, activeId, openIds, setOpenIds, onItemClick}: M
                 <Flex gap={2} pb={1} flexWrap="nowrap">
                     {items.map((item) => {
                         const hasChildren = !!item.children?.length;
-                        const isGroupActive = activeId === item.id || item.children?.some(c => c.id === activeId);
+                        const isGroupActive = activeId === item.id || (item.children?.some(c => c.id === activeId) ?? false);
                         const isOpen = openIds.includes(item.id);
 
                         return (
