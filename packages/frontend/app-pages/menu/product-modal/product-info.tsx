@@ -1,43 +1,63 @@
 'use client';
 
-import { Box, Heading, Text } from "@chakra-ui/react";
+import { Box, Heading, Text, VStack, Flex } from "@chakra-ui/react";
+import { PriceSelector } from "../products/price-selector";
+
+type Tag = { text: string; color: string };
 
 type ProductInfoProps = {
     name: string;
     description: string | null;
+    tags: Tag[] | null;
 };
 
-export const ProductInfo = ({ name, description }: ProductInfoProps) => (
-    <Box
-        bg="rgba(15, 15, 18, 0.7)"
-        backdropFilter="blur(30px)"
-        borderTop="1px solid rgba(255,255,255,0.08)"
-        p={{ base: 6, md: 10 }}
-        maxH="45vh"
-        overflowY="auto"
-        onClick={(e) => e.stopPropagation()}
-        css={{
-            "&::-webkit-scrollbar": { width: "4px" },
-            "&::-webkit-scrollbar-track": { bg: "transparent" },
-            "&::-webkit-scrollbar-thumb": { bg: "rgba(255,255,255,0.15)", borderRadius: "10px" },
-        }}
-    >
-        <Box maxW="1000px" mx="auto">
+export const ProductInfo = ({ name, description, tags }: ProductInfoProps) => (
+    <VStack align="stretch" gap={{ base: 4, md: 10 }}>
+        <Box>
+            {tags && tags.length > 0 && (
+                <Flex gap={4} mb={{ base: 3, md: 6 }} flexWrap="wrap">
+                    {tags.map((tag, idx) => (
+                        <Box key={idx} position="relative">
+                            <Text
+                                fontSize="11px"
+                                fontWeight="bold"
+                                color={tag.color}
+                                textTransform="uppercase"
+                                letterSpacing="0.2em"
+                            >
+                                {tag.text}
+                            </Text>
+                            <Box h="1px" w="100%" bg={tag.color} opacity={0.3} mt={1} />
+                        </Box>
+                    ))}
+                </Flex>
+            )}
             <Heading
-                fontSize={{ base: "2xl", md: "4xl" }}
-                fontWeight="800"
+                fontSize={{ base: "3xl", md: "5xl", lg: "6xl" }}
+                fontWeight="900"
                 color="white"
-                mb={description ? 6 : 0}
-                letterSpacing="-0.03em"
-                lineHeight="1.1"
+                mb={{ base: 3, md: 6 }}
+                letterSpacing="-0.05em"
+                lineHeight="0.95"
+                textTransform="uppercase"
             >
                 {name}
             </Heading>
-            {description && (
-                <Text fontSize={{ base: "md", md: "lg" }} color="whiteAlpha.700" lineHeight="1.8" whiteSpace="pre-wrap" fontWeight="450">
-                    {description}
-                </Text>
-            )}
+            <Box h="4px" w="60px" bg="white" borderRadius="full" />
         </Box>
-    </Box>
+
+        {description && (
+            <Text
+                fontSize={{ base: "md", md: "lg", lg: "xl" }}
+                color="whiteAlpha.700"
+                lineHeight="1.8"
+                whiteSpace="pre-wrap"
+                fontWeight="300"
+                letterSpacing="0.01em"
+                maxW="500px"
+            >
+                {description}
+            </Text>
+        )}
+    </VStack>
 );

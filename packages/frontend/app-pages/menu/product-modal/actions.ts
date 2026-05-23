@@ -9,6 +9,7 @@ type ProductResponse = {
         name: string;
         description?: string;
         tags?: Array<{text: string; color: string}>;
+        prices?: Array<{size: string; price: number}>;
     };
 };
 
@@ -26,6 +27,7 @@ export async function getProductById(id: string) {
             name: d.name,
             description: d.description ?? null,
             tags: d.tags ?? null,
+            prices: d.prices ?? null,
         };
     } catch {
         return null;

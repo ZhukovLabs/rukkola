@@ -78,6 +78,7 @@ export class MenuService {
       name: product.name,
       description: product.description,
       tags: product.tags,
+      prices: product.prices,
     };
   }
 

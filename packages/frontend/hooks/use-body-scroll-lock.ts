@@ -34,9 +34,9 @@ export function useBodyScrollLock(locked: boolean) {
             body.style.position = prev.bodyPosition;
             body.style.width = prev.bodyWidth;
             body.style.top = prev.bodyTop;
+            window.scrollTo(0, scrollYRef.current);
             html.style.scrollBehavior = prev.htmlScrollBehavior;
             body.style.scrollBehavior = prev.bodyScrollBehavior;
-            window.scrollTo(0, scrollYRef.current);
         };
     }, [locked]);
 }
