@@ -12,15 +12,14 @@ import {
 } from "@chakra-ui/react";
 import Image from "next/image";
 import {memo, useState, useCallback} from "react";
-import {motion, AnimatePresence} from "framer-motion";
+import {AnimatePresence, motion} from "framer-motion";
+
+const MotionBox = motion.create(Box);
 import {FiCheck, FiImage} from "react-icons/fi";
 import {useRouter, useSearchParams} from "next/navigation";
 import {addToCart} from "@/lib/local-storage";
-import {useIsLowPerformanceDevice} from "@/hooks/use-is-low-performance-device";
 import {trackAddToCart} from "@/lib/ecommerce-tracking";
 import {useProductModal} from "../product-modal/use-product-modal";
-
-const MotionArticle = motion.article;
 
 type Price = { size: string; price: number };
 
@@ -119,7 +118,6 @@ export const Product = memo(function Product({
     const [selectedPrice, setSelectedPrice] = useState<Price | null>(null);
     const [imgError, setImgError] = useState(false);
 
-    const disableMotion = useIsLowPerformanceDevice();
     const firstPrice = prices?.[0] ?? null;
     const priority = typeof index === "number" && index < 8;
 
@@ -197,14 +195,15 @@ export const Product = memo(function Product({
         });
     }, [router, searchParams, id, img]);
 
-    const Container = disableMotion ? Box : MotionArticle;
+    const animateEntry = typeof index === 'number' && index < 6;
+    const Container = animateEntry ? MotionBox : Box;
 
     return (
         <Container
-            initial={disableMotion ? undefined : {opacity: 0, y: 24}}
-            animate={disableMotion ? undefined : {opacity: 1, y: 0}}
-            transition={disableMotion ? undefined : {duration: 0.4}}
-            style={{display: "flex"}}
+            initial={animateEntry ? {opacity: 0, y: 24} : undefined}
+            animate={animateEntry ? {opacity: 1, y: 0} : undefined}
+            transition={animateEntry ? {duration: 0.4} : undefined}
+            display="flex"
         >
             <Flex
                 direction={{base: "column", md: "row"}}

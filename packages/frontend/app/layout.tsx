@@ -77,7 +77,7 @@ const restaurantSchema = {
                 "Saturday",
                 "Sunday",
             ],
-            opens: "12:00",
+            opens: "11:00",
             closes: "23:00",
         },
     ],
