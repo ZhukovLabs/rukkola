@@ -84,7 +84,6 @@ type CategoryWithChildren = CategoryData & {
 
 type Props = {
     categories: CategoryType[];
-    onRefresh?: () => Promise<void>;
     isSearching?: boolean;
 }
 
@@ -104,6 +103,8 @@ function toCategoryData(cat: CategoryType): CategoryData {
 function buildCategoryTree(categories: CategoryType[]): CategoryWithChildren[] {
     const map = new Map<string, CategoryWithChildren>()
     const roots: CategoryWithChildren[] = []
+
+    if (!Array.isArray(categories)) return roots
 
     for (const cat of categories) {
         const data = toCategoryData(cat)
@@ -554,7 +555,7 @@ function SortableLevel({
     )
 }
 
-export default function CategoriesTable({categories: initialCategories, onRefresh, isSearching}: Props) {
+export default function CategoriesTable({categories: initialCategories, isSearching}: Props) {
     const queryClient = useQueryClient()
     const [editingId, setEditingId] = useState<string | null>(null)
     const [tempName, setTempName] = useState('')
@@ -610,7 +611,7 @@ export default function CategoriesTable({categories: initialCategories, onRefres
             setTogglingId(id)
         },
         onSuccess: (result) => {
-            if (onRefresh) onRefresh()
+            queryClient.invalidateQueries({queryKey: ['categories']})
             revalidateMenu()
             setTogglingId(null)
             if (result.success) toast.showSuccess('Обновлено')
@@ -625,7 +626,7 @@ export default function CategoriesTable({categories: initialCategories, onRefres
     const reorderMutation = useMutation({
         mutationFn: (updates: { id: string; order: number }[]) => reorderCategories(updates),
         onSuccess: (result) => {
-            if (onRefresh) onRefresh()
+            queryClient.invalidateQueries({queryKey: ['categories']})
             revalidateMenu()
             if (result.success) toast.showSuccess('Порядок обновлен')
             else toast.showError(result.message || 'Ошибка')
@@ -637,7 +638,7 @@ export default function CategoriesTable({categories: initialCategories, onRefres
         mutationFn: ({id, name}: { id: string; name: string }) => updateCategoryName(id, name),
         onSuccess: (result) => {
             setEditingId(null)
-            if (onRefresh) onRefresh()
+            queryClient.invalidateQueries({queryKey: ['categories']})
             revalidateMenu()
             if (result.success) toast.showSuccess('Название обновлено')
             else toast.showError(result.message || 'Ошибка')
@@ -651,7 +652,7 @@ export default function CategoriesTable({categories: initialCategories, onRefres
     const deleteMutation = useMutation({
         mutationFn: deleteCategory,
         onSuccess: (result) => {
-            if (onRefresh) onRefresh()
+            queryClient.invalidateQueries({queryKey: ['categories']})
             revalidateMenu()
             if (result.success) toast.showSuccess('Удалено')
             else toast.showError(result.message || 'Ошибка')
@@ -686,8 +687,8 @@ export default function CategoriesTable({categories: initialCategories, onRefres
             categoryId: string;
             newPosition: number
         }) => moveCategoryToPosition(categoryId, newPosition),
-        onSuccess: async (result) => {
-            if (onRefresh) await onRefresh()
+        onSuccess: (result) => {
+            queryClient.invalidateQueries({queryKey: ['categories']})
             revalidateMenu()
             if (result.success) toast.showSuccess('Позиция обновлена')
             else toast.showError(result.message || 'Ошибка')

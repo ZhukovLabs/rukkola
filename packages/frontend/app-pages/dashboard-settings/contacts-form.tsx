@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useTransition } from 'react'
+import React, { useState } from 'react'
 import {
     Alert,
     Box,
@@ -15,6 +15,7 @@ import {
 } from '@chakra-ui/react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
     FiMapPin,
     FiCheckCircle,
@@ -33,10 +34,9 @@ import { siteSettingsSchema, type SiteSettingsFormData } from './validation'
 import { InputField } from '@/components/input-field'
 
 export const ContactsForm = () => {
-    const [isPending, startTransition] = useTransition()
+    const queryClient = useQueryClient()
     const [serverError, setServerError] = useState('')
     const [serverSuccess, setServerSuccess] = useState('')
-    const [loading, setLoading] = useState(true)
     const toast = useToast()
 
     const { register, handleSubmit, reset, formState: { errors } } = useForm<SiteSettingsFormData>({
@@ -52,51 +52,51 @@ export const ContactsForm = () => {
         }
     })
 
-    useEffect(() => {
-        (async () => {
-            try {
-                const res = await getSiteSettings()
-                if (res.success && res.data) {
-                    reset(res.data)
-                }
-            } catch (e) {
-                console.error('Failed to fetch site settings:', e)
-            } finally {
-                setLoading(false)
+    const {isLoading} = useQuery({
+        queryKey: ['site-settings'],
+        queryFn: async () => {
+            const res = await getSiteSettings()
+            if (res.success && res.data) {
+                reset(res.data)
             }
-        })()
-    }, [reset])
+            return res
+        },
+    })
+
+    const updateMutation = useMutation({
+        mutationFn: async (values: SiteSettingsFormData) => {
+            const formattedValues = {
+                ...values,
+                phoneLink: values.phoneLink.replace(/^tel:/, '').replace(/\s+/g, '')
+            }
+            const res = await updateSiteSettings(formattedValues)
+            await revalidateMenu()
+            return res
+        },
+        onSuccess: (res) => {
+            setServerError('')
+            if (res.success) {
+                setServerSuccess(res.message ?? 'Контакты обновлены')
+                toast.showSuccess(res.message ?? 'Контакты обновлены')
+            } else {
+                setServerError(res.message ?? 'Ошибка при обновлении')
+                toast.showError(res.message ?? 'Ошибка при обновлении')
+            }
+        },
+        onError: (e) => {
+            const message = (e as { message?: string })?.message ?? 'Ошибка при обновлении'
+            setServerError(message)
+            toast.showError(message)
+        },
+    })
 
     const onSubmit = (values: SiteSettingsFormData) => {
         setServerError('')
         setServerSuccess('')
-
-        startTransition(async () => {
-            try {
-                // Remove tel: prefix and whitespace before sending to server
-                const formattedValues = {
-                    ...values,
-                    phoneLink: values.phoneLink.replace(/^tel:/, '').replace(/\s+/g, '')
-                }
-
-                const res = await updateSiteSettings(formattedValues)
-                if (res.success) {
-                    setServerSuccess(res.message ?? 'Контакты обновлены')
-                    toast.showSuccess(res.message ?? 'Контакты обновлены')
-                    await revalidateMenu()
-                } else {
-                    setServerError(res.message ?? 'Ошибка при обновлении')
-                    toast.showError(res.message ?? 'Ошибка при обновлении')
-                }
-            } catch (e) {
-                const message = (e as { message?: string })?.message ?? 'Ошибка при обновлении'
-                setServerError(message)
-                toast.showError(message)
-            }
-        })
+        updateMutation.mutate(values)
     }
 
-    if (loading) {
+    if (isLoading) {
         return (
             <Center py={10}>
                 <VStack gap={4}>
@@ -287,8 +287,8 @@ export const ContactsForm = () => {
                         <Button
                             size="lg"
                             type="submit"
-                            loading={isPending}
-                            disabled={loading}
+                            loading={updateMutation.isPending}
+                            disabled={isLoading}
                             loadingText="Сохранение..."
                             bg="white"
                             color="gray.950"

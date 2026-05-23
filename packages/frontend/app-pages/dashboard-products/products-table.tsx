@@ -117,7 +117,7 @@ export const ProductsTable = memo(() => {
 
     const renderEmptyState = () => (
         <Table.Row>
-            <Table.Cell colSpan={COLUMNS.length + 1} textAlign="center" py={{base: 12, md: 20}}>
+            <Table.Cell colSpan={COLUMNS.length + 1} textAlign="center" py={{base: 12, md: 20}} bg="gray.950">
                 <Flex direction="column" align="center" gap={4} color="gray.500">
                     <Box
                         bg="gray.800"

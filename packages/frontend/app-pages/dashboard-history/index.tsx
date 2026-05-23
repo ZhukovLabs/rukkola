@@ -20,7 +20,7 @@ import {
     Button,
     Grid,
 } from '@chakra-ui/react';
-import {useCallback, useEffect, useMemo, useState} from 'react';
+import {useCallback, useMemo, useState} from 'react';
 import type {ChangeEvent, ElementType} from 'react';
 import {
     FiActivity,
@@ -50,6 +50,7 @@ import type {SerializedUser} from '@/lib/api/users';
 import {useAuth} from '@/lib/auth/auth-context';
 import {useDebounce} from '@/hooks/use-debounce';
 import {Pagination} from '@/components/pagination';
+import {useQuery, useQueryClient} from '@tanstack/react-query';
 
 const PAGE_SIZE = 20;
 
@@ -454,15 +455,9 @@ function buildDateRangeEnd(dateTo: string): string | undefined {
 
 export const DashboardHistoryPage = () => {
     const {user} = useAuth();
-
-    const [logs, setLogs] = useState<AuditLogDto[]>([]);
-    const [users, setUsers] = useState<SerializedUser[]>([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
 
     const [page, setPage] = useState(1);
-    const [total, setTotal] = useState(0);
-    const [totalPages, setTotalPages] = useState(1);
-
     const [sortValue, setSortValue] = useState<SortValue>(SORT_OPTIONS[0].value);
     const [selectedUserId, setSelectedUserId] = useState(EMPTY_FILTER_VALUE);
     const [selectedEntityType, setSelectedEntityType] = useState(EMPTY_FILTER_VALUE);
@@ -470,12 +465,49 @@ export const DashboardHistoryPage = () => {
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
 
-    const [refreshKey, setRefreshKey] = useState(0);
-
     const debouncedDateFrom = useDebounce(dateFrom, 400);
     const debouncedDateTo = useDebounce(dateTo, 400);
 
     const isAdmin = user?.role === 'admin';
+
+    const {data: users = []} = useQuery({
+        queryKey: ['users'],
+        queryFn: async () => {
+            const response = await getUsers();
+            if (response.success && response.data) {
+                return response.data;
+            }
+            return [] as SerializedUser[];
+        },
+        enabled: isAdmin,
+    });
+
+    const [sortField, sortOrder] = sortValue.split('_') as [string, 'asc' | 'desc'];
+
+    const {data: logsData, isLoading: loading} = useQuery({
+        queryKey: ['audit-logs', page, sortValue, selectedUserId, selectedEntityType, debouncedDateFrom, debouncedDateTo],
+        queryFn: async () => {
+            const response = await auditLogsApi.getLogs({
+                page,
+                limit: PAGE_SIZE,
+                sortBy: sortField,
+                sortOrder,
+                userId: selectedUserId || undefined,
+                entityType: selectedEntityType || undefined,
+                dateFrom: debouncedDateFrom || undefined,
+                dateTo: buildDateRangeEnd(debouncedDateTo),
+            });
+            if (response.success && response.data) {
+                return response.data;
+            }
+            return null;
+        },
+        enabled: isAdmin,
+    });
+
+    const logs = logsData?.logs ?? [];
+    const total = logsData?.total ?? 0;
+    const totalPages = logsData?.totalPages ?? 1;
 
     const sortCollection = useMemo(
         () => createListCollection({items: [...SORT_OPTIONS]}),
@@ -504,113 +536,41 @@ export const DashboardHistoryPage = () => {
         [users],
     );
 
-    useEffect(() => {
-        if (!isAdmin) {
-            return;
-        }
-
-        getUsers()
-            .then((response) => {
-                if (response.success && response.data) {
-                    setUsers(response.data);
-                }
-            })
-            .catch((error) => {
-                console.error('Failed to fetch users:', error);
-            });
-    }, [isAdmin]);
-
-    useEffect(() => {
-        if (!isAdmin) {
-            return;
-        }
-
-        const loadLogs = async () => {
-            const [sortField, sortOrder] = sortValue.split('_') as [string, 'asc' | 'desc'];
-
-            try {
-                const response = await auditLogsApi.getLogs({
-                    page,
-                    limit: PAGE_SIZE,
-                    sortBy: sortField,
-                    sortOrder,
-                    userId: selectedUserId || undefined,
-                    entityType: selectedEntityType || undefined,
-                    dateFrom: debouncedDateFrom || undefined,
-                    dateTo: buildDateRangeEnd(debouncedDateTo),
-                });
-
-                if (response.success && response.data) {
-                    setLogs(response.data.logs);
-                    setTotal(response.data.total);
-                    setTotalPages(response.data.totalPages);
-                }
-            } catch (error) {
-                console.error('Failed to fetch logs:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        void loadLogs();
-    }, [
-        isAdmin,
-        page,
-        sortValue,
-        selectedUserId,
-        selectedEntityType,
-        debouncedDateFrom,
-        debouncedDateTo,
-        refreshKey,
-    ]);
-
-    const markForReload = useCallback(() => {
-        setLoading(true);
-        setRefreshKey((current) => current + 1);
-    }, []);
+    const handleRefresh = useCallback(() => {
+        queryClient.invalidateQueries({queryKey: ['audit-logs']});
+    }, [queryClient]);
 
     const handleSortChange = useCallback((details: {value: string[]}) => {
         const nextValue = (details.value[0] ?? SORT_OPTIONS[0].value) as SortValue;
-        setLoading(true);
         setPage(1);
         setSortValue(nextValue);
     }, []);
 
     const handleUserFilterChange = useCallback((details: {value: string[]}) => {
-        setLoading(true);
         setPage(1);
         setSelectedUserId(details.value[0] ?? EMPTY_FILTER_VALUE);
     }, []);
 
     const handleEntityTypeChange = useCallback((details: {value: string[]}) => {
-        setLoading(true);
         setPage(1);
         setSelectedEntityType(details.value[0] ?? EMPTY_FILTER_VALUE);
     }, []);
 
     const handleDateFromChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-        setLoading(true);
         setPage(1);
         setDateFrom(event.target.value);
     }, []);
 
     const handleDateToChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-        setLoading(true);
         setPage(1);
         setDateTo(event.target.value);
     }, []);
 
     const handlePageChange = useCallback((nextPage: number) => {
-        setLoading(true);
         setPage(nextPage);
     }, []);
 
-    const handleRefresh = useCallback(() => {
-        markForReload();
-    }, [markForReload]);
-
     const handleResetDates = useCallback(() => {
-        setLoading(true);
         setPage(1);
         setDateFrom('');
         setDateTo('');

@@ -34,9 +34,9 @@ import {createListCollection} from '@chakra-ui/react'
 import {useToast} from '@/components/toast-container'
 import {revalidateMenu} from '@/lib/api/revalidate'
 
-type Props = { categories: CategoryType[]; onRefresh?: () => Promise<void> }
+type Props = { categories: CategoryType[] }
 
-export const AddCategoryDialog = ({categories, onRefresh}: Props) => {
+export const AddCategoryDialog = ({categories}: Props) => {
     const searchParams = useSearchParams()
     const isOpen = searchParams.has('addCategory')
     const router = useRouter()
@@ -75,7 +75,7 @@ export const AddCategoryDialog = ({categories, onRefresh}: Props) => {
                     showGroupTitle,
                 })
                 if (result.success) {
-                    if (onRefresh) await onRefresh()
+                    queryClient.invalidateQueries({queryKey: ['categories']})
                     revalidateMenu()
                     toast.showSuccess('Категория успешно создана')
                     resetForm()

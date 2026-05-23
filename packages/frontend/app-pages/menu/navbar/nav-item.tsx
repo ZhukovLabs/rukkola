@@ -2,7 +2,7 @@
 
 import {Button, Portal, useBreakpointValue} from "@chakra-ui/react";
 import {ChevronDownIcon} from "@chakra-ui/icons";
-import {useRef, useState, useEffect, useCallback} from "react";
+import {useRef, useState, useEffect} from "react";
 import {AnimatePresence} from "framer-motion";
 import {NavbarItem} from "./types";
 import {Menu} from "./menu";
@@ -56,17 +56,14 @@ export const NavItem = ({
         return () => window.removeEventListener("touchmove", handleScroll);
     }, [isOpen, isMobile]);
 
-    const handleTriggerClick = useCallback(
-        (e: React.MouseEvent) => {
-            e.stopPropagation();
-            if (hasChildren) {
-                setIsOpen(v => !v);
-            } else {
-                onClick(id);
-            }
-        },
-        [hasChildren, id, onClick]
-    );
+    const handleTriggerClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (hasChildren) {
+            setIsOpen(v => !v);
+        } else {
+            onClick(id);
+        }
+    };
 
     const handleChildClick = (childId: string) => {
         onClick(childId);

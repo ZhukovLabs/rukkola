@@ -9,8 +9,6 @@ export type SerializedUser = {
 }
 
 export type UserRowProps = {
-    onUserDelete: (id: string) => void
-    onUserUpdate: (user: SerializedUser) => void
     user: SerializedUser
     isOwnAccount: boolean
 }

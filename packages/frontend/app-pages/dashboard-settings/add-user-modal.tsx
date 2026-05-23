@@ -18,10 +18,10 @@ import {
 import {Select, createListCollection} from '@chakra-ui/react'
 import {useForm, Controller} from 'react-hook-form'
 import {zodResolver} from '@hookform/resolvers/zod'
+import {useMutation, useQueryClient} from '@tanstack/react-query'
 import {createUser} from './actions'
 import {FiX, FiEye, FiEyeOff} from 'react-icons/fi'
 import {useToast} from '@/components/toast-container'
-import type {SerializedUser} from './types'
 import {userSchema, type UserFormData} from './validation'
 
 const roles = createListCollection({
@@ -36,14 +36,13 @@ type FormValues = UserFormData
 type AddUserModalProps = {
     isOpen: boolean
     onClose: () => void
-    onUserAdded: (user: SerializedUser) => void
+    onUserAdded: () => void
 }
 
 export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) => {
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
     const [showPassword, setShowPassword] = useState(false)
     const toast = useToast()
+    const queryClient = useQueryClient()
 
     const {
         register,
@@ -63,29 +62,27 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
         },
     })
 
-    const onSubmit = async (data: FormValues) => {
-        setLoading(true)
-        setError(null)
-
-        try {
-            const res = await createUser(data)
-
+    const createMutation = useMutation({
+        mutationFn: createUser,
+        onSuccess: (res) => {
             if (res.success) {
-                onUserAdded(res.data!)
+                queryClient.invalidateQueries({queryKey: ['users']})
                 reset()
                 onClose()
+                onUserAdded()
                 toast.showSuccess('Пользователь успешно создан')
             } else {
-                setError(res.message || 'Ошибка при создании пользователя')
                 toast.showError(res.message || 'Ошибка при создании пользователя')
             }
-        } catch (e: unknown) {
+        },
+        onError: (e: unknown) => {
             const message = e instanceof Error ? e.message : 'Ошибка при создании пользователя'
-            setError(message)
             toast.showError(message)
-        } finally {
-            setLoading(false)
-        }
+        },
+    })
+
+    const onSubmit = (data: FormValues) => {
+        createMutation.mutate(data)
     }
 
     return (
@@ -134,10 +131,12 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                     <Dialog.Body px={8} pt={8} pb={10}>
                         <form onSubmit={handleSubmit(onSubmit)}>
                             <Stack gap={6}>
-                                {error && (
+                                {createMutation.isError && (
                                     <Alert.Root status="error" borderRadius="xl" bg="red.950/30" border="1px solid" borderColor="red.900/50">
                                         <Alert.Content>
-                                            <Alert.Description color="red.300/80" fontSize="sm">{error}</Alert.Description>
+                                            <Alert.Description color="red.300/80" fontSize="sm">
+                                                {createMutation.error instanceof Error ? createMutation.error.message : 'Ошибка при создании пользователя'}
+                                            </Alert.Description>
                                         </Alert.Content>
                                     </Alert.Root>
                                 )}
@@ -341,7 +340,7 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                                     color="gray.400"
                                     _hover={{bg: 'whiteAlpha.100', color: 'white'}}
                                     onClick={onClose}
-                                    disabled={loading}
+                                    disabled={createMutation.isPending}
                                     px={8}
                                     borderRadius="xl"
                                     fontWeight="bold"
@@ -354,7 +353,7 @@ export const AddUserModal = ({isOpen, onClose, onUserAdded}: AddUserModalProps) 
                                     type="submit"
                                     bg="white"
                                     color="gray.950"
-                                    loading={loading}
+                                    loading={createMutation.isPending}
                                     borderRadius="xl"
                                     fontWeight="bold"
                                     _hover={{

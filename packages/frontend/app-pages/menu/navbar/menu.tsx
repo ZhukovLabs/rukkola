@@ -1,11 +1,49 @@
 'use client';
 
-import {NavbarItem} from "./types";
+import type {NavbarItem} from "./types";
 import {Box} from "@chakra-ui/react";
 import {useEffect, useState, useCallback, useRef} from "react";
-import {MenuItem} from "./menu-item";
-import {Arrow} from "./arrow";
 import {MotionBox} from "@/lib/motion-box";
+
+function MenuItem({item, isMobile, onClick}: { item: NavbarItem; isMobile: boolean; onClick: () => void }) {
+    return (
+        <Box
+            as="button"
+            w="full"
+            textAlign="left"
+            px={4}
+            py={2.5}
+            borderRadius="lg"
+            color="whiteAlpha.800"
+            fontSize={isMobile ? "md" : "sm"}
+            fontWeight="medium"
+            cursor="pointer"
+            transition="all 0.15s"
+            _hover={{bg: "whiteAlpha.100", color: "white"}}
+            _active={{bg: "whiteAlpha.200"}}
+            onClick={onClick}
+        >
+            {item.name}
+        </Box>
+    );
+}
+
+function Arrow() {
+    return (
+        <Box
+            position="absolute"
+            top="-8px"
+            left="50%"
+            transform="translateX(-50%)"
+            w={0}
+            h={0}
+            borderLeft="8px solid transparent"
+            borderRight="8px solid transparent"
+            borderBottom="8px solid rgba(26,32,44,0.85)"
+            filter="drop-shadow(0 -2px 4px rgba(0,0,0,0.3))"
+        />
+    );
+}
 
 type MenuProps = {
     triggerRef: React.RefObject<HTMLButtonElement | null>;

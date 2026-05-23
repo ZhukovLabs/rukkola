@@ -14,8 +14,8 @@ import {
 } from "@chakra-ui/react";
 import {useAuth} from "@/lib/auth/auth-context";
 import {StatsGrid} from "./stats-grid";
-import {getDashboardStats, type DashboardData} from "@/lib/api/dashboard";
-import {useEffect, useState} from "react";
+import {getDashboardStats} from "@/lib/api/dashboard";
+import {useQuery} from "@tanstack/react-query";
 import {useRouter} from "next/navigation";
 import {
     FiBox,
@@ -89,29 +89,18 @@ function formatDate(): string {
 export const Dashboard = () => {
     const {user, status} = useAuth();
     const router = useRouter();
-    const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-    const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (status !== 'authenticated') return;
+    const {data: dashboardData, isLoading: dashboardLoading} = useQuery({
+        queryKey: ['dashboard-stats'],
+        queryFn: async () => {
+            const result = await getDashboardStats();
+            if (result.success && result.data) return result.data;
+            return null;
+        },
+        enabled: status === 'authenticated',
+    });
 
-        const fetchData = async () => {
-            try {
-                const result = await getDashboardStats();
-                if (result.success && result.data) {
-                    setDashboardData(result.data);
-                }
-            } catch (error) {
-                console.error('Failed to fetch dashboard data:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, [status]);
-
-    if (status === 'loading' || loading) {
+    if (status === 'loading' || dashboardLoading) {
         return (
             <Center minH="300px">
                 <VStack gap={4}>

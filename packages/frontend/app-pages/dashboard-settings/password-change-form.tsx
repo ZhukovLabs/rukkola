@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useTransition } from 'react'
+import React, { useState } from 'react'
 import {
     Alert,
     Box,
@@ -14,6 +14,7 @@ import {
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { FiAlertTriangle, FiCheckCircle, FiEye, FiEyeOff, FiLock } from 'react-icons/fi'
+import { useMutation } from '@tanstack/react-query'
 import { updatePassword } from './actions'
 import { useSession } from '@/lib/auth/auth-context'
 import { passwordSchema, type PasswordFormData } from './validation'
@@ -23,7 +24,6 @@ import { InputField } from '@/components/input-field'
 
 export const PasswordChangeForm = () => {
     const { data } = useSession()
-    const [isPending, startTransition] = useTransition()
     const [serverError, setServerError] = useState('')
     const [serverSuccess, setServerSuccess] = useState('')
     const [showOld, setShowOld] = useState(false)
@@ -35,36 +35,39 @@ export const PasswordChangeForm = () => {
         resolver: zodResolver(passwordSchema)
     })
 
+    const updateMutation = useMutation({
+        mutationFn: (values: PasswordFormData) => {
+            if (!data) throw new Error('Пользователь не авторизован')
+            return updatePassword(data.user.id, values.oldPassword, values.newPassword)
+        },
+        onSuccess: (res) => {
+            if (res?.success) {
+                setServerSuccess(res.message ?? 'Пароль успешно изменён')
+                toast.showSuccess(res.message ?? 'Пароль успешно изменён')
+                reset()
+            } else {
+                setServerError(res?.message ?? 'Ошибка при изменении пароля')
+                toast.showError(res?.message ?? 'Ошибка при изменении пароля')
+            }
+        },
+        onError: (e) => {
+            const message = (e as { message?: string })?.message ?? 'Ошибка при изменении пароля'
+            setServerError(message)
+            toast.showError(message)
+        },
+    })
+
     const onSubmit = (values: PasswordFormData) => {
         setServerError('')
         setServerSuccess('')
 
-        startTransition(() => {
-            (async () => {
-                if (!data) {
-                    setServerError('Пользователь не авторизован')
-                    toast.showError('Пользователь не авторизован')
-                    return
-                }
+        if (!data) {
+            setServerError('Пользователь не авторизован')
+            toast.showError('Пользователь не авторизован')
+            return
+        }
 
-                try {
-                    const res = await updatePassword(data.user.id, values.oldPassword, values.newPassword)
-
-                    if (res?.success) {
-                        setServerSuccess(res.message ?? 'Пароль успешно изменён')
-                        toast.showSuccess(res.message ?? 'Пароль успешно изменён')
-                        reset()
-                    } else {
-                        setServerError(res?.message ?? 'Ошибка при изменении пароля')
-                        toast.showError(res?.message ?? 'Ошибка при изменении пароля')
-                    }
-                } catch (e) {
-                    const message = (e as { message?: string })?.message ?? 'Ошибка при изменении пароля'
-                    setServerError(message)
-                    toast.showError(message)
-                }
-            })()
-        })
+        updateMutation.mutate(values)
     }
 
     const renderInput = (label: string, field: keyof PasswordFormData, show: boolean, setShow: (b: boolean) => void) => (
@@ -155,7 +158,7 @@ export const PasswordChangeForm = () => {
                         mt={4}
                         size="lg"
                         type="submit"
-                        loading={isPending}
+                        loading={updateMutation.isPending}
                         loadingText="Сохранение..."
                         bg="white"
                         color="gray.950"

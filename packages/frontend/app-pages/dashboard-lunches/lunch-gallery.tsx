@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useReducer, useTransition} from 'react';
+import React, {useReducer, useState} from 'react';
 import {
     Box,
     Button,
@@ -29,6 +29,7 @@ import {
     FiPlus,
 } from 'react-icons/fi';
 import {motion, AnimatePresence} from 'framer-motion';
+import {useMutation} from '@tanstack/react-query';
 import {uploadLunch, activeLunch, deleteLunch, deactivateLunch} from './actions';
 import {useConfirmationDialog} from '@/hooks/use-confirmation-dialog';
 import {useToast} from '@/components/toast-container';
@@ -116,30 +117,72 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
         })),
     });
 
-    const [isPending, startTransition] = useTransition();
     const toast = useToast();
     const {lunches, file, isDragOver, deletingId} = state;
 
     const activeLunchItem = lunches.find(l => l.active);
 
-    const {openDialog: openDeleteDialog, confirmationDialog: deleteConfirmationDialog} = useConfirmationDialog<string>({
-        onConfirm: async (id: string) => {
-            dispatch({type: 'SET_DELETING', payload: id});
-            try {
-                const res = await deleteLunch(id);
-                if (res?.success) {
-                    dispatch({type: 'REMOVE_LUNCH', payload: id});
-                    revalidateMenu();
-                    toast.showSuccess('Изображение удалено');
-                } else {
-                    toast.showError(res?.message || 'Не удалось удалить изображение');
-                }
-            } catch (err) {
-                console.error('Delete error', err);
-                toast.showError('Не удалось удалить изображение');
-            } finally {
-                dispatch({type: 'SET_DELETING', payload: null});
+    const deleteMutation = useMutation({
+        mutationFn: deleteLunch,
+        onMutate: (id: string) => dispatch({type: 'SET_DELETING', payload: id}),
+        onSuccess: (res, id) => {
+            if (res?.success) {
+                dispatch({type: 'REMOVE_LUNCH', payload: id});
+                revalidateMenu();
+                toast.showSuccess('Изображение удалено');
+            } else {
+                toast.showError(res?.message || 'Не удалось удалить изображение');
             }
+        },
+        onError: () => toast.showError('Не удалось удалить изображение'),
+        onSettled: () => dispatch({type: 'SET_DELETING', payload: null}),
+    });
+
+    const uploadMutation = useMutation({
+        mutationFn: uploadLunch,
+        onSuccess: (res) => {
+            if (res?.success && res?.data) {
+                dispatch({type: 'ADD_LUNCH', payload: {id: res.data.id, image: res.data.image}});
+                revalidateMenu();
+                toast.showSuccess('Изображение успешно загружено');
+            } else {
+                toast.showError(res?.message || 'Не удалось загрузить изображение');
+            }
+        },
+        onError: () => toast.showError('Ошибка при загрузке изображения'),
+    });
+
+    const activateMutation = useMutation({
+        mutationFn: activeLunch,
+        onSuccess: (res, id) => {
+            if (res?.success) {
+                dispatch({type: 'UPDATE_ACTIVE', payload: {id, active: true}});
+                revalidateMenu();
+                toast.showSuccess('Обед активирован для отображения');
+            } else {
+                toast.showError(res?.message || 'Не удалось активировать обед');
+            }
+        },
+        onError: () => toast.showError('Не удалось изменить статус обеда'),
+    });
+
+    const deactivateMutation = useMutation({
+        mutationFn: deactivateLunch,
+        onSuccess: (res) => {
+            if (res?.success) {
+                dispatch({type: 'DEACTIVATE_ALL'});
+                revalidateMenu();
+                toast.showInfo('Отображение обеда выключено');
+            } else {
+                toast.showError(res?.message || 'Не удалось выключить отображение');
+            }
+        },
+        onError: () => toast.showError('Не удалось выключить отображение'),
+    });
+
+    const {openDialog: openDeleteDialog, confirmationDialog: deleteConfirmationDialog} = useConfirmationDialog<string>({
+        onConfirm: (id: string) => {
+            deleteMutation.mutate(id);
         },
         title: 'Удалить изображение обеда?',
         description: 'Это действие нельзя отменить. Изображение будет удалено навсегда.',
@@ -148,69 +191,26 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
         colorScheme: 'red',
     });
 
-    const handleUpload = async () => {
+    const handleUpload = () => {
         if (!file) return;
-        try {
-            const res = await uploadLunch(file);
-            if (res?.success && res?.data) {
-                dispatch({type: 'ADD_LUNCH', payload: {id: res.data.id, image: res.data.image}});
-                revalidateMenu();
-                toast.showSuccess('Изображение успешно загружено');
-            } else {
-                toast.showError(res?.message || 'Не удалось загрузить изображение');
-            }
-        } catch (err) {
-            console.error('Upload error', err);
-            toast.showError('Ошибка при загрузке изображения');
-        }
+        uploadMutation.mutate(file);
     };
 
     const handleActivate = (id: string) => {
-        startTransition(async () => {
-            const lunch = lunches.find(l => l._id === id);
-            if (!lunch) return;
-            try {
-                if (lunch.active) {
-                    const res = await deactivateLunch();
-                    if (res?.success) {
-                        dispatch({type: 'DEACTIVATE_ALL'});
-                        revalidateMenu();
-                        toast.showInfo('Отображение обеда выключено');
-                    } else {
-                        toast.showError(res?.message || 'Не удалось выключить отображение');
-                    }
-                } else {
-                    const res = await activeLunch(id);
-                    if (res?.success) {
-                        dispatch({type: 'UPDATE_ACTIVE', payload: {id, active: true}});
-                        revalidateMenu();
-                        toast.showSuccess('Обед активирован для отображения');
-                    } else {
-                        toast.showError(res?.message || 'Не удалось активировать обед');
-                    }
-                }
-            } catch (err) {
-                console.error('Activate error', err);
-                toast.showError('Не удалось изменить статус обеда');
-            }
-        });
-    };
-
-    const handleDeactivateAll = async () => {
-        try {
-            const res = await deactivateLunch();
-            if (res?.success) {
-                dispatch({type: 'DEACTIVATE_ALL'});
-                revalidateMenu();
-                toast.showInfo('Отображение обеда выключено');
-            } else {
-                toast.showError(res?.message || 'Не удалось выключить отображение');
-            }
-        } catch (err) {
-            console.error('Deactivate all error', err);
-            toast.showError('Не удалось выключить отображение');
+        const lunch = lunches.find(l => l._id === id);
+        if (!lunch) return;
+        if (lunch.active) {
+            deactivateMutation.mutate(undefined as never);
+        } else {
+            activateMutation.mutate(id);
         }
     };
+
+    const handleDeactivateAll = () => {
+        deactivateMutation.mutate(undefined as never);
+    };
+
+    const isPending = deleteMutation.isPending || uploadMutation.isPending || activateMutation.isPending || deactivateMutation.isPending;
 
     return (
         <VStack gap={8} align="stretch" w="100%">
@@ -538,7 +538,9 @@ export const LunchGallery = ({initialLunches}: { initialLunches: Lunch[] }) => {
                                                         e.stopPropagation();
                                                         openDeleteDialog(lunch._id);
                                                     }}
-                                                    loading={deletingId === lunch._id}>
+                                                    loading={deletingId === lunch._id}
+                                                >
+
                                                     <FiTrash2 size={14}/>
                                                 </IconButton>
 

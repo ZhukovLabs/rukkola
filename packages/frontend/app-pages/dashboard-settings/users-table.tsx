@@ -1,7 +1,8 @@
 'use client'
 
-import React, {useState, useEffect} from 'react'
+import React, {useState} from 'react'
 import {Flex, Spinner, Text, Button, Card, Table, Box, VStack} from '@chakra-ui/react'
+import {useQuery, useQueryClient} from '@tanstack/react-query'
 import {getUsers} from './actions'
 import {AddUserModal} from './add-user-modal'
 import {UserRow} from './user-row'
@@ -11,27 +12,18 @@ import type {SerializedUser} from './types'
 export const UsersTable = () => {
     const {data: session} = useSession();
     const authenticatedUserId = session?.user?.id as string | undefined;
-
-    const [users, setUsers] = useState<SerializedUser[]>([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
     const [isAddOpen, setIsAddOpen] = useState(false);
 
-    useEffect(() => {
-        (async () => {
-            try {
-                const res = await getUsers();
-                if (res.success && res.data) {
-                    setUsers(res.data);
-                }
-            } finally {
-                setLoading(false);
-            }
-        })()
-    }, [])
+    const {data, isLoading} = useQuery({
+        queryKey: ['users'],
+        queryFn: getUsers,
+    })
 
+    const users: SerializedUser[] = data?.success && data.data ? data.data : [];
 
-    const handleUserCreated = (newUser: SerializedUser) => {
-        setUsers((prev) => [newUser, ...prev])
+    const handleUserCreated = () => {
+        queryClient.invalidateQueries({queryKey: ['users']})
     }
 
     return (
@@ -84,7 +76,7 @@ export const UsersTable = () => {
                 </Card.Header>
 
                 <Card.Body px={0} py={0}>
-                    {loading ? (
+                    {isLoading ? (
                         <Flex justify="center" align="center" h="200px">
                             <Spinner size="lg" color="whiteAlpha.400"/>
                         </Flex>
@@ -137,14 +129,6 @@ export const UsersTable = () => {
                                             <UserRow
                                                 key={user._id}
                                                 user={user}
-                                                onUserUpdate={(updated) => {
-                                                    setUsers((prev) =>
-                                                        prev.map((u) => (u._id === updated._id ? updated : u))
-                                                    )
-                                                }}
-                                                onUserDelete={(id) => {
-                                                    setUsers((prev) => prev.filter((u) => u._id !== id))
-                                                }}
                                                 isOwnAccount={user._id === authenticatedUserId}
                                             />
                                         ))

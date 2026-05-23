@@ -13,6 +13,7 @@ import {
     VStack
 } from '@chakra-ui/react'
 import {FiEdit, FiTrash2, FiCheck, FiX, FiLogOut, FiShieldOff, FiShield} from 'react-icons/fi'
+import {useMutation, useQueryClient} from '@tanstack/react-query'
 import {updateUser, deleteUser, toggleBlockUser, logoutUserSessions} from './actions'
 import {Tooltip} from '@/components/tooltip'
 import {Select, createListCollection} from '@chakra-ui/react'
@@ -30,7 +31,8 @@ const roles = createListCollection({
     ],
 })
 
-export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRowProps) => {
+export const UserRow = ({user, isOwnAccount}: UserRowProps) => {
+    const queryClient = useQueryClient()
     const [editing, setEditing] = useState(false)
     const [tempUser, setTempUser] = useState<EditableUserFields>({
         username: user.username,
@@ -42,22 +44,69 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
     const [error, setError] = useState<string | null>(null)
     const toast = useToast()
 
-    const {openDialog, confirmationDialog} = useConfirmationDialog<string>({
-        onConfirm: async (id) => {
-            setError(null)
-            try {
-                const res = await deleteUser(id)
-                if (res.success) {
-                    onUserDelete(id)
-                    toast.showSuccess('Пользователь удалён')
-                } else {
-                    setError(res.message || 'Не удалось удалить пользователя')
-                    toast.showError(res.message || 'Не удалось удалить пользователя')
-                }
-            } catch {
-                setError('Не удалось удалить пользователя')
-                toast.showError('Не удалось удалить пользователя')
+    const deleteMutation = useMutation({
+        mutationFn: deleteUser,
+        onSuccess: (res, id) => {
+            if (res.success) {
+                queryClient.invalidateQueries({queryKey: ['users']})
+                toast.showSuccess('Пользователь удалён')
+            } else {
+                setError(res.message || 'Не удалось удалить пользователя')
+                toast.showError(res.message || 'Не удалось удалить пользователя')
             }
+        },
+        onError: () => {
+            setError('Не удалось удалить пользователя')
+            toast.showError('Не удалось удалить пользователя')
+        },
+    })
+
+    const toggleBlockMutation = useMutation({
+        mutationFn: toggleBlockUser,
+        onSuccess: (res) => {
+            if (res.success && res.data) {
+                queryClient.invalidateQueries({queryKey: ['users']})
+                toast.showSuccess(res.data.isActive ? 'Пользователь разблокирован' : 'Пользователь заблокирован')
+            } else {
+                toast.showError(res.message || 'Ошибка')
+            }
+        },
+        onError: () => toast.showError('Не удалось изменить статус'),
+    })
+
+    const logoutSessionsMutation = useMutation({
+        mutationFn: logoutUserSessions,
+        onSuccess: (res) => {
+            if (res.success) {
+                toast.showSuccess(res.message || 'Сессии завершены')
+            } else {
+                toast.showError(res.message || 'Ошибка')
+            }
+        },
+        onError: () => toast.showError('Не удалось завершить сессии'),
+    })
+
+    const updateMutation = useMutation({
+        mutationFn: ({id, data}: {id: string; data: EditableUserFields}) => updateUser(id, data),
+        onSuccess: (res) => {
+            if (res.success) {
+                queryClient.invalidateQueries({queryKey: ['users']})
+                setEditing(false)
+                toast.showSuccess('Данные пользователя обновлены')
+            } else {
+                setError(res.message || 'Не удалось обновить пользователя')
+                toast.showError(res.message || 'Не удалось обновить пользователя')
+            }
+        },
+        onError: () => {
+            setError('Не удалось обновить пользователя')
+            toast.showError('Не удалось обновить пользователя')
+        },
+    })
+
+    const {openDialog, confirmationDialog} = useConfirmationDialog<string>({
+        onConfirm: (id) => {
+            deleteMutation.mutate(id)
         },
         title: 'Удалить пользователя?',
         description: 'Это действие невозможно будет отменить.',
@@ -66,36 +115,17 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
         colorScheme: 'red',
     })
 
-    const handleToggleBlock = async () => {
+    const handleToggleBlock = () => {
         setError(null)
-        try {
-            const res = await toggleBlockUser(user._id.toString())
-            if (res.success && res.data) {
-                onUserUpdate(res.data)
-                toast.showSuccess(res.data.isActive ? 'Пользователь разблокирован' : 'Пользователь заблокирован')
-            } else {
-                toast.showError(res.message || 'Ошибка')
-            }
-        } catch {
-            toast.showError('Не удалось изменить статус')
-        }
+        toggleBlockMutation.mutate(user._id.toString())
     }
 
-    const handleLogoutSessions = async () => {
+    const handleLogoutSessions = () => {
         setError(null)
-        try {
-            const res = await logoutUserSessions(user._id.toString())
-            if (res.success) {
-                toast.showSuccess(res.message || 'Сессии завершены')
-            } else {
-                toast.showError(res.message || 'Ошибка')
-            }
-        } catch {
-            toast.showError('Не удалось завершить сессии')
-        }
+        logoutSessionsMutation.mutate(user._id.toString())
     }
 
-    const handleSave = async () => {
+    const handleSave = () => {
         setError(null)
         const result = editUserSchema.safeParse(tempUser)
         if (!result.success) {
@@ -103,20 +133,7 @@ export const UserRow = ({user, onUserUpdate, onUserDelete, isOwnAccount}: UserRo
             setError(firstError?.message || 'Проверьте введённые данные')
             return
         }
-        try {
-            const res = await updateUser(user._id.toString(), tempUser)
-            if (res.success) {
-                onUserUpdate(res.data!)
-                setEditing(false)
-                toast.showSuccess('Данные пользователя обновлены')
-            } else {
-                setError(res.message || 'Не удалось обновить пользователя')
-                toast.showError(res.message || 'Не удалось обновить пользователя')
-            }
-        } catch {
-            setError('Не удалось обновить пользователя')
-            toast.showError('Не удалось обновить пользователя')
-        }
+        updateMutation.mutate({id: user._id.toString(), data: tempUser})
     }
 
     const handleCancel = () => {

@@ -1,5 +1,5 @@
-import { useMemo, useSyncExternalStore } from "react";
-import { cartStore, type CartItem, addToCart, removeFromCart, clearCart } from "@/lib/local-storage";
+import {useSyncExternalStore} from "react";
+import {cartStore, type CartItem, addToCart, removeFromCart, clearCart} from "@/lib/local-storage";
 
 const emptyCart: CartItem[] = [];
 
@@ -11,31 +11,20 @@ function getSnapshot(): CartItem[] {
     return cartStore.getSnapshot();
 }
 
-function getServerSnapshot(): CartItem[] {
-    return emptyCart;
-}
-
 export function useCart(): CartItem[] {
-    return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+    return useSyncExternalStore(subscribe, getSnapshot, () => emptyCart);
 }
 
 export function useCartCount(): number {
-    const items = useCart();
-    return useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
+    return useCart().reduce((sum, item) => sum + item.quantity, 0);
 }
 
 export function useCartTotal(): number {
-    const items = useCart();
-    return useMemo(() => items.reduce((sum, {price, quantity}) => sum + price * quantity, 0), [items]);
+    return useCart().reduce((sum, {price, quantity}) => sum + price * quantity, 0);
 }
 
-export const useCartActions = () => ({
-    add: addToCart,
-    remove: removeFromCart,
-    clear: clearCart,
-});
+export const useCartActions = () => ({add: addToCart, remove: removeFromCart, clear: clearCart});
 
 export function useCartItem(id: string, size: string) {
-    const items = useCart();
-    return useMemo(() => items.find(item => item.id === id && item.size === size), [items, id, size]);
+    return useCart().find(item => item.id === id && item.size === size);
 }

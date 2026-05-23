@@ -4,51 +4,28 @@ import {Box, Flex, Text, IconButton, Spinner, Center} from "@chakra-ui/react";
 import Image from "next/image";
 import {motion} from "framer-motion";
 import {FiX} from "react-icons/fi";
-import {useEffect, useState, useCallback} from "react";
+import {useState} from "react";
+import {useQuery} from "@tanstack/react-query";
 import {getProductById, type Product} from "./actions";
 import {trackViewItem} from "@/lib/ecommerce-tracking";
 import {useProductModal} from "./use-product-modal";
 import {ProductInfo} from "./product-info";
+import {useEffect} from "react";
 
 export const ProductModal = () => {
     const {productId, close: closeModalState} = useProductModal();
-
-    const [product, setProduct] = useState<Product | null>(null);
-    const [loading, setLoading] = useState(false);
     const [imageLoading, setImageLoading] = useState(false);
-    const [error, setError] = useState(false);
 
-    const close = useCallback(() => {
-        setProduct(null);
-        setLoading(false);
+    const close = () => {
         setImageLoading(false);
-        setError(false);
         closeModalState();
-    }, [closeModalState]);
+    };
 
-    useEffect(() => {
-        if (!productId) {
-            close();
-            return;
-        }
-
-        let cancelled = false;
-        setLoading(true);
-        setImageLoading(true);
-        setError(false);
-
-        getProductById(productId).then((data) => {
-            if (cancelled) return;
-            if (!data) { close(); return; }
-            setProduct(data);
-            setLoading(false);
-        }).catch(() => {
-            if (!cancelled) setError(true);
-            setLoading(false);
-        });
-
-        return () => { cancelled = true; };
-    }, [productId, close]);
+    const {data: product, isLoading: loading, isError: error} = useQuery({
+        queryKey: ["product-modal", productId],
+        queryFn: () => getProductById(productId!),
+        enabled: !!productId,
+    });
 
     useEffect(() => {
         if (product && productId) {
@@ -64,12 +41,16 @@ export const ProductModal = () => {
 
     if (!productId && !product) return null;
 
+    const handleBackdropClick = () => {
+        if (!loading) close();
+    };
+
     const imageSrc = product?.image
         ? product.image.includes("?") ? `${product.image}&w=1920` : `${product.image}?w=1920`
         : null;
 
     return (
-        <Box position="fixed" inset={0} bg="black" zIndex={9999} overflow="hidden" onClick={close}>
+        <Box position="fixed" inset={0} bg="black" zIndex={9999} overflow="hidden" onClick={handleBackdropClick}>
             <motion.div initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}} style={{width: "100%", height: "100%"}}>
                 <Flex h="100%" direction="column" position="relative">
                     <IconButton

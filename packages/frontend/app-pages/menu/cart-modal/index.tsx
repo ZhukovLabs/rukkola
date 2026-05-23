@@ -11,14 +11,36 @@ import {
     useBreakpointValue,
 } from "@chakra-ui/react";
 import {motion} from "framer-motion";
-import {FiX} from "react-icons/fi";
+import {FiX, FiShoppingCart} from "react-icons/fi";
 import {addToCart, clearCart, getCart, type CartItem} from "@/lib/local-storage";
 import {useCart, useCartActions, useCartTotal} from "@/hooks/use-cart";
 import {trackAddToCart, trackRemoveFromCart, trackPurchase} from "@/lib/ecommerce-tracking";
 import {CartItem as CartItemComponent} from "@/app-pages/menu/cart-modal/cart-item";
 import {useCartModal} from "./use-cart-modal";
-import {CartEmptyState} from "./cart-empty-state";
 import {CartFooter} from "./cart-footer";
+import {MotionBox} from "@/lib/motion-box";
+
+const CartEmptyState = () => (
+    <Flex direction="column" align="center" justify="center" py={12} px={6} gap={4}>
+        <MotionBox
+            initial={{scale: 0.8, opacity: 0}}
+            animate={{scale: 1, opacity: 1}}
+            transition={{duration: 0.5, ease: "easeOut"}}
+            bg="rgba(255, 255, 255, 0.05)"
+            p={6}
+            borderRadius="full"
+            border="1px solid rgba(255, 255, 255, 0.1)"
+        >
+            <Icon as={FiShoppingCart} boxSize={12} color="whiteAlpha.400"/>
+        </MotionBox>
+        <Flex direction="column" align="center" gap={1}>
+            <Text fontSize="lg" fontWeight="bold" color="white">Корзина пуста</Text>
+            <Text fontSize="sm" color="whiteAlpha.500" textAlign="center">
+                Добавьте что-нибудь вкусное, чтобы начать заказ
+            </Text>
+        </Flex>
+    </Flex>
+);
 
 export const CartModal = () => {
     const isMobile = useBreakpointValue({base: true, md: false});
@@ -36,9 +58,9 @@ export const CartModal = () => {
     const handleClear = () => clearCart();
 
     const handleCompleteOrder = () => {
-        const items = getCart();
-        if (!items.length) return;
-        trackPurchase({items: items.map(item => ({id: item.id, name: item.name, price: item.price, quantity: item.quantity}))});
+        const cartItems = getCart();
+        if (!cartItems.length) return;
+        trackPurchase({items: cartItems.map(i => ({id: i.id, name: i.name, price: i.price, quantity: i.quantity}))});
     };
 
     const increaseQuantity = (item: CartItem) => () => {

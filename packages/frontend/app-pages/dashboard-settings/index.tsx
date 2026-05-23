@@ -110,7 +110,7 @@ export const DashboardSettingsPage = () => {
 
                             {isAdmin && (
                                 <Tabs.Trigger
-                                    value="contacts"
+                                    value="footer"
                                     px={5}
                                     py={2}
                                     borderRadius="xl"
@@ -120,7 +120,7 @@ export const DashboardSettingsPage = () => {
                                         shadow: '0 0 20px rgba(255,255,255,0.15)',
                                     }}
                                     _hover={{
-                                        bg: currentTab === 'contacts' ? 'white' : 'whiteAlpha.100',
+                                        bg: currentTab === 'footer' ? 'white' : 'whiteAlpha.100',
                                     }}
                                     fontWeight="bold"
                                     color="gray.400"
@@ -129,7 +129,7 @@ export const DashboardSettingsPage = () => {
                                 >
                                     <Flex align="center" gap={2}>
                                         <Icon as={FiMapPin} boxSize={4}/>
-                                        <Text>Контакты</Text>
+                                        <Text>Подвал сайта</Text>
                                     </Flex>
                                 </Tabs.Trigger>
                             )}
@@ -175,7 +175,7 @@ export const DashboardSettingsPage = () => {
                         </Tabs.Content>
 
                         {isAdmin && (
-                            <Tabs.Content value="contacts" p={0}>
+                            <Tabs.Content value="footer" p={0}>
                                 <Box 
                                     bg="whiteAlpha.50" 
                                     p={{base: 4, md: 6}} 

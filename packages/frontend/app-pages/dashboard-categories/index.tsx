@@ -1,36 +1,27 @@
 'use client';
 
-import {useEffect, useState, useCallback, useMemo} from 'react';
+import {useState, useMemo} from 'react';
 import CategoriesTable from './categories-table';
 import {AddCategoryButton} from './add-category-button';
 import {AddCategoryDialog} from './add-category-modal';
 import {Box, Heading, Card, Flex, Spinner, Center, Input, Icon} from '@chakra-ui/react';
 import {FiFolder, FiSearch} from 'react-icons/fi';
 import {getCategories, type CategoryItem} from '@/lib/api/categories';
+import {useQuery} from '@tanstack/react-query';
 
 export const DashboardCategoriesPage = () => {
-    const [categories, setCategories] = useState<CategoryItem[]>([]);
-    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
 
-    const fetchCategories = useCallback(async () => {
-        try {
+    const {data: categories = [], isLoading} = useQuery({
+        queryKey: ['categories'],
+        queryFn: async () => {
             const result = await getCategories();
             if (result.success && result.data) {
-                setCategories(result.data);
+                return result.data;
             }
-        } catch (error) {
-            console.error('Failed to fetch categories:', error);
-        }
-    }, []);
-
-    useEffect(() => {
-        const init = async () => {
-            await fetchCategories();
-            setLoading(false);
-        };
-        init();
-    }, [fetchCategories]);
+            return [] as CategoryItem[];
+        },
+    });
 
     const filteredCategories = useMemo(() => {
         if (!searchQuery.trim()) return categories;
@@ -40,7 +31,7 @@ export const DashboardCategoriesPage = () => {
         );
     }, [categories, searchQuery]);
 
-    if (loading) {
+    if (isLoading) {
         return (
             <Center minH="400px">
                 <Spinner size="xl" color="green.500" />
@@ -134,11 +125,11 @@ export const DashboardCategoriesPage = () => {
                 </Card.Header>
 
                 <Card.Body px={0} py={0}>
-                    <CategoriesTable categories={filteredCategories} onRefresh={fetchCategories} isSearching={searchQuery.length > 0}/>
+                    <CategoriesTable categories={filteredCategories} isSearching={searchQuery.length > 0}/>
                 </Card.Body>
             </Card.Root>
 
-            <AddCategoryDialog categories={categories} onRefresh={fetchCategories}/>
+            <AddCategoryDialog categories={categories}/>
         </Box>
     );
 };
