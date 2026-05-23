@@ -18,7 +18,11 @@ const EXIT_ANIM_MS = 500
 export function CookieNotice() {
     const [visible, setVisible] = useState(() => {
         if (typeof window === 'undefined') return false
-        return localStorage.getItem(STORAGE_KEY) !== 'true'
+        try {
+            return localStorage.getItem(STORAGE_KEY) !== 'true'
+        } catch {
+            return false
+        }
     })
 
     const [mounted, setMounted] = useState(false)
@@ -34,7 +38,9 @@ export function CookieNotice() {
         e.preventDefault();
         if (isClosing) return
         setIsClosing(true)
-        localStorage.setItem(STORAGE_KEY, 'true')
+        try {
+            localStorage.setItem(STORAGE_KEY, 'true')
+        } catch {}
         setMounted(false)
         setTimeout(() => setVisible(false), EXIT_ANIM_MS)
     }
