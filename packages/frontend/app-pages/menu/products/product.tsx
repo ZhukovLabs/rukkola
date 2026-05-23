@@ -8,11 +8,12 @@ import {
     Stack,
     Box,
     Center,
-    Icon
+    Icon,
+    Grid
 } from "@chakra-ui/react";
 import Image from "next/image";
 import {memo, useState, useCallback} from "react";
-import {AnimatePresence, motion} from "framer-motion";
+import {motion} from "framer-motion";
 
 const MotionBox = motion.create(Box);
 import {FiCheck, FiImage} from "react-icons/fi";
@@ -90,6 +91,8 @@ const PriceButton = memo(function PriceButton({
             color={selected ? "white" : "gray.300"}
             borderWidth="1px"
             borderColor="gray.500"
+            w="full"
+            _notLast={{mb: 2}}
             _hover={{bg: selected ? "gray.600" : "gray.700", color: "white"}}
             onClick={onClick}
         >
@@ -212,7 +215,6 @@ export const Product = memo(function Product({
                 borderRadius={{base: "md", md: "xl"}}
                 borderColor="gray.700"
                 bg="gray.800"
-                overflow="hidden"
                 _hover={{
                     borderColor: "gray.500",
                     boxShadow: "0 6px 18px rgba(128,128,128,0.15)"
@@ -334,27 +336,59 @@ export const Product = memo(function Product({
                         )}
                     </Stack>
 
-                    <Flex direction="column" mt="auto" gap={3}>
-                        {!selecting &&
-                            prices?.map(p => (
-                                <Flex key={p.size} justify="space-between">
-                                    <Text fontSize="sm" color="gray.400">
-                                        {p.size}
-                                    </Text>
-                                    <Text fontSize="sm" color="gray.300">
-                                        {p.price.toFixed(2).replace(".", ",")} руб.
-                                    </Text>
-                                </Flex>
-                            ))}
+                    <Box mt="auto">
+                        <Box display="grid" gridTemplateColumns="1fr" gridTemplateRows="1fr">
+                            <Box
+                                gridRow="1"
+                                gridColumn="1"
+                                w="full"
+                                opacity={selecting ? 0 : 1}
+                                pointerEvents={selecting ? 'none' : 'auto'}
+                                transition="opacity 0.2s"
+                            >
+                                <Flex direction="column" gap={3} h="full" w="full">
+                                    {prices?.map(p => (
+                                        <Flex key={p.size} justify="space-between">
+                                            <Text fontSize="sm" color="gray.400">
+                                                {p.size}
+                                            </Text>
+                                            <Text fontSize="sm" color="gray.300">
+                                                {p.price.toFixed(2).replace(".", ",")} руб.
+                                            </Text>
+                                        </Flex>
+                                    ))}
 
-                        {selecting && (
-                            <AnimatePresence>
-                                <motion.div
-                                    initial={{opacity: 0}}
-                                    animate={{opacity: 1}}
-                                    exit={{opacity: 0}}
-                                >
-                                    <Flex direction="column" gap={2}>
+                                    <Button
+                                        size="sm"
+                                        borderRadius="full"
+                                        borderWidth="1px"
+                                        borderColor="gray.500"
+                                        onClick={handleAddClick}
+                                        bg={added ? "gray.500" : "gray.800"}
+                                        w="full"
+                                        mt="auto"
+                                    >
+                                        {added ? (
+                                            <Flex align="center" gap={1}>
+                                                <FiCheck/> Добавлено
+                                            </Flex>
+                                        ) : (
+                                            "Добавить"
+                                        )}
+                                    </Button>
+                                </Flex>
+                            </Box>
+
+                            <Box
+                                gridRow="1"
+                                gridColumn="1"
+                                w="full"
+                                opacity={selecting ? 1 : 0}
+                                pointerEvents={selecting ? 'auto' : 'none'}
+                                transition="opacity 0.2s"
+                            >
+                                <Flex direction="column" gap={2} h="full" w="full">
+                                    <Box>
                                         {prices?.map(p => (
                                             <PriceButton
                                                 key={p.size}
@@ -363,39 +397,32 @@ export const Product = memo(function Product({
                                                 onClick={() => setSelectedPrice(p)}
                                             />
                                         ))}
-                                    </Flex>
+                                    </Box>
 
-                                    <Flex justify="space-between" mt={3}>
-                                        <Button size="sm" onClick={handleCancel} bg="red.500">
-                                            Отмена
-                                        </Button>
-                                        <Button size="sm" onClick={handleConfirm} bg="gray.500">
-                                            OK
-                                        </Button>
-                                    </Flex>
-                                </motion.div>
-                            </AnimatePresence>
-                        )}
-
-                        {!selecting && (
-                            <Button
-                                size="sm"
-                                borderRadius="full"
-                                borderWidth="1px"
-                                borderColor="gray.500"
-                                onClick={handleAddClick}
-                                bg={added ? "gray.500" : "gray.800"}
-                            >
-                                {added ? (
-                                    <Flex align="center" gap={1}>
-                                        <FiCheck/> Добавлено
-                                    </Flex>
-                                ) : (
-                                    "Добавить"
-                                )}
-                            </Button>
-                        )}
-                    </Flex>
+                                    <Grid templateColumns="1fr 1fr" gap={3} mt="auto" w="full">
+                                    <Button
+                                        size="sm"
+                                        borderRadius="full"
+                                        onClick={handleCancel}
+                                        bg="red.500"
+                                        w="full"
+                                    >
+                                        Отмена
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        borderRadius="full"
+                                        onClick={handleConfirm}
+                                        bg="#059669"
+                                        w="full"
+                                    >
+                                        OK
+                                    </Button>
+                                </Grid>
+                                </Flex>
+                            </Box>
+                        </Box>
+                    </Box>
                 </Flex>
             </Flex>
         </Container>
