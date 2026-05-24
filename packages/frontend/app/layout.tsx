@@ -3,6 +3,7 @@ import Script from "next/script";
 import {Geist, Geist_Mono} from "next/font/google";
 import "./globals.css";
 import {Providers} from "@/components/providers";
+import {BrowserCompatibilityNotice} from "@/components/browser-compatibility-notice";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -143,6 +144,43 @@ export default function RootLayout({
         </head>
 
         <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        <script dangerouslySetInnerHTML={{__html: `
+(function(){
+  try {
+    if(typeof localStorage !== 'undefined') {
+      try { if(localStorage.getItem('browser-compat-dismissed') === 'true') return; } catch(e) {}
+    }
+    var hasJS = typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal && typeof structuredClone === 'function' && typeof ResizeObserver !== 'undefined' && typeof Element !== 'undefined' && typeof Element.prototype.animate === 'function';
+    var hasCSS = typeof CSS !== 'undefined' && CSS.supports && CSS.supports('display', 'grid') && CSS.supports('aspect-ratio', '1/1') && CSS.supports('gap', '0px') && CSS.supports('color', 'var(--x)');
+    if(!hasJS || !hasCSS) {
+      window.__browserOld = true;
+      if(document.body) document.body.style.paddingTop = '54px';
+    }
+  } catch(e) {}
+})();
+`}} />
+        <BrowserCompatibilityNotice/>
+        <noscript>
+            <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                backgroundColor: '#000000',
+                color: '#ffffff',
+                padding: '12px 20px',
+                zIndex: 999999,
+                borderBottom: '2px solid #333333',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                fontSize: '14px',
+                lineHeight: '1.4',
+                textAlign: 'center',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+            }}>
+                <strong>Ваш браузер устарел.</strong> Сайт может работать медленно или отображаться некорректно.
+                Пожалуйста, обновите систему или используйте современный браузер (Chrome, Edge) для лучшего опыта.
+            </div>
+        </noscript>
         <Providers>{children}</Providers>
 
         <Script id="yandex-metrika" strategy="lazyOnload">
