@@ -470,7 +470,7 @@ export const DashboardHistoryPage = () => {
 
     const isAdmin = user?.role === 'admin';
 
-    const {data: users = []} = useQuery({
+    const {data: _users = []} = useQuery({
         queryKey: ['users'],
         queryFn: async () => {
             const response = await getUsers();
@@ -481,6 +481,7 @@ export const DashboardHistoryPage = () => {
         },
         enabled: isAdmin,
     });
+    const users: SerializedUser[] = Array.isArray(_users) ? _users : [];
 
     const [sortField, sortOrder] = sortValue.split('_') as [string, 'asc' | 'desc'];
 
