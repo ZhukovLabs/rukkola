@@ -6,21 +6,35 @@ import {useQuery, useQueryClient} from '@tanstack/react-query'
 import {getUsers} from './actions'
 import {AddUserModal} from './add-user-modal'
 import {UserRow} from './user-row'
-import {useSession} from '@/lib/auth/auth-context'
+import {useSession, useAuth} from '@/lib/auth/auth-context'
 import type {SerializedUser} from './types'
 
 export const UsersTable = () => {
     const {data: session} = useSession();
+    const {status: authStatus} = useAuth();
     const authenticatedUserId = session?.user?.id as string | undefined;
     const queryClient = useQueryClient();
     const [isAddOpen, setIsAddOpen] = useState(false);
 
-    const {data, isLoading} = useQuery({
+    const {data, isPending} = useQuery({
         queryKey: ['users'],
-        queryFn: getUsers,
+        staleTime: 0,
+        queryFn: async () => {
+            const result = await getUsers()
+            if (result.success && result.data) return result.data
+            return [] as SerializedUser[]
+        },
     })
 
-    const users: SerializedUser[] = data?.success && data.data ? data.data : [];
+    const users: SerializedUser[] = data ?? [];
+
+    if (authStatus === 'loading') {
+        return (
+            <Flex justify="center" align="center" h="200px">
+                <Spinner size="lg" color="whiteAlpha.400"/>
+            </Flex>
+        )
+    }
 
     const handleUserCreated = () => {
         queryClient.invalidateQueries({queryKey: ['users']})
@@ -76,7 +90,7 @@ export const UsersTable = () => {
                 </Card.Header>
 
                 <Card.Body px={0} py={0}>
-                    {isLoading ? (
+                    {isPending ? (
                         <Flex justify="center" align="center" h="200px">
                             <Spinner size="lg" color="whiteAlpha.400"/>
                         </Flex>
